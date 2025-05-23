@@ -15,6 +15,7 @@ COPY . /app/
 
 WORKDIR /app
 RUN pip install -r requirements.txt \
+    && mkdir -p /app/dist \
     && chown -R www-data /app/dist \
     && locale-gen zh_CN.UTF-8 \
     && groupadd -r tissue -g 911 \
