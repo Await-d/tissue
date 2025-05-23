@@ -10,7 +10,7 @@ ENV LANG="C.UTF-8" \
 # 安装nodejs和npm用于构建前端
 RUN apt-get update -y \
     && apt-get -y install nginx locales gosu curl \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g npm@latest
 
