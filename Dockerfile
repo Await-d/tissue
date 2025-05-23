@@ -19,7 +19,8 @@ RUN pip install -r requirements.txt \
     && chown -R www-data /app/dist \
     && locale-gen zh_CN.UTF-8 \
     && groupadd -r tissue -g 911 \
-    && useradd -r tissue -g tissue -s /bin/bash -u 911
+    && useradd -r tissue -g tissue -s /bin/bash -u 911 \
+    && chmod +x /app/entrypoint
 
 EXPOSE 9193
 VOLUME [ "/app/config" ]
