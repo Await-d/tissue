@@ -1,0 +1,34 @@
+kind: pipeline
+type: docker
+name: tissue-deploy
+
+steps:
+  - name: deploy
+    image: docker:dind
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+    commands:
+      - docker build -t tissue:latest .
+      - docker stop tissue || true
+      - docker rm tissue || true
+      - >
+        docker run -d
+        --name tissue
+        -p 9194:9193
+        -e TZ="Asia/Shanghai"
+        -e PUID=0
+        -e PGID=0
+        -e UMASK=000
+        -v /volume1/docker/1panel/apps/local/tissue/localtissue/data/file:/data/file
+        -v /volume1/docker/1panel/apps/local/tissue/localtissue/data/video:/data/video
+        -v /volume5/HP-16/video/HP-16:/HP-16
+        -v /volume1/docker/1panel/apps/local/tissue/localtissue/data/config:/app/config
+        --restart unless-stopped
+        --network 1panel-network
+        tissue:latest
+
+volumes:
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock 
