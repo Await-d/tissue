@@ -434,39 +434,8 @@ class JavbusSpider(Spider):
                 # 提取演员名称，并进行搜索
                 actor_name = actor_url.split('/')[-1]
                 logger.info(f"从/actors/路径提取演员名称: {actor_name}")
-                # 调用搜索功能获取演员详情
-                actors = self.search_actor(actor_name)
-                if not actors:
-                    logger.info(f"未找到演员: {actor_name}")
-                    return []
-                
-                # 使用搜索结果中的第一个演员
-                best_match = actors[0]
-                # 从演员的URL获取ID
-                if hasattr(best_match, 'url') and best_match.url:
-                    actor_id_match = re.search(r'/star/([^/]+)', best_match.url)
-                    if actor_id_match:
-                        actor_id = actor_id_match.group(1)
-                        actor_url = urljoin(self.host, f'/star/{actor_id}')
-                        logger.info(f"从URL提取演员ID: {actor_id}, 构造URL: {actor_url}")
-                    else:
-                        logger.error(f"无法从URL提取演员ID: {best_match.url}")
-                        return []
-                else:
-                    # 从演员头像URL中提取演员ID
-                    thumb_url = best_match.thumb
-                    if thumb_url and 'actress' in thumb_url:
-                        try:
-                            # 处理类似 https://www.javbus.com/pics/actress/2de_a.jpg 的格式
-                            actress_id = re.search(r'actress/([^/_]+)', thumb_url).group(1)
-                            actor_url = urljoin(self.host, f'/star/{actress_id}')
-                            logger.info(f"从头像URL提取演员ID: {actress_id}, 构造URL: {actor_url}")
-                        except Exception as e:
-                            logger.error(f"无法从头像URL提取演员ID: {thumb_url}, 错误: {str(e)}")
-                            return []
-                    else:
-                        logger.error(f"无法获取演员ID: 没有有效的URL或头像")
-                        return []
+                # 直接使用演员名称搜索，不尝试提取ID
+                return self.get_actor_videos(actor_name)
             
             elif '/star/' not in actor_url:
                 # 如果是演员名称而不是URL，先搜索获取演员详情页URL
@@ -491,6 +460,7 @@ class JavbusSpider(Spider):
                 
                 if thumb_url and 'actress' in thumb_url:
                     try:
+                        # 处理类似 https://www.javbus.com/pics/actress/2de_a.jpg 的格式
                         actress_id = re.search(r'actress/([^/_]+)', thumb_url).group(1)
                         actor_id = actress_id
                         logger.info(f"从头像URL提取演员ID: {actress_id}")

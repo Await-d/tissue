@@ -112,7 +112,7 @@ def get_web_actors(source: str = 'javdb'):
         return R.list([])
 
 
-@router.get('/web/search/actor', dependencies=[Depends(verify_token)])
+@router.get('/web/search/actor')
 def search_web_actor(actor_name: str, source: str = 'javdb'):
     """从网站搜索演员"""
     logger.info(f"从{source}搜索演员: {actor_name}")
