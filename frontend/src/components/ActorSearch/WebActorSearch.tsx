@@ -9,6 +9,7 @@ import { useRequest } from 'ahooks';
 import VideoCover from "../VideoCover";
 import { useNavigate } from "@tanstack/react-router";
 import DownloadModal from "../../routes/_index/search/-components/downloadModal";
+import DownloadListModal from "../../routes/_index/search/-components/downloadListModal";
 
 interface WebActor {
     name: string;
@@ -43,6 +44,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     });
     const [selectedVideo, setSelectedVideo] = useState<any>(null);
     const [selectedDownload, setSelectedDownload] = useState<any>(null);
+    const [showDownloadList, setShowDownloadList] = useState(false);
+    const [downloadOptions, setDownloadOptions] = useState<any[]>([]);
     const navigate = useNavigate();
 
     // 获取热门演员列表
@@ -112,6 +115,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         onSuccess: () => {
             setSelectedVideo(null);
             setSelectedDownload(null);
+            setShowDownloadList(false);
+            setDownloadOptions([]);
             return message.success("下载任务创建成功");
         },
         onError: (error) => {
@@ -382,6 +387,37 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         );
     };
 
+    // 添加新的函数处理视频下载
+    const handleVideoDownload = (video: WebVideo) => {
+        // 构建临时下载选项
+        // 在实际场景中，这里应该调用API获取真实的下载选项
+        const options = [
+            {
+                name: video.num,
+                magnet: video.url,
+                is_zh: video.is_zh,
+                is_uncensored: video.is_uncensored,
+                size: "未知大小",
+                website: sourceType.toUpperCase(),
+                publish_date: video.publish_date
+            }
+        ];
+
+        // 检查是否有多个下载选项
+        if (options.length > 1) {
+            // 如果有多个选项，显示下载列表模态框
+            setSelectedVideo(video);
+            setDownloadOptions(options);
+            setShowDownloadList(true);
+        } else if (options.length === 1) {
+            // 如果只有一个选项，直接显示单个下载对话框
+            setSelectedVideo(video);
+            setSelectedDownload(options[0]);
+        } else {
+            message.warning("没有可用的下载资源");
+        }
+    };
+
     return (
         <div style={{ padding: '16px' }}>
             <Space direction="vertical" style={{ width: '100%', marginBottom: '16px' }}>
@@ -465,16 +501,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                     size="small"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // 创建临时下载对象
-                                                        const downloadItem = {
-                                                            name: video.num,
-                                                            magnet: video.url,
-                                                            is_zh: video.is_zh,
-                                                            is_uncensored: video.is_uncensored,
-                                                            publish_date: video.publish_date
-                                                        };
-                                                        setSelectedVideo(video);
-                                                        setSelectedDownload(downloadItem);
+                                                        // 使用新的处理函数
+                                                        handleVideoDownload(video);
                                                     }}
                                                 />
                                             </Tooltip>
@@ -564,11 +592,22 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 )}
             </Modal>
 
+            {/* 单个下载对话框 */}
             <DownloadModal
                 open={!!selectedDownload}
                 download={selectedDownload}
                 onCancel={() => setSelectedDownload(null)}
                 onDownload={item => onDownload(selectedVideo, item)}
+                confirmLoading={onDownloading}
+            />
+
+            {/* 添加下载列表模态框 */}
+            <DownloadListModal
+                open={showDownloadList}
+                video={selectedVideo}
+                downloads={downloadOptions}
+                onCancel={() => setShowDownloadList(false)}
+                onDownload={onDownload}
                 confirmLoading={onDownloading}
             />
         </div>

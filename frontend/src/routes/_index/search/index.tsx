@@ -10,11 +10,10 @@ import {
     Row, Segmented, Skeleton,
     Space,
     Tag,
-    Tooltip,
-    Tabs
+    Tooltip
 } from "antd";
 import React, { useEffect, useState } from "react";
-import { CarryOutOutlined, CloudDownloadOutlined, CopyOutlined, HistoryOutlined, RedoOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
+import { CarryOutOutlined, CloudDownloadOutlined, CopyOutlined, HistoryOutlined, RedoOutlined, UserOutlined } from "@ant-design/icons";
 import * as api from "../../../apis/subscribe";
 import * as videoApi from "../../../apis/video";
 import { useRequest, useResponsive } from "ahooks";
@@ -27,15 +26,15 @@ import {
     createFileRoute,
     useSearch,
     useLoaderData,
-    useRouter, useMatch, useNavigate
+    useRouter, useMatch, useNavigate, Link
 } from "@tanstack/react-router";
 import Await from "../../../components/Await";
 import { useDispatch } from "react-redux";
 import { Dispatch } from "../../../models";
 import Preview from "./-components/preview.tsx";
 import DownloadModal from "./-components/downloadModal.tsx";
+import DownloadListModal from "./-components/downloadListModal.tsx";
 import HistoryModal from "./-components/historyModal.tsx";
-import WebActorSearch from '../../../components/ActorSearch/WebActorSearch';
 
 const cacheHistoryKey = 'search_video_histories'
 
@@ -81,6 +80,7 @@ export function Search() {
 
     const [selectedVideo, setSelectedVideo] = useState<any>()
     const [selectedDownload, setSelectedDownload] = useState<any>()
+    const [showDownloadList, setShowDownloadList] = useState(false)
     const [historyModalOpen, setHistoryModalOpen] = useState(false)
 
     useEffect(() => {
@@ -105,6 +105,7 @@ export function Search() {
         onSuccess: () => {
             setSelectedVideo(undefined)
             setSelectedDownload(undefined)
+            setShowDownloadList(false)
             return message.success("下载任务创建成功")
         }
     })
@@ -115,7 +116,23 @@ export function Search() {
                 key: 'actors',
                 label: '演员',
                 span: 24,
-                children: video.actors,
+                children: typeof video.actors === 'string' ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {video.actors.split(',').map((actor: string) => {
+                            const actorName = actor.trim();
+                            return actorName ? (
+                                <Tag
+                                    key={actorName}
+                                    color="blue"
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => handleActorClick(actorName)}
+                                >
+                                    {actorName}
+                                </Tag>
+                            ) : null;
+                        })}
+                    </div>
+                ) : video.actors,
             },
             {
                 key: 'num',
@@ -211,6 +228,14 @@ export function Search() {
         return message.success("磁力链接已复制")
     }
 
+    const handleActorClick = (actorName: string) => {
+        navigate({
+            to: '/actor',
+            search: { actorName: actorName } as any,
+            replace: true
+        });
+    };
+
     const handleWebVideoSelect = (video: any) => {
         if (video && video.url) {
             let source = 'JavDB';
@@ -238,243 +263,242 @@ export function Search() {
         })
     };
 
+    const handleDownloadClick = (video: any, downloadItem?: any) => {
+        setSelectedVideo(video);
+
+        if (downloadItem) {
+            setSelectedDownload(downloadItem);
+            return;
+        }
+
+        const downloads = video?.downloads;
+        if (downloads && downloads.length > 0) {
+            setShowDownloadList(true);
+        } else {
+            message.warning("没有可用的下载资源");
+        }
+    };
+
     return (
         <Row gutter={[15, 15]}>
             <Col span={24}>
-                <Tabs
-                    defaultActiveKey="actor"
-                    tabBarExtraContent={
-                        <Button
-                            icon={<HistoryOutlined />}
-                            onClick={() => setHistoryModalOpen(true)}
-                        >
-                            历史记录
-                        </Button>
-                    }
-                    items={[
-                        {
-                            key: 'actor',
-                            label: (
-                                <span>
-                                    <UserOutlined />
+                <Card
+                    title="番号搜索"
+                    extra={
+                        <Space>
+                            <Button
+                                icon={<HistoryOutlined />}
+                                onClick={() => setHistoryModalOpen(true)}
+                            >
+                                历史记录
+                            </Button>
+                            <Link to="/actor">
+                                <Button type="primary" icon={<UserOutlined />}>
                                     演员搜索
-                                </span>
-                            ),
-                            children: (
-                                <WebActorSearch onVideoSelect={handleWebVideoSelect} />
-                            ),
-                        },
-                        {
-                            key: 'video',
-                            label: (
-                                <span>
-                                    <SearchOutlined />
-                                    番号搜索
-                                </span>
-                            ),
-                            children: (
-                                <Row gutter={[15, 15]}>
-                                    <Col span={24} lg={8} md={12}>
-                                        <Card>
-                                            {!detailMatch && (
-                                                <div className={'flex'}>
-                                                    <Input.Search
-                                                        placeholder={'请输入番号'}
-                                                        enterButton
-                                                        value={searchInput}
-                                                        allowClear
-                                                        onChange={e => setSearchInput(e.target.value)}
-                                                        onSearch={(num) => {
-                                                            return router.navigate({ search: { num: num } as any, replace: true })
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                            <Await promise={loaderData}>
-                                                {(video, loading) => (
-                                                    video ? (
-                                                        <>
-                                                            <div className={'my-4 rounded-lg overflow-hidden'}>
-                                                                <VideoCover src={video.cover} />
-                                                            </div>
-                                                            <div className={'text-center'}>
-                                                                <Tooltip title={'添加订阅'}>
-                                                                    <Button
-                                                                        type={'primary'}
-                                                                        icon={<CarryOutOutlined />}
-                                                                        shape={'circle'}
-                                                                        onClick={() => {
-                                                                            setSubscribeOpen(true, video)
-                                                                        }}
-                                                                    />
-                                                                </Tooltip>
-                                                                <Tooltip title={'刷新'}>
-                                                                    <Button
-                                                                        type={'primary'}
-                                                                        icon={<RedoOutlined />}
-                                                                        shape={'circle'}
-                                                                        className={'ml-4'}
-                                                                        onClick={() => {
-                                                                            router.invalidate({ filter: d => d.routeId === routeId })
-                                                                            return router.navigate({
-                                                                                replace: true,
-                                                                                search: { ...search, num: video.num }
-                                                                            })
-                                                                        }}
-                                                                    />
-                                                                </Tooltip>
-                                                            </div>
-                                                            <Descriptions
-                                                                className={'mt-4'}
-                                                                layout={'vertical'}
-                                                                items={renderItems(video)}
-                                                                column={24}
-                                                                size={'small'}
-                                                            />
-                                                        </>
-                                                    ) : (
-                                                        loading ? (
-                                                            <Skeleton active />
-                                                        ) : (
-                                                            <div className={'py-11'}>
-                                                                <Empty />
-                                                            </div>
-                                                        )
-                                                    )
-                                                )}
-                                            </Await>
-                                        </Card>
-                                    </Col>
-                                    <Col span={24} lg={16} md={12}>
-                                        <Await promise={loaderData}>
-                                            {(video) => {
-                                                if (video?.previews) {
-                                                    const previews = video.previews.find((i: any) => i.website === previewSelected) || video.previews[0]
-                                                    return (
-                                                        <Card
-                                                            title={'预览'}
-                                                            className={'mb-4'}
-                                                            extra={(
-                                                                <Segmented
-                                                                    onChange={(value: string) => setPreviewSelected(value)}
-                                                                    options={video.previews.map((i: any) => i.website)}
-                                                                />
-                                                            )}>
-                                                            <Preview data={previews.items} />
-                                                        </Card>
-                                                    )
-                                                } else {
-                                                    return <div></div>
-                                                }
+                                </Button>
+                            </Link>
+                        </Space>
+                    }
+                >
+                    <Row gutter={[15, 15]}>
+                        <Col span={24} lg={8} md={12}>
+                            <Card>
+                                {!detailMatch && (
+                                    <div className={'flex'}>
+                                        <Input.Search
+                                            placeholder={'请输入番号'}
+                                            enterButton
+                                            value={searchInput}
+                                            allowClear
+                                            onChange={e => setSearchInput(e.target.value)}
+                                            onSearch={(num) => {
+                                                return router.navigate({ search: { num: num } as any, replace: true })
                                             }}
-                                        </Await>
-                                        <Card
-                                            title={'资源列表'}
-                                            extra={
-                                                <>
-                                                    <Tag
-                                                        color={filter.isHd ? 'red' : 'default'}
-                                                        className={'cursor-pointer'}
-                                                        onClick={() => setFilter({ ...filter, isHd: !filter.isHd })}
-                                                    >
-                                                        高清
-                                                    </Tag>
-                                                    <Tag
-                                                        color={filter.isZh ? 'blue' : 'default'}
-                                                        className={'cursor-pointer'}
-                                                        onClick={() => setFilter({ ...filter, isZh: !filter.isZh })}
-                                                    >
-                                                        中文
-                                                    </Tag>
-                                                    <Tag
-                                                        color={filter.isUncensored ? 'green' : 'default'}
-                                                        className={'cursor-pointer'}
-                                                        onClick={() => setFilter({
-                                                            ...filter,
-                                                            isUncensored: !filter.isUncensored
-                                                        })}
-                                                    >
-                                                        无码
-                                                    </Tag>
-                                                </>
-                                            }>
-                                            <Await promise={loaderData}>
-                                                {(video: any, loading) => {
-                                                    const downloads = video?.downloads?.filter((item: any) => (
-                                                        (!filter.isHd || item.is_hd) &&
-                                                        (!filter.isZh || item.is_zh) &&
-                                                        ((!filter.isUncensored || item.is_uncensored))
-                                                    ))
-                                                    return downloads ? (
-                                                        <List
-                                                            dataSource={downloads}
-                                                            renderItem={(item: any) => (
-                                                                <List.Item
-                                                                    actions={[
-                                                                        <Tooltip title={'发送到下载器'}>
-                                                                            <Button
-                                                                                type={'primary'}
-                                                                                icon={<CloudDownloadOutlined />}
-                                                                                shape={'circle'}
-                                                                                onClick={() => {
-                                                                                    setSelectedVideo(video)
-                                                                                    setSelectedDownload(item)
-                                                                                }}
-                                                                            />
-                                                                        </Tooltip>,
-                                                                        <Tooltip title={'复制磁力链接'}>
-                                                                            <Button
-                                                                                type={'primary'}
-                                                                                icon={<CopyOutlined />}
-                                                                                shape={'circle'}
-                                                                                onClick={() => onCopyClick(item)}
-                                                                            />
-                                                                        </Tooltip>
-                                                                    ]}>
-                                                                    <List.Item.Meta
-                                                                        title={item.name}
-                                                                        description={(
-                                                                            <Space
-                                                                                direction={responsive.lg ? 'horizontal' : 'vertical'}
-                                                                                size={responsive.lg ? 0 : 'small'}>
-                                                                                <div>
-                                                                                    <a href={item.url}>
-                                                                                        <Tag>{item.website}</Tag>
-                                                                                    </a>
-                                                                                    <Tag>{item.size}</Tag>
-                                                                                </div>
-                                                                                <div>
-                                                                                    {item.is_hd &&
-                                                                                        <Tag color={'red'} bordered={false}>高清</Tag>}
-                                                                                    {item.is_zh &&
-                                                                                        <Tag color={'blue'} bordered={false}>中文</Tag>}
-                                                                                    {item.is_uncensored &&
-                                                                                        <Tag color={'green'} bordered={false}>无码</Tag>}
-                                                                                </div>
-                                                                                <div>{item.publish_date}</div>
-                                                                            </Space>
-                                                                        )}
-                                                                    />
-                                                                </List.Item>
+                                        />
+                                    </div>
+                                )}
+                                <Await promise={loaderData}>
+                                    {(video, loading) => (
+                                        video ? (
+                                            <>
+                                                <div className={'my-4 rounded-lg overflow-hidden'}>
+                                                    <VideoCover src={video.cover} />
+                                                </div>
+                                                <div className={'text-center'}>
+                                                    <Tooltip title={'添加订阅'}>
+                                                        <Button
+                                                            type={'primary'}
+                                                            icon={<CarryOutOutlined />}
+                                                            shape={'circle'}
+                                                            onClick={() => {
+                                                                setSubscribeOpen(true, video)
+                                                            }}
+                                                        />
+                                                    </Tooltip>
+                                                    <Tooltip title={'刷新'}>
+                                                        <Button
+                                                            type={'primary'}
+                                                            icon={<RedoOutlined />}
+                                                            shape={'circle'}
+                                                            className={'ml-4'}
+                                                            onClick={() => {
+                                                                router.invalidate({ filter: d => d.routeId === routeId })
+                                                                return router.navigate({
+                                                                    replace: true,
+                                                                    search: { ...search, num: video.num }
+                                                                })
+                                                            }}
+                                                        />
+                                                    </Tooltip>
+                                                </div>
+                                                <Descriptions
+                                                    className={'mt-4'}
+                                                    layout={'vertical'}
+                                                    items={renderItems(video)}
+                                                    column={24}
+                                                    size={'small'}
+                                                />
+                                            </>
+                                        ) : (
+                                            loading ? (
+                                                <Skeleton active />
+                                            ) : (
+                                                <div className={'py-11'}>
+                                                    <Empty />
+                                                </div>
+                                            )
+                                        )
+                                    )}
+                                </Await>
+                            </Card>
+                        </Col>
+                        <Col span={24} lg={16} md={12}>
+                            <Await promise={loaderData}>
+                                {(video) => {
+                                    if (video?.previews) {
+                                        const previews = video.previews.find((i: any) => i.website === previewSelected) || video.previews[0]
+                                        return (
+                                            <Card
+                                                title={'预览'}
+                                                className={'mb-4'}
+                                                extra={(
+                                                    <Segmented
+                                                        onChange={(value: string) => setPreviewSelected(value)}
+                                                        options={video.previews.map((i: any) => i.website)}
+                                                    />
+                                                )}>
+                                                <Preview data={previews.items} />
+                                            </Card>
+                                        )
+                                    } else {
+                                        return <div></div>
+                                    }
+                                }}
+                            </Await>
+                            <Card
+                                title={'资源列表'}
+                                extra={
+                                    <>
+                                        <Tag
+                                            color={filter.isHd ? 'red' : 'default'}
+                                            className={'cursor-pointer'}
+                                            onClick={() => setFilter({ ...filter, isHd: !filter.isHd })}
+                                        >
+                                            高清
+                                        </Tag>
+                                        <Tag
+                                            color={filter.isZh ? 'blue' : 'default'}
+                                            className={'cursor-pointer'}
+                                            onClick={() => setFilter({ ...filter, isZh: !filter.isZh })}
+                                        >
+                                            中文
+                                        </Tag>
+                                        <Tag
+                                            color={filter.isUncensored ? 'green' : 'default'}
+                                            className={'cursor-pointer'}
+                                            onClick={() => setFilter({
+                                                ...filter,
+                                                isUncensored: !filter.isUncensored
+                                            })}
+                                        >
+                                            无码
+                                        </Tag>
+                                    </>
+                                }>
+                                <Await promise={loaderData}>
+                                    {(video: any, loading) => {
+                                        const downloads = video?.downloads?.filter((item: any) => (
+                                            (!filter.isHd || item.is_hd) &&
+                                            (!filter.isZh || item.is_zh) &&
+                                            ((!filter.isUncensored || item.is_uncensored))
+                                        ))
+                                        return downloads ? (
+                                            <List
+                                                dataSource={downloads}
+                                                renderItem={(item: any) => (
+                                                    <List.Item
+                                                        actions={[
+                                                            <Tooltip title={'发送到下载器'}>
+                                                                <Button
+                                                                    type={'primary'}
+                                                                    icon={<CloudDownloadOutlined />}
+                                                                    shape={'circle'}
+                                                                    onClick={() => {
+                                                                        handleDownloadClick(video);
+                                                                    }}
+                                                                />
+                                                            </Tooltip>,
+                                                            <Tooltip title={'复制磁力链接'}>
+                                                                <Button
+                                                                    type={'primary'}
+                                                                    icon={<CopyOutlined />}
+                                                                    shape={'circle'}
+                                                                    onClick={() => onCopyClick(item)}
+                                                                />
+                                                            </Tooltip>
+                                                        ]}>
+                                                        <List.Item.Meta
+                                                            title={item.name}
+                                                            description={(
+                                                                <Space
+                                                                    direction={responsive.lg ? 'horizontal' : 'vertical'}
+                                                                    size={responsive.lg ? 0 : 'small'}>
+                                                                    <div>
+                                                                        <a href={item.url}>
+                                                                            <Tag>{item.website}</Tag>
+                                                                        </a>
+                                                                        <Tag>{item.size}</Tag>
+                                                                    </div>
+                                                                    <div>
+                                                                        {item.is_hd &&
+                                                                            <Tag color={'red'} bordered={false}>高清</Tag>}
+                                                                        {item.is_zh &&
+                                                                            <Tag color={'blue'} bordered={false}>中文</Tag>}
+                                                                        {item.is_uncensored &&
+                                                                            <Tag color={'green'} bordered={false}>无码</Tag>}
+                                                                    </div>
+                                                                    <div>{item.publish_date}</div>
+                                                                </Space>
                                                             )}
                                                         />
-                                                    ) : (
-                                                        loading ? (
-                                                            <Skeleton active />
-                                                        ) : (
-                                                            <div className={'py-8'}>
-                                                                <Empty />
-                                                            </div>
-                                                        )
-                                                    )
-                                                }}
-                                            </Await>
-                                        </Card>
-                                    </Col>
-                                </Row>
-                            ),
-                        },
-                    ]} />
+                                                    </List.Item>
+                                                )}
+                                            />
+                                        ) : (
+                                            loading ? (
+                                                <Skeleton active />
+                                            ) : (
+                                                <div className={'py-8'}>
+                                                    <Empty />
+                                                </div>
+                                            )
+                                        )
+                                    }}
+                                </Await>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Card>
             </Col>
 
             <SubscribeModifyModal width={1100}
@@ -483,6 +507,14 @@ export function Search() {
                 download={selectedDownload}
                 onCancel={() => setSelectedDownload(undefined)}
                 onDownload={item => onDownload(selectedVideo, item)}
+                confirmLoading={onDownloading}
+            />
+            <DownloadListModal
+                open={showDownloadList}
+                video={selectedVideo}
+                downloads={selectedVideo?.downloads}
+                onCancel={() => setShowDownloadList(false)}
+                onDownload={onDownload}
                 confirmLoading={onDownloading}
             />
             <HistoryModal
