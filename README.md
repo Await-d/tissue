@@ -80,34 +80,4 @@ docker run \
 <img width="1685" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/4597df98-87bf-40a6-805f-37dc0b5e02ad">
 <img width="1682" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/ac11e3c0-7631-40cb-bef6-7074fe3bbc2f">
 
-### 前端构建说明
-
-由于网络问题，Docker构建过程中不再自动构建前端资源。请按照以下步骤手动构建前端：
-
-1. 在宿主机上安装Node.js和pnpm
-   ```shell
-   # 安装pnpm
-   npm install -g pnpm
-   ```
-
-2. 构建前端资源
-   ```shell
-   # 进入前端目录
-   cd frontend
-   
-   # 安装依赖
-   pnpm install
-   
-   # 构建
-   pnpm run build
-   ```
-
-3. 将构建好的资源复制到容器的指定目录
-   ```shell
-   # 确保容器在运行中
-   docker cp frontend/dist/* tissue:/app/dist/
-   ```
-
-如果您的网络环境允许，也可以修改Dockerfile增加自动构建步骤，但可能会因为网络问题导致构建失败。
-
 
