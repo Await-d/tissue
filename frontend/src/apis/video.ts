@@ -2,7 +2,7 @@
  * @Author: Await
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
- * @LastEditTime: 2025-05-24 17:54:25
+ * @LastEditTime: 2025-05-25 04:53:46
  * @Description: 请填写简介
  */
 import { request } from "../utils/requests";
@@ -113,13 +113,14 @@ export async function getWebActorVideos(actorName: string, source: string = 'jav
     return response.data.data
 }
 
-export async function getVideoDownloads(num: string, source: string = 'javdb') {
+export async function getVideoDownloads(num: string, source: string = 'javdb', url?: string) {
     const response = await request.request({
         url: '/home/ranking/detail',
         method: 'get',
         params: {
             num: num,
-            source: source
+            source: source,
+            url: url
         }
     })
     return response.data

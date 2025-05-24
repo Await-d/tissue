@@ -82,6 +82,7 @@ export function Search() {
     const [selectedDownload, setSelectedDownload] = useState<any>()
     const [showDownloadList, setShowDownloadList] = useState(false)
     const [historyModalOpen, setHistoryModalOpen] = useState(false)
+    const [loadingDownloadId, setLoadingDownloadId] = useState<string | null>(null)
 
     useEffect(() => {
         if (detailMatch) {
@@ -107,6 +108,10 @@ export function Search() {
             setSelectedDownload(undefined)
             setShowDownloadList(false)
             return message.success("下载任务创建成功")
+        },
+        onError: (err) => {
+            console.error(err)
+            message.error("下载任务创建失败")
         }
     })
 
@@ -264,20 +269,25 @@ export function Search() {
     };
 
     const handleDownloadClick = (video: any, downloadItem?: any) => {
-        setSelectedVideo(video);
+        setLoadingDownloadId(video.num)
+
+        setSelectedVideo(video)
 
         if (downloadItem) {
-            setSelectedDownload(downloadItem);
-            return;
+            setSelectedDownload(downloadItem)
+            setLoadingDownloadId(null)
+            return
         }
 
-        const downloads = video?.downloads;
+        const downloads = video?.downloads
         if (downloads && downloads.length > 0) {
-            setShowDownloadList(true);
+            setShowDownloadList(true)
+            setLoadingDownloadId(null)
         } else {
-            message.warning("没有可用的下载资源");
+            message.warning("没有可用的下载资源")
+            setLoadingDownloadId(null)
         }
-    };
+    }
 
     return (
         <Row gutter={[15, 15]}>
@@ -443,8 +453,10 @@ export function Search() {
                                                                     type={'primary'}
                                                                     icon={<CloudDownloadOutlined />}
                                                                     shape={'circle'}
+                                                                    loading={loadingDownloadId === video.num}
                                                                     onClick={() => {
-                                                                        handleDownloadClick(video);
+                                                                        setLoadingDownloadId(video.num);
+                                                                        onDownload(video, item);
                                                                     }}
                                                                 />
                                                             </Tooltip>,

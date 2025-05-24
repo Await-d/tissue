@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip } from 'antd';
-import { SearchOutlined, UserOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -10,6 +10,9 @@ import VideoCover from "../VideoCover";
 import { useNavigate } from "@tanstack/react-router";
 import DownloadModal from "../../routes/_index/search/-components/downloadModal";
 import DownloadListModal from "../../routes/_index/search/-components/downloadListModal";
+
+// 本地存储的键名
+const STORAGE_KEY = 'web_actor_search_state';
 
 interface WebActor {
     name: string;
@@ -34,10 +37,34 @@ interface WebActorSearchProps {
     defaultSearchValue?: string;
 }
 
+// 定义要保存的状态接口
+interface SavedState {
+    searchValue: string;
+    selectedActor: WebActor | null;
+    sourceType: string;
+    actorVideos?: any[];
+}
+
 const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultSearchValue }) => {
-    const [searchValue, setSearchValue] = useState(defaultSearchValue || '');
-    const [selectedActor, setSelectedActor] = useState<WebActor | null>(null);
-    const [sourceType, setSourceType] = useState<string>('javdb');
+    // 尝试从localStorage获取保存的状态
+    const getSavedState = (): SavedState | null => {
+        try {
+            const savedStateString = localStorage.getItem(STORAGE_KEY);
+            if (savedStateString) {
+                return JSON.parse(savedStateString);
+            }
+        } catch (error) {
+            console.error('Failed to parse saved state:', error);
+        }
+        return null;
+    };
+
+    const savedState = getSavedState();
+
+    // 使用保存的状态或默认值初始化状态
+    const [searchValue, setSearchValue] = useState(defaultSearchValue || savedState?.searchValue || '');
+    const [selectedActor, setSelectedActor] = useState<WebActor | null>(savedState?.selectedActor || null);
+    const [sourceType, setSourceType] = useState<string>(savedState?.sourceType || 'javdb');
     const [modal, setModal] = useState<{ visible: boolean, video: WebVideo | null }>({
         visible: false,
         video: null
@@ -46,7 +73,27 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     const [selectedDownload, setSelectedDownload] = useState<any>(null);
     const [showDownloadList, setShowDownloadList] = useState(false);
     const [downloadOptions, setDownloadOptions] = useState<any[]>([]);
+    const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
     const navigate = useNavigate();
+
+    // 保存状态到localStorage
+    const saveState = () => {
+        try {
+            const stateToSave: SavedState = {
+                searchValue,
+                selectedActor,
+                sourceType
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+        } catch (error) {
+            console.error('Failed to save state:', error);
+        }
+    };
+
+    // 当关键状态变化时保存状态
+    useEffect(() => {
+        saveState();
+    }, [searchValue, selectedActor, sourceType]);
 
     // 获取热门演员列表
     const { data: actorsData = [], loading: loadingActors, refresh: refreshActors } = useRequest(
@@ -125,13 +172,19 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         }
     });
 
-    // 初始化时如果有默认搜索值，执行搜索
+    // 初始化时处理默认搜索值或恢复保存的状态
     useEffect(() => {
         if (defaultSearchValue && defaultSearchValue.trim()) {
+            // 如果有默认搜索值，优先使用默认搜索值
             setSearchValue(defaultSearchValue);
             searchActor(defaultSearchValue);
+        } else if (savedState?.selectedActor && savedState.searchValue) {
+            // 如果有保存的演员，恢复之前的状态
+            if (savedState.selectedActor.name) {
+                fetchActorVideos(savedState.selectedActor.name);
+            }
         }
-    }, [defaultSearchValue, searchActor]);
+    }, [defaultSearchValue, searchActor, fetchActorVideos]);
 
     // 当演员列表或搜索结果更新时，尝试匹配默认演员
     useEffect(() => {
@@ -389,12 +442,19 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
 
     // 添加新的函数处理视频下载
     const handleVideoDownload = (video: WebVideo) => {
+        // 设置当前视频为加载状态
+        const videoId = `${video.num}-${Math.random().toString(36).substring(2, 7)}`;
+        setLoadingVideoId(videoId);
+
         // 显示加载消息
         message.loading({ content: '正在获取下载资源...', key: 'download' });
 
         // 获取视频的详细信息（包括下载资源）
-        api.getVideoDownloads(video.num, sourceType)
+        api.getVideoDownloads(video.num, sourceType, video.url)
             .then(detailData => {
+                // 清除加载状态
+                setLoadingVideoId(null);
+
                 if (detailData && detailData.downloads && detailData.downloads.length > 0) {
                     // 如果有多个下载选项，显示下载列表模态框
                     setSelectedVideo(detailData);
@@ -402,40 +462,18 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     setShowDownloadList(true);
                     message.destroy('download');
                 } else {
-                    // 如果没有下载选项，构造一个基本选项（使用视频URL作为标识，但这可能不是一个有效的磁力链接）
-                    message.warning({ content: '没有找到可用的下载资源，使用基本链接', key: 'download' });
-
-                    const fallbackOption = {
-                        name: video.num,
-                        magnet: video.url,
-                        is_zh: video.is_zh,
-                        is_uncensored: video.is_uncensored,
-                        size: "未知大小",
-                        website: sourceType.toUpperCase(),
-                        publish_date: video.publish_date
-                    };
-
-                    setSelectedVideo(video);
-                    setSelectedDownload(fallbackOption);
+                    // 如果没有下载选项，只显示提示信息，不显示模态框
+                    message.warning({ content: '没有找到可用的下载资源', key: 'download' });
+                    // 不再设置selectedVideo和selectedDownload，避免显示空模态框
                 }
             })
             .catch(error => {
+                // 清除加载状态
+                setLoadingVideoId(null);
+
                 console.error('获取下载资源失败:', error);
                 message.error({ content: '获取下载资源失败', key: 'download' });
-
-                // 出错时使用基本信息构造一个下载选项
-                const fallbackOption = {
-                    name: video.num,
-                    magnet: video.url,
-                    is_zh: video.is_zh,
-                    is_uncensored: video.is_uncensored,
-                    size: "未知大小",
-                    website: sourceType.toUpperCase(),
-                    publish_date: video.publish_date
-                };
-
-                setSelectedVideo(video);
-                setSelectedDownload(fallbackOption);
+                // 出错时不显示模态框，只显示错误提示
             });
     };
 
@@ -472,6 +510,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                             }
                         }}
                         enterButton
+                        allowClear
                     />
                 </AutoComplete>
             </Space>
@@ -488,6 +527,24 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                         <h2 style={{ marginTop: 8 }}>{selectedActor.name}</h2>
                     </div>
 
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                        <Tooltip title="刷新作品列表">
+                            <Button
+                                type="primary"
+                                icon={<RedoOutlined />}
+                                loading={loadingVideos}
+                                onClick={() => {
+                                    if (selectedActor && selectedActor.name) {
+                                        fetchActorVideos(selectedActor.name);
+                                        message.info('正在刷新作品列表...');
+                                    }
+                                }}
+                            >
+                                刷新
+                            </Button>
+                        </Tooltip>
+                    </div>
+
                     {loadingVideos ? (
                         <div style={{ textAlign: 'center', margin: '32px 0' }}>
                             <Spin />
@@ -497,67 +554,72 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                         <List
                             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 5 }}
                             dataSource={actorVideos}
-                            renderItem={(video: WebVideo, index: number) => (
-                                <List.Item key={`${video.num || ''}-${index}-${Math.random().toString(36).substring(2, 7)}`}>
-                                    <Card
-                                        hoverable
-                                        cover={
-                                            video.cover ? (
-                                                <div style={{ height: 200, overflow: 'hidden' }}>
-                                                    <VideoCover src={video.cover} />
-                                                </div>
-                                            ) : (
-                                                <div style={{ height: 200, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    无封面
-                                                </div>
-                                            )
-                                        }
-                                        onClick={() => handleVideoSelect(video)}
-                                        actions={[
-                                            <Tooltip title="推送到下载器">
-                                                <Button
-                                                    type="primary"
-                                                    shape="circle"
-                                                    icon={<CloudDownloadOutlined />}
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        // 使用新的处理函数
-                                                        handleVideoDownload(video);
-                                                    }}
-                                                />
-                                            </Tooltip>
-                                        ]}
-                                    >
-                                        <Card.Meta
-                                            title={
-                                                <div style={{
-                                                    whiteSpace: 'normal',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    display: '-webkit-box',
-                                                    WebkitLineClamp: 2,
-                                                    WebkitBoxOrient: 'vertical',
-                                                    lineHeight: '1.3'
-                                                }}>
-                                                    {video.title || video.num}
-                                                </div>
-                                            }
-                                            description={
-                                                <div>
-                                                    <div><strong>{video.num}</strong></div>
-                                                    <div>
-                                                        {video.is_zh && <span style={{ marginRight: 8, color: '#1890ff' }}>中文</span>}
-                                                        {video.is_uncensored && <span style={{ color: '#ff4d4f' }}>无码</span>}
-                                                        {video.rank && <span style={{ marginLeft: 8 }}>评分: {video.rank}</span>}
+                            renderItem={(video: WebVideo, index: number) => {
+                                // 为每个视频生成一个唯一的ID用于加载状态跟踪
+                                const videoId = `${video.num}-${index}-${Math.random().toString(36).substring(2, 7)}`;
+                                return (
+                                    <List.Item key={videoId}>
+                                        <Card
+                                            hoverable
+                                            cover={
+                                                video.cover ? (
+                                                    <div style={{ height: 200, overflow: 'hidden' }}>
+                                                        <VideoCover src={video.cover} />
                                                     </div>
-                                                    {video.publish_date && <div style={{ marginTop: 4, color: '#8c8c8c', fontSize: '12px' }}>发行日期: {video.publish_date}</div>}
-                                                </div>
+                                                ) : (
+                                                    <div style={{ height: 200, background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        无封面
+                                                    </div>
+                                                )
                                             }
-                                        />
-                                    </Card>
-                                </List.Item>
-                            )}
+                                            onClick={() => handleVideoSelect(video)}
+                                            actions={[
+                                                <Tooltip title="推送到下载器">
+                                                    <Button
+                                                        type="primary"
+                                                        shape="circle"
+                                                        icon={<CloudDownloadOutlined />}
+                                                        size="small"
+                                                        loading={loadingVideoId === videoId}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            // 使用新的处理函数
+                                                            handleVideoDownload(video);
+                                                        }}
+                                                    />
+                                                </Tooltip>
+                                            ]}
+                                        >
+                                            <Card.Meta
+                                                title={
+                                                    <div style={{
+                                                        whiteSpace: 'normal',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        lineHeight: '1.3'
+                                                    }}>
+                                                        {video.title || video.num}
+                                                    </div>
+                                                }
+                                                description={
+                                                    <div>
+                                                        <div><strong>{video.num}</strong></div>
+                                                        <div>
+                                                            {video.is_zh && <span style={{ marginRight: 8, color: '#1890ff' }}>中文</span>}
+                                                            {video.is_uncensored && <span style={{ color: '#ff4d4f' }}>无码</span>}
+                                                            {video.rank && <span style={{ marginLeft: 8 }}>评分: {video.rank}</span>}
+                                                        </div>
+                                                        {video.publish_date && <div style={{ marginTop: 4, color: '#8c8c8c', fontSize: '12px' }}>发行日期: {video.publish_date}</div>}
+                                                    </div>
+                                                }
+                                            />
+                                        </Card>
+                                    </List.Item>
+                                );
+                            }}
                         />
                     ) : (
                         <Empty description="没有找到相关视频" />
@@ -628,7 +690,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 video={selectedVideo}
                 downloads={downloadOptions}
                 onCancel={() => setShowDownloadList(false)}
-                onDownload={onDownload}
+                onDownload={(video, item) => onDownload(video, item)}
                 confirmLoading={onDownloading}
             />
         </div>
