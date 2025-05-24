@@ -439,9 +439,8 @@ class JavdbSpider(Spider):
                     
                     if url_match:
                         video_url = url_match.group(1)
-                        if not video_url.startswith('http'):
-                            video_url = urljoin(self.host, video_url)
-                        item.url = video_url
+                        # 使用与get_ranking相同的URL拼接方式
+                        item.url = urljoin(self.host, video_url)
                         
                         # 尝试匹配封面
                         cover_pattern = rf'<a href="{re.escape(video_url)}"[^>]*>.*?<img[^>]*src="([^"]+)"'
