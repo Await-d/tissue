@@ -369,8 +369,12 @@ class JavdbSpider(Spider):
                     filtered_actors = [a for a in actors if a.name not in ['有碼', '無碼', '歐美']]
                     if filtered_actors:
                         actor_match = filtered_actors[0]  # 使用第一个结果
+                    elif actors:
+                        actor_match = actors[0]  # 如果没有过滤结果，使用第一个结果
                     else:
-                        actor_match = actors[3]  # 跳过前三个类别选项
+                        # 没有找到任何演员
+                        logger.error(f"没有找到任何匹配的演员: {actor_url}")
+                        return []
                 
                 logger.info(f"选择演员: {actor_match.name}")
                 
@@ -404,89 +408,92 @@ class JavdbSpider(Spider):
         try:
             # 访问演员详情页
             response = self.session.get(actor_url)
-            html_content = response.text
+            
+            # 使用lxml解析HTML，比正则表达式更可靠
+            html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             # 保存页面内容用于调试
             try:
-                with open("javdb_actor_debug.html", "w", encoding="utf-8") as f:
-                    f.write(html_content)
+                with open("javdb_actor_debug.html", "wb") as f:
+                    f.write(response.content)
                 logger.info("已保存演员详情页HTML文件")
             except:
                 pass
             
             result = []
             
-            # 直接寻找视频标题元素和番号
-            title_pattern = r'<div class="video-title"><strong>([^<]+)</strong>([^<]*)</div>'
-            title_matches = re.findall(title_pattern, html_content)
+            # 获取所有视频条目
+            movie_boxes = html.xpath('//a[@class="box"]')
+            logger.info(f"找到 {len(movie_boxes)} 个视频条目")
             
-            logger.info(f"找到 {len(title_matches)} 个视频标题")
-            
-            for idx, (num, title) in enumerate(title_matches):
+            for box in movie_boxes:
                 try:
                     item = JavDBRanking()
                     
-                    # 清理和格式化标题文本
-                    clean_title = re.sub(r'\s+', ' ', title).strip()
+                    # 提取视频URL
+                    video_url = box.get('href')
+                    if not video_url.startswith('http'):
+                        video_url = urljoin(self.host, video_url)
+                    item.url = video_url
                     
-                    # 提取番号和标题
-                    item.num = num
-                    item.title = (num + " " + clean_title).strip()
-                    
-                    # 尝试匹配这个番号对应的URL和封面
-                    url_pattern = rf'<a href="([^"]+)"[^>]*>.*?<div class="video-title"><strong>{re.escape(num)}</strong>'
-                    url_match = re.search(url_pattern, html_content, re.DOTALL)
-                    
-                    if url_match:
-                        video_url = url_match.group(1)
-                        if not video_url.startswith('http'):
-                            video_url = urljoin(self.host, video_url)
-                        item.url = video_url
-                    else:
-                        # 如果无法从页面提取URL，根据番号构建一个合理的URL
-                        item.url = urljoin(self.host, f'/v/{num}')
-                        logger.info(f"无法提取URL，使用番号构建URL: {item.url}")
+                    # 提取视频标题和番号
+                    title_element = box.xpath('.//div[contains(@class, "video-title")]')
+                    if title_element:
+                        # 提取番号
+                        num_element = title_element[0].xpath('./strong/text()')
+                        if num_element:
+                            item.num = num_element[0].strip()
                         
-                    # 检查URL是否为app.javdb457.com，如果是，则修正为正确的URL
-                    if 'app.javdb457.com' in item.url:
-                        correct_url = urljoin(self.host, f'/v/{num}')
-                        logger.warning(f"检测到错误URL: {item.url}，修正为: {correct_url}")
-                        item.url = correct_url
+                        # 提取完整标题
+                        full_title = title_element[0].xpath('string(.)')
+                        if full_title:
+                            item.title = full_title.strip()
                     
-                    # 尝试匹配封面
-                    cover_pattern = rf'<a href="{re.escape(video_url)}"[^>]*>.*?<img[^>]*src="([^"]+)"'
-                    cover_match = re.search(cover_pattern, html_content, re.DOTALL)
-                    if cover_match:
-                        cover_url = cover_match.group(1)
-                        # 确保封面URL是完整的URL
-                        if not cover_url.startswith('http'):
-                            item.cover = urljoin(self.host, cover_url)
-                        else:
-                            item.cover = cover_url
+                    # 提取封面
+                    cover_element = box.xpath('.//img[@loading="lazy"]')
+                    if cover_element:
+                        cover_url = cover_element[0].get('src')
+                        if cover_url and not cover_url.startswith('http'):
+                            cover_url = 'https:' + cover_url if cover_url.startswith('//') else urljoin(self.host, cover_url)
+                        item.cover = cover_url
                     
                     # 提取评分
-                    score_pattern = r'<div class="video-title"><strong>' + re.escape(num) + r'</strong>.*?<div class="score">.*?<span class="value">.*?([0-9.]+)分'
-                    score_match = re.search(score_pattern, html_content, re.DOTALL)
-                    if score_match:
+                    score_element = box.xpath('.//div[contains(@class, "score")]//span[@class="value"]/text()')
+                    if score_element:
+                        score_text = score_element[0]
+                        score_match = re.search(r'(\d+\.\d+)分', score_text)
+                        if score_match:
+                            try:
+                                item.rank = float(score_match.group(1))
+                            except:
+                                pass
+                    
+                    # 检查标签
+                    cnsub_element = box.xpath('.//span[contains(@class, "cnsub")]')
+                    item.isZh = len(cnsub_element) > 0
+                    
+                    uncensored_element = box.xpath('.//span[contains(@class, "uncensored")]')
+                    item.is_uncensored = len(uncensored_element) > 0
+                    
+                    # 尝试获取发布日期
+                    date_element = box.xpath('.//div[contains(@class, "meta")]/text()')
+                    if date_element and len(date_element) > 0:
+                        date_text = date_element[0].strip()
                         try:
-                            item.rank = float(score_match.group(1))
-                        except:
-                            pass
+                            # 尝试解析日期格式 YYYY-MM-DD
+                            if re.match(r'\d{4}-\d{2}-\d{2}', date_text):
+                                item.publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
+                                logger.info(f"解析到日期: {item.publish_date} 从 {date_text}")
+                        except Exception as e:
+                            logger.error(f"日期解析失败: {date_text}, 错误: {str(e)}")
                     
-                    # 查找番号相关的所有标签
-                    card_html = ""
-                    card_pattern = r'<a href="[^"]*' + re.escape(num) + r'[^"]*".*?</a>'
-                    card_match = re.search(card_pattern, html_content, re.DOTALL)
-                    if card_match:
-                        card_html = card_match.group(0)
+                    # 如果没有找到番号，则跳过这个条目
+                    if not item.num:
+                        continue
                         
-                        # 检查标签
-                        item.isZh = '中字' in card_html
-                        item.is_uncensored = '無碼' in card_html or '无码' in card_html
-                    
                     result.append(item)
                 except Exception as e:
-                    logger.error(f"处理视频时出错: {e}")
+                    logger.error(f"处理视频条目时出错: {str(e)}")
             
             return result
             

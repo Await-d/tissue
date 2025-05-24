@@ -437,7 +437,7 @@ class JavbusSpider(Spider):
                 # 直接使用演员名称搜索，不尝试提取ID
                 return self.get_actor_videos(actor_name)
             
-            elif '/star/' not in actor_url:
+            elif '/star/' not in actor_url and not actor_url.startswith('http'):
                 # 如果是演员名称而不是URL，先搜索获取演员详情页URL
                 actors = self.search_actor(actor_url)
                 if not actors:
@@ -473,16 +473,17 @@ class JavbusSpider(Spider):
                     if actor_url_match:
                         actor_id = actor_url_match.group(1)
                         logger.info(f"从URL提取演员ID: {actor_id}")
-                    
+                
                 if actor_id:
                     actor_url = urljoin(self.host, f'/star/{actor_id}')
                     logger.info(f"构造演员URL: {actor_url}")
                 else:
-                    logger.error(f"无法提取演员ID")
+                    logger.error(f"无法构造演员URL，未找到演员ID: {actor_url}")
                     return []
-            else:
-                # 如果包含/star/路径但不是完整URL
+            elif '/star/' in actor_url and not actor_url.startswith('http'):
+                # 如果是相对路径如 /star/xxx
                 actor_url = urljoin(self.host, actor_url)
+                logger.info(f"构造完整URL: {actor_url}")
         
         logger.info(f"访问演员页面: {actor_url}")
         
@@ -492,13 +493,6 @@ class JavbusSpider(Spider):
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Referer': self.host,
-            'sec-ch-ua': '"Google Chrome";v="91", " Not;A Brand";v="99", "Chromium";v="91"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'same-origin',
-            'Upgrade-Insecure-Requests': '1',
         }
         
         # 保存原始头信息用于后续恢复
@@ -573,6 +567,23 @@ class JavbusSpider(Spider):
                     item.url = movie_url
                     item.isZh = is_zh
                     item.is_uncensored = is_uncensored
+                    
+                    # 尝试获取发布日期 - 修复JavBus特有的日期格式
+                    # JavBus网站中日期在第二个<date>标签中
+                    date_elements = box.xpath('.//date/text()')
+                    if date_elements and len(date_elements) >= 2:
+                        date_text = date_elements[1].strip()  # 第二个date元素包含日期
+                        try:
+                            # 尝试解析日期格式 YYYY-MM-DD
+                            if re.match(r'\d{4}-\d{2}-\d{2}', date_text):
+                                item.publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
+                                logger.info(f"解析到日期: {item.publish_date} 从 {date_text}")
+                            # 尝试解析其他可能的日期格式，如YYYY/MM/DD
+                            elif re.match(r'\d{4}/\d{2}/\d{2}', date_text):
+                                item.publish_date = datetime.strptime(date_text, "%Y/%m/%d").date()
+                                logger.info(f"解析到日期: {item.publish_date} 从 {date_text}")
+                        except Exception as e:
+                            logger.error(f"日期解析失败: {date_text}, 错误: {str(e)}")
                     
                     result.append(item)
                     logger.info(f"解析到视频: {num} - {title}")

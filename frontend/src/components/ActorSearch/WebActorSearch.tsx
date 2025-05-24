@@ -28,10 +28,11 @@ interface WebVideo {
 
 interface WebActorSearchProps {
     onVideoSelect?: (video: WebVideo) => void;
+    defaultSearchValue?: string;
 }
 
-const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
-    const [searchValue, setSearchValue] = useState('');
+const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultSearchValue }) => {
+    const [searchValue, setSearchValue] = useState(defaultSearchValue || '');
     const [selectedActor, setSelectedActor] = useState<WebActor | null>(null);
     const [sourceType, setSourceType] = useState<string>('javdb');
     const [modal, setModal] = useState<{ visible: boolean, video: WebVideo | null }>({
@@ -59,10 +60,6 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
             id: actor.url ? actor.url.split('/').pop() : `actor-${index}-${actor.name}`,
         }));
     }, [actorsData]);
-
-    useEffect(() => {
-        console.log('获取到演员列表数据:', actors);
-    }, [actors]);
 
     // 搜索演员
     const { run: searchActor, data: searchResultsData = [], loading: searching } = useRequest(
@@ -104,6 +101,33 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
             }
         }
     );
+
+    // 初始化时如果有默认搜索值，执行搜索
+    useEffect(() => {
+        if (defaultSearchValue && defaultSearchValue.trim()) {
+            setSearchValue(defaultSearchValue);
+            searchActor(defaultSearchValue);
+        }
+    }, [defaultSearchValue, searchActor]);
+
+    // 当演员列表或搜索结果更新时，尝试匹配默认演员
+    useEffect(() => {
+        if (defaultSearchValue && defaultSearchValue.trim() && (actors.length > 0 || searchResults.length > 0)) {
+            // 如果能在演员列表或搜索结果中找到匹配的演员，自动选中并获取其作品
+            const matchedActor =
+                [...actors, ...searchResults].find(actor =>
+                    actor.name.toLowerCase() === defaultSearchValue.toLowerCase());
+
+            if (matchedActor) {
+                setSelectedActor(matchedActor);
+                fetchActorVideos(matchedActor.name);
+            }
+        }
+    }, [defaultSearchValue, actors, searchResults, fetchActorVideos]);
+
+    useEffect(() => {
+        console.log('获取到演员列表数据:', actors);
+    }, [actors]);
 
     const handleSearch = (value: string) => {
         setSearchValue(value);
@@ -437,6 +461,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
                                                         {video.is_uncensored && <span style={{ color: '#ff4d4f' }}>无码</span>}
                                                         {video.rank && <span style={{ marginLeft: 8 }}>评分: {video.rank}</span>}
                                                     </div>
+                                                    {video.publish_date && <div style={{ marginTop: 4, color: '#8c8c8c', fontSize: '12px' }}>发行日期: {video.publish_date}</div>}
                                                 </div>
                                             }
                                         />

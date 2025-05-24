@@ -10,6 +10,7 @@ from app.utils.logger import logger
 from app.utils.spider.javdb import JavdbSpider
 from app.utils.spider.javbus import JavbusSpider
 from app.dependencies.security import verify_token
+from app.utils.cache import cached, get_cache_json, cache_json, clean_cache_json
 
 router = APIRouter()
 
@@ -82,9 +83,9 @@ def search_videos_by_actor(actor_name: str, force: Optional[bool] = True, servic
     return R.list(videos)
 
 
-@router.get('/web/actors')
-def get_web_actors(source: str = 'javdb'):
-    """从网站获取热门演员列表"""
+@cached('web_actors', key_func=lambda source: f"actors_{source.lower()}", expire_time=3600)
+def _get_web_actors(source: str = 'javdb'):
+    """从网站获取热门演员列表（带缓存）"""
     logger.info(f"从{source}获取热门演员列表")
     try:
         if source.lower() == 'javdb':
@@ -92,7 +93,7 @@ def get_web_actors(source: str = 'javdb'):
         elif source.lower() == 'javbus':
             spider = JavbusSpider()
         else:
-            return R.list([])
+            return []
             
         actors = spider.get_actors()
         
@@ -104,17 +105,34 @@ def get_web_actors(source: str = 'javdb'):
                 thumb=actor.thumb,
                 url=f"/actors/{actor.name}"  # 简化URL，前端会处理
             )
-            web_actors.append(web_actor)
+            # 转换为字典，使其可以被JSON序列化
+            web_actors.append(web_actor.model_dump())
             
-        return R.list(web_actors)
+        return web_actors
     except Exception as e:
         logger.error(f"获取演员列表失败: {str(e)}")
-        return R.list([])
+        return []
 
 
-@router.get('/web/search/actor')
-def search_web_actor(actor_name: str, source: str = 'javdb'):
-    """从网站搜索演员"""
+@router.get('/web/actors')  # 无需token验证的API
+def get_web_actors(source: str = 'javdb', force: bool = False):
+    """从网站获取热门演员列表"""
+    logger.info(f"尝试获取演员列表，源：{source}，强制刷新：{force}")
+    cache_key = f"actors_{source.lower()}"
+    
+    # 如果强制刷新，则清除缓存
+    if force:
+        clean_cache_json('web_actors', cache_key)
+        logger.info(f"强制刷新{source}演员列表")
+    
+    # 获取演员列表（内部有缓存机制）
+    web_actors = _get_web_actors(source)
+    return R.list(web_actors)
+
+
+@cached('web_actor_search', key_func=lambda name, source: f"search_{source.lower()}_{name}", expire_time=3600)
+def _search_web_actor(actor_name: str, source: str = 'javdb'):
+    """从网站搜索演员（带缓存）"""
     logger.info(f"从{source}搜索演员: {actor_name}")
     try:
         if source.lower() == 'javdb':
@@ -122,7 +140,7 @@ def search_web_actor(actor_name: str, source: str = 'javdb'):
         elif source.lower() == 'javbus':
             spider = JavbusSpider()
         else:
-            return R.list([])
+            return []
             
         actors = spider.search_actor(actor_name)
         
@@ -134,45 +152,74 @@ def search_web_actor(actor_name: str, source: str = 'javdb'):
                 thumb=actor.thumb,
                 url=f"/actors/{actor.name}"  # 简化URL，前端会处理
             )
-            web_actors.append(web_actor)
+            # 转换为字典，使其可以被JSON序列化
+            web_actors.append(web_actor.model_dump())
             
-        return R.list(web_actors)
+        return web_actors
     except Exception as e:
         logger.error(f"搜索演员失败: {str(e)}")
-        return R.list([])
+        return []
 
 
-@router.get('/web/actor/videos')
-def get_web_actor_videos(actor_name: str, source: str = 'javdb'):
-    """获取演员的所有视频"""
+@router.get('/web/search/actor')
+def search_web_actor(actor_name: str, source: str = 'javdb', force: bool = False):
+    """从网站搜索演员"""
+    cache_key = f"search_{source.lower()}_{actor_name}"
+    
+    # 如果强制刷新，则清除缓存
+    if force:
+        clean_cache_json('web_actor_search', cache_key)
+        logger.info(f"强制刷新{source}演员搜索: {actor_name}")
+    
+    # 搜索演员（内部有缓存机制）
+    web_actors = _search_web_actor(actor_name, source)
+    return R.list(web_actors)
+
+
+@cached('web_actor_videos', key_func=lambda name, source: f"videos_{source.lower()}_{name}", expire_time=3600)
+def _get_web_actor_videos(actor_name: str, source: str = 'javdb'):
+    """获取演员的所有视频（带缓存）"""
     logger.info(f"从{source}获取演员的视频: {actor_name}")
+    
     try:
+        # 选择爬虫
         if source.lower() == 'javdb':
             spider = JavdbSpider()
         elif source.lower() == 'javbus':
             spider = JavbusSpider()
         else:
-            return R.list([])
-            
-        # 直接传入演员名称，不构造URL
+            return []
+        
+        # 获取演员视频
         videos = spider.get_actor_videos(actor_name)
         
-        # 转换为WebVideo类型
-        web_videos: List[WebVideo] = []
+        # 处理结果，确保可以被JSON序列化
+        result_videos = []
         for video in videos:
-            web_video = WebVideo(
-                title=video.title or video.num,
-                cover=video.cover,
-                num=video.num,
-                url=video.url,
-                publish_date=getattr(video, "publish_date", None),
-                rank=getattr(video, "rank", None),
-                is_zh=getattr(video, "isZh", False),
-                is_uncensored=getattr(video, "is_uncensored", False)
-            )
-            web_videos.append(web_video)
+            video_dict = video.model_dump()
             
-        return R.list(web_videos)
+            # 处理日期：如果是日期对象，转换为字符串
+            if video.publish_date:
+                video_dict['publish_date'] = video.publish_date.isoformat()
+                
+            result_videos.append(video_dict)
+            
+        return result_videos
     except Exception as e:
         logger.error(f"获取演员视频失败: {str(e)}")
-        return R.list([])
+        return []
+
+
+@router.get('/web/actor/videos')  # 无需token验证的API
+def get_web_actor_videos(actor_name: str, source: str = 'javdb', force: bool = False):
+    """获取演员的所有视频"""
+    cache_key = f"videos_{source.lower()}_{actor_name}"
+    
+    # 如果强制刷新，则清除缓存
+    if force:
+        clean_cache_json('web_actor_videos', cache_key)
+        logger.info(f"强制刷新{source}演员视频: {actor_name}")
+    
+    # 获取演员视频（内部有缓存机制）
+    web_videos = _get_web_actor_videos(actor_name, source)
+    return R.list(web_videos)
