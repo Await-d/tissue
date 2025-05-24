@@ -213,9 +213,16 @@ export function Search() {
 
     const handleWebVideoSelect = (video: any) => {
         if (video && video.url) {
+            let source = 'JavDB'; // 默认source
+            if (video.url.includes('javbus')) {
+                source = 'JavBus';
+            } else if (video.url.includes('javdb')) {
+                source = 'JavDB';
+            }
+
             navigate({
                 to: '/home/detail',
-                search: { source: 'JavDB', num: video.num, url: video.url }
+                search: { source: source, num: video.num, url: video.url }
             });
         }
     };
