@@ -6,6 +6,7 @@ import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useRequest } from 'ahooks';
 import VideoCover from "../VideoCover";
+import { useNavigate } from "@tanstack/react-router";
 
 interface WebActor {
     name: string;
@@ -37,6 +38,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
         visible: false,
         video: null
     });
+    const navigate = useNavigate();
 
     // 获取热门演员列表
     const { data: actorsData = [], loading: loadingActors, refresh: refreshActors } = useRequest(
@@ -125,10 +127,13 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
         if (onVideoSelect) {
             onVideoSelect(video);
         } else {
-            // 如果没有传入onVideoSelect回调，则显示详情模态框
-            setModal({
-                visible: true,
-                video
+            navigate({
+                to: '/home/detail',
+                search: {
+                    source: sourceType.charAt(0).toUpperCase() + sourceType.slice(1),
+                    num: video.num,
+                    url: video.url
+                }
             });
         }
     };
