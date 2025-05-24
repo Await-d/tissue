@@ -439,14 +439,20 @@ class JavdbSpider(Spider):
                     
                     if url_match:
                         video_url = url_match.group(1)
-                        # 使用与get_ranking相同的URL拼接方式
-                        item.url = urljoin(self.host, video_url)
+                        if not video_url.startswith('http'):
+                            video_url = urljoin(self.host, video_url)
+                        item.url = video_url
                         
                         # 尝试匹配封面
                         cover_pattern = rf'<a href="{re.escape(video_url)}"[^>]*>.*?<img[^>]*src="([^"]+)"'
                         cover_match = re.search(cover_pattern, html_content, re.DOTALL)
                         if cover_match:
-                            item.cover = cover_match.group(1)
+                            cover_url = cover_match.group(1)
+                            # 确保封面URL是完整的URL
+                            if not cover_url.startswith('http'):
+                                item.cover = urljoin(self.host, cover_url)
+                            else:
+                                item.cover = cover_url
                     
                     # 提取评分
                     score_pattern = r'<div class="video-title"><strong>' + re.escape(num) + r'</strong>.*?<div class="score">.*?<span class="value">.*?([0-9.]+)分'
