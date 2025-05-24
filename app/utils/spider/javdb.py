@@ -342,131 +342,62 @@ class JavdbSpider(Spider):
             
         return result
         
-    def get_actor_videos(self, actor_url: str):
+    def get_actor_videos(self, actor_name):
         """获取演员的所有视频"""
-        import logging
-        import re
-        logger = logging.getLogger('spider')
-        
-        # 处理不同格式的actor_url输入
-        if not actor_url.startswith(self.host):
-            if not actor_url.startswith('http'):
-                # 如果提供的是演员名称而不是URL
-                actors = self.search_actor(actor_url)
-                if not actors:
-                    logger.info(f"未找到演员: {actor_url}")
-                    return []
-                    
-                # 找到最匹配的演员
-                actor_match = None
-                for actor in actors:
-                    if actor.name.lower() == actor_url.lower() or actor_url.lower() in actor.name.lower():
-                        actor_match = actor
-                        break
-                
-                if not actor_match:
-                    # 排除掉有碼、無碼、歐美等类别标签
-                    filtered_actors = [a for a in actors if a.name not in ['有碼', '無碼', '歐美']]
-                    if filtered_actors:
-                        actor_match = filtered_actors[0]  # 使用第一个结果
-                    elif actors:
-                        actor_match = actors[0]  # 如果没有过滤结果，使用第一个结果
-                    else:
-                        # 没有找到任何演员
-                        logger.error(f"没有找到任何匹配的演员: {actor_url}")
-                        return []
-                
-                logger.info(f"选择演员: {actor_match.name}")
-                
-                # 从thumb中提取actor_id
-                thumb_url = actor_match.thumb
-                actor_code = thumb_url.split('/')[-1].split('.')[0]
-                actor_url = urljoin(self.host, f'/actors/{actor_code}')
-            elif '/actors/' not in actor_url:
-                # 如果是其他网站的URL，无法处理
-                return []
-            else:
-                # 包含/actors/但不是完整URL
-                actor_url = urljoin(self.host, actor_url)
-        
-        logger.info(f"访问演员详情页: {actor_url}")
-        
-        # 使用更完整的浏览器请求头
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Referer': self.host,
-        }
-        
-        # 保存原始头信息用于后续恢复
-        original_headers = self.session.headers.copy()
-        
-        # 临时替换会话头信息
-        self.session.headers.update(headers)
-        
+        logger.info(f"获取演员 {actor_name} 的视频列表")
         try:
-            # 访问演员详情页
-            response = self.session.get(actor_url)
+            search_response = self.session.get(f"{self.host}/search?q={actor_name}&f=actor")
+            search_html = etree.HTML(search_response.text)
+            actors = search_html.xpath('//div[@class="box actor-box"]')
             
-            # 使用lxml解析HTML，比正则表达式更可靠
-            html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
+            if not actors:
+                logger.warning(f"未找到演员：{actor_name}")
+                return []
             
-            # 保存页面内容用于调试
-            try:
-                with open("javdb_actor_debug.html", "wb") as f:
-                    f.write(response.content)
-                logger.info("已保存演员详情页HTML文件")
-            except:
-                pass
+            # 找到匹配的演员
+            actor_url = None
+            for actor in actors:
+                name = actor.xpath('.//div[@class="video-title"]/text()')[0].strip()
+                if name == actor_name:
+                    actor_url = actor.xpath('.//a/@href')[0]
+                    break
             
-            result = []
+            if not actor_url:
+                logger.warning(f"未找到完全匹配的演员：{actor_name}")
+                # 尝试使用第一个结果
+                if actors:
+                    actor_url = actors[0].xpath('.//a/@href')[0]
             
-            # 获取所有视频条目
-            movie_boxes = html.xpath('//a[@class="box"]')
-            logger.info(f"找到 {len(movie_boxes)} 个视频条目")
+            if not actor_url.startswith('http'):
+                actor_url = self.host + actor_url
             
-            for box in movie_boxes:
+            # 获取演员详情页
+            actor_response = self.session.get(actor_url)
+            actor_html = etree.HTML(actor_response.text)
+            
+            videos = []
+            boxes = actor_html.xpath('//div[@class="grid-item column"]')
+            
+            for box in boxes:
                 try:
-                    item = JavDBRanking()
+                    item = WebVideo()
                     
-                    # 提取视频URL
-                    video_url = box.get('href')
-                    if not video_url.startswith('http'):
-                        video_url = urljoin(self.host, video_url)
-                    item.url = video_url
+                    # 获取标题、番号和URL
+                    video_tag = box.xpath('.//div[@class="video-title"]/a')[0]
+                    item.title = video_tag.text.strip()
+                    item.url = video_tag.get('href')
+                    if not item.url.startswith('http'):
+                        item.url = self.host + item.url
                     
-                    # 提取视频标题和番号
-                    title_element = box.xpath('.//div[contains(@class, "video-title")]')
-                    if title_element:
-                        # 提取番号
-                        num_element = title_element[0].xpath('./strong/text()')
-                        if num_element:
-                            item.num = num_element[0].strip()
-                        
-                        # 提取完整标题
-                        full_title = title_element[0].xpath('string(.)')
-                        if full_title:
-                            item.title = full_title.strip()
+                    # 获取番号
+                    num_tag = box.xpath('.//div[contains(@class, "uid")]/text()')
+                    if num_tag:
+                        item.num = num_tag[0].strip()
                     
-                    # 提取封面
-                    cover_element = box.xpath('.//img[@loading="lazy"]')
-                    if cover_element:
-                        cover_url = cover_element[0].get('src')
-                        if cover_url and not cover_url.startswith('http'):
-                            cover_url = 'https:' + cover_url if cover_url.startswith('//') else urljoin(self.host, cover_url)
-                        item.cover = cover_url
-                    
-                    # 提取评分
-                    score_element = box.xpath('.//div[contains(@class, "score")]//span[@class="value"]/text()')
-                    if score_element:
-                        score_text = score_element[0]
-                        score_match = re.search(r'(\d+\.\d+)分', score_text)
-                        if score_match:
-                            try:
-                                item.rank = float(score_match.group(1))
-                            except:
-                                pass
+                    # 获取封面
+                    cover = box.xpath('.//img')[0].get('src')
+                    if cover:
+                        item.cover = cover
                     
                     # 检查标签
                     cnsub_element = box.xpath('.//span[contains(@class, "cnsub")]')
@@ -485,18 +416,40 @@ class JavdbSpider(Spider):
                                 item.publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
                                 logger.info(f"解析到日期: {item.publish_date} 从 {date_text}")
                         except Exception as e:
-                            logger.error(f"日期解析失败: {date_text}, 错误: {str(e)}")
+                            logger.warning(f"日期解析失败 {date_text}: {str(e)}")
                     
-                    # 如果没有找到番号，则跳过这个条目
-                    if not item.num:
-                        continue
+                    # 尝试获取评分
+                    score_element = box.xpath('.//div[contains(@class, "score")]/text()')
+                    if score_element and len(score_element) > 0:
+                        try:
+                            item.rank = float(score_element[0].strip())
+                        except:
+                            pass
+                    
+                    # 添加获取磁力链接
+                    try:
+                        # 打开详情页面获取磁力链接
+                        video_response = self.session.get(item.url)
+                        video_html = etree.HTML(video_response.text)
                         
-                    result.append(item)
+                        # 获取第一个磁力链接
+                        magnet_element = video_html.xpath("//div[@id='magnets-content']//a[contains(@href, 'magnet:?')]/@href")
+                        if magnet_element and len(magnet_element) > 0:
+                            item.magnet = magnet_element[0]
+                            
+                            # 检查是否高清
+                            hd_element = video_html.xpath("//div[@id='magnets-content']//span[text()='高清']")
+                            item.is_hd = len(hd_element) > 0
+                    except Exception as e:
+                        logger.warning(f"获取磁力链接失败: {str(e)}")
+                    
+                    videos.append(item)
+                    
                 except Exception as e:
-                    logger.error(f"处理视频条目时出错: {str(e)}")
+                    logger.error(f"解析视频元素失败: {str(e)}")
             
-            return result
+            return videos
             
-        finally:
-            # 恢复原始头信息
-            self.session.headers = original_headers
+        except Exception as e:
+            logger.error(f"获取演员视频列表失败: {str(e)}")
+            return []

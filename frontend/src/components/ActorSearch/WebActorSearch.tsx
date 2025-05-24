@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space } from 'antd';
-import { SearchOutlined, UserOutlined } from '@ant-design/icons';
+import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip } from 'antd';
+import { SearchOutlined, UserOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
+import * as subscribeApi from '../../apis/subscribe';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useRequest } from 'ahooks';
 import VideoCover from "../VideoCover";
 import { useNavigate } from "@tanstack/react-router";
+import DownloadModal from '../../routes/_index/search/-components/downloadModal';
 
 interface WebActor {
     name: string;
@@ -16,14 +18,16 @@ interface WebActor {
 }
 
 interface WebVideo {
-    title: string;
+    title?: string;
     num: string;
-    url: string;
     cover?: string;
+    url: string;
     is_zh: boolean;
     is_uncensored: boolean;
+    is_hd?: boolean;
     rank?: number;
     publish_date?: string;
+    magnet?: string;  // 添加磁力链接字段
 }
 
 interface WebActorSearchProps {
@@ -39,6 +43,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         visible: false,
         video: null
     });
+    const [selectedVideo, setSelectedVideo] = useState<any>(null);
+    const [selectedDownload, setSelectedDownload] = useState<any>(null);
     const navigate = useNavigate();
 
     // 获取热门演员列表
@@ -101,6 +107,16 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
             }
         }
     );
+
+    // 添加下载处理函数
+    const { run: onDownload, loading: onDownloading } = useRequest(subscribeApi.downloadVideos, {
+        manual: true,
+        onSuccess: () => {
+            setSelectedVideo(null);
+            setSelectedDownload(null);
+            message.success("下载任务创建成功");
+        }
+    });
 
     // 初始化时如果有默认搜索值，执行搜索
     useEffect(() => {
@@ -418,7 +434,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                             <Spin />
                             <div style={{ marginTop: 8 }}>加载中...</div>
                         </div>
-                    ) : actorVideos.length > 0 ? (
+                    ) : actorVideos && actorVideos.length > 0 ? (
                         <List
                             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 5 }}
                             dataSource={actorVideos}
@@ -438,21 +454,34 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                             )
                                         }
                                         onClick={() => handleVideoSelect(video)}
+                                        actions={[
+                                            <Tooltip title={'发送到下载器'}>
+                                                <Button
+                                                    type={'primary'}
+                                                    icon={<CloudDownloadOutlined />}
+                                                    shape={'circle'}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (video.magnet) {
+                                                            setSelectedVideo(video);
+                                                            setSelectedDownload({
+                                                                name: video.title || video.num,
+                                                                magnet: video.magnet,
+                                                                is_hd: video.is_hd,
+                                                                is_zh: video.is_zh,
+                                                                is_uncensored: video.is_uncensored,
+                                                                publish_date: video.publish_date
+                                                            });
+                                                        } else {
+                                                            message.warning('该视频没有可用的磁力链接');
+                                                        }
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        ]}
                                     >
                                         <Card.Meta
-                                            title={
-                                                <div style={{
-                                                    whiteSpace: 'normal',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    display: '-webkit-box',
-                                                    WebkitLineClamp: 2,
-                                                    WebkitBoxOrient: 'vertical',
-                                                    lineHeight: '1.3'
-                                                }}>
-                                                    {video.title || video.num}
-                                                </div>
-                                            }
+                                            title={video.title || video.num}
                                             description={
                                                 <div>
                                                     <div><strong>{video.num}</strong></div>
@@ -461,7 +490,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                         {video.is_uncensored && <span style={{ color: '#ff4d4f' }}>无码</span>}
                                                         {video.rank && <span style={{ marginLeft: 8 }}>评分: {video.rank}</span>}
                                                     </div>
-                                                    {video.publish_date && <div style={{ marginTop: 4, color: '#8c8c8c', fontSize: '12px' }}>发行日期: {video.publish_date}</div>}
+                                                    {video.publish_date && <div>发布日期: {video.publish_date}</div>}
                                                 </div>
                                             }
                                         />
@@ -490,21 +519,23 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
             >
                 {modal.video && (
                     <div>
-                        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                            {modal.video.cover && (
+                        <div style={{ marginBottom: 16 }}>
+                            <strong>番号:</strong> {modal.video.num}
+                        </div>
+                        {modal.video.cover && (
+                            <div style={{ textAlign: 'center', marginBottom: 16 }}>
                                 <img
                                     src={api.getVideoCover(modal.video.cover)}
                                     alt={modal.video.title || modal.video.num}
-                                    style={{ maxWidth: '100%', maxHeight: '400px' }}
+                                    style={{ maxWidth: '100%', maxHeight: 400 }}
                                     onError={(e: any) => {
                                         e.target.onerror = null;
                                         e.target.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
                                     }}
                                 />
-                            )}
-                        </div>
+                            </div>
+                        )}
                         <div>
-                            <p><strong>番号:</strong> {modal.video.num}</p>
                             {modal.video.publish_date && <p><strong>发行日期:</strong> {modal.video.publish_date}</p>}
                             {modal.video.rank && <p><strong>评分:</strong> {modal.video.rank}</p>}
                             <p>
@@ -522,6 +553,15 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     </div>
                 )}
             </Modal>
+
+            {/* 添加下载对话框 */}
+            <DownloadModal
+                open={!!selectedDownload}
+                download={selectedDownload}
+                onCancel={() => setSelectedDownload(null)}
+                onDownload={item => onDownload(selectedVideo, item)}
+                confirmLoading={onDownloading}
+            />
         </div>
     );
 };
