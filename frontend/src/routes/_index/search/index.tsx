@@ -213,11 +213,15 @@ export function Search() {
 
     const handleWebVideoSelect = (video: any) => {
         if (video && video.url) {
-            let source = 'JavDB'; // 默认source
+            let source = 'JavDB';
+
             if (video.url.includes('javbus')) {
                 source = 'JavBus';
-            } else if (video.url.includes('javdb')) {
+                console.log('根据URL设置source为JavBus');
+            }
+            else if (video.url.includes('javdb')) {
                 source = 'JavDB';
+                console.log('根据URL设置source为JavDB');
             }
 
             navigate({
