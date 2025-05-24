@@ -389,33 +389,54 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
 
     // 添加新的函数处理视频下载
     const handleVideoDownload = (video: WebVideo) => {
-        // 构建临时下载选项
-        // 在实际场景中，这里应该调用API获取真实的下载选项
-        const options = [
-            {
-                name: video.num,
-                magnet: video.url,
-                is_zh: video.is_zh,
-                is_uncensored: video.is_uncensored,
-                size: "未知大小",
-                website: sourceType.toUpperCase(),
-                publish_date: video.publish_date
-            }
-        ];
+        // 显示加载消息
+        message.loading({ content: '正在获取下载资源...', key: 'download' });
 
-        // 检查是否有多个下载选项
-        if (options.length > 1) {
-            // 如果有多个选项，显示下载列表模态框
-            setSelectedVideo(video);
-            setDownloadOptions(options);
-            setShowDownloadList(true);
-        } else if (options.length === 1) {
-            // 如果只有一个选项，直接显示单个下载对话框
-            setSelectedVideo(video);
-            setSelectedDownload(options[0]);
-        } else {
-            message.warning("没有可用的下载资源");
-        }
+        // 获取视频的详细信息（包括下载资源）
+        api.getVideoDownloads(video.num, sourceType)
+            .then(detailData => {
+                if (detailData && detailData.downloads && detailData.downloads.length > 0) {
+                    // 如果有多个下载选项，显示下载列表模态框
+                    setSelectedVideo(detailData);
+                    setDownloadOptions(detailData.downloads);
+                    setShowDownloadList(true);
+                    message.destroy('download');
+                } else {
+                    // 如果没有下载选项，构造一个基本选项（使用视频URL作为标识，但这可能不是一个有效的磁力链接）
+                    message.warning({ content: '没有找到可用的下载资源，使用基本链接', key: 'download' });
+
+                    const fallbackOption = {
+                        name: video.num,
+                        magnet: video.url,
+                        is_zh: video.is_zh,
+                        is_uncensored: video.is_uncensored,
+                        size: "未知大小",
+                        website: sourceType.toUpperCase(),
+                        publish_date: video.publish_date
+                    };
+
+                    setSelectedVideo(video);
+                    setSelectedDownload(fallbackOption);
+                }
+            })
+            .catch(error => {
+                console.error('获取下载资源失败:', error);
+                message.error({ content: '获取下载资源失败', key: 'download' });
+
+                // 出错时使用基本信息构造一个下载选项
+                const fallbackOption = {
+                    name: video.num,
+                    magnet: video.url,
+                    is_zh: video.is_zh,
+                    is_uncensored: video.is_uncensored,
+                    size: "未知大小",
+                    website: sourceType.toUpperCase(),
+                    publish_date: video.publish_date
+                };
+
+                setSelectedVideo(video);
+                setSelectedDownload(fallbackOption);
+            });
     };
 
     return (

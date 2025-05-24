@@ -112,3 +112,15 @@ export async function getWebActorVideos(actorName: string, source: string = 'jav
     })
     return response.data.data
 }
+
+export async function getVideoDownloads(num: string, source: string = 'javdb') {
+    const response = await request.request({
+        url: '/home/ranking/detail',
+        method: 'get',
+        params: {
+            num: num,
+            source: source
+        }
+    })
+    return response.data
+}
