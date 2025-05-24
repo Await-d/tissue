@@ -138,10 +138,23 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
                 }
             }
 
+            // 根据URL确定正确的source
+            let source = sourceType.charAt(0).toUpperCase() + sourceType.slice(1);
+            // 如果URL包含javbus但source不是JavBus，则修正
+            if (video.url.includes('javbus') && source !== 'JavBus') {
+                source = 'JavBus';
+                console.log('根据URL修正source:', source);
+            }
+            // 如果URL包含javdb但source不是JavDB，则修正
+            else if (video.url.includes('javdb') && source !== 'JavDB') {
+                source = 'JavDB';
+                console.log('根据URL修正source:', source);
+            }
+
             navigate({
                 to: '/home/detail',
                 search: {
-                    source: sourceType.charAt(0).toUpperCase() + sourceType.slice(1),
+                    source: source,
                     num: videoNum,
                     url: video.url
                 }
