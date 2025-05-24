@@ -17,7 +17,7 @@ class JavbusSpider(Spider):
 
     def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
-        url = url or urljoin(self.host, num)
+        url = urljoin(self.host, num)
         response = self.session.get(url, allow_redirects=False)
 
         html = etree.HTML(response.text)
@@ -88,7 +88,7 @@ class JavbusSpider(Spider):
         if include_downloads:
             meta.downloads = self.get_downloads(url, response.text)
 
-        if include_previews:
+        if include_downloads:
             meta.previews = self.get_previews(html)
 
         return meta
@@ -546,6 +546,16 @@ class JavbusSpider(Spider):
                         # 如果找不到番号，尝试从URL中提取
                         num_match = re.search(r'/([^/]+)$', movie_url)
                         num = num_match.group(1) if num_match else "Unknown"
+                    
+                    # 尝试从URL中提取实际番号，而不是使用日期作为番号
+                    actual_num_match = re.search(r'/([A-Za-z]+-\d+)$', movie_url)
+                    if actual_num_match:
+                        num = actual_num_match.group(1)
+                    # 如果URL中没有提取到番号格式，尝试从标题中提取
+                    elif title:
+                        title_num_match = re.search(r'([A-Za-z]+-\d+)', title)
+                        if title_num_match:
+                            num = title_num_match.group(1)
                     
                     # 是否有中文字幕标记
                     is_zh = len(box.xpath('.//button[contains(@class, "btn-primary") and contains(text(), "字幕")]')) > 0

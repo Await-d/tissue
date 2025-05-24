@@ -127,16 +127,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
         if (onVideoSelect) {
             onVideoSelect(video);
         } else {
-            // 检查num是否为日期格式
-            const isDateFormat = /^\d{4}-\d{2}-\d{2}$/.test(video.num);
+            // 从URL中提取实际番号作为备用
             let videoNum = video.num;
-
-            // 如果是日期格式，从URL中提取实际番号
-            if (isDateFormat && video.url) {
-                const urlParts = video.url.split('/');
-                const lastPart = urlParts[urlParts.length - 1];
-                if (lastPart && lastPart.length > 0) {
-                    videoNum = lastPart;
+            if (sourceType.toLowerCase() === 'javbus' && videoNum.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                // 如果是JavBus源并且num是日期格式，尝试从URL中提取番号
+                const urlMatch = video.url.match(/\/([A-Za-z]+-\d+)$/);
+                if (urlMatch && urlMatch[1]) {
+                    console.log('从URL中提取番号:', urlMatch[1], '替代日期格式:', video.num);
+                    videoNum = urlMatch[1];
                 }
             }
 
