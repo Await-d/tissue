@@ -17,7 +17,7 @@ class JavbusSpider(Spider):
 
     def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
-        url = urljoin(self.host, num)
+        url = url or urljoin(self.host, num)
         response = self.session.get(url, allow_redirects=False)
 
         html = etree.HTML(response.text)
@@ -88,7 +88,7 @@ class JavbusSpider(Spider):
         if include_downloads:
             meta.downloads = self.get_downloads(url, response.text)
 
-        if include_downloads:
+        if include_previews:
             meta.previews = self.get_previews(html)
 
         return meta

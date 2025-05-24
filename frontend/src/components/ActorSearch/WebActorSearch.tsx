@@ -127,22 +127,22 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect }) => {
         if (onVideoSelect) {
             onVideoSelect(video);
         } else {
-            // 从URL中提取实际番号，防止使用发布日期作为番号
-            let num = video.num;
-            // 如果num看起来像日期格式（YYYY-MM-DD），尝试从URL中提取番号
-            if (/^\d{4}-\d{2}-\d{2}$/.test(num) && video.url) {
-                const urlMatch = video.url.match(/\/([A-Za-z0-9\-]+)$/);
-                if (urlMatch && urlMatch[1]) {
-                    num = urlMatch[1];
-                    console.log('从URL提取番号:', num);
-                }
-            }
+            // 确保使用视频的实际番号，而不是日期
+            const videoNum = video.num.includes('-') && video.num.length === 10 && !isNaN(Date.parse(video.num))
+                ? video.url.split('/').pop() // 如果num是日期格式，从URL中提取番号
+                : video.num;
+
+            console.log("选择视频", {
+                source: sourceType,
+                num: videoNum,
+                url: video.url
+            });
 
             navigate({
                 to: '/home/detail',
                 search: {
                     source: sourceType.charAt(0).toUpperCase() + sourceType.slice(1),
-                    num: num,
+                    num: videoNum,
                     url: video.url
                 }
             });

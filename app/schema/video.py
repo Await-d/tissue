@@ -1,12 +1,19 @@
-from datetime import date
-from typing import Optional, List
+from datetime import date, datetime
+from typing import Optional, List, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class VideoActor(BaseModel):
     name: Optional[str] = None
     thumb: Optional[str] = None
+
+
+class WebActor(BaseModel):
+    """网站演员模型"""
+    name: str
+    thumb: Optional[str] = None
+    url: Optional[str] = None
 
 
 class VideoList(BaseModel):
@@ -20,17 +27,29 @@ class VideoList(BaseModel):
 
 
 class VideoDownload(BaseModel):
-    is_hd: bool = False
-    is_zh: bool = False
-    is_uncensored: bool = False
-
-    name: Optional[str] = None
     website: Optional[str] = None
     url: Optional[str] = None
-    size: Optional[str] = None
+    name: Optional[str] = None
     magnet: Optional[str] = None
+    size: Optional[str] = None
     savepath: Optional[str] = None
+    is_uncensored: bool = False
+    is_zh: bool = False
+    is_hd: bool = False
     publish_date: Optional[date] = None
+
+
+class WebVideo(BaseModel):
+    """网站视频搜索结果模型"""
+    title: str
+    cover: Optional[str] = None
+    num: str
+    url: str
+    publish_date: Optional[date] = None
+    rank: Optional[float] = None
+    is_zh: bool = False
+    is_uncensored: bool = False
+    actors: List[WebActor] = []
 
 
 class VideoPreviewItem(BaseModel):
