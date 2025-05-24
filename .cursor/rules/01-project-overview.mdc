@@ -1,0 +1,26 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 项目概述
+
+Tissue是一个视频刮削工具，提供海报下载、元数据匹配等功能，使视频能够在Jellyfin、Emby、Kodi等工具里装订成册，便于学习。
+
+## 主要功能
+- 媒体刮削：自动下载视频元数据、海报和演员信息
+- 元数据匹配：将视频与在线数据库中的元数据匹配关联
+- 媒体库管理：整理视频文件到结构化目录中
+- 下载管理：支持与qBittorrent集成，管理下载任务
+- 订阅功能：订阅特定内容的更新
+
+## 技术架构
+- 后端：FastAPI、SQLAlchemy、APScheduler
+- 前端：React、TypeScript、Antd、Tailwind CSS
+- 部署：Docker、Nginx
+
+## 核心组件
+- 主应用入口：[app/main.py](mdc:app/main.py) - FastAPI应用初始化
+- 后台任务调度：[app/scheduler.py](mdc:app/scheduler.py) - 定时任务管理
+- API路由：[app/api/__init__.py](mdc:app/api/__init__.py) - API路由注册
+- 前端入口：[frontend/src/main.tsx](mdc:frontend/src/main.tsx) - React应用入口

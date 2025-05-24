@@ -1,3 +1,10 @@
+/*
+ * @Author: Await
+ * @Date: 2025-05-24 17:05:38
+ * @LastEditors: Await
+ * @LastEditTime: 2025-05-24 23:25:24
+ * @Description: 请填写简介
+ */
 import Filter, { FilterField } from "./-components/filter.tsx";
 import React from "react";
 import { Col, Empty, message, Row, Skeleton } from "antd";
@@ -68,20 +75,10 @@ function JavDB() {
                         <Row className={'mt-2 cursor-pointer'} gutter={[12, 12]}>
                             {videos.map((item: any) => (
                                 <Col key={item.url} span={24} md={12} lg={6}
-                                    onClick={() => {
-                                        // 根据URL自动判断source参数
-                                        let source = 'JavDB'; // 默认source
-                                        if (item.url.includes('javbus')) {
-                                            source = 'JavBus';
-                                        } else if (item.url.includes('javdb')) {
-                                            source = 'JavDB';
-                                        }
-
-                                        navigate({
-                                            to: '/home/detail',
-                                            search: { source: source, num: item.num, url: item.url }
-                                        });
-                                    }}><JavDBItem
+                                    onClick={() => navigate({
+                                        to: '/home/detail',
+                                        search: { source: 'JavDB', num: item.num, url: item.url }
+                                    })}><JavDBItem
                                         item={item} /></Col>
                             ))}
                         </Row>

@@ -1,0 +1,50 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# API路由结构
+
+Tissue使用FastAPI的路由系统，所有API端点都注册在[app/api/__init__.py](mdc:app/api/__init__.py)中。
+除了认证和公共API外，所有路由都依赖于Token验证中间件。
+
+## 主要路由模块
+
+- [auth.py](mdc:app/api/auth.py) - `/auth` - 身份验证和令牌管理
+- [common.py](mdc:app/api/common.py) - `/common` - 公共API
+- [user.py](mdc:app/api/user.py) - `/user` - 用户管理
+- [setting.py](mdc:app/api/setting.py) - `/setting` - 系统设置
+- [video.py](mdc:app/api/video.py) - `/video` - 视频管理
+- [file.py](mdc:app/api/file.py) - `/file` - 文件管理
+- [download.py](mdc:app/api/download.py) - `/download` - 下载管理
+- [history.py](mdc:app/api/history.py) - `/history` - 历史记录
+- [schedule.py](mdc:app/api/schedule.py) - `/schedule` - 计划任务
+- [home.py](mdc:app/api/home.py) - `/home` - 首页相关
+- [subscribe.py](mdc:app/api/subscribe.py) - `/subscribe` - 订阅管理
+
+## 认证体系
+
+系统使用JWT令牌认证：
+- 登录接口生成令牌
+- `verify_token`依赖项验证令牌有效性
+- 所有受保护路由都依赖于此中间件
+
+## 主要模块功能
+
+### 视频管理
+- 获取视频列表
+- 获取视频详情
+- 刮削视频元数据
+- 保存视频及元数据
+- 删除视频及元数据
+
+### 下载管理
+- 连接qBittorrent
+- 获取下载状态
+- 添加下载任务
+- 删除下载任务
+
+### 订阅管理
+- 添加订阅
+- 管理订阅状态
+- 更新订阅元数据

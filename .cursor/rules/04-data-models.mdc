@@ -1,0 +1,51 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 数据模型
+
+Tissue使用两种类型的数据模型：
+1. **Pydantic模型** (schema/) - 用于API请求/响应验证和序列化
+2. **SQLAlchemy ORM模型** (db/models/) - 用于数据库交互
+
+## 核心数据模型
+
+### 视频模型
+
+[app/schema/video.py](mdc:app/schema/video.py) 定义了视频相关的Pydantic模型：
+
+- **VideoList** - 视频列表项
+- **VideoDetail** - 视频详细信息
+- **VideoActor** - 演员信息
+- **VideoDownload** - 视频下载信息
+- **VideoPreview** - 视频预览信息
+
+### 用户模型
+
+[app/schema/user.py](mdc:app/schema/user.py) 定义了用户相关的Pydantic模型：
+
+- **UserLogin** - 用户登录请求
+- **UserInfo** - 用户信息
+- **UserCreate/UserUpdate** - 用户创建/更新请求
+
+### 设置模型
+
+[app/schema/setting.py](mdc:app/schema/setting.py) 定义了系统设置相关的模型：
+
+- **AppSetting** - 应用设置
+- **DownloadSetting** - 下载设置
+- **FileSetting** - 文件设置
+- **NotifySetting** - 通知设置
+
+### 订阅模型
+
+[app/schema/subscribe.py](mdc:app/schema/subscribe.py) 定义了订阅相关的模型：
+
+- **Subscribe** - 订阅信息
+- **SubscribeCreate/SubscribeUpdate** - 订阅创建/更新请求
+
+## 数据验证和序列化
+
+所有API请求和响应都使用Pydantic模型进行验证和序列化，确保数据一致性和类型安全。
+业务逻辑层（service/）使用这些模型处理数据，并通过SQLAlchemy ORM模型与数据库交互。

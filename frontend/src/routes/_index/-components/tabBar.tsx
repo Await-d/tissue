@@ -1,45 +1,58 @@
-import {CarryOutOutlined, HomeOutlined, MenuOutlined, SearchOutlined, VideoCameraOutlined} from "@ant-design/icons";
+/*
+ * @Author: Await
+ * @Date: 2025-05-24 17:05:38
+ * @LastEditors: Await
+ * @LastEditTime: 2025-05-25 00:20:42
+ * @Description: 请填写简介
+ */
+import { CarryOutOutlined, HomeOutlined, MenuOutlined, SearchOutlined, UserOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import React from "react";
-import {theme} from "antd";
-import {Link, useLocation} from "@tanstack/react-router";
+import { theme } from "antd";
+import { Link, useLocation } from "@tanstack/react-router";
 
-const {useToken} = theme
+const { useToken } = theme
 
 function TabBar() {
 
-    const {token} = useToken()
+    const { token } = useToken()
     const location = useLocation()
 
     const menus = [
         {
             link: '/home',
-            icon: <HomeOutlined/>
+            icon: <HomeOutlined />
         },
         {
             link: '/video',
-            icon: <VideoCameraOutlined/>
+            icon: <VideoCameraOutlined />
         },
         {
             link: '/subscribe',
-            icon: <CarryOutOutlined/>
+            icon: <CarryOutOutlined />
         },
         {
             link: '/search',
-            icon: <SearchOutlined/>
+            icon: <SearchOutlined />,
+            title: '番号'
+        },
+        {
+            link: '/actor',
+            icon: <UserOutlined />,
+            title: '演员'
         },
         {
             link: '/menu',
-            icon: <MenuOutlined/>
+            icon: <MenuOutlined />
         }
     ]
 
     return (
         <div className={'flex justify-around h-12 items-center'}
-             style={{marginBottom: 'env(safe-area-inset-bottom,0)'}}>
+            style={{ marginBottom: 'env(safe-area-inset-bottom,0)' }}>
             {menus.map(item => (
                 <div key={item.link} className={'text-2xl'}>
                     <Link to={item.link}
-                          style={{color: location.pathname === item.link ? token.colorPrimary : token.colorText}}>
+                        style={{ color: location.pathname === item.link ? token.colorPrimary : token.colorText }}>
                         <div className={'px-4'}>
                             {item.icon}
                         </div>

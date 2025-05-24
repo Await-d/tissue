@@ -419,69 +419,154 @@ class JavbusSpider(Spider):
             # 恢复原始头信息
             self.session.headers = original_headers
 
-    def get_actor_videos(self, actor_name):
+    def get_actor_videos(self, actor_url: str):
         """获取演员的所有视频"""
-        logger.info(f"获取演员 {actor_name} 的视频列表")
+        from app.schema.home import JavDBRanking  # 复用JavDBRanking模型
+        import logging
+        import re
+        
+        logger = logging.getLogger('spider')
+        
+        # 处理不同形式的actor_url输入
+        if not actor_url.startswith(self.host):
+            # 检查是否以/actors/开头，这是前端传来的格式
+            if actor_url.startswith('/actors/'):
+                # 提取演员名称，并进行搜索
+                actor_name = actor_url.split('/')[-1]
+                logger.info(f"从/actors/路径提取演员名称: {actor_name}")
+                # 直接使用演员名称搜索，不尝试提取ID
+                return self.get_actor_videos(actor_name)
+            
+            elif '/star/' not in actor_url and not actor_url.startswith('http'):
+                # 如果是演员名称而不是URL，先搜索获取演员详情页URL
+                actors = self.search_actor(actor_url)
+                if not actors:
+                    logger.info(f"未找到演员: {actor_url}")
+                    return []
+                
+                # 从搜索结果中找出最匹配的演员
+                best_match = None
+                for actor in actors:
+                    if actor.name.lower() == actor_url.lower() or actor_url.lower() in actor.name.lower():
+                        best_match = actor
+                        break
+                
+                if not best_match:
+                    best_match = actors[0]  # 使用第一个结果
+                
+                # 从演员头像URL中提取演员ID
+                thumb_url = best_match.thumb
+                actor_id = None
+                
+                if thumb_url and 'actress' in thumb_url:
+                    try:
+                        # 处理类似 https://www.javbus.com/pics/actress/2de_a.jpg 的格式
+                        actress_id = re.search(r'actress/([^/_]+)', thumb_url).group(1)
+                        actor_id = actress_id
+                        logger.info(f"从头像URL提取演员ID: {actress_id}")
+                    except Exception as e:
+                        logger.error(f"无法从头像URL提取演员ID: {thumb_url}, 错误: {str(e)}")
+                
+                if not actor_id and hasattr(best_match, 'url') and best_match.url:
+                    # 尝试从URL获取
+                    actor_url_match = re.search(r'/star/([^/]+)', str(best_match.url))
+                    if actor_url_match:
+                        actor_id = actor_url_match.group(1)
+                        logger.info(f"从URL提取演员ID: {actor_id}")
+                
+                if actor_id:
+                    actor_url = urljoin(self.host, f'/star/{actor_id}')
+                    logger.info(f"构造演员URL: {actor_url}")
+                else:
+                    logger.error(f"无法构造演员URL，未找到演员ID: {actor_url}")
+                    return []
+            elif '/star/' in actor_url and not actor_url.startswith('http'):
+                # 如果是相对路径如 /star/xxx
+                actor_url = urljoin(self.host, actor_url)
+                logger.info(f"构造完整URL: {actor_url}")
+        
+        logger.info(f"访问演员页面: {actor_url}")
+        
+        # 使用更完整的浏览器请求头
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Referer': self.host,
+        }
+        
+        # 保存原始头信息用于后续恢复
+        original_headers = self.session.headers.copy()
+        
+        # 临时替换会话头信息
+        self.session.headers.update(headers)
+        
         try:
-            search_response = self.session.get(f"{self.host}/searchstar/{actor_name}")
-            search_html = etree.HTML(search_response.text)
-            actor_box = search_html.xpath('//a[@class="avatar-box text-center"]')
+            response = self.session.get(actor_url)
+            html_content = response.text
             
-            if not actor_box:
-                logger.warning(f"未找到演员：{actor_name}")
-                return []
+            # 保存页面内容用于调试
+            try:
+                with open("javbus_actor_debug.html", "w", encoding="utf-8") as f:
+                    f.write(html_content)
+                logger.info("已保存演员详情页HTML文件")
+            except Exception as e:
+                logger.error(f"保存HTML文件失败: {str(e)}")
             
-            # 找到匹配的演员
-            actor_url = None
-            for actor in actor_box:
-                name = actor.xpath('.//span/text()')[0].strip()
-                if name == actor_name:
-                    actor_url = actor.get('href')
-                    break
+            result = []
             
-            if not actor_url:
-                logger.warning(f"未找到完全匹配的演员：{actor_name}")
-                # 尝试使用第一个结果
-                if actor_box:
-                    actor_url = actor_box[0].get('href')
+            # 使用更可靠的XPath解析方法
+            html = etree.HTML(html_content)
             
-            if not actor_url.startswith('http'):
-                actor_url = self.host + actor_url
+            # 使用XPath提取影片信息
+            movie_boxes = html.xpath('//a[@class="movie-box"]')
+            logger.info(f"找到 {len(movie_boxes)} 个视频元素")
             
-            # 获取演员详情页
-            actor_response = self.session.get(actor_url)
-            actor_html = etree.HTML(actor_response.text)
-            
-            videos = []
-            boxes = actor_html.xpath('//a[@class="movie-box"]')
-            
-            for box in boxes:
+            for box in movie_boxes:
                 try:
-                    item = WebVideo()
+                    # 提取链接
+                    movie_url = box.get('href')
                     
-                    # 获取URL
-                    item.url = box.get('href')
+                    # 提取封面图
+                    img_element = box.xpath('.//img')[0]
+                    cover_url = img_element.get('src')
+                    title = img_element.get('title')
                     
-                    # 获取标题和番号
-                    title_element = box.xpath('.//span[@class="title"]/text()')
-                    if title_element:
-                        item.title = title_element[0].strip()
+                    # 提取番号
+                    date_elements = box.xpath('.//date/text()')
+                    if len(date_elements) >= 2:
+                        num = date_elements[1]
+                    else:
+                        # 如果找不到番号，尝试从URL中提取
+                        num_match = re.search(r'/([^/]+)$', movie_url)
+                        num = num_match.group(1) if num_match else "Unknown"
                     
-                    num_element = box.xpath('.//date[1]/text()')
-                    if num_element:
-                        item.num = num_element[0].strip()
+                    # 尝试从URL中提取实际番号，而不是使用日期作为番号
+                    actual_num_match = re.search(r'/([A-Za-z]+-\d+)$', movie_url)
+                    if actual_num_match:
+                        num = actual_num_match.group(1)
+                    # 如果URL中没有提取到番号格式，尝试从标题中提取
+                    elif title:
+                        title_num_match = re.search(r'([A-Za-z]+-\d+)', title)
+                        if title_num_match:
+                            num = title_num_match.group(1)
                     
-                    # 获取封面
-                    cover_element = box.xpath('.//img/@src')
-                    if cover_element:
-                        item.cover = cover_element[0]
+                    # 是否有中文字幕标记
+                    is_zh = len(box.xpath('.//button[contains(@class, "btn-primary") and contains(text(), "字幕")]')) > 0
                     
-                    # 检查特征
-                    is_zh = box.xpath('.//button[@class="btn btn-primary btn-xs"]')
-                    item.isZh = len(is_zh) > 0
+                    # 是否无码
+                    is_uncensored = len(box.xpath('.//button[contains(@class, "btn-danger") and contains(text(), "无码")]')) > 0 or '无码' in title
                     
-                    is_uncensored = box.xpath('.//button[@class="btn btn-danger btn-xs"]')
-                    item.is_uncensored = len(is_uncensored) > 0
+                    item = JavDBRanking()
+                    item.cover = cover_url
+                    if cover_url and cover_url.startswith('/'):
+                        item.cover = urljoin(self.host, cover_url)
+                    
+                    item.title = title
+                    item.num = num
+                    item.url = movie_url
+                    item.isZh = is_zh
+                    item.is_uncensored = is_uncensored
                     
                     # 尝试获取发布日期 - 修复JavBus特有的日期格式
                     # JavBus网站中日期在第二个<date>标签中
@@ -498,33 +583,20 @@ class JavbusSpider(Spider):
                                 item.publish_date = datetime.strptime(date_text, "%Y/%m/%d").date()
                                 logger.info(f"解析到日期: {item.publish_date} 从 {date_text}")
                         except Exception as e:
-                            logger.warning(f"日期解析失败 {date_text}: {str(e)}")
+                            logger.error(f"日期解析失败: {date_text}, 错误: {str(e)}")
                     
-                    # 添加获取磁力链接
-                    try:
-                        # 打开详情页面获取磁力链接
-                        video_response = self.session.get(item.url)
-                        video_html = etree.HTML(video_response.text)
-                        
-                        # 获取第一个磁力链接
-                        magnet_element = video_html.xpath("//table[@id='magnet-table']//a[contains(@href, 'magnet:?')]/@href")
-                        if magnet_element and len(magnet_element) > 0:
-                            item.magnet = magnet_element[0]
-                            
-                            # 检查是否高清
-                            magnet_title = video_html.xpath("//table[@id='magnet-table']//tr[1]/td[1]/a/text()")
-                            if magnet_title and '1080' in magnet_title[0]:
-                                item.is_hd = True
-                    except Exception as e:
-                        logger.warning(f"获取磁力链接失败: {str(e)}")
-                    
-                    videos.append(item)
+                    result.append(item)
+                    logger.info(f"解析到视频: {num} - {title}")
                     
                 except Exception as e:
-                    logger.error(f"解析视频元素失败: {str(e)}")
+                    logger.error(f"处理视频时出错: {str(e)}")
             
-            return videos
-            
+            return result
+        
         except Exception as e:
             logger.error(f"获取演员视频列表失败: {str(e)}")
             return []
+            
+        finally:
+            # 恢复原始头信息
+            self.session.headers = original_headers

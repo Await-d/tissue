@@ -26,11 +26,13 @@ import { Route as IndexHomeIndexImport } from './routes/_index/home/index'
 import { Route as IndexHistoryIndexImport } from './routes/_index/history/index'
 import { Route as IndexFileIndexImport } from './routes/_index/file/index'
 import { Route as IndexDownloadIndexImport } from './routes/_index/download/index'
+import { Route as IndexActorIndexImport } from './routes/_index/actor/index'
 import { Route as IndexAboutIndexImport } from './routes/_index/about/index'
 import { Route as IndexSettingNotifyImport } from './routes/_index/setting/notify'
 import { Route as IndexSettingFileImport } from './routes/_index/setting/file'
 import { Route as IndexSettingDownloadImport } from './routes/_index/setting/download'
 import { Route as IndexSettingAppImport } from './routes/_index/setting/app'
+import { Route as IndexSearchIndexbackupImport } from './routes/_index/search/index_backup'
 import { Route as IndexHomeDetailImport } from './routes/_index/home/detail'
 
 // Create/Update Routes
@@ -124,6 +126,12 @@ const IndexDownloadIndexRoute = IndexDownloadIndexImport.update({
   getParentRoute: () => IndexRouteRoute,
 } as any)
 
+const IndexActorIndexRoute = IndexActorIndexImport.update({
+  id: '/actor/',
+  path: '/actor/',
+  getParentRoute: () => IndexRouteRoute,
+} as any)
+
 const IndexAboutIndexRoute = IndexAboutIndexImport.update({
   id: '/about/',
   path: '/about/',
@@ -152,6 +160,12 @@ const IndexSettingAppRoute = IndexSettingAppImport.update({
   id: '/app',
   path: '/app',
   getParentRoute: () => IndexSettingRouteRoute,
+} as any)
+
+const IndexSearchIndexbackupRoute = IndexSearchIndexbackupImport.update({
+  id: '/search/index_backup',
+  path: '/search/index_backup',
+  getParentRoute: () => IndexRouteRoute,
 } as any)
 
 const IndexHomeDetailRoute = IndexHomeDetailImport.update({
@@ -199,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexHomeDetailImport
       parentRoute: typeof IndexRouteImport
     }
+    '/_index/search/index_backup': {
+      id: '/_index/search/index_backup'
+      path: '/search/index_backup'
+      fullPath: '/search/index_backup'
+      preLoaderRoute: typeof IndexSearchIndexbackupImport
+      parentRoute: typeof IndexRouteImport
+    }
     '/_index/setting/app': {
       id: '/_index/setting/app'
       path: '/app'
@@ -232,6 +253,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof IndexAboutIndexImport
+      parentRoute: typeof IndexRouteImport
+    }
+    '/_index/actor/': {
+      id: '/_index/actor/'
+      path: '/actor'
+      fullPath: '/actor'
+      preLoaderRoute: typeof IndexActorIndexImport
       parentRoute: typeof IndexRouteImport
     }
     '/_index/download/': {
@@ -339,7 +367,9 @@ interface IndexRouteRouteChildren {
   IndexSettingRouteRoute: typeof IndexSettingRouteRouteWithChildren
   IndexIndexRoute: typeof IndexIndexRoute
   IndexHomeDetailRoute: typeof IndexHomeDetailRoute
+  IndexSearchIndexbackupRoute: typeof IndexSearchIndexbackupRoute
   IndexAboutIndexRoute: typeof IndexAboutIndexRoute
+  IndexActorIndexRoute: typeof IndexActorIndexRoute
   IndexDownloadIndexRoute: typeof IndexDownloadIndexRoute
   IndexFileIndexRoute: typeof IndexFileIndexRoute
   IndexHistoryIndexRoute: typeof IndexHistoryIndexRoute
@@ -356,7 +386,9 @@ const IndexRouteRouteChildren: IndexRouteRouteChildren = {
   IndexSettingRouteRoute: IndexSettingRouteRouteWithChildren,
   IndexIndexRoute: IndexIndexRoute,
   IndexHomeDetailRoute: IndexHomeDetailRoute,
+  IndexSearchIndexbackupRoute: IndexSearchIndexbackupRoute,
   IndexAboutIndexRoute: IndexAboutIndexRoute,
+  IndexActorIndexRoute: IndexActorIndexRoute,
   IndexDownloadIndexRoute: IndexDownloadIndexRoute,
   IndexFileIndexRoute: IndexFileIndexRoute,
   IndexHistoryIndexRoute: IndexHistoryIndexRoute,
@@ -379,11 +411,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexIndexRoute
   '/login': typeof LoginIndexRoute
   '/home/detail': typeof IndexHomeDetailRoute
+  '/search/index_backup': typeof IndexSearchIndexbackupRoute
   '/setting/app': typeof IndexSettingAppRoute
   '/setting/download': typeof IndexSettingDownloadRoute
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
   '/about': typeof IndexAboutIndexRoute
+  '/actor': typeof IndexActorIndexRoute
   '/download': typeof IndexDownloadIndexRoute
   '/file': typeof IndexFileIndexRoute
   '/history': typeof IndexHistoryIndexRoute
@@ -401,11 +435,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexIndexRoute
   '/login': typeof LoginIndexRoute
   '/home/detail': typeof IndexHomeDetailRoute
+  '/search/index_backup': typeof IndexSearchIndexbackupRoute
   '/setting/app': typeof IndexSettingAppRoute
   '/setting/download': typeof IndexSettingDownloadRoute
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
   '/about': typeof IndexAboutIndexRoute
+  '/actor': typeof IndexActorIndexRoute
   '/download': typeof IndexDownloadIndexRoute
   '/file': typeof IndexFileIndexRoute
   '/history': typeof IndexHistoryIndexRoute
@@ -426,11 +462,13 @@ export interface FileRoutesById {
   '/_index/': typeof IndexIndexRoute
   '/login/': typeof LoginIndexRoute
   '/_index/home/detail': typeof IndexHomeDetailRoute
+  '/_index/search/index_backup': typeof IndexSearchIndexbackupRoute
   '/_index/setting/app': typeof IndexSettingAppRoute
   '/_index/setting/download': typeof IndexSettingDownloadRoute
   '/_index/setting/file': typeof IndexSettingFileRoute
   '/_index/setting/notify': typeof IndexSettingNotifyRoute
   '/_index/about/': typeof IndexAboutIndexRoute
+  '/_index/actor/': typeof IndexActorIndexRoute
   '/_index/download/': typeof IndexDownloadIndexRoute
   '/_index/file/': typeof IndexFileIndexRoute
   '/_index/history/': typeof IndexHistoryIndexRoute
@@ -452,11 +490,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/home/detail'
+    | '/search/index_backup'
     | '/setting/app'
     | '/setting/download'
     | '/setting/file'
     | '/setting/notify'
     | '/about'
+    | '/actor'
     | '/download'
     | '/file'
     | '/history'
@@ -473,11 +513,13 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/home/detail'
+    | '/search/index_backup'
     | '/setting/app'
     | '/setting/download'
     | '/setting/file'
     | '/setting/notify'
     | '/about'
+    | '/actor'
     | '/download'
     | '/file'
     | '/history'
@@ -496,11 +538,13 @@ export interface FileRouteTypes {
     | '/_index/'
     | '/login/'
     | '/_index/home/detail'
+    | '/_index/search/index_backup'
     | '/_index/setting/app'
     | '/_index/setting/download'
     | '/_index/setting/file'
     | '/_index/setting/notify'
     | '/_index/about/'
+    | '/_index/actor/'
     | '/_index/download/'
     | '/_index/file/'
     | '/_index/history/'
@@ -545,7 +589,9 @@ export const routeTree = rootRoute
         "/_index/setting",
         "/_index/",
         "/_index/home/detail",
+        "/_index/search/index_backup",
         "/_index/about/",
+        "/_index/actor/",
         "/_index/download/",
         "/_index/file/",
         "/_index/history/",
@@ -580,6 +626,10 @@ export const routeTree = rootRoute
       "filePath": "_index/home/detail.tsx",
       "parent": "/_index"
     },
+    "/_index/search/index_backup": {
+      "filePath": "_index/search/index_backup.tsx",
+      "parent": "/_index"
+    },
     "/_index/setting/app": {
       "filePath": "_index/setting/app.tsx",
       "parent": "/_index/setting"
@@ -598,6 +648,10 @@ export const routeTree = rootRoute
     },
     "/_index/about/": {
       "filePath": "_index/about/index.tsx",
+      "parent": "/_index"
+    },
+    "/_index/actor/": {
+      "filePath": "_index/actor/index.tsx",
       "parent": "/_index"
     },
     "/_index/download/": {

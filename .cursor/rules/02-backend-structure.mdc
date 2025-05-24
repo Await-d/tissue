@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 后端结构
+
+Tissue后端使用FastAPI框架构建，采用了模块化结构组织代码。
+
+## 核心目录
+- **app/** - 应用主目录
+  - **api/** - API路由和控制器
+  - **db/** - 数据库模型和连接管理
+  - **dependencies/** - 依赖注入组件
+  - **exception/** - 异常处理
+  - **middleware/** - 中间件
+  - **schema/** - Pydantic数据模型
+  - **service/** - 业务逻辑层
+  - **utils/** - 工具函数
+
+## 主要文件
+- [app/main.py](mdc:app/main.py) - 应用入口，初始化FastAPI应用
+- [app/scheduler.py](mdc:app/scheduler.py) - 后台任务调度器
+- [app/api/__init__.py](mdc:app/api/__init__.py) - API路由注册
+- [app/db/__init__.py](mdc:app/db/__init__.py) - 数据库初始化
+
+## 数据访问层
+- **models/** - SQLAlchemy ORM模型
+- **service/** - 服务层，处理业务逻辑
+- **schema/** - 数据验证和序列化模型
+
+## 后台任务
+系统使用APScheduler管理后台任务，主要包括：
+- 订阅下载 (subscribe)
+- 订阅元数据更新 (subscribe_meta_update)
+- 整理已完成下载 (scrape_download)
+- 删除已整理下载 (delete_complete_download)
+- 清理缓存 (clean_cache)

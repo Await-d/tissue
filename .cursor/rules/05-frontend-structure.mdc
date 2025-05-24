@@ -1,0 +1,64 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 前端结构
+
+Tissue前端使用React、TypeScript、Vite构建，UI采用Ant Design和Tailwind CSS。
+
+## 技术栈
+
+- **React 18** - UI库
+- **TypeScript** - 类型安全的JavaScript超集
+- **Vite** - 构建工具
+- **TanStack Router** - 路由管理
+- **Ant Design** - UI组件库
+- **Tailwind CSS** - 实用优先的CSS框架
+- **Rematch** - 状态管理
+- **Axios** - HTTP客户端
+
+## 目录结构
+
+主要目录和文件：
+
+- **src/** - 源代码目录
+  - **components/** - 可复用UI组件
+  - **layouts/** - 页面布局组件
+  - **models/** - Rematch状态模型
+  - **pages/** - 页面组件
+  - **routes/** - 路由定义
+  - **services/** - API服务
+  - **utils/** - 工具函数
+  - **App.tsx** - 应用入口组件
+  - **main.tsx** - 应用入口文件
+
+## 状态管理
+
+使用Rematch进行状态管理，主要状态模型包括：
+
+- **user** - 用户信息和认证状态
+- **video** - 视频列表和当前选中视频
+- **setting** - 应用设置
+- **download** - 下载任务状态
+
+## 用户界面
+
+主要页面组件：
+
+- **Login** - 登录页面
+- **Home** - 首页，显示概览信息
+- **Videos** - 视频管理页面
+- **Downloads** - 下载管理页面
+- **Settings** - 设置页面
+- **Subscribes** - 订阅管理页面
+
+## API集成
+
+前端通过Axios与后端API通信，API服务封装在`services/`目录中，主要包括：
+
+- **auth** - 身份验证API
+- **video** - 视频相关API
+- **download** - 下载相关API
+- **setting** - 设置相关API
+- **subscribe** - 订阅相关API
