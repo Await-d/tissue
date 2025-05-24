@@ -10,7 +10,7 @@ api_router.include_router(common.router, prefix="/common")
 api_router.include_router(user.router, prefix='/user', dependencies=[Depends(verify_token)])
 api_router.include_router(setting.router, prefix='/setting', dependencies=[Depends(verify_token)])
 
-api_router.include_router(video.router, prefix='/video', dependencies=[Depends(verify_token)])
+api_router.include_router(video.router, prefix='/video')
 api_router.include_router(file.router, prefix='/file', dependencies=[Depends(verify_token)])
 api_router.include_router(download.router, prefix='/download', dependencies=[Depends(verify_token)])
 api_router.include_router(history.router, prefix='/history', dependencies=[Depends(verify_token)])

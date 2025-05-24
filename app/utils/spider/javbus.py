@@ -151,3 +151,461 @@ class JavbusSpider(Spider):
 
             result.append(download)
         return result
+
+    def get_actors(self):
+        """获取JavBus网站上的热门演员列表"""
+        import logging
+        import re
+        logger = logging.getLogger('spider')
+        
+        url = urljoin(self.host, '/actresses')
+        
+        # 使用更完整的浏览器请求头，避免被网站拦截
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Referer': self.host,
+            'sec-ch-ua': '"Google Chrome";v="91", " Not;A Brand";v="99", "Chromium";v="91"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'same-origin',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        
+        # 保存原始头信息用于后续恢复
+        original_headers = self.session.headers.copy()
+        
+        # 临时替换会话头信息
+        self.session.headers.update(headers)
+        
+        try:
+            response = self.session.get(url)
+            html_content = response.content
+            logger.info(f"响应内容大小: {len(html_content)} 字节")
+            
+            # 保存页面内容用于调试
+            try:
+                with open("javbus_actresses_debug.html", "wb") as f:
+                    f.write(html_content)
+                logger.info("已保存actresses页面HTML文件")
+            except Exception as e:
+                logger.error(f"保存HTML文件失败: {str(e)}")
+            
+            html = etree.HTML(html_content, parser=etree.HTMLParser(encoding='utf-8'))
+            
+            result = []
+            
+            # 尝试多种方式获取演员列表
+            # 1. 先尝试使用XPath选择器
+            actresses = html.xpath('//a[@class="avatar-box text-center"]')
+            logger.info(f"使用XPath找到演员元素: {len(actresses)}个")
+            
+            if not actresses:
+                # 2. 尝试使用更宽松的选择器
+                actresses = html.xpath('//a[contains(@class, "avatar-box")]')
+                logger.info(f"使用宽松XPath找到演员元素: {len(actresses)}个")
+            
+            if not actresses:
+                # 3. 尝试查找包含演员照片的元素
+                actresses = html.xpath('//div[@id="waterfall"]/div/a') or html.xpath('//div[contains(@class, "item")]/a')
+                logger.info(f"使用备用XPath找到演员元素: {len(actresses)}个")
+            
+            # 如果XPath都失败了，尝试正则表达式
+            if not actresses:
+                logger.info("XPath失败，尝试使用正则表达式匹配")
+                avatar_box_pattern = r'<a[^>]*href="([^"]+)"[^>]*>.*?<img[^>]*src="([^"]+)"[^>]*title="([^"]+)".*?</a>'
+                avatar_matches = re.findall(avatar_box_pattern, response.text, re.DOTALL)
+                
+                logger.info(f"正则表达式匹配到: {len(avatar_matches)}个演员")
+                
+                for match in avatar_matches:
+                    try:
+                        actress_url, actress_avatar, actress_name = match
+                        
+                        # 检查是否是演员页面的URL
+                        if '/star/' not in actress_url and '/actresses/' not in actress_url:
+                            continue
+                        
+                        logger.info(f"找到演员: {actress_name}, URL: {actress_url}")
+                        
+                        # JavBus的图片路径需要特殊处理
+                        if actress_avatar.startswith('/'):
+                            actress_avatar = urljoin(self.host, actress_avatar)
+                        
+                        actor_info = VideoActor(name=actress_name, thumb=actress_avatar)
+                        result.append(actor_info)
+                    except Exception as e:
+                        logger.error(f"处理正则匹配时出错: {str(e)}")
+                
+                return result
+            
+            # 处理通过XPath找到的演员
+            for actress in actresses:
+                try:
+                    actress_url = actress.get('href')
+                    
+                    # 尝试不同方式获取演员名称和头像
+                    actress_name = None
+                    actress_avatar = None
+                    
+                    # 尝试获取名称
+                    name_elements = actress.xpath('./div/img/@title') or actress.xpath('.//img/@title')
+                    if name_elements:
+                        actress_name = name_elements[0]
+                    else:
+                        # 尝试其他方法
+                        name_elements = actress.xpath('.//span/text()') or actress.xpath('.//text()')
+                        if name_elements:
+                            for text in name_elements:
+                                if text.strip():
+                                    actress_name = text.strip()
+                                    break
+                    
+                    # 如果还没找到名称，使用URL的最后部分
+                    if not actress_name and actress_url:
+                        actress_name = actress_url.split('/')[-1]
+                    
+                    # 如果没有名称，跳过这个演员
+                    if not actress_name:
+                        continue
+                    
+                    # 尝试获取头像
+                    avatar_elements = actress.xpath('./div/img/@src') or actress.xpath('.//img/@src')
+                    if avatar_elements:
+                        actress_avatar = avatar_elements[0]
+                        if actress_avatar.startswith('/'):
+                            actress_avatar = urljoin(self.host, actress_avatar)
+                    else:
+                        # 如果找不到图像元素，尝试构造一个URL
+                        if '/star/' in actress_url:
+                            star_id = actress_url.split('/')[-1]
+                            actress_avatar = urljoin(self.host, f'/pics/actress/{star_id}_a.jpg')
+                    
+                    logger.info(f"找到演员: {actress_name}, URL: {actress_url}, 头像: {actress_avatar}")
+                    
+                    if actress_name and actress_avatar:
+                        actor_info = VideoActor(name=actress_name, thumb=actress_avatar)
+                        result.append(actor_info)
+                    elif actress_name:
+                        # 如果只有名称没有头像，也创建演员，使用一个占位图像
+                        logger.warning(f"演员 {actress_name} 没有头像")
+                        actor_info = VideoActor(name=actress_name, thumb="")
+                        result.append(actor_info)
+                        
+                except Exception as e:
+                    logger.error(f"处理演员元素时出错: {str(e)}")
+                    continue
+            
+            logger.info(f"总共找到 {len(result)} 个演员")
+            return result
+            
+        finally:
+            # 恢复原始头信息
+            self.session.headers = original_headers
+
+    def search_actor(self, actor_name: str):
+        """搜索JavBus网站上的演员"""
+        import logging
+        import re
+        logger = logging.getLogger('spider')
+        
+        url = urljoin(self.host, f'/searchstar/{actor_name}')
+        logger.info(f"搜索演员URL: {url}")
+        
+        # 使用更完整的浏览器请求头
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Referer': self.host,
+            'sec-ch-ua': '"Google Chrome";v="91", " Not;A Brand";v="99", "Chromium";v="91"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'same-origin',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        
+        # 保存原始头信息用于后续恢复
+        original_headers = self.session.headers.copy()
+        
+        # 临时替换会话头信息
+        self.session.headers.update(headers)
+        
+        try:
+            response = self.session.get(url)
+            html_content = response.text
+            logger.info(f"响应内容大小: {len(html_content)} 字节")
+            
+            # 保存页面内容用于调试
+            try:
+                with open("javbus_debug.html", "w", encoding="utf-8") as f:
+                    f.write(html_content)
+                logger.info("已保存调试HTML文件")
+            except:
+                pass
+            
+            # 使用正则表达式查找演员信息，更宽松的匹配
+            result = []
+            
+            # 1. 搜索avatar-box包含的演员信息
+            avatar_box_pattern = r'<a[^>]*class="avatar-box[^"]*"[^>]*href="([^"]+)"[^>]*>.*?<img src="([^"]+)"[^>]*title="([^"]+)"'
+            avatar_matches = re.findall(avatar_box_pattern, html_content, re.DOTALL)
+            
+            logger.info(f"avatar-box匹配: {len(avatar_matches)} 个")
+            
+            for match in avatar_matches:
+                try:
+                    actress_url, actress_avatar, actress_name = match
+                    logger.info(f"找到演员: {actress_name}, URL: {actress_url}")
+                    
+                    # JavBus的图片路径需要特殊处理
+                    if actress_avatar and actress_avatar.startswith('/'):
+                        actress_avatar = urljoin(self.host, actress_avatar)
+                    
+                    actor_info = VideoActor(name=actress_name, thumb=actress_avatar)
+                    result.append(actor_info)
+                except Exception as e:
+                    logger.error(f"处理匹配时出错: {e}")
+            
+            # 2. 如果没有找到，搜索演员名称并构造URL
+            if not result:
+                actress_pattern = r'<div class="photo-info">\s*<span[^>]*>([^<]+)<'
+                actress_matches = re.findall(actress_pattern, html_content)
+                
+                logger.info(f"演员名称匹配: {len(actress_matches)} 个")
+                
+                for actress_name in actress_matches:
+                    if actor_name.lower() in actress_name.lower() or actress_name.lower() in actor_name.lower():
+                        logger.info(f"找到演员名称: {actress_name}")
+                        
+                        # 查找对应的star ID
+                        star_pattern = r'href="[^"]*?/star/([^"]+)"[^>]*>' + re.escape(actress_name)
+                        star_matches = re.findall(star_pattern, html_content)
+                        
+                        if star_matches:
+                            star_id = star_matches[0]
+                            logger.info(f"找到演员ID: {star_id}")
+                            
+                            # 构造头像URL
+                            actress_avatar = urljoin(self.host, f'/pics/actress/{star_id}_a.jpg')
+                            
+                            actor_info = VideoActor(name=actress_name, thumb=actress_avatar)
+                            result.append(actor_info)
+                            break
+            
+            # 3. 如果还没找到，搜索带有演员名称的图片
+            if not result:
+                img_pattern = r'<img[^>]*title="' + re.escape(actor_name) + r'"[^>]*src="([^"]+)"'
+                img_matches = re.findall(img_pattern, html_content)
+                
+                logger.info(f"图片匹配: {len(img_matches)} 个")
+                
+                if img_matches:
+                    actress_avatar = img_matches[0]
+                    if actress_avatar.startswith('/'):
+                        actress_avatar = urljoin(self.host, actress_avatar)
+                    
+                    actor_info = VideoActor(name=actor_name, thumb=actress_avatar)
+                    result.append(actor_info)
+            
+            return result
+            
+        finally:
+            # 恢复原始头信息
+            self.session.headers = original_headers
+
+    def get_actor_videos(self, actor_url: str):
+        """获取演员的所有视频"""
+        from app.schema.home import JavDBRanking  # 复用JavDBRanking模型
+        import logging
+        import re
+        
+        logger = logging.getLogger('spider')
+        
+        # 处理不同形式的actor_url输入
+        if not actor_url.startswith(self.host):
+            # 检查是否以/actors/开头，这是前端传来的格式
+            if actor_url.startswith('/actors/'):
+                # 提取演员名称，并进行搜索
+                actor_name = actor_url.split('/')[-1]
+                logger.info(f"从/actors/路径提取演员名称: {actor_name}")
+                # 调用搜索功能获取演员详情
+                actors = self.search_actor(actor_name)
+                if not actors:
+                    logger.info(f"未找到演员: {actor_name}")
+                    return []
+                
+                # 使用搜索结果中的第一个演员
+                best_match = actors[0]
+                # 从演员的URL获取ID
+                if hasattr(best_match, 'url') and best_match.url:
+                    actor_id_match = re.search(r'/star/([^/]+)', best_match.url)
+                    if actor_id_match:
+                        actor_id = actor_id_match.group(1)
+                        actor_url = urljoin(self.host, f'/star/{actor_id}')
+                        logger.info(f"从URL提取演员ID: {actor_id}, 构造URL: {actor_url}")
+                    else:
+                        logger.error(f"无法从URL提取演员ID: {best_match.url}")
+                        return []
+                else:
+                    # 从演员头像URL中提取演员ID
+                    thumb_url = best_match.thumb
+                    if thumb_url and 'actress' in thumb_url:
+                        try:
+                            # 处理类似 https://www.javbus.com/pics/actress/2de_a.jpg 的格式
+                            actress_id = re.search(r'actress/([^/_]+)', thumb_url).group(1)
+                            actor_url = urljoin(self.host, f'/star/{actress_id}')
+                            logger.info(f"从头像URL提取演员ID: {actress_id}, 构造URL: {actor_url}")
+                        except Exception as e:
+                            logger.error(f"无法从头像URL提取演员ID: {thumb_url}, 错误: {str(e)}")
+                            return []
+                    else:
+                        logger.error(f"无法获取演员ID: 没有有效的URL或头像")
+                        return []
+            
+            elif '/star/' not in actor_url:
+                # 如果是演员名称而不是URL，先搜索获取演员详情页URL
+                actors = self.search_actor(actor_url)
+                if not actors:
+                    logger.info(f"未找到演员: {actor_url}")
+                    return []
+                
+                # 从搜索结果中找出最匹配的演员
+                best_match = None
+                for actor in actors:
+                    if actor.name.lower() == actor_url.lower() or actor_url.lower() in actor.name.lower():
+                        best_match = actor
+                        break
+                
+                if not best_match:
+                    best_match = actors[0]  # 使用第一个结果
+                
+                # 从演员头像URL中提取演员ID
+                thumb_url = best_match.thumb
+                actor_id = None
+                
+                if thumb_url and 'actress' in thumb_url:
+                    try:
+                        actress_id = re.search(r'actress/([^/_]+)', thumb_url).group(1)
+                        actor_id = actress_id
+                        logger.info(f"从头像URL提取演员ID: {actress_id}")
+                    except Exception as e:
+                        logger.error(f"无法从头像URL提取演员ID: {thumb_url}, 错误: {str(e)}")
+                
+                if not actor_id and hasattr(best_match, 'url') and best_match.url:
+                    # 尝试从URL获取
+                    actor_url_match = re.search(r'/star/([^/]+)', str(best_match.url))
+                    if actor_url_match:
+                        actor_id = actor_url_match.group(1)
+                        logger.info(f"从URL提取演员ID: {actor_id}")
+                    
+                if actor_id:
+                    actor_url = urljoin(self.host, f'/star/{actor_id}')
+                    logger.info(f"构造演员URL: {actor_url}")
+                else:
+                    logger.error(f"无法提取演员ID")
+                    return []
+            else:
+                # 如果包含/star/路径但不是完整URL
+                actor_url = urljoin(self.host, actor_url)
+        
+        logger.info(f"访问演员页面: {actor_url}")
+        
+        # 使用更完整的浏览器请求头
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Referer': self.host,
+            'sec-ch-ua': '"Google Chrome";v="91", " Not;A Brand";v="99", "Chromium";v="91"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'same-origin',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        
+        # 保存原始头信息用于后续恢复
+        original_headers = self.session.headers.copy()
+        
+        # 临时替换会话头信息
+        self.session.headers.update(headers)
+        
+        try:
+            response = self.session.get(actor_url)
+            html_content = response.text
+            
+            # 保存页面内容用于调试
+            try:
+                with open("javbus_actor_debug.html", "w", encoding="utf-8") as f:
+                    f.write(html_content)
+                logger.info("已保存演员详情页HTML文件")
+            except Exception as e:
+                logger.error(f"保存HTML文件失败: {str(e)}")
+            
+            result = []
+            
+            # 使用更可靠的XPath解析方法
+            html = etree.HTML(html_content)
+            
+            # 使用XPath提取影片信息
+            movie_boxes = html.xpath('//a[@class="movie-box"]')
+            logger.info(f"找到 {len(movie_boxes)} 个视频元素")
+            
+            for box in movie_boxes:
+                try:
+                    # 提取链接
+                    movie_url = box.get('href')
+                    
+                    # 提取封面图
+                    img_element = box.xpath('.//img')[0]
+                    cover_url = img_element.get('src')
+                    title = img_element.get('title')
+                    
+                    # 提取番号
+                    date_elements = box.xpath('.//date/text()')
+                    if len(date_elements) >= 2:
+                        num = date_elements[1]
+                    else:
+                        # 如果找不到番号，尝试从URL中提取
+                        num_match = re.search(r'/([^/]+)$', movie_url)
+                        num = num_match.group(1) if num_match else "Unknown"
+                    
+                    # 是否有中文字幕标记
+                    is_zh = len(box.xpath('.//button[contains(@class, "btn-primary") and contains(text(), "字幕")]')) > 0
+                    
+                    # 是否无码
+                    is_uncensored = len(box.xpath('.//button[contains(@class, "btn-danger") and contains(text(), "无码")]')) > 0 or '无码' in title
+                    
+                    item = JavDBRanking()
+                    item.cover = cover_url
+                    if cover_url and cover_url.startswith('/'):
+                        item.cover = urljoin(self.host, cover_url)
+                    
+                    item.title = title
+                    item.num = num
+                    item.url = movie_url
+                    item.isZh = is_zh
+                    item.is_uncensored = is_uncensored
+                    
+                    result.append(item)
+                    logger.info(f"解析到视频: {num} - {title}")
+                    
+                except Exception as e:
+                    logger.error(f"处理视频时出错: {str(e)}")
+            
+            return result
+        
+        except Exception as e:
+            logger.error(f"获取演员视频列表失败: {str(e)}")
+            return []
+            
+        finally:
+            # 恢复原始头信息
+            self.session.headers = original_headers
