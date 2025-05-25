@@ -1,0 +1,33 @@
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date
+
+from app.db.models.base import Base
+
+
+class ActorSubscribe(Base):
+    __tablename__ = 'actor_subscribe'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    actor_name = Column(String, nullable=False)
+    actor_url = Column(String, nullable=True)
+    actor_thumb = Column(String, nullable=True)
+    from_date = Column(Date, nullable=False)  # 订阅起始日期
+    last_updated = Column(DateTime, nullable=True)
+    is_hd = Column(Boolean, nullable=False, default=True)
+    is_zh = Column(Boolean, nullable=False, default=False)
+    is_uncensored = Column(Boolean, nullable=False, default=False)
+
+
+class ActorSubscribeDownload(Base):
+    __tablename__ = 'actor_subscribe_download'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    actor_subscribe_id = Column(Integer, nullable=False)  # 关联的演员订阅ID
+    num = Column(String, nullable=False)  # 番号
+    title = Column(String, nullable=True)  # 标题
+    cover = Column(String, nullable=True)  # 封面
+    magnet = Column(String, nullable=True)  # 磁力链接
+    size = Column(String, nullable=True)  # 文件大小
+    download_time = Column(DateTime, nullable=False)  # 下载时间
+    is_hd = Column(Boolean, nullable=False, default=True)
+    is_zh = Column(Boolean, nullable=False, default=False)
+    is_uncensored = Column(Boolean, nullable=False, default=False) 

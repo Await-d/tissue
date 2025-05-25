@@ -12,6 +12,7 @@ from app.service.download import DownloadService
 from app.service.job import clean_cache
 from app.service.subscribe import SubscribeService
 from app.utils.logger import logger
+from app.service.actor_subscribe import ActorSubscribeService
 
 
 class Job(BaseModel):
@@ -62,6 +63,15 @@ class Scheduler:
             self.add('scrape_download')
         if setting.download.delete_auto:
             self.add('delete_complete_download')
+
+        self.add_job(
+            ActorSubscribeService.job_actor_subscribe,
+            'cron',
+            hour='2',
+            minute='30',
+            id='actor_subscribe',
+            replace_existing=True,
+        )
 
     def list(self):
         return self.scheduler.get_jobs()
