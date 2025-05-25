@@ -2,7 +2,7 @@
  * @Author: Await
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
- * @LastEditTime: 2025-05-25 05:13:47
+ * @LastEditTime: 2025-05-26 00:02:10
  * @Description: 请填写简介
  */
 import { request } from "../utils/requests";
@@ -58,6 +58,49 @@ export async function downloadVideos(video: any, link: any) {
             video: processedVideo,
             link
         }
+    })
+    return response.data.data
+}
+
+// 演员订阅相关API
+
+export async function getActorSubscriptions() {
+    const response = await request.request({
+        url: '/actor-subscribe/',
+        method: 'get'
+    })
+    return response.data.data
+}
+
+export function subscribeActor(data: any) {
+    return request.request({
+        url: '/actor-subscribe/',
+        method: data.id ? 'put' : 'post',
+        data: data
+    })
+}
+
+export function updateActorSubscription(data: any) {
+    return request.request({
+        url: '/actor-subscribe/',
+        method: 'put',
+        data: data
+    })
+}
+
+export function deleteActorSubscription(id: number) {
+    return request.request({
+        url: '/actor-subscribe/',
+        method: 'delete',
+        params: { subscribe_id: id },
+    })
+}
+
+export async function getActorSubscriptionDownloads(actorId: number) {
+    const response = await request.request({
+        url: '/actor-subscribe/downloads',
+        method: 'get',
+        params: { actor_id: actorId }
     })
     return response.data.data
 }

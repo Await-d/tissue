@@ -10,7 +10,11 @@ import {
     SearchOutlined,
     SettingOutlined,
     UserOutlined,
-    VideoCameraOutlined
+    VideoCameraOutlined,
+    StarOutlined,
+    HeartOutlined,
+    ClockCircleOutlined,
+    FileOutlined
 } from "@ant-design/icons";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen.ts";
@@ -82,6 +86,11 @@ export default [
                 title: '演员',
                 path: '/actor',
                 icon: (<UserOutlined />),
+            },
+            {
+                title: '演员订阅',
+                path: '/actor-subscribe',
+                icon: (<StarOutlined />),
             },
         ]
     },

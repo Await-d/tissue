@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip } from 'antd';
-import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined } from '@ant-design/icons';
+import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -10,6 +10,7 @@ import VideoCover from "../VideoCover";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import DownloadModal from "../../routes/_index/search/-components/downloadModal";
 import DownloadListModal from "../../routes/_index/search/-components/downloadListModal";
+import ActorSubscribeModal from '../../routes/_index/actor-subscribe/-components/ActorSubscribeModal';
 
 // 本地存储的键名
 const STORAGE_KEY = 'web_actor_search_state';
@@ -77,6 +78,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     const navigate = useNavigate();
     const router = useRouter(); // 添加路由钩子
     const isFirstRender = useRef(true); // 添加首次渲染标记
+    const [subscribeModalVisible, setSubscribeModalVisible] = useState(false);
 
     // 保存状态到localStorage
     const saveState = () => {
@@ -542,6 +544,16 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                             src={selectedActor.thumb ? api.getVideoCover(selectedActor.thumb) : undefined}
                         />
                         <h2 style={{ marginTop: 8 }}>{selectedActor.name}</h2>
+
+                        {/* 添加订阅按钮 */}
+                        <Button
+                            type="primary"
+                            icon={<StarOutlined />}
+                            style={{ marginTop: 8 }}
+                            onClick={() => setSubscribeModalVisible(true)}
+                        >
+                            订阅演员
+                        </Button>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
@@ -710,6 +722,19 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 onDownload={(video, item) => onDownload(video, item)}
                 confirmLoading={onDownloading}
             />
+
+            {/* 添加演员订阅对话框 */}
+            {selectedActor && (
+                <ActorSubscribeModal
+                    open={subscribeModalVisible}
+                    actor={selectedActor}
+                    onCancel={() => setSubscribeModalVisible(false)}
+                    onOk={() => {
+                        setSubscribeModalVisible(false);
+                        message.success(`已成功订阅演员 ${selectedActor.name}`);
+                    }}
+                />
+            )}
         </div>
     );
 };

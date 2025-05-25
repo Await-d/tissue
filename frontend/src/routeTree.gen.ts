@@ -27,6 +27,7 @@ import { Route as IndexHistoryIndexImport } from './routes/_index/history/index'
 import { Route as IndexFileIndexImport } from './routes/_index/file/index'
 import { Route as IndexDownloadIndexImport } from './routes/_index/download/index'
 import { Route as IndexActorIndexImport } from './routes/_index/actor/index'
+import { Route as IndexActorSubscribeIndexImport } from './routes/_index/actor-subscribe/index'
 import { Route as IndexAboutIndexImport } from './routes/_index/about/index'
 import { Route as IndexSettingNotifyImport } from './routes/_index/setting/notify'
 import { Route as IndexSettingFileImport } from './routes/_index/setting/file'
@@ -129,6 +130,12 @@ const IndexDownloadIndexRoute = IndexDownloadIndexImport.update({
 const IndexActorIndexRoute = IndexActorIndexImport.update({
   id: '/actor/',
   path: '/actor/',
+  getParentRoute: () => IndexRouteRoute,
+} as any)
+
+const IndexActorSubscribeIndexRoute = IndexActorSubscribeIndexImport.update({
+  id: '/actor-subscribe/',
+  path: '/actor-subscribe/',
   getParentRoute: () => IndexRouteRoute,
 } as any)
 
@@ -255,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexAboutIndexImport
       parentRoute: typeof IndexRouteImport
     }
+    '/_index/actor-subscribe/': {
+      id: '/_index/actor-subscribe/'
+      path: '/actor-subscribe'
+      fullPath: '/actor-subscribe'
+      preLoaderRoute: typeof IndexActorSubscribeIndexImport
+      parentRoute: typeof IndexRouteImport
+    }
     '/_index/actor/': {
       id: '/_index/actor/'
       path: '/actor'
@@ -369,6 +383,7 @@ interface IndexRouteRouteChildren {
   IndexHomeDetailRoute: typeof IndexHomeDetailRoute
   IndexSearchIndexbackupRoute: typeof IndexSearchIndexbackupRoute
   IndexAboutIndexRoute: typeof IndexAboutIndexRoute
+  IndexActorSubscribeIndexRoute: typeof IndexActorSubscribeIndexRoute
   IndexActorIndexRoute: typeof IndexActorIndexRoute
   IndexDownloadIndexRoute: typeof IndexDownloadIndexRoute
   IndexFileIndexRoute: typeof IndexFileIndexRoute
@@ -388,6 +403,7 @@ const IndexRouteRouteChildren: IndexRouteRouteChildren = {
   IndexHomeDetailRoute: IndexHomeDetailRoute,
   IndexSearchIndexbackupRoute: IndexSearchIndexbackupRoute,
   IndexAboutIndexRoute: IndexAboutIndexRoute,
+  IndexActorSubscribeIndexRoute: IndexActorSubscribeIndexRoute,
   IndexActorIndexRoute: IndexActorIndexRoute,
   IndexDownloadIndexRoute: IndexDownloadIndexRoute,
   IndexFileIndexRoute: IndexFileIndexRoute,
@@ -417,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
   '/about': typeof IndexAboutIndexRoute
+  '/actor-subscribe': typeof IndexActorSubscribeIndexRoute
   '/actor': typeof IndexActorIndexRoute
   '/download': typeof IndexDownloadIndexRoute
   '/file': typeof IndexFileIndexRoute
@@ -441,6 +458,7 @@ export interface FileRoutesByTo {
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
   '/about': typeof IndexAboutIndexRoute
+  '/actor-subscribe': typeof IndexActorSubscribeIndexRoute
   '/actor': typeof IndexActorIndexRoute
   '/download': typeof IndexDownloadIndexRoute
   '/file': typeof IndexFileIndexRoute
@@ -468,6 +486,7 @@ export interface FileRoutesById {
   '/_index/setting/file': typeof IndexSettingFileRoute
   '/_index/setting/notify': typeof IndexSettingNotifyRoute
   '/_index/about/': typeof IndexAboutIndexRoute
+  '/_index/actor-subscribe/': typeof IndexActorSubscribeIndexRoute
   '/_index/actor/': typeof IndexActorIndexRoute
   '/_index/download/': typeof IndexDownloadIndexRoute
   '/_index/file/': typeof IndexFileIndexRoute
@@ -496,6 +515,7 @@ export interface FileRouteTypes {
     | '/setting/file'
     | '/setting/notify'
     | '/about'
+    | '/actor-subscribe'
     | '/actor'
     | '/download'
     | '/file'
@@ -519,6 +539,7 @@ export interface FileRouteTypes {
     | '/setting/file'
     | '/setting/notify'
     | '/about'
+    | '/actor-subscribe'
     | '/actor'
     | '/download'
     | '/file'
@@ -544,6 +565,7 @@ export interface FileRouteTypes {
     | '/_index/setting/file'
     | '/_index/setting/notify'
     | '/_index/about/'
+    | '/_index/actor-subscribe/'
     | '/_index/actor/'
     | '/_index/download/'
     | '/_index/file/'
@@ -591,6 +613,7 @@ export const routeTree = rootRoute
         "/_index/home/detail",
         "/_index/search/index_backup",
         "/_index/about/",
+        "/_index/actor-subscribe/",
         "/_index/actor/",
         "/_index/download/",
         "/_index/file/",
@@ -648,6 +671,10 @@ export const routeTree = rootRoute
     },
     "/_index/about/": {
       "filePath": "_index/about/index.tsx",
+      "parent": "/_index"
+    },
+    "/_index/actor-subscribe/": {
+      "filePath": "_index/actor-subscribe/index.tsx",
       "parent": "/_index"
     },
     "/_index/actor/": {
