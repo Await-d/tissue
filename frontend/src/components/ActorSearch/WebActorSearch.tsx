@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip } from 'antd';
 import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
@@ -7,7 +7,7 @@ import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useRequest } from 'ahooks';
 import VideoCover from "../VideoCover";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import DownloadModal from "../../routes/_index/search/-components/downloadModal";
 import DownloadListModal from "../../routes/_index/search/-components/downloadListModal";
 
@@ -75,6 +75,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     const [downloadOptions, setDownloadOptions] = useState<any[]>([]);
     const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
     const navigate = useNavigate();
+    const router = useRouter(); // 添加路由钩子
+    const isFirstRender = useRef(true); // 添加首次渲染标记
 
     // 保存状态到localStorage
     const saveState = () => {
@@ -476,6 +478,21 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 // 出错时不显示模态框，只显示错误提示
             });
     };
+
+    // 添加新的useEffect，监听路由变化
+    useEffect(() => {
+        // 如果是首次渲染，标记为已渲染并返回
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        // 如果有选中的演员，自动刷新作品列表
+        if (selectedActor && selectedActor.name) {
+            console.log('检测到路由变化，自动刷新演员作品列表:', selectedActor.name);
+            fetchActorVideos(selectedActor.name);
+        }
+    }, [router.state.location.pathname, selectedActor, fetchActorVideos]);
 
     return (
         <div style={{ padding: '16px' }}>
