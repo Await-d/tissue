@@ -20,154 +20,180 @@ class JavbusSpider(Spider):
         from app.utils.logger import logger
 
         url = urljoin(self.host, num)
-        # 修改：允许跟随重定向
-        response = self.session.get(url, allow_redirects=True)
         
-        # 检查响应状态码
-        if response.status_code >= 300:
-            logger.error(f"请求番号 {num} 失败，状态码: {response.status_code}")
-            logger.error(f"响应内容前200字符: {response.text[:200]}")
-            raise SpiderException(f'请求失败，状态码: {response.status_code}')
-
-        # 保存完整HTML用于调试
+        # 使用更完整的浏览器请求头，避免被网站拦截
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Referer': self.host,
+            'sec-ch-ua': '"Google Chrome";v="91", " Not;A Brand";v="99", "Chromium";v="91"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'same-origin',
+            'Upgrade-Insecure-Requests': '1',
+        }
+        
+        # 保存原始头信息用于后续恢复
+        original_headers = self.session.headers.copy()
+        
+        # 临时替换会话头信息
+        self.session.headers.update(headers)
+        
         try:
-            with open(f"javbus_debug_{num}.html", "w", encoding="utf-8") as f:
-                f.write(response.text)
-            logger.info(f"已保存HTML调试文件: javbus_debug_{num}.html")
-        except Exception as e:
-            logger.error(f"保存HTML调试文件失败: {str(e)}")
-
-        html = etree.HTML(response.text)
-
-        meta = VideoDetail()
-        meta.num = num
-
-        # 尝试多种方式提取标题
-        title = None
-        
-        # 方法1: 标准h3标签
-        title_element = html.xpath("//h3")
-        if title_element and title_element[0].text and len(title_element[0].text.strip()) > 0:
-            title = title_element[0].text.strip()
-            logger.info(f"通过h3标签找到标题: {title}")
-        
-        # 方法2: 查找包含番号的标题元素
-        if not title:
-            title_elements = html.xpath(f"//*[contains(text(), '{num}')]")
-            for elem in title_elements:
-                text = elem.text
-                if text and len(text.strip()) > 5 and num in text:  # 确保标题有一定长度
-                    title = text.strip()
-                    logger.info(f"通过包含番号的元素找到标题: {title}")
-                    break
-        
-        # 方法3: 查找页面标题
-        if not title:
-            page_title = html.xpath("//title/text()")
-            if page_title and len(page_title[0].strip()) > 0:
-                title = page_title[0].strip()
-                # 如果页面标题包含网站名，尝试清理
-                title = title.replace("JavBus", "").replace("-", "").strip()
-                logger.info(f"通过页面标题找到标题: {title}")
-        
-        # 方法4: 检查是否有重定向或错误提示
-        error_text = html.xpath("//*[contains(text(), '404') or contains(text(), '找不到') or contains(text(), 'not found')]//text()")
-        if error_text:
-            error_msg = " ".join([t.strip() for t in error_text if t.strip()])
-            logger.warning(f"页面可能包含错误信息: {error_msg}")
-        
-        # 最终检查是否找到标题
-        if title:
-            meta.title = title
-        else:
-            logger.error(f"未找到番号 {num} 的标题，HTML内容前200字符: {response.text[:200]}")
-            # 不立即抛出异常，而是返回一个包含基本信息的对象，让其他爬虫有机会处理
-            meta.title = f"{num} (标题未找到)"
-            return meta
-
-        # 尝试提取评分和评论数
-        meta.rank_count = 0
-        
-        # 尝试从页面中提取评分信息
-        score_element = html.xpath("//div[contains(@class,'score')]")
-        if score_element:
-            score_text = etree.tostring(score_element[0], method='text', encoding='utf-8').decode('utf-8').strip()
-            # 尝试提取评分值
-            score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
-            if score_match:
-                try:
-                    meta.rating = score_match.group(1)
-                except:
-                    pass
+            # 修改：允许跟随重定向
+            response = self.session.get(url, allow_redirects=True)
             
-            # 尝试提取评论数，如果有类似"(123人评价)"的格式
-            count_match = re.search(r'(\d+)人評價', score_text)
-            if count_match:
-                try:
-                    meta.rank_count = int(count_match.group(1))
-                except:
-                    pass
+            # 检查响应状态码
+            if response.status_code >= 300:
+                logger.error(f"请求番号 {num} 失败，状态码: {response.status_code}")
+                logger.error(f"响应内容前200字符: {response.text[:200]}")
+                raise SpiderException(f'请求失败，状态码: {response.status_code}')
+            
+            # 保存调试信息
+            try:
+                with open("javbus_debug_response.html", "w", encoding="utf-8") as f:
+                    f.write(response.text)
+                logger.info(f"已保存 {num} 的HTML响应到文件")
+            except Exception as e:
+                logger.error(f"保存调试文件失败: {str(e)}")
+            
+            html = etree.HTML(response.text)
+            
+            meta = VideoDetail()
+            meta.num = num
+            
+            # 尝试多种方式获取标题
+            title = None
+            
+            # 方法1: 标准h3标签
+            title_element = html.xpath("//h3")
+            if title_element and title_element[0].text:
+                title = title_element[0].text
+                logger.info(f"从h3标签获取到标题: {title}")
+            
+            # 方法2: 尝试获取页面title中的信息
+            if not title:
+                page_title = html.xpath("//title/text()")
+                if page_title:
+                    # 尝试从页面标题中提取番号信息
+                    page_title_text = page_title[0]
+                    logger.info(f"页面title: {page_title_text}")
+                    if num in page_title_text:
+                        # 如果页面标题包含番号，可能是有效页面
+                        title = page_title_text.replace(" - JavBus", "").strip()
+                        logger.info(f"从页面标题获取到信息: {title}")
+            
+            # 方法3: 尝试meta标签
+            if not title:
+                meta_desc = html.xpath("//meta[@name='description']/@content")
+                if meta_desc:
+                    logger.info(f"Meta描述: {meta_desc[0]}")
+                    if num in meta_desc[0]:
+                        title = meta_desc[0]
+            
+            # 设置标题，如果仍然找不到，至少使用番号作为标题
+            if title:
+                meta.title = title
+            else:
+                # 检查是否有重定向或者防爬虫页面
+                if "captcha" in response.text.lower() or "verify" in response.text.lower():
+                    logger.error(f"可能遇到验证码或防爬机制: {num}")
+                    raise SpiderException('网站需要人机验证，请稍后再试')
+                
+                logger.error(f"未找到番号 {num} 的标题，HTML内容前200字符: {response.text[:200]}")
+                # 尝试使用番号作为标题，而不是直接失败
+                meta.title = num
+                logger.warning(f"未找到标题，使用番号 {num} 作为标题")
+            
+            # 尝试提取评分和评论数
+            meta.rank_count = 0
+            
+            # 尝试从页面中提取评分信息
+            score_element = html.xpath("//div[contains(@class,'score')]")
+            if score_element:
+                score_text = etree.tostring(score_element[0], method='text', encoding='utf-8').decode('utf-8').strip()
+                # 尝试提取评分值
+                score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
+                if score_match:
+                    try:
+                        meta.rating = score_match.group(1)
+                    except:
+                        pass
+                
+                # 尝试提取评论数，如果有类似"(123人评价)"的格式
+                count_match = re.search(r'(\d+)人評價', score_text)
+                if count_match:
+                    try:
+                        meta.rank_count = int(count_match.group(1))
+                    except:
+                        pass
+            
+            premiered_element = html.xpath("//span[text()='發行日期:']")
+            if premiered_element:
+                meta.premiered = premiered_element[0].tail.strip()
 
-        premiered_element = html.xpath("//span[text()='發行日期:']")
-        if premiered_element:
-            meta.premiered = premiered_element[0].tail.strip()
+            runtime_element = html.xpath("//span[text()='長度:']")
+            if runtime_element:
+                runtime = runtime_element[0].tail.strip()
+                runtime = runtime.replace("分鐘", "")
+                meta.runtime = runtime
 
-        runtime_element = html.xpath("//span[text()='長度:']")
-        if runtime_element:
-            runtime = runtime_element[0].tail.strip()
-            runtime = runtime.replace("分鐘", "")
-            meta.runtime = runtime
+            director_element = html.xpath("//span[text()='導演:']/../a")
+            if director_element:
+                director = director_element[0].text
+                meta.director = director
 
-        director_element = html.xpath("//span[text()='導演:']/../a")
-        if director_element:
-            director = director_element[0].text
-            meta.director = director
+            studio_element = html.xpath("//span[text()='製作商:']/../a")
+            if studio_element:
+                studio = studio_element[0].text
+                meta.studio = studio
 
-        studio_element = html.xpath("//span[text()='製作商:']/../a")
-        if studio_element:
-            studio = studio_element[0].text
-            meta.studio = studio
+            publisher_element = html.xpath("//span[text()='發行商:']/../a")
+            if publisher_element:
+                publisher = publisher_element[0].text
+                meta.publisher = publisher
 
-        publisher_element = html.xpath("//span[text()='發行商:']/../a")
-        if publisher_element:
-            publisher = publisher_element[0].text
-            meta.publisher = publisher
+            series_element = html.xpath("//span[text()='系列:']/../a")
+            if series_element:
+                series = series_element[0].text
+                meta.series = series
 
-        series_element = html.xpath("//span[text()='系列:']/../a")
-        if series_element:
-            series = series_element[0].text
-            meta.series = series
+            tag_elements = html.xpath("//span[@class='genre']//a[contains(@href,'genre')]")
+            if tag_elements:
+                tags = [tag.text for tag in tag_elements]
+                meta.tags = tags
 
-        tag_elements = html.xpath("//span[@class='genre']//a[contains(@href,'genre')]")
-        if tag_elements:
-            tags = [tag.text for tag in tag_elements]
-            meta.tags = tags
+            actor_elements = html.xpath("//span[@class='genre']//a[contains(@href,'star')]")
+            if actor_elements:
+                actors = []
+                for element in actor_elements:
+                    actor_url = element.get('href')
+                    actor_code = actor_url.split("/")[-1]
+                    actor_avatar = urljoin(self.host, f'/pics/actress/{actor_code}_a.jpg')
+                    actor = VideoActor(name=element.text, thumb=actor_avatar)
+                    actors.append(actor)
+                meta.actors = actors
 
-        actor_elements = html.xpath("//span[@class='genre']//a[contains(@href,'star')]")
-        if actor_elements:
-            actors = []
-            for element in actor_elements:
-                actor_url = element.get('href')
-                actor_code = actor_url.split("/")[-1]
-                actor_avatar = urljoin(self.host, f'/pics/actress/{actor_code}_a.jpg')
-                actor = VideoActor(name=element.text, thumb=actor_avatar)
-                actors.append(actor)
-            meta.actors = actors
+            cover_element = html.xpath("//a[@class='bigImage']")
+            if cover_element:
+                cover = cover_element[0].get("href")
+                meta.cover = urljoin(self.host, cover)
 
-        cover_element = html.xpath("//a[@class='bigImage']")
-        if cover_element:
-            cover = cover_element[0].get("href")
-            meta.cover = urljoin(self.host, cover)
+            meta.website.append(url)
 
-        meta.website.append(url)
+            if include_downloads:
+                meta.downloads = self.get_downloads(url, response.text)
 
-        if include_downloads:
-            meta.downloads = self.get_downloads(url, response.text)
+            if include_downloads:
+                meta.previews = self.get_previews(html)
 
-        if include_downloads:
-            meta.previews = self.get_previews(html)
-
-        return meta
+            return meta
+        finally:
+            # 恢复原始头信息
+            self.session.headers = original_headers
 
     def get_previews(self, html: etree.HTML):
         result = []
