@@ -96,11 +96,14 @@ export function updateActorSubscriptionStatus(id: number, isPaused: boolean) {
     })
 }
 
-export function deleteActorSubscription(id: number) {
+export function deleteActorSubscription(subscriptionId: number, deleteDownloads: boolean = false) {
     return request.request({
         url: '/actor-subscribe/',
         method: 'delete',
-        params: { subscribe_id: id },
+        data: {
+            subscription_id: subscriptionId,
+            delete_downloads: deleteDownloads
+        }
     })
 }
 

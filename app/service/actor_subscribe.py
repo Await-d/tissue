@@ -1,6 +1,7 @@
 import time
 import traceback
 import re
+import os
 from datetime import datetime
 from random import randint
 
@@ -64,11 +65,63 @@ class ActorSubscribeService(BaseService):
         return exist
 
     @transaction
-    def delete_actor_subscription(self, subscription_id: int):
+    def delete_actor_subscription(self, subscription_id: int, delete_downloads: bool = False):
+        """删除演员订阅
+        
+        Args:
+            subscription_id: 订阅ID
+            delete_downloads: 是否删除已下载的资源
+        """
         exist = ActorSubscribe.get(self.db, subscription_id)
         if not exist:
             raise BizException("该演员订阅不存在")
+        
+        # 获取该订阅的所有下载记录
+        downloads = self.get_actor_subscription_downloads(subscription_id)
+        
+        if delete_downloads and downloads:
+            logger.info(f"开始删除演员 {exist.actor_name} 的 {len(downloads)} 个下载资源")
+            
+            # 删除qBittorrent中的下载任务
+            for download in downloads:
+                try:
+                    if download.magnet:
+                        # 通过magnet获取种子hash，然后删除任务
+                        self._delete_torrent_by_magnet(download.magnet)
+                        logger.info(f"已删除下载任务: {download.num}")
+                except Exception as e:
+                    logger.error(f"删除下载任务失败 {download.num}: {e}")
+        
+        # 删除下载记录（数据库中的记录）
+        for download in downloads:
+            download.delete(self.db)
+        
+        # 删除订阅记录
         exist.delete(self.db)
+        
+        logger.info(f"已删除演员订阅: {exist.actor_name}, 删除下载资源: {delete_downloads}")
+
+    def _delete_torrent_by_magnet(self, magnet: str):
+        """通过magnet链接删除qBittorrent中的种子"""
+        try:
+            # 从magnet链接中提取hash
+            import re
+            hash_match = re.search(r'btih:([a-fA-F0-9]{40})', magnet)
+            if not hash_match:
+                hash_match = re.search(r'btih:([a-fA-F0-9]{32})', magnet)
+            
+            if hash_match:
+                torrent_hash = hash_match.group(1).lower()
+                # 调用qBittorrent API删除种子（包括文件）
+                response = qbittorent.delete_torrent(torrent_hash, delete_files=True)
+                if response.status_code == 200:
+                    logger.info(f"成功删除种子: {torrent_hash}")
+                else:
+                    logger.warning(f"删除种子失败: {torrent_hash}, 状态码: {response.status_code}")
+            else:
+                logger.warning(f"无法从magnet链接中提取hash: {magnet}")
+        except Exception as e:
+            logger.error(f"删除种子时发生错误: {e}")
 
     def get_actor_subscription_downloads(self, subscription_id: int):
         return (

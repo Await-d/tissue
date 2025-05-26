@@ -88,10 +88,10 @@ class QBittorent:
         )
 
     @auth
-    def delete_torrent(self, torrent_hash: str):
-        self.session.post(
+    def delete_torrent(self, torrent_hash: str, delete_files: bool = True):
+        return self.session.post(
             urljoin(self.host, "/api/v2/torrents/delete"),
-            data={"hashes": torrent_hash, "deleteFiles": "true"},
+            data={"hashes": torrent_hash, "deleteFiles": "true" if delete_files else "false"},
         )
 
     @auth

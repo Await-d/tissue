@@ -58,11 +58,14 @@ def update_actor_subscription_status(
 
 @router.delete("/")
 def delete_actor_subscription(
-    subscribe_id: int, 
+    delete_request: schema.actor_subscribe.ActorSubscribeDeleteRequest,
     service=Depends(get_actor_subscribe_service)
 ):
     """删除演员订阅"""
-    service.delete_actor_subscription(subscribe_id)
+    service.delete_actor_subscription(
+        delete_request.subscription_id, 
+        delete_request.delete_downloads
+    )
     return R.ok()
 
 

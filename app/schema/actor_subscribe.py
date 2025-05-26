@@ -39,6 +39,13 @@ class ActorSubscribeStatusUpdate(BaseModel):
     is_paused: bool
 
 
+class ActorSubscribeDeleteRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    subscription_id: int
+    delete_downloads: bool = False  # 是否删除已下载的资源
+
+
 class ActorSubscribeNotify(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     

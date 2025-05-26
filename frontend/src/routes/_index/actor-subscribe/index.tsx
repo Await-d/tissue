@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography } from 'antd';
+import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography, Checkbox } from 'antd';
 import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, SettingOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined } from '@ant-design/icons';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import * as api from '../../../apis/video';
@@ -88,12 +88,32 @@ function ActorSubscribe() {
 
     // 确认删除
     const confirmDelete = (actor: any) => {
+        let deleteDownloads = false;
+
         Modal.confirm({
             title: '确认取消订阅',
-            content: `确定要取消订阅演员 ${actor.actor_name} 吗？`,
-            okText: '确认',
+            content: (
+                <div>
+                    <p>确定要取消订阅演员 <strong>{actor.actor_name}</strong> 吗？</p>
+                    <div style={{ marginTop: '16px' }}>
+                        <Checkbox
+                            onChange={(e: any) => {
+                                deleteDownloads = e.target.checked;
+                            }}
+                        >
+                            同时删除已下载的资源（包括文件和下载任务）
+                        </Checkbox>
+                        <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                            选中此项将从qBittorrent中删除该演员的所有下载任务和文件
+                        </div>
+                    </div>
+                </div>
+            ),
+            okText: '确认取消订阅',
             cancelText: '取消',
-            onOk: () => deleteSubscription(actor.id)
+            okType: 'danger',
+            width: 450,
+            onOk: () => deleteSubscription(actor.id, deleteDownloads)
         });
     };
 
