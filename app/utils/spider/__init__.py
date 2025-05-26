@@ -11,7 +11,13 @@ from app.utils.spider.javbus import JavbusSpider
 from app.utils.spider.javdb import JavdbSpider
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
-from app.api.video import get_web_actor_videos
+
+
+def get_web_actor_videos(actor_name: str, source: str = 'javdb'):
+    """获取演员的视频列表，这是一个辅助函数，用于避免循环导入"""
+    # 延迟导入以避免循环引用
+    from app.api.video import _get_web_actor_videos
+    return _get_web_actor_videos(actor_name, source)
 
 
 def get_video_cover(url: str):
