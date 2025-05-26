@@ -891,3 +891,33 @@ fabric.properties
 
 .idea
 config
+
+# 调试文件
+*.html
+*.log
+
+# IDE 和编辑器特定文件
+.idea/
+.vscode/
+*.swp
+*~
+
+# Python 缓存和字节码
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 构建和分发
+build/
+dist/
+*.egg-info/
+*.egg
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# 操作系统特定文件
+.DS_Store
+Thumbs.db
