@@ -11,6 +11,7 @@ from app.utils.spider.javbus import JavbusSpider
 from app.utils.spider.javdb import JavdbSpider
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
+from app.api.video import get_web_actor_videos
 
 
 def get_video_cover(url: str):
