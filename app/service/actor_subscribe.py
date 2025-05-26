@@ -92,7 +92,13 @@ class ActorSubscribeService(BaseService):
                     # 检查是否是新作品（发布日期晚于订阅起始日期）
                     if video.get("publish_date"):
                         try:
-                            video_date = datetime.strptime(video["publish_date"], "%Y-%m-%d").date()
+                            # 处理不同格式的日期
+                            if isinstance(video["publish_date"], str):
+                                video_date = datetime.strptime(video["publish_date"], "%Y-%m-%d").date()
+                            else:
+                                # 如果已经是日期对象
+                                video_date = video["publish_date"]
+                                
                             if video_date < subscription.from_date:
                                 continue
                         except Exception as e:
