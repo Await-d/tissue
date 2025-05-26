@@ -1,4 +1,4 @@
-FROM python:3.11.4-slim-bullseye
+FROM python:3.11.8-slim-bullseye
 LABEL authors="Chris Chen"
 
 ENV LANG="C.UTF-8" \
