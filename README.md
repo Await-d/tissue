@@ -2,7 +2,7 @@
  * @Author: Await
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
- * @LastEditTime: 2025-05-26 18:32:06
+ * @LastEditTime: 2025-05-27 04:29:22
  * @Description: 请填写简介
 -->
 # Tissue-Plus
@@ -16,7 +16,7 @@
 
 > 本项目基于 [chris-2s/tissue](https://github.com/chris-2s/tissue) 进行二次开发，感谢原作者的贡献。
 
-[效果图传送阵](#talk-is-cheap-show-me-the-view)
+[效果图传送阵](#talk-is-cheap-show-me-the-view) | [版本更新记录](CHANGELOG.md)
 
 ### 注意事项
 
