@@ -1,11 +1,20 @@
-# Tissue
+<!--
+ * @Author: Await
+ * @Date: 2025-05-24 17:05:38
+ * @LastEditors: Await
+ * @LastEditTime: 2025-05-26 18:32:06
+ * @Description: 请填写简介
+-->
+# Tissue-Plus
 
-![GitHub License](https://img.shields.io/github/license/chris-2s/tissue)
-![Docker Image Version](https://img.shields.io/docker/v/chris2s/tissue/latest)
-![Docker Image Size](https://img.shields.io/docker/image-size/chris2s/tissue/latest)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/chris-2s/tissue/build.yml)
+![GitHub License](https://img.shields.io/github/license/Await-d/tissue)
+![Docker Image Version](https://img.shields.io/docker/v/chris2s/tissue-plus/latest)
+![Docker Image Size](https://img.shields.io/docker/image-size/chris2s/tissue-plus/latest)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Await-d/tissue/build.yml)
 
 老师教材刮削工具，提供海报下载、元数据匹配等功能，使教材能够在Jellyfin、Emby、Kodi等工具里装订成册，便于学习。
+
+> 本项目基于 [chris-2s/tissue](https://github.com/chris-2s/tissue) 进行二次开发，感谢原作者的贡献。
 
 [效果图传送阵](#talk-is-cheap-show-me-the-view)
 
@@ -14,28 +23,28 @@
 - ***科学的上网方式***是使用本项目的前提，这是最重要的一点。
 - 项目仍处于非常早期阶段，只是满足了最基本的需求。
 - 目前仍有许多bug，不排除有丢失或污染数据的可能性，请做好备份，酌情使用。
-- 对于非Tissue刮削的NFO文件打开可能存在报错，有处理了部分情况，可能还有遗漏的情况。
+- 对于非Tissue-Plus刮削的NFO文件打开可能存在报错，有处理了部分情况，可能还有遗漏的情况。
 - 当前还是自用为主，请勿在国内任何平台讨论本项目。
 
 ### 部署方式
 
 目前仅提供Docker一种部署方式
 
-[前往Docker Hub下载](https://hub.docker.com/r/chris2s/tissue)
+[前往Docker Hub下载](https://hub.docker.com/r/chris2s/tissue-plus)
 
 或直接执行以下命令，请将路径或端口按照自己的实际情况做调整，相关说明请往下看
 
 ```shell
 docker run \
   -d \
-  --name=tissue \
+  --name=tissue-plus \
   -e TZ="Asia/Shanghai" \
   -p '9193:9193' \
   -v '/path/for/config':'/app/config' \
   -v '/path/for/video':'/data/video' \
   -v '/path/for/file':'/data/file' \
   -v '/path/for/downloads':'/downloads' \
-  'chris2s/tissue:latest'
+  'chris2s/tissue-plus:latest'
 ```
 
 ### Docker环境变量
@@ -79,5 +88,3 @@ docker run \
 <img width="1685" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/e5707b21-2737-4fb6-839e-a213318eddf3">
 <img width="1685" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/4597df98-87bf-40a6-805f-37dc0b5e02ad">
 <img width="1682" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/ac11e3c0-7631-40cb-bef6-7074fe3bbc2f">
-
-

@@ -467,6 +467,15 @@ class JavdbSpider(Spider):
                                 item.rank = float(score_match.group(1))
                             except:
                                 pass
+                        
+                        # 提取评论数
+                        count_match = re.search(r'由(\d+)人評價', score_text)
+                        if count_match:
+                            try:
+                                item.rank_count = int(count_match.group(1))
+                                logger.info(f"解析到评论数: {item.rank_count}")
+                            except Exception as e:
+                                logger.error(f"评论数解析失败: {score_text}, 错误: {str(e)}")
                     
                     # 检查标签
                     cnsub_element = box.xpath('.//span[contains(@class, "cnsub")]')

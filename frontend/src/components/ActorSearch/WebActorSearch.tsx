@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip } from 'antd';
-import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined } from '@ant-design/icons';
+import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip, Tag, App, Rate } from 'antd';
+import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined, StarFilled, CheckCircleFilled } from '@ant-design/icons';
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -31,6 +31,7 @@ interface WebVideo {
     is_uncensored: boolean;
     rank?: number;
     publish_date?: string;
+    rank_count?: number;
 }
 
 interface WebActorSearchProps {
@@ -47,6 +48,7 @@ interface SavedState {
 }
 
 const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultSearchValue }) => {
+    const { message } = App.useApp();
     // 尝试从localStorage获取保存的状态
     const getSavedState = (): SavedState | null => {
         try {
@@ -79,6 +81,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     const router = useRouter(); // 添加路由钩子
     const isFirstRender = useRef(true); // 添加首次渲染标记
     const [subscribeModalVisible, setSubscribeModalVisible] = useState(false);
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const [checkingSubscription, setCheckingSubscription] = useState(false);
 
     // 保存状态到localStorage
     const saveState = () => {
@@ -156,9 +160,41 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 if (data && data.length === 0) {
                     message.info('没有找到该演员的视频');
                 }
+                // 当获取到演员视频数据后，检查该演员是否已被订阅
+                if (selectedActor && selectedActor.name) {
+                    checkActorSubscription(selectedActor.name);
+                }
             }
         }
     );
+
+    // 添加检查演员是否已被订阅的函数
+    const checkActorSubscription = async (actorName: string) => {
+        if (!actorName) return;
+
+        setCheckingSubscription(true);
+        try {
+            const subscriptions = await subscribeApi.getActorSubscriptions();
+            const isAlreadySubscribed = subscriptions.some(
+                (sub: any) => sub.actor_name.toLowerCase() === actorName.toLowerCase()
+            );
+            setIsSubscribed(isAlreadySubscribed);
+            console.log(`演员 ${actorName} 订阅状态:`, isAlreadySubscribed ? '已订阅' : '未订阅');
+        } catch (error) {
+            console.error('检查演员订阅状态失败:', error);
+        } finally {
+            setCheckingSubscription(false);
+        }
+    };
+
+    // 当选中的演员变化时，检查订阅状态
+    useEffect(() => {
+        if (selectedActor && selectedActor.name) {
+            checkActorSubscription(selectedActor.name);
+        } else {
+            setIsSubscribed(false);
+        }
+    }, [selectedActor]);
 
     // 添加下载功能
     const { run: onDownload, loading: onDownloading } = useRequest(subscribeApi.downloadVideos, {
@@ -496,6 +532,13 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         }
     }, [router.state.location.pathname, selectedActor, fetchActorVideos]);
 
+    // 处理订阅成功后的回调
+    const handleSubscribeSuccess = () => {
+        setSubscribeModalVisible(false);
+        setIsSubscribed(true);
+        message.success(`已成功订阅演员 ${selectedActor?.name}`);
+    };
+
     return (
         <div style={{ padding: '16px' }}>
             <Space direction="vertical" style={{ width: '100%', marginBottom: '16px' }}>
@@ -543,16 +586,25 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                             icon={<UserOutlined />}
                             src={selectedActor.thumb ? api.getVideoCover(selectedActor.thumb) : undefined}
                         />
-                        <h2 style={{ marginTop: 8 }}>{selectedActor.name}</h2>
+                        <h2 style={{ marginTop: 8 }}>
+                            {selectedActor.name}
+                            {checkingSubscription ? (
+                                <Spin size="small" style={{ marginLeft: 8 }} />
+                            ) : isSubscribed ? (
+                                <Tag color="green" icon={<CheckCircleFilled />} style={{ marginLeft: 8 }}>
+                                    已订阅
+                                </Tag>
+                            ) : null}
+                        </h2>
 
-                        {/* 添加订阅按钮 */}
+                        {/* 订阅按钮根据订阅状态显示不同样式 */}
                         <Button
-                            type="primary"
-                            icon={<StarOutlined />}
+                            type={isSubscribed ? "default" : "primary"}
+                            icon={isSubscribed ? <StarFilled /> : <StarOutlined />}
                             style={{ marginTop: 8 }}
                             onClick={() => setSubscribeModalVisible(true)}
                         >
-                            订阅演员
+                            {isSubscribed ? "修改订阅" : "订阅演员"}
                         </Button>
                     </div>
 
@@ -636,10 +688,16 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                 description={
                                                     <div>
                                                         <div><strong>{video.num}</strong></div>
+                                                        {video.rank && (
+                                                            <div className={'flex items-center my-2'}>
+                                                                <Rate disabled allowHalf value={video.rank} style={{ fontSize: 12 }} />
+                                                                <div className={'mx-1'}>{video.rank}分</div>
+                                                                {video.rank_count && <div>由{video.rank_count}人评价</div>}
+                                                            </div>
+                                                        )}
                                                         <div>
                                                             {video.is_zh && <span style={{ marginRight: 8, color: '#1890ff' }}>中文</span>}
                                                             {video.is_uncensored && <span style={{ color: '#ff4d4f' }}>无码</span>}
-                                                            {video.rank && <span style={{ marginLeft: 8 }}>评分: {video.rank}</span>}
                                                         </div>
                                                         {video.publish_date && <div style={{ marginTop: 4, color: '#8c8c8c', fontSize: '12px' }}>发行日期: {video.publish_date}</div>}
                                                     </div>
@@ -723,15 +781,13 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 confirmLoading={onDownloading}
             />
 
-            {/* 添加演员订阅对话框 */}
+            {/* 修改演员订阅对话框，添加onOk回调 */}
             {selectedActor && (
                 <ActorSubscribeModal
                     open={subscribeModalVisible}
                     actor={selectedActor}
                     onCancel={() => setSubscribeModalVisible(false)}
-                    onOk={() => {
-                        setSubscribeModalVisible(false);
-                    }}
+                    onOk={handleSubscribeSuccess}
                 />
             )}
         </div>

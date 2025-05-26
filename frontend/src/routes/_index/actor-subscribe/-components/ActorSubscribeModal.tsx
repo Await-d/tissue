@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Form, Input, Checkbox, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, message } from 'antd';
+import { Modal, Form, Input, Checkbox, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, App } from 'antd';
 import { UserOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/video';
 import * as subscribeApi from '../../../../apis/subscribe';
@@ -22,6 +22,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
     confirmLoading = false
 }) => {
     const [form] = Form.useForm();
+    const { message } = App.useApp();
 
     // 当演员信息变化时，更新表单数据
     React.useEffect(() => {

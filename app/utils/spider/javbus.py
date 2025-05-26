@@ -32,6 +32,30 @@ class JavbusSpider(Spider):
         else:
             raise SpiderException('未找到番号')
 
+        # 尝试提取评分和评论数
+        meta.rank = 0.0
+        meta.rank_count = 0
+        
+        # 尝试从页面中提取评分信息
+        score_element = html.xpath("//div[contains(@class,'score')]")
+        if score_element:
+            score_text = etree.tostring(score_element[0], method='text', encoding='utf-8').decode('utf-8').strip()
+            # 尝试提取评分值
+            score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
+            if score_match:
+                try:
+                    meta.rank = float(score_match.group(1))
+                except:
+                    pass
+            
+            # 尝试提取评论数，如果有类似"(123人评价)"的格式
+            count_match = re.search(r'(\d+)人評價', score_text)
+            if count_match:
+                try:
+                    meta.rank_count = int(count_match.group(1))
+                except:
+                    pass
+
         premiered_element = html.xpath("//span[text()='發行日期:']")
         if premiered_element:
             meta.premiered = premiered_element[0].tail.strip()
@@ -567,6 +591,33 @@ class JavbusSpider(Spider):
                     item.url = movie_url
                     item.isZh = is_zh
                     item.is_uncensored = is_uncensored
+                    
+                    # 尝试提取评分和评论数
+                    # 在JavBus中评分信息可能不在当前页面，这里添加一个默认值
+                    item.rank = 0.0
+                    item.rank_count = 0
+                    
+                    # 尝试从页面中提取评分信息，例如"★4.82分"这样的格式
+                    score_element = box.xpath('.//div[contains(@class,"score")]')
+                    if score_element:
+                        score_text = etree.tostring(score_element[0], method='text', encoding='utf-8').decode('utf-8').strip()
+                        # 尝试提取评分值
+                        score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
+                        if score_match:
+                            try:
+                                item.rank = float(score_match.group(1))
+                                logger.info(f"从评分元素提取到评分: {item.rank}")
+                            except:
+                                pass
+                        
+                        # 尝试提取评论数，如果有类似"(123人评价)"的格式
+                        count_match = re.search(r'(\d+)人評價', score_text)
+                        if count_match:
+                            try:
+                                item.rank_count = int(count_match.group(1))
+                                logger.info(f"从评分元素提取到评论数: {item.rank_count}")
+                            except Exception as e:
+                                logger.error(f"评论数解析失败: {score_text}, 错误: {str(e)}")
                     
                     # 尝试获取发布日期 - 修复JavBus特有的日期格式
                     # JavBus网站中日期在第二个<date>标签中

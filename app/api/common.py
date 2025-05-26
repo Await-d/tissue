@@ -1,3 +1,10 @@
+'''
+Author: Await
+Date: 2025-05-24 17:05:38
+LastEditors: Await
+LastEditTime: 2025-05-26 18:33:42
+Description: 请填写简介
+'''
 import hashlib
 import re
 
@@ -53,7 +60,7 @@ async def proxy_video_trailer(url: str, request: Request):
 def get_versions():
     current = APP_VERSION[1:]
 
-    response = requests.get("https://raw.githubusercontent.com/chris-2s/tissue/refs/heads/main/version.py", timeout=10)
+    response = requests.get("https://raw.githubusercontent.com/Await-d/tissue/main/version.py", timeout=10)
     latest = re.match(r"APP_VERSION = 'v(.+?)'", response.text).group(1)
 
     return R.ok({

@@ -6,7 +6,7 @@ import {
     Empty,
     Input,
     List,
-    message,
+    App,
     Row, Segmented, Skeleton,
     Space,
     Tag,
@@ -64,6 +64,7 @@ export const Route = createFileRoute('/_index/search/')({
 
 
 export function Search() {
+    const { message } = App.useApp();
     const router = useRouter()
     const navigate = useNavigate()
 

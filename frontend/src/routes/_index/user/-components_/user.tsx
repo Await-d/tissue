@@ -1,4 +1,11 @@
-import { Card, message, Table } from "antd";
+/*
+ * @Author: Await
+ * @Date: 2025-05-24 17:05:38
+ * @LastEditors: Await
+ * @LastEditTime: 2025-05-26 18:01:49
+ * @Description: 请填写简介
+ */
+import { Card, App, Table } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import React from "react";
 import { PlusOutlined } from "@ant-design/icons";
@@ -10,6 +17,7 @@ import IconButton from "../../../../components/IconButton";
 import { useFormModal } from "../../../../utils/useFormModal.ts";
 
 function UserList() {
+    const { message } = App.useApp();
     const { tableProps, refresh } = useAntdTable(api.getUsers)
     const { setOpen, modalProps, form } = useFormModal({
         service: api.modifyUser,

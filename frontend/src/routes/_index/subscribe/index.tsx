@@ -1,4 +1,4 @@
-import { Card, Col, Empty, FloatButton, Input, message, Row, Skeleton, Space, Tag, Tooltip } from "antd";
+import { Card, Col, Empty, FloatButton, Input, App, Row, Skeleton, Space, Tag, Tooltip } from "antd";
 import React, { useState } from "react";
 import * as api from "../../../apis/subscribe";
 import { useRequest } from "ahooks";
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_index/subscribe/')({
 })
 
 function Subscribe() {
-
+    const { message } = App.useApp();
     const navigate = useNavigate()
 
     const { data = [], loading, refresh } = useRequest(api.getSubscribes, {})
