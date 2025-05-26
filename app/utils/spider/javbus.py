@@ -17,6 +17,7 @@ class JavbusSpider(Spider):
     downloadable = True
 
     def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
+        from app.utils.logger import logger
 
         url = urljoin(self.host, num)
         # 修改：允许跟随重定向
@@ -24,24 +25,65 @@ class JavbusSpider(Spider):
         
         # 检查响应状态码
         if response.status_code >= 300:
-            from app.utils.logger import logger
             logger.error(f"请求番号 {num} 失败，状态码: {response.status_code}")
             logger.error(f"响应内容前200字符: {response.text[:200]}")
             raise SpiderException(f'请求失败，状态码: {response.status_code}')
+
+        # 保存完整HTML用于调试
+        try:
+            with open(f"javbus_debug_{num}.html", "w", encoding="utf-8") as f:
+                f.write(response.text)
+            logger.info(f"已保存HTML调试文件: javbus_debug_{num}.html")
+        except Exception as e:
+            logger.error(f"保存HTML调试文件失败: {str(e)}")
 
         html = etree.HTML(response.text)
 
         meta = VideoDetail()
         meta.num = num
 
+        # 尝试多种方式提取标题
+        title = None
+        
+        # 方法1: 标准h3标签
         title_element = html.xpath("//h3")
-        if title_element:
-            title = title_element[0].text
+        if title_element and title_element[0].text and len(title_element[0].text.strip()) > 0:
+            title = title_element[0].text.strip()
+            logger.info(f"通过h3标签找到标题: {title}")
+        
+        # 方法2: 查找包含番号的标题元素
+        if not title:
+            title_elements = html.xpath(f"//*[contains(text(), '{num}')]")
+            for elem in title_elements:
+                text = elem.text
+                if text and len(text.strip()) > 5 and num in text:  # 确保标题有一定长度
+                    title = text.strip()
+                    logger.info(f"通过包含番号的元素找到标题: {title}")
+                    break
+        
+        # 方法3: 查找页面标题
+        if not title:
+            page_title = html.xpath("//title/text()")
+            if page_title and len(page_title[0].strip()) > 0:
+                title = page_title[0].strip()
+                # 如果页面标题包含网站名，尝试清理
+                title = title.replace("JavBus", "").replace("-", "").strip()
+                logger.info(f"通过页面标题找到标题: {title}")
+        
+        # 方法4: 检查是否有重定向或错误提示
+        error_text = html.xpath("//*[contains(text(), '404') or contains(text(), '找不到') or contains(text(), 'not found')]//text()")
+        if error_text:
+            error_msg = " ".join([t.strip() for t in error_text if t.strip()])
+            logger.warning(f"页面可能包含错误信息: {error_msg}")
+        
+        # 最终检查是否找到标题
+        if title:
             meta.title = title
         else:
-            from app.utils.logger import logger
             logger.error(f"未找到番号 {num} 的标题，HTML内容前200字符: {response.text[:200]}")
-            raise SpiderException('未找到番号')
+            # 不立即抛出异常，而是返回一个包含基本信息的对象，让其他爬虫有机会处理
+            meta.title = f"{num} (标题未找到)"
+            return meta
 
         # 尝试提取评分和评论数
         meta.rank_count = 0
