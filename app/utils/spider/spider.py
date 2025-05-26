@@ -24,8 +24,6 @@ import logging
 import requests
 import ssl
 import time
-from urllib3.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -44,18 +42,6 @@ class Session(requests.Session):
     def __init__(self, timeout: int = 10):
         super().__init__()
         self.timeout = timeout
-        
-        # 配置重试策略
-        retry_strategy = Retry(
-            total=3,
-            status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=["HEAD", "GET", "OPTIONS"],
-            backoff_factor=1
-        )
-        
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        self.mount("http://", adapter)
-        self.mount("https://", adapter)
         
         # 禁用SSL验证以避免证书问题
         self.verify = False
