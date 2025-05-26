@@ -104,3 +104,10 @@ export async function getActorSubscriptionDownloads(actorId: number) {
     })
     return response.data.data
 }
+
+export function runActorSubscribe() {
+    return request.request({
+        url: '/actor-subscribe/run',
+        method: 'post'
+    })
+}

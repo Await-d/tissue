@@ -85,7 +85,7 @@ function DownloadListModal(props: Props) {
             ]}
             width={700}
             centered
-            bodyStyle={{ maxHeight: '60vh', overflowY: 'auto', padding: '12px 24px' }}
+            styles={{ body: { maxHeight: '60vh', overflowY: 'auto', padding: '12px 24px' } }}
         >
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography.Text>
