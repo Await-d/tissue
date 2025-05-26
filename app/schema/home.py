@@ -14,3 +14,4 @@ class JavDBRanking(BaseModel):
     isZh: Optional[bool] = False
     is_uncensored: Optional[bool] = False
     url: Optional[str] = None
+    rating: Optional[str] = None

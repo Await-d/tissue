@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem, VideoPreview
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
+from app.schema.home import JavDBRanking
 
 
 class JavbusSpider(Spider):
@@ -33,7 +34,6 @@ class JavbusSpider(Spider):
             raise SpiderException('未找到番号')
 
         # 尝试提取评分和评论数
-        meta.rank = 0.0
         meta.rank_count = 0
         
         # 尝试从页面中提取评分信息
@@ -44,7 +44,7 @@ class JavbusSpider(Spider):
             score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
             if score_match:
                 try:
-                    meta.rank = float(score_match.group(1))
+                    meta.rating = score_match.group(1)
                 except:
                     pass
             
@@ -594,7 +594,7 @@ class JavbusSpider(Spider):
                     
                     # 尝试提取评分和评论数
                     # 在JavBus中评分信息可能不在当前页面，这里添加一个默认值
-                    item.rank = 0.0
+                    item.rating = '0.0'
                     item.rank_count = 0
                     
                     # 尝试从页面中提取评分信息，例如"★4.82分"这样的格式
@@ -605,8 +605,8 @@ class JavbusSpider(Spider):
                         score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
                         if score_match:
                             try:
-                                item.rank = float(score_match.group(1))
-                                logger.info(f"从评分元素提取到评分: {item.rank}")
+                                item.rating = score_match.group(1)
+                                logger.info(f"从评分元素提取到评分: {item.rating}")
                             except:
                                 pass
                         
