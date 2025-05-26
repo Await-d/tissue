@@ -1,15 +1,22 @@
+/*
+ * @Author: Await
+ * @Date: 2025-05-24 17:05:38
+ * @LastEditors: Await
+ * @LastEditTime: 2025-05-26 16:49:02
+ * @Description: 请填写简介
+ */
 import React from 'react';
 import zhCN from "antd/lib/locale/zh_CN";
 import dayjs from "dayjs";
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import relativeTime from "dayjs/plugin/relativeTime";
 import 'dayjs/locale/zh-cn'
-import {useTheme} from "ahooks";
-import {useSelector} from "react-redux";
+import { useTheme } from "ahooks";
+import { useSelector } from "react-redux";
 
-import {ConfigProvider, theme} from "antd";
-import {RootState} from "../models";
-import {createRootRouteWithContext, Outlet} from "@tanstack/react-router";
+import { ConfigProvider, theme, App as AntdApp } from "antd";
+import { RootState } from "../models";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 
 
 dayjs.extend(relativeTime)
@@ -27,7 +34,7 @@ export const Route = createRootRouteWithContext<MyRouteContext>()({
 function App() {
 
     const themeMode = useSelector((state: RootState) => state.app?.themeMode)
-    const {theme: systemTheme} = useTheme()
+    const { theme: systemTheme } = useTheme()
 
     const handleThemeChange = () => {
         switch (themeMode) {
@@ -46,7 +53,9 @@ function App() {
             theme={{
                 algorithm: handleThemeChange(),
             }}>
-            <Outlet/>
+            <AntdApp>
+                <Outlet />
+            </AntdApp>
         </ConfigProvider>
     );
 }

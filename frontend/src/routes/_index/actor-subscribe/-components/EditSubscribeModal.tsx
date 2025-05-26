@@ -1,44 +1,45 @@
-import React from 'react';
-import { Modal, Form, Input, Checkbox, DatePicker, Button, Row, Col, Avatar, Space, Tooltip } from 'antd';
+import React, { useEffect } from 'react';
+import { Modal, Form, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, Checkbox, Input } from 'antd';
 import { UserOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/video';
 import * as subscribeApi from '../../../../apis/subscribe';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 
-interface ActorSubscribeModalProps {
+interface EditSubscribeModalProps {
     open: boolean;
-    actor: any;
+    subscription: any;
     onCancel: () => void;
     onOk: () => void;
     confirmLoading?: boolean;
 }
 
-const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
+const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
     open,
-    actor,
+    subscription,
     onCancel,
     onOk,
     confirmLoading = false
 }) => {
     const [form] = Form.useForm();
 
-    // 当演员信息变化时，更新表单数据
-    React.useEffect(() => {
-        if (actor && open) {
+    // 当订阅信息变化时，更新表单数据
+    useEffect(() => {
+        if (subscription && open) {
             form.setFieldsValue({
-                actor_name: actor.name,
-                actor_url: actor.url,
-                actor_thumb: actor.thumb,
-                from_date: dayjs(),
-                is_hd: true,
-                is_zh: false,
-                is_uncensored: false
+                id: subscription.id,
+                actor_name: subscription.actor_name,
+                actor_url: subscription.actor_url,
+                actor_thumb: subscription.actor_thumb,
+                from_date: subscription.from_date ? dayjs(subscription.from_date) : dayjs(),
+                is_hd: subscription.is_hd,
+                is_zh: subscription.is_zh,
+                is_uncensored: subscription.is_uncensored
             });
         }
-    }, [actor, open, form]);
+    }, [subscription, open, form]);
 
-    const { run: subscribe, loading } = useRequest(subscribeApi.subscribeActor, {
+    const { run: updateSubscription, loading } = useRequest(subscribeApi.updateActorSubscription, {
         manual: true,
         onSuccess: () => {
             onOk();
@@ -47,7 +48,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
 
     const handleSubmit = () => {
         form.validateFields().then(values => {
-            subscribe({
+            updateSubscription({
                 ...values,
                 from_date: values.from_date.format('YYYY-MM-DD')
             });
@@ -56,7 +57,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
 
     return (
         <Modal
-            title="订阅演员"
+            title="编辑订阅设置"
             open={open}
             onCancel={onCancel}
             confirmLoading={confirmLoading || loading}
@@ -65,7 +66,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                     取消
                 </Button>,
                 <Button key="submit" type="primary" loading={confirmLoading || loading} onClick={handleSubmit}>
-                    确定
+                    保存
                 </Button>
             ]}
         >
@@ -79,16 +80,20 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                     from_date: dayjs()
                 }}
             >
-                {actor && (
+                {subscription && (
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                         <Avatar
                             size={64}
                             icon={<UserOutlined />}
-                            src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
+                            src={subscription.actor_thumb ? api.getVideoCover(subscription.actor_thumb) : undefined}
                         />
-                        <h2 style={{ marginTop: 8 }}>{actor.name}</h2>
+                        <h2 style={{ marginTop: 8 }}>{subscription.actor_name}</h2>
                     </div>
                 )}
+
+                <Form.Item name="id" hidden>
+                    <Input />
+                </Form.Item>
 
                 <Form.Item name="actor_name" hidden>
                     <Input />
@@ -151,11 +156,11 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                 </Row>
 
                 <div style={{ marginTop: '16px', color: '#888', fontSize: '14px' }}>
-                    系统将自动监控该演员的新作品，并根据设置的条件进行下载。
+                    更改订阅设置后，系统将根据新的条件进行下载。
                 </div>
             </Form>
         </Modal>
     );
 };
 
-export default ActorSubscribeModal; 
+export default EditSubscribeModal; 
