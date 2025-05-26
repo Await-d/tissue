@@ -19,7 +19,15 @@ class JavbusSpider(Spider):
     def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
         url = urljoin(self.host, num)
-        response = self.session.get(url, allow_redirects=False)
+        # 修改：允许跟随重定向
+        response = self.session.get(url, allow_redirects=True)
+        
+        # 检查响应状态码
+        if response.status_code >= 300:
+            from app.utils.logger import logger
+            logger.error(f"请求番号 {num} 失败，状态码: {response.status_code}")
+            logger.error(f"响应内容前200字符: {response.text[:200]}")
+            raise SpiderException(f'请求失败，状态码: {response.status_code}')
 
         html = etree.HTML(response.text)
 
@@ -31,6 +39,8 @@ class JavbusSpider(Spider):
             title = title_element[0].text
             meta.title = title
         else:
+            from app.utils.logger import logger
+            logger.error(f"未找到番号 {num} 的标题，HTML内容前200字符: {response.text[:200]}")
             raise SpiderException('未找到番号')
 
         # 尝试提取评分和评论数
