@@ -17,13 +17,26 @@ export async function getVideos(force: boolean = false) {
     return response.data.data
 }
 
-export async function getVideoDetail(path: string) {
+export async function getVideoDetail(path: string, source?: string, url?: string) {
+    if (source && url) {
+        const response = await request.request({
+            url: '/home/ranking/detail',
+            method: 'get',
+            params: {
+                num: path,
+                source: source,
+                url: url
+            }
+        });
+        return response.data;
+    }
+
     const response = await request.request({
         url: '/video/detail',
         method: 'get',
         params: { path }
-    })
-    return response.data.data
+    });
+    return response.data.data;
 }
 
 export async function parseVideoNum(path: string) {

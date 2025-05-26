@@ -19,29 +19,29 @@ function TabBar() {
 
     const menus = [
         {
-            link: '/home',
+            link: '/_index/home',
             icon: <HomeOutlined />
         },
         {
-            link: '/video',
+            link: '/_index/video',
             icon: <VideoCameraOutlined />
         },
         {
-            link: '/subscribe',
+            link: '/_index/subscribe',
             icon: <CarryOutOutlined />
         },
         {
-            link: '/search',
+            link: '/_index/search',
             icon: <SearchOutlined />,
             title: '番号'
         },
         {
-            link: '/actor',
+            link: '/_index/actor',
             icon: <UserOutlined />,
             title: '演员'
         },
         {
-            link: '/menu',
+            link: '/_index/menu',
             icon: <MenuOutlined />
         }
     ]
@@ -52,7 +52,7 @@ function TabBar() {
             {menus.map(item => (
                 <div key={item.link} className={'text-2xl'}>
                     <Link to={item.link}
-                        style={{ color: location.pathname === item.link ? token.colorPrimary : token.colorText }}>
+                        style={{ color: location.pathname === item.link || location.pathname.startsWith(item.link + '/') ? token.colorPrimary : token.colorText }}>
                         <div className={'px-4'}>
                             {item.icon}
                         </div>

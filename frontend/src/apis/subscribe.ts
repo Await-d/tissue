@@ -2,7 +2,7 @@
  * @Author: Await
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
- * @LastEditTime: 2025-05-26 00:02:10
+ * @LastEditTime: 2025-05-27 05:19:35
  * @Description: 请填写简介
  */
 import { request } from "../utils/requests";
@@ -114,6 +114,27 @@ export async function getActorSubscriptionDownloads(actorId: number) {
         params: { actor_id: actorId }
     })
     return response.data.data
+}
+
+export async function getAllSubscriptionDownloads() {
+    try {
+        const response = await request.request({
+            url: '/actor-subscribe/all-downloads',
+            method: 'get'
+        });
+        return response.data.data;
+    } catch (error) {
+        console.error('获取所有下载记录失败:', error);
+        return [];
+    }
+}
+
+export function deleteSubscriptionDownload(downloadId: number, deleteFiles: boolean = false) {
+    return request.request({
+        url: `/actor-subscribe/download/${downloadId}`,
+        method: 'delete',
+        params: { delete_files: deleteFiles }
+    })
 }
 
 export function runActorSubscribe() {

@@ -76,8 +76,8 @@ function JavDB() {
                             {videos.map((item: any) => (
                                 <Col key={item.url} span={24} md={12} lg={6}
                                     onClick={() => navigate({
-                                        to: '/home/detail',
-                                        search: { source: 'JavDB', num: item.num, url: item.url }
+                                        to: `/_index/video/${item.num}`,
+                                        search: { source: 'JavDB', url: item.url }
                                     })}><JavDBItem
                                         item={item} /></Col>
                             ))}

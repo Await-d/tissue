@@ -59,9 +59,20 @@ async def proxy_video_trailer(url: str, request: Request):
 @cached(cache=TTLCache(maxsize=1, ttl=3600))
 def get_versions():
     current = APP_VERSION[1:]
+    latest = current  # 默认值为当前版本
 
-    response = requests.get("https://raw.githubusercontent.com/Await-d/tissue/main/version.py", timeout=10)
-    latest = re.match(r"APP_VERSION = 'v(.+?)'", response.text).group(1)
+    try:
+        response = requests.get("https://raw.githubusercontent.com/Await-d/tissue/main/version.py", timeout=10)
+        if response.status_code == 200:
+            # 使用更灵活的正则表达式匹配
+            match = re.search(r"APP_VERSION\s*=\s*['\"]v?(.+?)['\"]", response.text)
+            if match:
+                latest = match.group(1)
+            else:
+                print("未能从响应中匹配到版本号")
+    except Exception as e:
+        # 捕获所有异常，包括网络错误、超时等
+        print(f"获取最新版本失败: {e}")
 
     return R.ok({
         "current": current,

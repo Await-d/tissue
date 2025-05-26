@@ -131,6 +131,66 @@ class ActorSubscribeService(BaseService):
             .all()
         )
 
+    def get_all_subscription_downloads(self):
+        """获取所有演员订阅的下载记录，带有演员信息"""
+        try:
+            # 使用SQL联表查询获取下载记录和对应的演员信息
+            query = """
+            SELECT d.*, a.actor_name, a.actor_thumb
+            FROM actor_subscribe_download d
+            JOIN actor_subscribe a ON d.actor_subscribe_id = a.id
+            ORDER BY d.download_time DESC
+            """
+            result = self.db.execute(query)
+            downloads = []
+            
+            for row in result:
+                # 将查询结果转换为字典
+                download_dict = {
+                    'id': row.id,
+                    'actor_subscribe_id': row.actor_subscribe_id,
+                    'num': row.num,
+                    'title': row.title,
+                    'cover': row.cover,
+                    'magnet': row.magnet,
+                    'size': row.size,
+                    'download_time': row.download_time,
+                    'is_hd': row.is_hd,
+                    'is_zh': row.is_zh,
+                    'is_uncensored': row.is_uncensored,
+                    'actor_name': row.actor_name,
+                    'actor_thumb': row.actor_thumb
+                }
+                downloads.append(download_dict)
+            
+            return downloads
+        except Exception as e:
+            logger.error(f"获取所有下载记录失败: {e}")
+            return []
+
+    @transaction
+    def delete_subscription_download(self, download_id: int, delete_files: bool = False):
+        """删除单个下载记录
+        
+        Args:
+            download_id: 下载记录ID
+            delete_files: 是否同时删除文件
+        """
+        download = ActorSubscribeDownload.get(self.db, download_id)
+        if not download:
+            raise BizException("下载记录不存在")
+        
+        if delete_files and download.magnet:
+            # 删除qBittorrent中的下载任务和文件
+            self._delete_torrent_by_magnet(download.magnet)
+            logger.info(f"已删除下载任务: {download.num}")
+        
+        # 删除数据库中的记录
+        download.delete(self.db)
+        logger.info(f"已删除下载记录: {download.num}, 删除文件: {delete_files}")
+        
+        return True
+
     def do_actor_subscribe(self):
         """执行演员订阅任务，检查每个演员的新作品并下载"""
         subscriptions = self.get_actor_subscriptions()

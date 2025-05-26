@@ -1,7 +1,7 @@
 import Axios from "axios";
 import configs from "../configs";
-import {message} from "antd";
-import {store} from "../models";
+import { message } from "antd";
+import { store } from "../models";
 
 
 export const request = Axios.create({
@@ -17,7 +17,13 @@ request.interceptors.request.use(request => {
 })
 
 request.interceptors.response.use(response => response, error => {
-    if (error.response.status == 401) {
+    if (!error.response) {
+        console.error('网络错误:', error.message);
+        message.error(`网络错误: ${error.message}`);
+        return Promise.reject(error);
+    }
+
+    if (error.response.status === 401) {
         store.dispatch.auth.logout()
     } else if (error.response.data) {
         message.error(error.response.data)
