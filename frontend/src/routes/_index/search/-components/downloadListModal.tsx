@@ -117,7 +117,7 @@ function DownloadListModal(props: Props) {
                                 backgroundColor: selectedItem === item ? '#e6f7ff' : getSizeColor(item.size),
                                 transition: 'all 0.3s'
                             }}
-                            bodyStyle={{ padding: 16 }}
+                            styles={{ body: { padding: 16 } }}
                             onClick={() => handleSelectItem(item)}
                         >
                             <Row gutter={16} align="middle">
