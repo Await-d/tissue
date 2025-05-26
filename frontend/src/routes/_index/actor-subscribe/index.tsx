@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography, Checkbox } from 'antd';
-import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, SettingOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined } from '@ant-design/icons';
+import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, SettingOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import * as api from '../../../apis/video';
 import * as subscribeApi from '../../../apis/subscribe';
 import { useRequest } from 'ahooks';
 import { createPortal } from 'react-dom';
 import EditSubscribeModal from './-components/EditSubscribeModal';
+import AllDownloadsModal from './-components/AllDownloadsModal';
 
 const { Title, Text } = Typography;
 
@@ -22,6 +23,7 @@ function ActorSubscribe() {
     const [loadingDownloads, setLoadingDownloads] = useState(false);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [editingSubscription, setEditingSubscription] = useState<any>(null);
+    const [allDownloadsVisible, setAllDownloadsVisible] = useState(false);
 
     // 获取订阅的演员列表
     const { data: subscriptions = [], loading, refresh } = useRequest(subscribeApi.getActorSubscriptions, {
@@ -197,6 +199,13 @@ function ActorSubscribe() {
                                         onClick={() => runActorSubscribe()}
                                     >
                                         立即检查更新
+                                    </Button>
+                                    <Button
+                                        type="default"
+                                        icon={<DatabaseOutlined />}
+                                        onClick={() => setAllDownloadsVisible(true)}
+                                    >
+                                        所有下载
                                     </Button>
                                 </Space>
                             </Col>
@@ -466,6 +475,13 @@ function ActorSubscribe() {
                 onOk={handleEditComplete}
             />
 
+            {/* 所有下载记录模态框 */}
+            <AllDownloadsModal
+                open={allDownloadsVisible}
+                onCancel={() => setAllDownloadsVisible(false)}
+                onRefresh={refresh}
+            />
+
             {/* 悬浮按钮 */}
             <FloatButton.Group
                 trigger="hover"
@@ -481,6 +497,11 @@ function ActorSubscribe() {
                     icon={runningTask ? <SyncOutlined spin /> : <SyncOutlined />}
                     tooltip="立即检查更新"
                     onClick={() => runActorSubscribe()}
+                />
+                <FloatButton
+                    icon={<DatabaseOutlined />}
+                    tooltip="所有下载"
+                    onClick={() => setAllDownloadsVisible(true)}
                 />
             </FloatButton.Group>
         </div>

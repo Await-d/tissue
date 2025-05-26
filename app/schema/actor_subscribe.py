@@ -77,3 +77,9 @@ class ActorSubscribeDownloadCreate(BaseModel):
 class ActorSubscribeDownload(ActorSubscribeDownloadCreate):
     id: int
     download_time: datetime 
+
+
+class ActorSubscribeDownloadWithActor(ActorSubscribeDownload):
+    """带有演员信息的下载记录"""
+    actor_name: str
+    actor_thumb: Optional[str] = None 

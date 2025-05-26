@@ -13,7 +13,7 @@ import {
     Tooltip
 } from "antd";
 import React, { useEffect, useState } from "react";
-import { CarryOutOutlined, CloudDownloadOutlined, CopyOutlined, HistoryOutlined, RedoOutlined, UserOutlined } from "@ant-design/icons";
+import { CarryOutOutlined, CloudDownloadOutlined, CopyOutlined, HistoryOutlined, RedoOutlined, UserOutlined, ClearOutlined } from "@ant-design/icons";
 import * as api from "../../../apis/subscribe";
 import * as videoApi from "../../../apis/video";
 import { useRequest, useResponsive } from "ahooks";
@@ -37,6 +37,7 @@ import DownloadListModal from "./-components/downloadListModal.tsx";
 import HistoryModal from "./-components/historyModal.tsx";
 
 const cacheHistoryKey = 'search_video_histories'
+const cacheLastSearchKey = 'search_video_last_search'
 
 export const Route = createFileRoute('/_index/search/')({
     component: Search,
@@ -50,6 +51,10 @@ export const Route = createFileRoute('/_index/search/')({
                         .filter((i: any) => i.num.toUpperCase() !== res.num.toUpperCase())
                     const history = { num: res.num, actors: res.actors, title: res.title, cover: res.cover }
                     localStorage.setItem(cacheHistoryKey, JSON.stringify([history, ...histories.slice(0, 9)]))
+
+                    // 保存最后一次搜索的番号
+                    localStorage.setItem(cacheLastSearchKey, res.num)
+
                     return res
                 }).catch(() => {
 
@@ -85,6 +90,18 @@ export function Search() {
     const [historyModalOpen, setHistoryModalOpen] = useState(false)
     const [loadingDownloadId, setLoadingDownloadId] = useState<string | null>(null)
 
+    // 组件加载时，检查是否有上一次搜索的番号，如果有且当前没有搜索参数，则自动搜索
+    useEffect(() => {
+        if (!search?.num) {
+            const lastSearch = localStorage.getItem(cacheLastSearchKey);
+            if (lastSearch) {
+                setSearchInput(lastSearch);
+                // 如果需要自动搜索，取消注释下面这行
+                // router.navigate({ search: { num: lastSearch } as any, replace: true });
+            }
+        }
+    }, []);
+
     useEffect(() => {
         if (detailMatch) {
             appDispatch.setCanBack(true)
@@ -115,6 +132,13 @@ export function Search() {
             message.error("下载任务创建失败")
         }
     })
+
+    // 清除搜索结果
+    const handleClearSearch = () => {
+        setSearchInput('');
+        localStorage.removeItem(cacheLastSearchKey);
+        router.navigate({ search: {} as any, replace: true });
+    };
 
     function renderItems(video: any) {
         return [
@@ -308,6 +332,12 @@ export function Search() {
                                     演员搜索
                                 </Button>
                             </Link>
+                            <Button
+                                icon={<ClearOutlined />}
+                                onClick={handleClearSearch}
+                            >
+                                清除
+                            </Button>
                         </Space>
                     }
                 >

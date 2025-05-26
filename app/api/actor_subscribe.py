@@ -79,6 +79,31 @@ def get_actor_subscription_downloads(
     return R.list(downloads)
 
 
+@router.get("/all-downloads", response_model=R[List[schema.actor_subscribe.ActorSubscribeDownloadWithActor]])
+def get_all_subscription_downloads(
+    service=Depends(get_actor_subscribe_service)
+):
+    """获取所有演员订阅的下载记录"""
+    downloads = service.get_all_subscription_downloads()
+    return R.list(downloads)
+
+
+@router.delete("/download/{download_id}")
+def delete_subscription_download(
+    download_id: int,
+    delete_files: bool = False,
+    service=Depends(get_actor_subscribe_service)
+):
+    """删除单个下载记录
+    
+    Args:
+        download_id: 下载记录ID
+        delete_files: 是否同时删除文件
+    """
+    service.delete_subscription_download(download_id, delete_files)
+    return R.ok()
+
+
 @router.post("/run")
 def run_actor_subscribe(service=Depends(get_actor_subscribe_service)):
     """手动执行演员订阅任务"""
