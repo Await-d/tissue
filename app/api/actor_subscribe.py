@@ -46,6 +46,16 @@ def update_actor_subscription(
     return R.ok()
 
 
+@router.put("/status")
+def update_actor_subscription_status(
+    status: schema.actor_subscribe.ActorSubscribeStatusUpdate,
+    service=Depends(get_actor_subscribe_service)
+):
+    """更新演员订阅状态（暂停/恢复）"""
+    service.update_actor_subscription_status(status)
+    return R.ok()
+
+
 @router.delete("/")
 def delete_actor_subscription(
     subscribe_id: int, 

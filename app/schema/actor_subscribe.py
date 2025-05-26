@@ -14,6 +14,7 @@ class ActorSubscribeCreate(BaseModel):
     is_hd: bool = True
     is_zh: bool = False
     is_uncensored: bool = False
+    is_paused: bool = False
 
 
 class ActorSubscribeUpdate(ActorSubscribeCreate):
@@ -22,6 +23,13 @@ class ActorSubscribeUpdate(ActorSubscribeCreate):
 
 class ActorSubscribe(ActorSubscribeUpdate):
     last_updated: Optional[datetime] = None
+
+
+class ActorSubscribeStatusUpdate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    is_paused: bool
 
 
 class ActorSubscribeDownloadCreate(BaseModel):

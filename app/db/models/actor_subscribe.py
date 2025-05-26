@@ -1,3 +1,10 @@
+'''
+Author: Await
+Date: 2025-05-26 01:10:10
+LastEditors: Await
+LastEditTime: 2025-05-26 23:42:36
+Description: 请填写简介
+'''
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date
 
 from app.db.models.base import Base
@@ -15,6 +22,7 @@ class ActorSubscribe(Base):
     is_hd = Column(Boolean, nullable=False, default=True)
     is_zh = Column(Boolean, nullable=False, default=False)
     is_uncensored = Column(Boolean, nullable=False, default=False)
+    is_paused = Column(Boolean, nullable=False, default=False)  # 是否暂停订阅
 
 
 class ActorSubscribeDownload(Base):

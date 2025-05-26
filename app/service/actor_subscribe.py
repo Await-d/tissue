@@ -55,6 +55,15 @@ class ActorSubscribeService(BaseService):
         return exist
 
     @transaction
+    def update_actor_subscription_status(self, param: schema.actor_subscribe.ActorSubscribeStatusUpdate):
+        """更新演员订阅状态（暂停/恢复）"""
+        exist = ActorSubscribe.get(self.db, param.id)
+        if not exist:
+            raise BizException("该演员订阅不存在")
+        exist.update(self.db, {"is_paused": param.is_paused})
+        return exist
+
+    @transaction
     def delete_actor_subscription(self, subscription_id: int):
         exist = ActorSubscribe.get(self.db, subscription_id)
         if not exist:
@@ -74,7 +83,12 @@ class ActorSubscribeService(BaseService):
         subscriptions = self.get_actor_subscriptions()
         logger.info(f"获取到{len(subscriptions)}个演员订阅")
         
-        for subscription in subscriptions:
+        # 过滤掉已暂停的订阅
+        active_subscriptions = [s for s in subscriptions if not s.is_paused]
+        if len(active_subscriptions) < len(subscriptions):
+            logger.info(f"跳过{len(subscriptions) - len(active_subscriptions)}个已暂停的订阅")
+        
+        for subscription in active_subscriptions:
             try:
                 # 获取演员的作品列表
                 actor_videos = spider.get_web_actor_videos(subscription.actor_name, "javdb")
