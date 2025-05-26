@@ -1,3 +1,10 @@
+'''
+Author: Await
+Date: 2025-05-26 01:10:25
+LastEditors: Await
+LastEditTime: 2025-05-27 02:59:10
+Description: 请填写简介
+'''
 from datetime import datetime, date
 from typing import Optional, List
 
@@ -30,6 +37,20 @@ class ActorSubscribeStatusUpdate(BaseModel):
     
     id: int
     is_paused: bool
+
+
+class ActorSubscribeNotify(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    actor_name: str
+    num: str
+    title: Optional[str] = None
+    cover: Optional[str] = None
+    magnet: Optional[str] = None
+    size: Optional[str] = None
+    is_hd: bool = True
+    is_zh: bool = False
+    is_uncensored: bool = False
 
 
 class ActorSubscribeDownloadCreate(BaseModel):

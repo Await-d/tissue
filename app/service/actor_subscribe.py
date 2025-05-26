@@ -240,17 +240,18 @@ class ActorSubscribeService(BaseService):
         
         # 发送通知
         try:
-            notify_data = {
-                "actor_name": subscription.actor_name,
-                "num": video_detail.num,
-                "title": video_detail.title,
-                "cover": video_detail.cover,
-                "magnet": resource.magnet,
-                "size": resource.size,
-                "is_hd": resource.is_hd,
-                "is_zh": resource.is_zh,
-                "is_uncensored": resource.is_uncensored
-            }
+            from app.schema.actor_subscribe import ActorSubscribeNotify
+            notify_data = ActorSubscribeNotify(
+                actor_name=subscription.actor_name,
+                num=video_detail.num,
+                title=video_detail.title,
+                cover=video_detail.cover,
+                magnet=resource.magnet,
+                size=resource.size,
+                is_hd=resource.is_hd,
+                is_zh=resource.is_zh,
+                is_uncensored=resource.is_uncensored
+            )
             notify.send_actor_subscribe(notify_data)
         except Exception as e:
             logger.error(f"发送通知失败: {e}")
