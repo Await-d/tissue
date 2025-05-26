@@ -1,15 +1,15 @@
-import {Button, Col, message, Row, Space, theme} from "antd";
-import Logo from "../../assets/logo.png";
+import { Button, Col, message, Row, Space, theme } from "antd";
+import Logo from "../../assets/logo.svg";
 import PinPad from "./pad.tsx";
-import React, {useState} from "react";
-import {useResponsive} from "ahooks";
-import {CloseOutlined, EyeInvisibleOutlined, EyeOutlined} from "@ant-design/icons";
-import {sha256} from "js-sha256";
-import {createPortal} from "react-dom";
-import {useDispatch, useSelector} from "react-redux";
-import {Dispatch, RootState} from "../../models";
+import React, { useState } from "react";
+import { useResponsive } from "ahooks";
+import { CloseOutlined, EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
+import { sha256 } from "js-sha256";
+import { createPortal } from "react-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Dispatch, RootState } from "../../models";
 
-const {useToken} = theme
+const { useToken } = theme
 
 export enum PinMode {
     verify,
@@ -24,8 +24,8 @@ interface Props {
 
 function PinView(props: Props) {
 
-    const {pin, mode, onClose} = props;
-    const {token} = useToken()
+    const { pin, mode, onClose } = props;
+    const { token } = useToken()
     const [numbers, setNumbers] = useState<string[]>([])
     const [repeatNumbers, setRepeatNumbers] = useState<string[]>([])
     const [errorMessage, setErrorMessage] = useState<string>()
@@ -91,13 +91,13 @@ function PinView(props: Props) {
     }
 
     return createPortal(
-        <div className={'fixed top-0 right-0 bottom-0 left-0 z-[1000]'} style={{background: token.colorBgContainer}}>
+        <div className={'fixed top-0 right-0 bottom-0 left-0 z-[1000]'} style={{ background: token.colorBgContainer }}>
             <div className={'h-full w-full flex justify-center items-center'}>
                 <Row gutter={[80, 0]}>
                     <Col span={24} md={12}>
                         <div className={'h-full flex flex-col items-center justify-center'}>
-                            <img className={'h-20'} src={Logo} alt=""/>
-                            <div style={{color: token.colorText}}>
+                            <img className={'h-20'} src={Logo} alt="" />
+                            <div style={{ color: token.colorText }}>
                                 {repeatNumbers.length > 0 ? (
                                     '请再次输入密码 '
                                 ) : (
@@ -107,10 +107,10 @@ function PinView(props: Props) {
                             <Space className={'flex justify-center mt-8'}>
                                 {new Array(4).fill(0).map((_, i) => (
                                     <Button shape={"circle"} size={"small"} key={i}
-                                            type={numbers.length > i ? 'primary' : 'default'}/>
+                                        type={numbers.length > i ? 'primary' : 'default'} />
                                 ))}
                             </Space>
-                            <div className={'h-14 flex items-center'} style={{color: token.colorError}}>
+                            <div className={'h-14 flex items-center'} style={{ color: token.colorError }}>
                                 {errorMessage}
                             </div>
                             {responsive.md && (
@@ -120,7 +120,7 @@ function PinView(props: Props) {
                     </Col>
                     <Col span={24} md={12}>
                         <div className={'flex flex-col items-center justify-center'}>
-                            <PinPad numbers={numbers} onEnter={onEnter} onDelete={onDelete}/>
+                            <PinPad numbers={numbers} onEnter={onEnter} onDelete={onDelete} />
                         </div>
                         {!responsive.md && (
                             renderRemark()
@@ -133,11 +133,11 @@ function PinView(props: Props) {
                 right: 'calc(20px + env(safe-area-inset-right, 0))'
             }}>
                 {mode === PinMode.setting ? (
-                    <Button shape={'circle'} icon={<CloseOutlined/>} onClick={() => onClose()}/>
+                    <Button shape={'circle'} icon={<CloseOutlined />} onClick={() => onClose()} />
                 ) : (
-                    <div className={'mr-2'} style={{fontSize: token.sizeLG, color: token.colorText}}
-                         onClick={() => dispatch.setGoodBoy(!goodBoy)}>
-                        {goodBoy ? (<EyeInvisibleOutlined/>) : (<EyeOutlined/>)}
+                    <div className={'mr-2'} style={{ fontSize: token.sizeLG, color: token.colorText }}
+                        onClick={() => dispatch.setGoodBoy(!goodBoy)}>
+                        {goodBoy ? (<EyeInvisibleOutlined />) : (<EyeOutlined />)}
                     </div>
                 )}
             </div>

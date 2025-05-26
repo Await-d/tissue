@@ -17,7 +17,7 @@ import { themes } from "../../../utils/constants";
 import React, { useRef, useState } from "react";
 import IconButton from "../../../components/IconButton";
 import Log from "./log";
-import Logo from "../../../assets/logo.png";
+import Logo from "../../../assets/logo.svg";
 import { useResponsive } from "ahooks";
 import PinView, { PinMode } from "../../../components/PinView";
 import { Link, useRouter } from "@tanstack/react-router";
