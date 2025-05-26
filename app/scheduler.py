@@ -64,7 +64,7 @@ class Scheduler:
         if setting.download.delete_auto:
             self.add('delete_complete_download')
 
-        self.add_job(
+        self.scheduler.add_job(
             ActorSubscribeService.job_actor_subscribe,
             'cron',
             hour='2',
