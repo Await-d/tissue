@@ -22,8 +22,17 @@ Description: 请填写简介
 from abc import abstractmethod
 import logging
 import requests
+import ssl
+import time
+from urllib3.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
 
 from app.schema import Setting
+
+# 禁用SSL警告
+disable_warnings(InsecureRequestWarning)
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +44,21 @@ class Session(requests.Session):
     def __init__(self, timeout: int = 10):
         super().__init__()
         self.timeout = timeout
+        
+        # 配置重试策略
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            method_whitelist=["HEAD", "GET", "OPTIONS"],
+            backoff_factor=1
+        )
+        
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.mount("http://", adapter)
+        self.mount("https://", adapter)
+        
+        # 禁用SSL验证以避免证书问题
+        self.verify = False
 
     def request(self, *args, **kwargs):
         method = args[0] if args else kwargs.get('method')
@@ -42,14 +66,27 @@ class Session(requests.Session):
         logger.info(f"请求: {method} {url}")
         
         kwargs.setdefault('timeout', self.timeout)
-        response = super(Session, self).request(*args, **kwargs)
+        kwargs.setdefault('verify', False)  # 禁用SSL验证
         
-        logger.info(f"响应: {response.status_code} - {url}")
-        if response.status_code != 200:
-            logger.error(f"请求失败: {response.status_code} - {url}")
-            logger.error(f"响应内容: {response.text[:200]}")
-        
-        return response
+        # 添加重试机制
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = super(Session, self).request(*args, **kwargs)
+                logger.info(f"响应: {response.status_code} - {url}")
+                if response.status_code != 200:
+                    logger.error(f"请求失败: {response.status_code} - {url}")
+                    logger.error(f"响应内容: {response.text[:200]}")
+                return response
+            except (requests.exceptions.SSLError, 
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout) as e:
+                logger.warning(f"请求失败 (尝试 {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)  # 指数退避
+                else:
+                    logger.error(f"所有重试都失败了: {url}")
+                    raise
 
 
 class Spider:
@@ -90,9 +127,13 @@ class Spider:
     @classmethod
     def get_cover(cls, url):
         logger.info(f"获取封面: {url}")
-        response = requests.get(url, headers={'Referer': cls.host})
-        if response.ok:
-            return response.content
-        else:
-            logger.error(f"获取封面失败: {response.status_code} - {url}")
+        try:
+            response = requests.get(url, headers={'Referer': cls.host}, verify=False, timeout=10)
+            if response.ok:
+                return response.content
+            else:
+                logger.error(f"获取封面失败: {response.status_code} - {url}")
+                return None
+        except Exception as e:
+            logger.error(f"获取封面异常: {e} - {url}")
             return None
