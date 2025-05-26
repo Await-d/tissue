@@ -25,94 +25,109 @@ class JavbusSpider(Spider):
             if not url.startswith('http'):
                 url = urljoin(self.host, url)
                 
-        response = self.session.get(url, allow_redirects=False)
-
-        html = etree.HTML(response.text)
-
-        meta = VideoDetail()
-        meta.num = num
-
-        title_element = html.xpath("//h3")
-        if title_element:
+        # 允许重定向，防止302错误
+        try:
+            response = self.session.get(url, allow_redirects=True)
+            
+            # 检查响应状态码
+            if response.status_code != 200:
+                raise SpiderException(f'请求失败，状态码: {response.status_code}')
+                
+            html = etree.HTML(response.text)
+            
+            # 检查是否是有效的页面
+            title_element = html.xpath("//h3")
+            if not title_element:
+                raise SpiderException('未找到番号')
+                
+            meta = VideoDetail()
+            meta.num = num
+            
             title = title_element[0].text
             meta.title = title
-        else:
-            raise SpiderException('未找到番号')
 
-        # 尝试从页面中提取评分信息
-        score_element = html.xpath("//div[contains(@class,'score')]")
-        if score_element:
-            score_text = etree.tostring(score_element[0], method='text', encoding='utf-8').decode('utf-8').strip()
-            # 尝试提取评分值
-            score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
-            if score_match:
-                try:
-                    meta.rating = score_match.group(1)
-                except:
-                    pass
+            # 尝试从页面中提取评分信息
+            score_element = html.xpath("//div[contains(@class,'score')]")
+            if score_element:
+                score_text = etree.tostring(score_element[0], method='text', encoding='utf-8').decode('utf-8').strip()
+                # 尝试提取评分值
+                score_match = re.search(r'★\s*(\d+\.\d+)分', score_text)
+                if score_match:
+                    try:
+                        meta.rating = score_match.group(1)
+                    except:
+                        pass
+                
+                # 尝试提取评论数，但VideoDetail没有这个字段，所以不设置
+
+            premiered_element = html.xpath("//span[text()='發行日期:']")
+            if premiered_element:
+                meta.premiered = premiered_element[0].tail.strip()
+
+            runtime_element = html.xpath("//span[text()='長度:']")
+            if runtime_element:
+                runtime = runtime_element[0].tail.strip()
+                runtime = runtime.replace("分鐘", "")
+                meta.runtime = runtime
+
+            director_element = html.xpath("//span[text()='導演:']/../a")
+            if director_element:
+                director = director_element[0].text
+                meta.director = director
+
+            studio_element = html.xpath("//span[text()='製作商:']/../a")
+            if studio_element:
+                studio = studio_element[0].text
+                meta.studio = studio
+
+            publisher_element = html.xpath("//span[text()='發行商:']/../a")
+            if publisher_element:
+                publisher = publisher_element[0].text
+                meta.publisher = publisher
+
+            series_element = html.xpath("//span[text()='系列:']/../a")
+            if series_element:
+                series = series_element[0].text
+                meta.series = series
+
+            tag_elements = html.xpath("//span[@class='genre']//a[contains(@href,'genre')]")
+            if tag_elements:
+                tags = [tag.text for tag in tag_elements]
+                meta.tags = tags
+
+            actor_elements = html.xpath("//span[@class='genre']//a[contains(@href,'star')]")
+            if actor_elements:
+                actors = []
+                for element in actor_elements:
+                    actor_url = element.get('href')
+                    actor_code = actor_url.split("/")[-1]
+                    actor_avatar = urljoin(self.host, f'/pics/actress/{actor_code}_a.jpg')
+                    actor = VideoActor(name=element.text, thumb=actor_avatar)
+                    actors.append(actor)
+                meta.actors = actors
+
+            cover_element = html.xpath("//a[@class='bigImage']")
+            if cover_element:
+                cover = cover_element[0].get("href")
+                meta.cover = urljoin(self.host, cover)
+
+            meta.website.append(url)
+
+            if include_downloads:
+                meta.downloads = self.get_downloads(url, response.text)
+
+            if include_downloads:
+                meta.previews = self.get_previews(html)
+
+            return meta
             
-            # 尝试提取评论数，但VideoDetail没有这个字段，所以不设置
-
-        premiered_element = html.xpath("//span[text()='發行日期:']")
-        if premiered_element:
-            meta.premiered = premiered_element[0].tail.strip()
-
-        runtime_element = html.xpath("//span[text()='長度:']")
-        if runtime_element:
-            runtime = runtime_element[0].tail.strip()
-            runtime = runtime.replace("分鐘", "")
-            meta.runtime = runtime
-
-        director_element = html.xpath("//span[text()='導演:']/../a")
-        if director_element:
-            director = director_element[0].text
-            meta.director = director
-
-        studio_element = html.xpath("//span[text()='製作商:']/../a")
-        if studio_element:
-            studio = studio_element[0].text
-            meta.studio = studio
-
-        publisher_element = html.xpath("//span[text()='發行商:']/../a")
-        if publisher_element:
-            publisher = publisher_element[0].text
-            meta.publisher = publisher
-
-        series_element = html.xpath("//span[text()='系列:']/../a")
-        if series_element:
-            series = series_element[0].text
-            meta.series = series
-
-        tag_elements = html.xpath("//span[@class='genre']//a[contains(@href,'genre')]")
-        if tag_elements:
-            tags = [tag.text for tag in tag_elements]
-            meta.tags = tags
-
-        actor_elements = html.xpath("//span[@class='genre']//a[contains(@href,'star')]")
-        if actor_elements:
-            actors = []
-            for element in actor_elements:
-                actor_url = element.get('href')
-                actor_code = actor_url.split("/")[-1]
-                actor_avatar = urljoin(self.host, f'/pics/actress/{actor_code}_a.jpg')
-                actor = VideoActor(name=element.text, thumb=actor_avatar)
-                actors.append(actor)
-            meta.actors = actors
-
-        cover_element = html.xpath("//a[@class='bigImage']")
-        if cover_element:
-            cover = cover_element[0].get("href")
-            meta.cover = urljoin(self.host, cover)
-
-        meta.website.append(url)
-
-        if include_downloads:
-            meta.downloads = self.get_downloads(url, response.text)
-
-        if include_downloads:
-            meta.previews = self.get_previews(html)
-
-        return meta
+        except SpiderException as e:
+            raise e
+        except Exception as e:
+            import logging
+            logger = logging.getLogger('spider')
+            logger.error(f"JavBus获取信息失败: {str(e)}")
+            raise SpiderException(f'获取信息失败: {str(e)}')
 
     def get_previews(self, html: etree.HTML):
         result = []

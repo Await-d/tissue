@@ -89,21 +89,31 @@ def get_video(number: str):
     spiders = [JavbusSpider(), JavdbSpider()]
     metas = []
     logger.info(f"开始刮削番号《{number}》")
+    
     for spider in spiders:
         try:
             if spider.downloadable:
                 logger.info(f"{spider.name} 获取下载列表...")
-                videos = spider.get_info(number, include_downloads=True, include_previews=True)
-                logger.info(f"获取到{len(videos.downloads)}部影片")
-                metas.append(videos)
-        except:
-            logger.error(f"{spider.name} 获取下载列表失败")
+                try:
+                    videos = spider.get_info(number, include_downloads=True, include_previews=True)
+                    if videos and videos.downloads:
+                        logger.info(f"获取到{len(videos.downloads)}部影片")
+                        metas.append(videos)
+                    else:
+                        logger.warning(f"{spider.name} 未获取到下载资源")
+                except SpiderException as e:
+                    logger.error(f"{spider.name} 获取下载列表失败: {e.message}")
+                except Exception as e:
+                    logger.error(f"{spider.name} 获取下载列表失败: {str(e)}")
+                    traceback.print_exc()
+        except Exception as e:
+            logger.error(f"{spider.name} 未知错误: {str(e)}")
             traceback.print_exc()
             continue
 
     if len(metas) == 0:
-        return
+        logger.warning(f"番号《{number}》没有找到任何下载资源")
+        return None
 
     meta = _merge_video_info(metas)
-
     return meta
