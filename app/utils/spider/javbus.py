@@ -18,7 +18,13 @@ class JavbusSpider(Spider):
 
     def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
-        url = urljoin(self.host, num)
+        if url is None:
+            url = urljoin(self.host, num)
+        else:
+            # 确保URL是完整的绝对URL
+            if not url.startswith('http'):
+                url = urljoin(self.host, url)
+                
         response = self.session.get(url, allow_redirects=False)
 
         html = etree.HTML(response.text)

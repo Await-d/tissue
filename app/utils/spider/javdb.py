@@ -26,6 +26,10 @@ class JavdbSpider(Spider):
         if url is None:
             url = self.search(num)
             searched = True
+        else:
+            # 确保URL是完整的绝对URL
+            if not url.startswith('http'):
+                url = urljoin(self.host, url)
 
         if not url:
             raise SpiderException('未找到番号')
@@ -143,64 +147,36 @@ class JavdbSpider(Spider):
 
     def get_downloads(self, url: str, html: etree.HTML):
         result = []
-        
-        # 获取下载区域的所有行
-        rows = html.xpath('//div[contains(@class, "video-panel-info")]//div[contains(@class, "columns")]')
-        
-        for row in rows:
-            try:
-                # 检查是否是下载行
-                magnet_link = row.xpath('.//a[contains(@href, "magnet:?")]')
-                if not magnet_link:
-                    continue
-                
-                download = VideoDownload()
-                download.website = self.name
-                download.url = url  # 使用传入的视频页面URL
-                
-                # 获取磁力链接
-                magnet = magnet_link[0].get('href')
-                download.magnet = magnet
-                
-                # 获取资源名称
-                name_element = row.xpath('.//a[contains(@href, "magnet:?")]/text()')
-                if name_element:
-                    download.name = name_element[0].strip()
-                else:
-                    # 如果没有直接的名称，使用链接文本
-                    download.name = magnet_link[0].text.strip() if magnet_link[0].text else "未知名称"
-                
-                # 检查是否高清
-                hd_element = row.xpath('.//span[contains(text(), "高清") or contains(text(), "HD")]')
-                download.is_hd = len(hd_element) > 0
-                
-                # 检查是否中文
-                zh_element = row.xpath('.//span[contains(text(), "字幕") or contains(text(), "中文")]')
-                download.is_zh = len(zh_element) > 0
-                
-                # 检查是否无码
-                uncensored_element = row.xpath('.//span[contains(text(), "无码") or contains(text(), "無碼") or contains(text(), "uncensored")]')
-                download.is_uncensored = len(uncensored_element) > 0 or '无码' in download.name or '無碼' in download.name
-                
-                # 获取文件大小
-                size_element = row.xpath('.//span[contains(@class, "meta") and contains(text(), "G") or contains(text(), "M")]/text()')
-                if size_element:
-                    download.size = size_element[0].strip()
-                
-                # 获取发布日期
-                date_element = row.xpath('.//span[contains(@class, "meta") and contains(text(), "-")]/text()')
-                if date_element:
-                    date_text = date_element[0].strip()
-                    try:
-                        if re.match(r'\d{4}-\d{2}-\d{2}', date_text):
-                            download.publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
-                    except:
-                        pass
-                
-                result.append(download)
-            except Exception as e:
-                logger.error(f"处理下载行时出错: {str(e)}")
-        
+        table = html.xpath("//div[@id='magnets-content']/div")
+        for item in table:
+            download = VideoDownload()
+
+            parts = item.xpath("./div[1]/a")[0]
+            download.website = self.name
+            download.url = url
+            download.name = parts[0].text.strip()
+            download.magnet = parts.get('href')
+
+            name = parts.xpath("./span[1]")
+            if name:
+                if '无码' in name[0].text or '破解' in name[0].text:
+                    download.is_uncensored = True
+
+            size = parts.xpath("./span[2]")
+            if size:
+                download.size = size[0].text.split(',')[0].strip()
+
+            for tag in parts.xpath('./div[@class="tags"]/span'):
+                if tag.text == '高清':
+                    download.is_hd = True
+                if tag.text == '字幕':
+                    download.is_zh = True
+
+            publish_date = item.xpath(".//span[@class='time']")
+            if publish_date:
+                download.publish_date = datetime.strptime(publish_date[0].text.strip(), "%Y-%m-%d").date()
+
+            result.append(download)
         return result
 
     def get_ranking(self, video_type: str, cycle: str):
@@ -493,9 +469,6 @@ class JavdbSpider(Spider):
                         if score_match:
                             try:
                                 item.rank = float(score_match.group(1))
-                                # 同时设置rating字段，确保兼容性
-                                item.rating = score_match.group(1)
-                                logger.info(f"解析到评分: {item.rating}")
                             except:
                                 pass
                         
