@@ -921,3 +921,4 @@ env/
 # 操作系统特定文件
 .DS_Store
 Thumbs.db
+nohup.out
