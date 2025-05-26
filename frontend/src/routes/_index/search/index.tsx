@@ -93,7 +93,7 @@ export function Search() {
         }
     }, [detailMatch, appDispatch])
 
-    const { setOpen: setSubscribeOpen, modalProps: subscribeModalProps } = useFormModal({
+    const { setOpen: setSubscribeOpen, modalProps: subscribeModalProps, form: subscribeForm } = useFormModal({
         service: api.modifySubscribe,
         onOk: () => {
             setSubscribeOpen(false)
@@ -514,6 +514,7 @@ export function Search() {
             </Col>
 
             <SubscribeModifyModal width={1100}
+                form={subscribeForm}
                 {...subscribeModalProps} />
             <DownloadModal open={!!selectedDownload}
                 download={selectedDownload}

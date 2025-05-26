@@ -1,17 +1,17 @@
-import {Card, message, Table} from "antd";
-import {ColumnsType} from "antd/lib/table";
+import { Card, message, Table } from "antd";
+import { ColumnsType } from "antd/lib/table";
 import React from "react";
-import {PlusOutlined} from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import UserModal from "./userModal.tsx";
 import * as api from "../../../../apis/user";
-import {useAntdTable} from "ahooks";
+import { useAntdTable } from "ahooks";
 import More from "../../../../components/More";
 import IconButton from "../../../../components/IconButton";
-import {useFormModal} from "../../../../utils/useFormModal.ts";
+import { useFormModal } from "../../../../utils/useFormModal.ts";
 
 function UserList() {
-    const {tableProps, refresh} = useAntdTable(api.getUsers)
-    const {setOpen, modalProps} = useFormModal({
+    const { tableProps, refresh } = useAntdTable(api.getUsers)
+    const { setOpen, modalProps, form } = useFormModal({
         service: api.modifyUser,
         onOk: () => {
             message.success("保存成功")
@@ -40,7 +40,7 @@ function UserList() {
             width: 20,
             render: (_, record) => (
                 !record.is_admin && (
-                    <More onClick={(key) => onMoreClick(key, record)}/>
+                    <More onClick={(key) => onMoreClick(key, record)} />
                 )
             )
         }
@@ -55,11 +55,11 @@ function UserList() {
     return (
         <Card title={'用户管理'} extra={(
             <IconButton onClick={() => setOpen(true)}>
-                <PlusOutlined/>
+                <PlusOutlined />
             </IconButton>
         )}>
-            <Table rowKey={'id'} columns={columns} {...tableProps} pagination={false}/>
-            <UserModal {...modalProps} />
+            <Table rowKey={'id'} columns={columns} {...tableProps} pagination={false} />
+            <UserModal form={form} {...modalProps} />
         </Card>
     )
 }
