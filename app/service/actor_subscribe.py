@@ -27,8 +27,21 @@ class ActorSubscribeService(BaseService):
     def get_actor_subscriptions(self):
         return self.db.query(ActorSubscribe).order_by(ActorSubscribe.id.desc()).all()
 
+    def get_actor_subscription_by_name(self, actor_name: str):
+        """通过演员名称查找订阅"""
+        return self.db.query(ActorSubscribe).filter(ActorSubscribe.actor_name == actor_name).first()
+
     @transaction
     def add_actor_subscription(self, param: schema.actor_subscribe.ActorSubscribeCreate):
+        # 先检查是否已存在该演员的订阅
+        exist = self.get_actor_subscription_by_name(param.actor_name)
+        if exist:
+            # 如果已存在，则更新订阅设置
+            exist_data = param.model_dump()
+            exist.update(self.db, exist_data)
+            return exist
+        
+        # 不存在则创建新订阅
         subscription = ActorSubscribe(**param.model_dump())
         subscription.add(self.db)
         return subscription

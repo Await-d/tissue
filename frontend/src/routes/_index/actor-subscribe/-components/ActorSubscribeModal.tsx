@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Form, Input, Checkbox, DatePicker, Button, Row, Col, Avatar, Space, Tooltip } from 'antd';
+import { Modal, Form, Input, Checkbox, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, message } from 'antd';
 import { UserOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/video';
 import * as subscribeApi from '../../../../apis/subscribe';
@@ -40,8 +40,18 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
 
     const { run: subscribe, loading } = useRequest(subscribeApi.subscribeActor, {
         manual: true,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            // 根据返回结果显示不同消息
+            if (response && response.data && response.data.is_update) {
+                message.success(`已更新演员 ${actor.name} 的订阅设置`);
+            } else {
+                message.success(`已成功订阅演员 ${actor.name}`);
+            }
             onOk();
+        },
+        onError: (error) => {
+            console.error('订阅失败:', error);
+            message.error('订阅失败，请稍后重试');
         }
     });
 

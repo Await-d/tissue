@@ -731,7 +731,6 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     onCancel={() => setSubscribeModalVisible(false)}
                     onOk={() => {
                         setSubscribeModalVisible(false);
-                        message.success(`已成功订阅演员 ${selectedActor.name}`);
                     }}
                 />
             )}

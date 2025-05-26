@@ -30,8 +30,10 @@ def add_actor_subscription(
     service=Depends(get_actor_subscribe_service)
 ):
     """添加演员订阅"""
-    service.add_actor_subscription(subscription)
-    return R.ok()
+    result = service.add_actor_subscription(subscription)
+    # 返回结果中加入is_update标识，表示是更新还是新增
+    is_update = hasattr(result, 'id') and result.id is not None
+    return R.ok(data={"is_update": is_update, "id": result.id if is_update else None})
 
 
 @router.put("/")
