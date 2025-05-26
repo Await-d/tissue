@@ -88,6 +88,14 @@ export function updateActorSubscription(data: any) {
     })
 }
 
+export function updateActorSubscriptionStatus(id: number, isPaused: boolean) {
+    return request.request({
+        url: '/actor-subscribe/status',
+        method: 'put',
+        data: { id, is_paused: isPaused }
+    })
+}
+
 export function deleteActorSubscription(id: number) {
     return request.request({
         url: '/actor-subscribe/',

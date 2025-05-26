@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography } from 'antd';
-import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, SettingOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined } from '@ant-design/icons';
+import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, SettingOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined } from '@ant-design/icons';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import * as api from '../../../apis/video';
 import * as subscribeApi from '../../../apis/subscribe';
@@ -53,6 +53,19 @@ function ActorSubscribe() {
         onError: (error) => {
             console.error('执行订阅任务失败:', error);
             message.error('执行订阅任务失败');
+        }
+    });
+
+    // 更新订阅状态（暂停/恢复）
+    const { run: updateSubscriptionStatus, loading: updatingStatus } = useRequest(subscribeApi.updateActorSubscriptionStatus, {
+        manual: true,
+        onSuccess: (_, [id, isPaused]) => {
+            message.success(isPaused ? '已暂停订阅' : '已恢复订阅');
+            refresh();
+        },
+        onError: (error) => {
+            console.error('更新订阅状态失败:', error);
+            message.error('更新订阅状态失败');
         }
     });
 
@@ -253,6 +266,21 @@ function ActorSubscribe() {
                                             <Tooltip title="编辑订阅">
                                                 <EditOutlined key="edit" onClick={() => handleEditSubscription(item)} />
                                             </Tooltip>,
+                                            <Tooltip title={item.is_paused ? "恢复订阅" : "暂停订阅"}>
+                                                {item.is_paused ? (
+                                                    <PlaySquareOutlined
+                                                        key="resume"
+                                                        style={{ color: '#52c41a' }}
+                                                        onClick={() => updateSubscriptionStatus(item.id, false)}
+                                                    />
+                                                ) : (
+                                                    <PauseOutlined
+                                                        key="pause"
+                                                        style={{ color: '#faad14' }}
+                                                        onClick={() => updateSubscriptionStatus(item.id, true)}
+                                                    />
+                                                )}
+                                            </Tooltip>,
                                             <Tooltip title="取消订阅">
                                                 <DeleteOutlined
                                                     key="delete"
@@ -282,6 +310,7 @@ function ActorSubscribe() {
                                             </Row>
                                             <div style={{ marginTop: 12 }}>
                                                 <Space size={[0, 8]} wrap>
+                                                    {item.is_paused && <Tag color="volcano">已暂停</Tag>}
                                                     {item.is_hd && <Tag color="blue">高清</Tag>}
                                                     {item.is_zh && <Tag color="green">中文字幕</Tag>}
                                                     {item.is_uncensored && <Tag color="red">无码</Tag>}

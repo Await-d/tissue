@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, Checkbox, Input } from 'antd';
+import { Modal, Form, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, Checkbox, Input, Switch } from 'antd';
 import { UserOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/video';
 import * as subscribeApi from '../../../../apis/subscribe';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
+import { message } from 'antd';
 
 interface EditSubscribeModalProps {
     open: boolean;
@@ -27,14 +28,8 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
     useEffect(() => {
         if (subscription && open) {
             form.setFieldsValue({
-                id: subscription.id,
-                actor_name: subscription.actor_name,
-                actor_url: subscription.actor_url,
-                actor_thumb: subscription.actor_thumb,
-                from_date: subscription.from_date ? dayjs(subscription.from_date) : dayjs(),
-                is_hd: subscription.is_hd,
-                is_zh: subscription.is_zh,
-                is_uncensored: subscription.is_uncensored
+                ...subscription,
+                from_date: subscription.from_date ? dayjs(subscription.from_date) : null,
             });
         }
     }, [subscription, open, form]);
@@ -46,13 +41,19 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
         }
     });
 
-    const handleSubmit = () => {
-        form.validateFields().then(values => {
-            updateSubscription({
+    const handleSubmit = async () => {
+        try {
+            const values = await form.validateFields();
+            const formData = {
                 ...values,
-                from_date: values.from_date.format('YYYY-MM-DD')
-            });
-        });
+                id: subscription.id,
+                from_date: values.from_date ? values.from_date.format('YYYY-MM-DD') : null,
+            };
+
+            await updateSubscription(formData);
+        } catch (error) {
+            message.error('保存失败');
+        }
     };
 
     return (
@@ -132,7 +133,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                             name="is_hd"
                             valuePropName="checked"
                         >
-                            <Checkbox />
+                            <Switch />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -141,7 +142,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                             name="is_zh"
                             valuePropName="checked"
                         >
-                            <Checkbox />
+                            <Switch />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -150,10 +151,19 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                             name="is_uncensored"
                             valuePropName="checked"
                         >
-                            <Checkbox />
+                            <Switch />
                         </Form.Item>
                     </Col>
                 </Row>
+
+                <Form.Item
+                    label="暂停订阅"
+                    name="is_paused"
+                    valuePropName="checked"
+                    extra="暂停后将不会自动检查和下载新作品"
+                >
+                    <Switch />
+                </Form.Item>
 
                 <div style={{ marginTop: '16px', color: '#888', fontSize: '14px' }}>
                     更改订阅设置后，系统将根据新的条件进行下载。
