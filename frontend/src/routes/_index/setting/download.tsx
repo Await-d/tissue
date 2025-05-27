@@ -25,6 +25,21 @@ function SettingDownload() {
         }
     })
 
+    // 测试qBittorrent连接
+    const { run: testConnection, loading: testing } = useRequest(api.testQBittorrentConnection, {
+        manual: true,
+        onSuccess: (res) => {
+            if (res.data.status) {
+                message.success(res.data.message);
+            } else {
+                message.error(res.data.message);
+            }
+        },
+        onError: (err) => {
+            message.error("测试连接失败：" + (err.message || "未知错误"));
+        }
+    });
+
     function onFinish(data: any) {
         run('download', data)
     }
@@ -43,6 +58,19 @@ function SettingDownload() {
                     </Form.Item>
                     <Form.Item label={'密码'} name={'password'}>
                         <Input.Password autoComplete={'new-password'} />
+                    </Form.Item>
+                    <Form.Item label={'测试连接'}>
+                        <Button
+                            type="default"
+                            loading={testing}
+                            onClick={() => testConnection()}
+                            style={{ marginRight: 8 }}
+                        >
+                            测试连接
+                        </Button>
+                        <span className="text-gray-400 text-sm">
+                            (保存设置后再测试连接)
+                        </span>
                     </Form.Item>
                     <Form.Item label={'转移模式'} name={'trans_mode'} tooltip={'手动或自动转移使用的转移模式'}>
                         <Select>
