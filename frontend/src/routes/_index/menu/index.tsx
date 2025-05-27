@@ -1,5 +1,5 @@
 import routes from "../../../routes.tsx";
-import { Card, Divider, theme } from "antd";
+import { Card, Divider, theme, Row, Col } from "antd";
 import { useResponsive } from "ahooks";
 import React from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
@@ -21,88 +21,130 @@ function Menu() {
         {
             key: 'home',
             icon: <HomeOutlined />,
-            label: '首页'
+            label: '首页',
+            path: '/home'
         },
         {
             key: 'search',
             icon: <SearchOutlined />,
-            label: '搜索'
+            label: '搜索',
+            path: '/search'
         },
         {
             key: 'actor',
             icon: <UserOutlined />,
-            label: '演员'
+            label: '演员',
+            path: '/actor'
         },
         {
             key: 'actor-subscribe',
             icon: <StarOutlined />,
-            label: '演员订阅'
+            label: '演员订阅',
+            path: '/actor-subscribe'
         },
         {
             key: 'subscribe',
             icon: <HeartOutlined />,
-            label: '订阅'
+            label: '订阅',
+            path: '/subscribe'
         },
         {
             key: 'schedule',
             icon: <ClockCircleOutlined />,
-            label: '定时任务'
+            label: '定时任务',
+            path: '/schedule'
         },
         {
             key: 'file',
             icon: <FileOutlined />,
-            label: '文件'
+            label: '文件',
+            path: '/file'
         },
         {
             key: 'setting',
             icon: <SettingOutlined />,
-            label: '设置'
+            label: '设置',
+            path: '/setting'
         },
         {
             key: 'history',
             icon: <HistoryOutlined />,
-            label: '历史'
+            label: '历史',
+            path: '/history'
         },
         {
             key: 'download',
             icon: <DownloadOutlined />,
-            label: '下载'
+            label: '下载',
+            path: '/download'
         },
         {
             key: 'about',
             icon: <InfoCircleOutlined />,
-            label: '关于'
+            label: '关于',
+            path: '/about'
         }
     ]
 
-    function renderMenuSection() {
-        return routes.filter(i => i.hidden !== true).map(item => (
-            <div key={item.title}>
-                <Divider>{item.title}</Divider>
-                <div className={'flex justify-center'}>
-                    {item.children ? (
-                        item.children.map((child: any) => (renderMenu(child)))
-                    ) : (
-                        renderMenu(item)
-                    )}
-                </div>
+    // 分组菜单项
+    const menuGroups = [
+        {
+            title: '常用功能',
+            items: ['home', 'search', 'actor', 'subscribe']
+        },
+        {
+            title: '内容管理',
+            items: ['file', 'download', 'history']
+        },
+        {
+            title: '系统设置',
+            items: ['setting', 'schedule', 'about', 'actor-subscribe']
+        }
+    ];
+
+    // 通过key找到对应的菜单项
+    const getItemByKey = (key) => {
+        return menuItems.find(item => item.key === key);
+    };
+
+    // 渲染分组菜单
+    function renderGroupedMenu() {
+        return menuGroups.map(group => (
+            <div key={group.title}>
+                <Divider>{group.title}</Divider>
+                <Row gutter={[16, 16]} justify="center">
+                    {group.items.map(itemKey => {
+                        const item = getItemByKey(itemKey);
+                        return item ? (
+                            <Col key={item.key} span={6}>
+                                {renderMenuItem(item)}
+                            </Col>
+                        ) : null;
+                    })}
+                </Row>
             </div>
-        ))
+        ));
     }
 
-    function renderMenu(menu: any) {
+    function renderMenuItem(item) {
         return (
-            <Link key={menu.path} to={menu.path} style={{ color: token.colorText }}>
-                <div className={'px-4 py-2 flex flex-col items-center'}>
-                    <div className={'text-4xl'}>
-                        {menu.icon}
+            <Link to={item.path} style={{ color: token.colorText }}>
+                <div className={'p-3 flex flex-col items-center'}
+                    style={{
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease',
+                        border: `1px solid ${token.colorBorderSecondary}`,
+                        height: '100%'
+                    }}>
+                    <div className={'text-3xl'} style={{ color: token.colorPrimary }}>
+                        {item.icon}
                     </div>
-                    <div className={'mt-2'}>
-                        {menu.title}
+                    <div className={'mt-2 text-center'} style={{ fontSize: '14px' }}>
+                        {item.label}
                     </div>
                 </div>
             </Link>
-        )
+        );
     }
 
     if (responsive.md) {
@@ -110,8 +152,8 @@ function Menu() {
     }
 
     return (
-        <Card>
-            {renderMenuSection()}
+        <Card title="功能菜单" bordered={false}>
+            {renderGroupedMenu()}
         </Card>
     )
 }
