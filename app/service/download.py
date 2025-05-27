@@ -26,7 +26,7 @@ class DownloadService(BaseService):
         self.setting = Setting()
         self.qb = qbittorent
 
-    def get_downloads(self, include_success=False, include_failed=True):
+    def get_downloads(self, include_success=True, include_failed=True):
         if not self.setting.download.host:
             return []
 
@@ -37,7 +37,19 @@ class DownloadService(BaseService):
             torrent = Torrent(hash=info['hash'], name=info['name'], size=utils.convert_size(info['total_size']),
                               path=info['save_path'], tags=list(map(lambda i: i.strip(), info['tags'].split(','))))
             files = self.qb.get_torrent_files(info['hash'])
-            for file in filter(lambda item: item['progress'] == 1 and item['priority'] != 0, files):
+            
+            # 检查是否有任何文件
+            if not files:
+                # 如果没有文件信息，仍然添加种子但不添加文件
+                torrents.append(torrent)
+                continue
+                
+            # 处理文件列表
+            for file in files:
+                # 允许显示任何优先级不为0的文件，无论下载进度如何
+                if file['priority'] == 0:
+                    continue
+                    
                 _, ext_name = os.path.splitext(file['name'])
                 name = file['name'].split('/')[-1]
                 size = file['size']
@@ -47,10 +59,53 @@ class DownloadService(BaseService):
                 if path.startswith(self.setting.download.download_path):
                     path = path.replace(self.setting.download.download_path, self.setting.download.mapping_path, 1)
 
+                # 仍然只显示视频文件
                 if ext_name in self.setting.app.video_format.split(',') and size > (
                         self.setting.app.video_size_minimum * 1024 * 1024):
-                    torrent.files.append(TorrentFile(name=name, size=utils.convert_size(size), path=path))
-            torrents.append(torrent)
+                    # 添加进度信息
+                    progress = file.get('progress', 0)
+                    
+                    # 尝试获取番号和演员信息
+                    num = None
+                    actors = None
+                    try:
+                        # 首先检查是否有匹配的种子记录
+                        matched_torrent = self.db.query(DBTorrent).filter_by(hash=info['hash']).one_or_none()
+                        if matched_torrent is not None:
+                            num = matched_torrent.num
+                        else:
+                            # 尝试从文件路径解析番号
+                            video_service = VideoService(self.db)
+                            video_info = video_service.parse_video(path)
+                            if video_info and video_info.num:
+                                num = video_info.num
+                                
+                                # 如果有番号，尝试获取演员信息
+                                try:
+                                    video_detail = video_service.get_video_by_num(num)
+                                    if video_detail and video_detail.actors:
+                                        actors = [actor.name for actor in video_detail.actors]
+                                except:
+                                    # 如果获取演员信息失败，忽略错误
+                                    pass
+                    except:
+                        # 如果解析失败，忽略错误
+                        pass
+                    
+                    file_info = TorrentFile(
+                        name=name, 
+                        size=utils.convert_size(size), 
+                        path=path,
+                        progress=progress,
+                        num=num,
+                        actors=actors
+                    )
+                    torrent.files.append(file_info)
+            
+            # 只有当种子包含文件时才添加到列表中
+            if torrent.files or not files:
+                torrents.append(torrent)
+                
         return torrents
 
     def complete_download(self, torrent_hash: str, is_success: bool = True):
@@ -65,9 +120,11 @@ class DownloadService(BaseService):
         with SessionFactory() as db:
             download_service = DownloadService(db=db)
             video_service = VideoService(db=db)
-            torrents = download_service.get_downloads(include_failed=False, include_success=False)
-            logger.info(f"获取到{len(torrents)}个已完成下载任务")
+            torrents = download_service.get_downloads(include_failed=True, include_success=True)
+            logger.info(f"获取到{len(torrents)}个下载任务")
             for torrent in torrents:
+                if any(tag in ["整理成功", "整理失败"] for tag in torrent.tags):
+                    continue
                 download_service.scrape_download(video_service, torrent, setting.download.trans_mode)
             db.commit()
 

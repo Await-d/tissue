@@ -46,7 +46,7 @@ steps:
             -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config:/app/config \
             --restart unless-stopped \
             --network 1panel-network \
-            tissue:latest
+        tissue:latest
         else
           echo "错误：一个或多个必要目录不存在，无法启动容器"
           exit 1
@@ -55,7 +55,7 @@ steps:
 volumes:
   - name: dockersock
     host:
-      path: /var/run/docker.sock
+      path: /var/run/docker.sock 
   - name: volume1
     host:
       path: /volume1

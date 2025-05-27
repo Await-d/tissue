@@ -59,6 +59,37 @@ class VideoService(BaseService):
             detail = VideoDetail(path=path)
         return detail
 
+    def get_video_by_num(self, num: str) -> Optional[VideoDetail]:
+        """通过番号获取视频详情
+        
+        Args:
+            num: 视频番号
+            
+        Returns:
+            VideoDetail: 视频详情，如果找不到则返回None
+        """
+        try:
+            # 首先尝试在NFO文件中查找
+            videos = self.get_videos()
+            for video in videos:
+                if video.num == num:
+                    return self.get_video(video.path)
+            
+            # 如果在本地找不到，尝试从网络获取
+            try:
+                from app.service.home import HomeService
+                home_service = HomeService(self.db)
+                detail = home_service.get_ranking_detail(num=num)
+                if detail:
+                    return VideoDetail(**detail.dict())
+            except:
+                pass
+                
+            return None
+        except Exception as e:
+            logger.error(f"通过番号获取视频详情失败: {e}")
+            return None
+
     def search_videos_by_actor(self, actor_name: str) -> List[VideoList]:
         """根据演员名称搜索视频列表"""
         if not actor_name:

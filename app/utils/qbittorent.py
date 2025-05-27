@@ -130,7 +130,7 @@ class QBittorent:
         host = self._get_host_with_scheme()
         result = self.session.get(
             urljoin(host, "/api/v2/torrents/info"),
-            params={"filter": ["seeding", "completed"], "category": category},
+            params={"category": category},
         ).json()
 
         if not include_failed:
