@@ -7,6 +7,7 @@ from random import randint
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app import schema
 from app.db import get_db, SessionFactory
@@ -135,12 +136,12 @@ class ActorSubscribeService(BaseService):
         """获取所有演员订阅的下载记录，带有演员信息"""
         try:
             # 使用SQL联表查询获取下载记录和对应的演员信息
-            query = """
+            query = text("""
             SELECT d.*, a.actor_name, a.actor_thumb
             FROM actor_subscribe_download d
             JOIN actor_subscribe a ON d.actor_subscribe_id = a.id
             ORDER BY d.download_time DESC
-            """
+            """)
             result = self.db.execute(query)
             downloads = []
             
