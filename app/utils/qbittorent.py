@@ -23,8 +23,12 @@ class QBittorent:
     def login(self):
         try:
             setting = Setting().download
+            
+            # 获取带协议头的host
+            host = self._get_host_with_scheme()
+                
             response = self.session.post(
-                url=urljoin(self.host, "/api/v2/auth/login"),
+                url=urljoin(host, "/api/v2/auth/login"),
                 data={"username": setting.username, "password": setting.password},
             )
             if response.status_code != 200:
@@ -50,9 +54,12 @@ class QBittorent:
             if not setting.username or not setting.password:
                 return {"status": False, "message": "下载器用户名或密码未配置"}
             
+            # 获取带协议头的host
+            host = self._get_host_with_scheme()
+            
             # 尝试登录
             login_response = self.session.post(
-                url=urljoin(self.host, "/api/v2/auth/login"),
+                url=urljoin(host, "/api/v2/auth/login"),
                 data={"username": setting.username, "password": setting.password},
                 timeout=5  # 设置5秒超时
             )
@@ -62,7 +69,7 @@ class QBittorent:
             
             # 尝试获取基本信息验证登录状态
             version_response = self.session.get(
-                urljoin(self.host, "/api/v2/app/version"),
+                urljoin(host, "/api/v2/app/version"),
                 timeout=5
             )
             
@@ -101,12 +108,28 @@ class QBittorent:
 
         return wrapper
 
+    def _get_host_with_scheme(self):
+        """
+        确保host包含协议头
+        
+        Returns:
+            str: 包含协议头的host地址
+        """
+        if not self.host:
+            return ""
+            
+        host = self.host
+        if not (host.startswith('http://') or host.startswith('https://')):
+            host = 'http://' + host
+        return host
+
     @auth
     def get_torrents(
         self, category: Optional[str] = None, include_failed=True, include_success=True
     ):
+        host = self._get_host_with_scheme()
         result = self.session.get(
-            urljoin(self.host, "/api/v2/torrents/info"),
+            urljoin(host, "/api/v2/torrents/info"),
             params={"filter": ["seeding", "completed"], "category": category},
         ).json()
 
@@ -120,8 +143,9 @@ class QBittorent:
 
     @auth
     def get_torrent_files(self, torrent_hash: str):
+        host = self._get_host_with_scheme()
         return self.session.get(
-            urljoin(self.host, "/api/v2/torrents/files"),
+            urljoin(host, "/api/v2/torrents/files"),
             params={
                 "hash": torrent_hash,
             },
@@ -129,31 +153,36 @@ class QBittorent:
 
     @auth
     def add_torrent_tags(self, torrent_hash: str, tags: List[str]):
+        host = self._get_host_with_scheme()
         self.session.post(
-            urljoin(self.host, "/api/v2/torrents/addTags"),
+            urljoin(host, "/api/v2/torrents/addTags"),
             data={"hashes": torrent_hash, "tags": ",".join(tags)},
         )
 
     @auth
     def remove_torrent_tags(self, torrent_hash: str, tags: List[str]):
+        host = self._get_host_with_scheme()
         self.session.post(
-            urljoin(self.host, "/api/v2/torrents/removeTags"),
+            urljoin(host, "/api/v2/torrents/removeTags"),
             data={"hashes": torrent_hash, "tags": ",".join(tags)},
         )
 
     @auth
     def delete_torrent(self, torrent_hash: str, delete_files: bool = True):
+        host = self._get_host_with_scheme()
         return self.session.post(
-            urljoin(self.host, "/api/v2/torrents/delete"),
+            urljoin(host, "/api/v2/torrents/delete"),
             data={"hashes": torrent_hash, "deleteFiles": "true" if delete_files else "false"},
         )
 
     @auth
     def get_trans_info(self):
-        return self.session.get(urljoin(self.host, "/api/v2/transfer/info")).json()
+        host = self._get_host_with_scheme()
+        return self.session.get(urljoin(host, "/api/v2/transfer/info")).json()
 
     @auth
     def add_magnet(self, magnet: str, savepath: Optional[str] = None):
+        host = self._get_host_with_scheme()
         nonce = "".join(random.sample("abcdefghijklmnopqrstuvwxyz", 5))
         data = {"urls": magnet, "tags": nonce}
 
@@ -163,7 +192,7 @@ class QBittorent:
             data["savepath"] = self.savepath
 
         response = self.session.post(
-            urljoin(self.host, "/api/v2/torrents/add"), data=data
+            urljoin(host, "/api/v2/torrents/add"), data=data
         )
         if response.status_code != 200:
             return response
@@ -172,7 +201,7 @@ class QBittorent:
         for _ in range(5):
             time.sleep(1)
             torrents = self.session.get(
-                urljoin(self.host, "/api/v2/torrents/info"), params={"tag": nonce}
+                urljoin(host, "/api/v2/torrents/info"), params={"tag": nonce}
             ).json()
             if torrents:
                 torrent_hash = torrents[0]["hash"]
@@ -183,7 +212,7 @@ class QBittorent:
             trackers_text = requests.get(self.tracker_subscribe).text
             trackers = "\n".join(filter(lambda item: item, trackers_text.split("\n")))
             self.session.post(
-                urljoin(self.host, "/api/v2/torrents/addTrackers"),
+                urljoin(host, "/api/v2/torrents/addTrackers"),
                 data={"hash": torrent_hash, "urls": trackers},
             )
 
