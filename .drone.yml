@@ -12,6 +12,10 @@ steps:
       - docker build -t tissue:latest .
       - docker stop tissue || true
       - docker rm tissue || true
+      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file
+      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video
+      - mkdir -p /volume5/HP-16/video/HP-16
+      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config
       - >
         docker run -d
         --name tissue
@@ -20,10 +24,10 @@ steps:
         -e PUID=0
         -e PGID=0
         -e UMASK=000
-        -v /volume1/docker/1panel/apps/local/tissue/localtissue/data/file:/data/file
-        -v /volume1/docker/1panel/apps/local/tissue/localtissue/data/video:/data/video
+        -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file:/data/file
+        -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video:/data/video
         -v /volume5/HP-16/video/HP-16:/HP-16
-        -v /volume1/docker/1panel/apps/local/tissue/localtissue/data/config:/app/config
+        -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config:/app/config
         --restart unless-stopped
         --network 1panel-network
         tissue:latest
