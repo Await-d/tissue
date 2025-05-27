@@ -325,13 +325,35 @@ class ActorSubscribeService(BaseService):
         sorted_resources = sorted(resources, key=lambda x: parse_size(x.size), reverse=True)
         return sorted_resources[0] if sorted_resources else None
     
-    @transaction
     def download_actor_video(self, subscription, video_detail, resource):
         """下载演员视频并记录"""
-        # 检查种子是否已存在于qBittorrent中
-        if qbittorent.is_magnet_exists(resource.magnet):
-            logger.info(f"种子已存在于qBittorrent中，跳过下载，直接记录: {video_detail.num}")
-            # 虽然不添加下载任务，但仍然记录为已下载
+        try:
+            # 检查种子是否已存在于qBittorrent中
+            if qbittorent.is_magnet_exists(resource.magnet):
+                logger.info(f"种子已存在于qBittorrent中，跳过下载，直接记录: {video_detail.num}")
+                # 虽然不添加下载任务，但仍然记录为已下载
+                download = ActorSubscribeDownload(
+                    actor_subscribe_id=subscription.id,
+                    num=video_detail.num,
+                    title=video_detail.title,
+                    cover=video_detail.cover,
+                    magnet=resource.magnet,
+                    size=resource.size,
+                    download_time=datetime.now(),
+                    is_hd=resource.is_hd,
+                    is_zh=resource.is_zh,
+                    is_uncensored=resource.is_uncensored
+                )
+                download.add(self.db)
+                self.db.flush()
+                return
+                
+            # 添加下载任务
+            response = qbittorent.add_magnet(resource.magnet, resource.savepath)
+            if response.status_code != 200:
+                raise BizException("下载创建失败")
+            
+            # 记录下载
             download = ActorSubscribeDownload(
                 actor_subscribe_id=subscription.id,
                 num=video_detail.num,
@@ -345,45 +367,28 @@ class ActorSubscribeService(BaseService):
                 is_uncensored=resource.is_uncensored
             )
             download.add(self.db)
-            return
+            self.db.flush()
             
-        # 添加下载任务
-        response = qbittorent.add_magnet(resource.magnet, resource.savepath)
-        if response.status_code != 200:
-            raise BizException("下载创建失败")
-        
-        # 记录下载
-        download = ActorSubscribeDownload(
-            actor_subscribe_id=subscription.id,
-            num=video_detail.num,
-            title=video_detail.title,
-            cover=video_detail.cover,
-            magnet=resource.magnet,
-            size=resource.size,
-            download_time=datetime.now(),
-            is_hd=resource.is_hd,
-            is_zh=resource.is_zh,
-            is_uncensored=resource.is_uncensored
-        )
-        download.add(self.db)
-        
-        # 发送通知
-        try:
-            from app.schema.actor_subscribe import ActorSubscribeNotify
-            notify_data = ActorSubscribeNotify(
-                actor_name=subscription.actor_name,
-                num=video_detail.num,
-                title=video_detail.title,
-                cover=video_detail.cover,
-                magnet=resource.magnet,
-                size=resource.size,
-                is_hd=resource.is_hd,
-                is_zh=resource.is_zh,
-                is_uncensored=resource.is_uncensored
-            )
-            notify.send_actor_subscribe(notify_data)
+            # 发送通知
+            try:
+                from app.schema.actor_subscribe import ActorSubscribeNotify
+                notify_data = ActorSubscribeNotify(
+                    actor_name=subscription.actor_name,
+                    num=video_detail.num,
+                    title=video_detail.title,
+                    cover=video_detail.cover,
+                    magnet=resource.magnet,
+                    size=resource.size,
+                    is_hd=resource.is_hd,
+                    is_zh=resource.is_zh,
+                    is_uncensored=resource.is_uncensored
+                )
+                notify.send_actor_subscribe(notify_data)
+            except Exception as e:
+                logger.error(f"发送通知失败: {e}")
         except Exception as e:
-            logger.error(f"发送通知失败: {e}")
+            self.db.rollback()
+            raise e
     
     @classmethod
     def job_actor_subscribe(cls):
