@@ -33,6 +33,60 @@ class QBittorent:
             logger.info("下载器连接失败")
             raise BizException("下载器连接失败")
 
+    def test_connection(self):
+        """
+        测试qBittorrent连接是否正常
+        
+        Returns:
+            dict: 测试结果，包含状态和详细信息
+        """
+        try:
+            # 首先尝试登录
+            setting = Setting().download
+            
+            if not self.host or not self.host.strip():
+                return {"status": False, "message": "下载器地址未配置"}
+                
+            if not setting.username or not setting.password:
+                return {"status": False, "message": "下载器用户名或密码未配置"}
+            
+            # 尝试登录
+            login_response = self.session.post(
+                url=urljoin(self.host, "/api/v2/auth/login"),
+                data={"username": setting.username, "password": setting.password},
+                timeout=5  # 设置5秒超时
+            )
+            
+            if login_response.status_code != 200:
+                return {"status": False, "message": f"登录失败: {login_response.text}"}
+            
+            # 尝试获取基本信息验证登录状态
+            version_response = self.session.get(
+                urljoin(self.host, "/api/v2/app/version"),
+                timeout=5
+            )
+            
+            if version_response.status_code != 200:
+                return {"status": False, "message": "无法获取版本信息，请检查权限设置"}
+            
+            # 检查保存路径是否设置
+            save_path_message = ""
+            if not self.savepath:
+                save_path_message = "（警告：下载保存路径未设置）"
+            
+            return {
+                "status": True, 
+                "message": f"连接成功! qBittorrent版本: {version_response.text} {save_path_message}",
+                "version": version_response.text
+            }
+        except requests.exceptions.ConnectionError:
+            return {"status": False, "message": "连接错误，请检查下载器地址是否正确"}
+        except requests.exceptions.Timeout:
+            return {"status": False, "message": "连接超时，请检查下载器是否在线"}
+        except Exception as e:
+            logger.error(f"测试下载器连接出错: {str(e)}")
+            return {"status": False, "message": f"连接测试失败: {str(e)}"}
+
     def auth(func):
         def wrapper(self, *args, **kwargs):
             try:

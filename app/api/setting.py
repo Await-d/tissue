@@ -1,3 +1,10 @@
+'''
+Author: Await
+Date: 2025-05-24 17:05:38
+LastEditors: Await
+LastEditTime: 2025-05-27 14:27:14
+Description: 请填写简介
+'''
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -5,6 +12,7 @@ from app.scheduler import scheduler
 from app.schema import Setting
 from app.schema.r import R
 from app.utils.qbittorent import qbittorent
+from app.utils.logger import logger
 
 router = APIRouter()
 
@@ -36,3 +44,19 @@ def save_setting(section: str, setting: dict):
         qbittorent.savepath = setting.get("savepath")
 
     return R.ok()
+
+
+@router.get("/test-qbittorrent")
+def test_qbittorrent_connection():
+    """
+    测试qBittorrent下载器连接
+    """
+    try:
+        result = qbittorent.test_connection()
+        if result["status"]:
+            return R.ok(result)
+        else:
+            return R.fail(result["message"], data=result)
+    except Exception as e:
+        logger.error(f"测试qBittorrent连接时出错: {str(e)}")
+        return R.fail(f"测试连接时发生错误: {str(e)}")
