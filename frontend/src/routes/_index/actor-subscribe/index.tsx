@@ -49,11 +49,17 @@ function ActorSubscribe() {
     // 执行演员订阅任务
     const { run: runActorSubscribe, loading: runningTask } = useRequest(subscribeApi.runActorSubscribe, {
         manual: true,
-        onSuccess: () => {
-            message.success('订阅任务执行成功，请稍后查看下载结果');
+        onSuccess: (res) => {
+            message.success(res.data?.message || '订阅任务已在后台启动，请稍后查看结果');
         },
-        onError: (error) => {
-            console.error('执行订阅任务失败:', error);
+        onError: (err: any) => {
+            // 即使出现504错误，也不提示错误，因为任务已在后台执行
+            if (err.response && err.response.status === 504) {
+                message.success('订阅任务已在后台启动，请稍后查看结果');
+                console.log('演员订阅任务超时，但任务已在后台执行');
+                return;
+            }
+            console.error('执行订阅任务失败:', err);
             message.error('执行订阅任务失败');
         }
     });
