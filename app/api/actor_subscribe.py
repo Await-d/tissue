@@ -107,5 +107,13 @@ def delete_subscription_download(
 @router.post("/run")
 def run_actor_subscribe(service=Depends(get_actor_subscribe_service)):
     """手动执行演员订阅任务"""
-    service.do_actor_subscribe()
-    return R.ok() 
+    # 导入线程模块
+    import threading
+    
+    # 创建一个线程来执行订阅任务
+    thread = threading.Thread(target=service.do_actor_subscribe)
+    thread.daemon = True  # 设置为守护线程，这样主程序退出时线程也会退出
+    thread.start()
+    
+    # 立即返回成功响应，不等待任务完成
+    return R.ok(message="订阅任务已在后台启动，请稍后查看结果") 
