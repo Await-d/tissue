@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography, Checkbox } from 'antd';
-import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, SettingOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import * as api from '../../../apis/video';
 import * as subscribeApi from '../../../apis/subscribe';
@@ -482,12 +482,8 @@ function ActorSubscribe() {
                 onRefresh={refresh}
             />
 
-            {/* 悬浮按钮 */}
-            <FloatButton.Group
-                trigger="hover"
-                style={{ right: 24, bottom: 24 }}
-                icon={<SettingOutlined />}
-            >
+            {/* 悬浮按钮 - 直接显示功能按钮，不使用设置按钮组 */}
+            <FloatButton.Group style={{ right: 24, bottom: 24 }}>
                 <FloatButton
                     icon={<PlusOutlined />}
                     tooltip="添加订阅"
