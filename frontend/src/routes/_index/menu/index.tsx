@@ -11,13 +11,27 @@ export const Route = createFileRoute('/_index/menu/')({
     component: Menu,
 })
 
+// 定义菜单项的接口
+interface MenuItem {
+    key: string;
+    icon: React.ReactNode;
+    label: string;
+    path: string;
+}
+
+// 定义菜单组的接口
+interface MenuGroup {
+    title: string;
+    items: string[];
+}
+
 function Menu() {
 
     const { token } = useToken();
     const responsive = useResponsive()
 
     // 添加演员订阅菜单项
-    const menuItems = [
+    const menuItems: MenuItem[] = [
         {
             key: 'home',
             icon: <HomeOutlined />,
@@ -87,7 +101,7 @@ function Menu() {
     ]
 
     // 分组菜单项
-    const menuGroups = [
+    const menuGroups: MenuGroup[] = [
         {
             title: '常用功能',
             items: ['home', 'search', 'actor', 'subscribe']
@@ -103,7 +117,7 @@ function Menu() {
     ];
 
     // 通过key找到对应的菜单项
-    const getItemByKey = (key) => {
+    const getItemByKey = (key: string): MenuItem | undefined => {
         return menuItems.find(item => item.key === key);
     };
 
@@ -126,7 +140,7 @@ function Menu() {
         ));
     }
 
-    function renderMenuItem(item) {
+    function renderMenuItem(item: MenuItem) {
         return (
             <Link to={item.path} style={{ color: token.colorText }}>
                 <div className={'p-3 flex flex-col items-center'}
