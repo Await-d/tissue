@@ -105,14 +105,10 @@ class ActorSubscribeService(BaseService):
     def _delete_torrent_by_magnet(self, magnet: str):
         """通过magnet链接删除qBittorrent中的种子"""
         try:
-            # 从magnet链接中提取hash
-            import re
-            hash_match = re.search(r'btih:([a-fA-F0-9]{40})', magnet)
-            if not hash_match:
-                hash_match = re.search(r'btih:([a-fA-F0-9]{32})', magnet)
+            # 使用qbittorent的方法从magnet链接中提取hash
+            torrent_hash = qbittorent.extract_hash_from_magnet(magnet)
             
-            if hash_match:
-                torrent_hash = hash_match.group(1).lower()
+            if torrent_hash:
                 # 调用qBittorrent API删除种子（包括文件）
                 response = qbittorent.delete_torrent(torrent_hash, delete_files=True)
                 if response.status_code == 200:
@@ -332,6 +328,25 @@ class ActorSubscribeService(BaseService):
     @transaction
     def download_actor_video(self, subscription, video_detail, resource):
         """下载演员视频并记录"""
+        # 检查种子是否已存在于qBittorrent中
+        if qbittorent.is_magnet_exists(resource.magnet):
+            logger.info(f"种子已存在于qBittorrent中，跳过下载，直接记录: {video_detail.num}")
+            # 虽然不添加下载任务，但仍然记录为已下载
+            download = ActorSubscribeDownload(
+                actor_subscribe_id=subscription.id,
+                num=video_detail.num,
+                title=video_detail.title,
+                cover=video_detail.cover,
+                magnet=resource.magnet,
+                size=resource.size,
+                download_time=datetime.now(),
+                is_hd=resource.is_hd,
+                is_zh=resource.is_zh,
+                is_uncensored=resource.is_uncensored
+            )
+            download.add(self.db)
+            return
+            
         # 添加下载任务
         response = qbittorent.add_magnet(resource.magnet, resource.savepath)
         if response.status_code != 200:

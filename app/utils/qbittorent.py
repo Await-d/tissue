@@ -219,5 +219,83 @@ class QBittorent:
         self.remove_torrent_tags(torrent_hash, [nonce])
         return response
 
+    @auth
+    def get_all_torrents(self):
+        """获取所有种子信息，不过滤"""
+        host = self._get_host_with_scheme()
+        return self.session.get(
+            urljoin(host, "/api/v2/torrents/info")
+        ).json()
+    
+    def extract_hash_from_magnet(self, magnet: str) -> Optional[str]:
+        """从磁力链接中提取hash值
+        
+        Args:
+            magnet: 磁力链接
+            
+        Returns:
+            str: 提取的hash值，如果提取失败则返回None
+        """
+        try:
+            import re
+            hash_match = re.search(r'btih:([a-fA-F0-9]{40})', magnet)
+            if not hash_match:
+                hash_match = re.search(r'btih:([a-fA-F0-9]{32})', magnet)
+            
+            if hash_match:
+                return hash_match.group(1).lower()
+            return None
+        except Exception as e:
+            logger.error(f"从磁力链接提取hash失败: {e}")
+            return None
+            
+    def is_magnet_exists(self, magnet: str) -> bool:
+        """检查磁力链接是否已在qBittorrent中下载
+        
+        Args:
+            magnet: 磁力链接
+            
+        Returns:
+            bool: 如果已存在则返回True，否则返回False
+        """
+        try:
+            # 从磁力链接中提取hash
+            torrent_hash = self.extract_hash_from_magnet(magnet)
+            if not torrent_hash:
+                logger.warning(f"无法从磁力链接中提取hash: {magnet}")
+                return False
+                
+            # 获取所有种子
+            all_torrents = self.get_all_torrents()
+            
+            # 检查是否有匹配的hash
+            for torrent in all_torrents:
+                if torrent["hash"].lower() == torrent_hash:
+                    logger.info(f"种子已存在于qBittorrent中: {torrent_hash}")
+                    return True
+                    
+            return False
+        except Exception as e:
+            logger.error(f"检查种子是否存在时出错: {e}")
+            return False
+
+    def _delete_torrent_by_magnet(self, magnet: str):
+        """通过magnet链接删除qBittorrent中的种子"""
+        try:
+            # 从magnet链接中提取hash
+            torrent_hash = self.extract_hash_from_magnet(magnet)
+            
+            if torrent_hash:
+                # 调用qBittorrent API删除种子（包括文件）
+                response = self.delete_torrent(torrent_hash, delete_files=True)
+                if response.status_code == 200:
+                    logger.info(f"成功删除种子: {torrent_hash}")
+                else:
+                    logger.warning(f"删除种子失败: {torrent_hash}, 状态码: {response.status_code}")
+            else:
+                logger.warning(f"无法从magnet链接中提取hash: {magnet}")
+        except Exception as e:
+            logger.error(f"删除种子时发生错误: {e}")
+
 
 qbittorent = QBittorent()
