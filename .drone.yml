@@ -8,31 +8,57 @@ steps:
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
+      - name: volume1
+        path: /volume1
+      - name: volume5
+        path: /volume5
     commands:
       - docker build -t tissue:latest .
       - docker stop tissue || true
       - docker rm tissue || true
-      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file
-      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video
-      - mkdir -p /volume5/HP-16/video/HP-16
-      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config
+      - echo "开始诊断和创建必要目录..."
+      - ls -la /volume1 || echo "/volume1 目录不存在或无法访问"
+      - ls -la /volume5 || echo "/volume5 目录不存在或无法访问"
+      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file || echo "无法创建file目录"
+      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video || echo "无法创建video目录"
+      - mkdir -p /volume5/HP-16/video/HP-16 || echo "无法创建HP-16目录"
+      - mkdir -p /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config || echo "无法创建config目录"
+      - ls -la /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file || echo "file目录不存在"
+      - ls -la /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video || echo "video目录不存在"
+      - ls -la /volume5/HP-16/video/HP-16 || echo "HP-16目录不存在"
+      - ls -la /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config || echo "config目录不存在"
       - >
-        docker run -d
-        --name tissue
-        -p 9194:9193
-        -e TZ="Asia/Shanghai"
-        -e PUID=0
-        -e PGID=0
-        -e UMASK=000
-        -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file:/data/file
-        -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video:/data/video
-        -v /volume5/HP-16/video/HP-16:/HP-16
-        -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config:/app/config
-        --restart unless-stopped
-        --network 1panel-network
-        tissue:latest
+        if [ -d "/volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config" ] && 
+           [ -d "/volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file" ] && 
+           [ -d "/volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video" ] && 
+           [ -d "/volume5/HP-16/video/HP-16" ]; then
+          echo "所有必要目录已存在，启动容器...";
+          docker run -d
+          --name tissue
+          -p 9194:9193
+          -e TZ="Asia/Shanghai"
+          -e PUID=0
+          -e PGID=0
+          -e UMASK=000
+          -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/file:/data/file
+          -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/video:/data/video
+          -v /volume5/HP-16/video/HP-16:/HP-16
+          -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config:/app/config
+          --restart unless-stopped
+          --network 1panel-network
+          tissue:latest;
+        else
+          echo "错误：一个或多个必要目录不存在，无法启动容器";
+          exit 1;
+        fi
 
 volumes:
   - name: dockersock
     host:
-      path: /var/run/docker.sock 
+      path: /var/run/docker.sock
+  - name: volume1
+    host:
+      path: /volume1
+  - name: volume5
+    host:
+      path: /volume5 
