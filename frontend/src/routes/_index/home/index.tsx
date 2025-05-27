@@ -2,7 +2,7 @@
  * @Author: Await
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
- * @LastEditTime: 2025-05-24 23:25:24
+ * @LastEditTime: 2025-05-27 16:22:02
  * @Description: 请填写简介
  */
 import Filter, { FilterField } from "./-components/filter.tsx";
@@ -76,8 +76,8 @@ function JavDB() {
                             {videos.map((item: any) => (
                                 <Col key={item.url} span={24} md={12} lg={6}
                                     onClick={() => navigate({
-                                        to: `/_index/video/${item.num}`,
-                                        search: { source: 'JavDB', url: item.url }
+                                        to: '/home/detail',
+                                        search: { source: 'JavDB', url: item.url, num: item.num }
                                     })}><JavDBItem
                                         item={item} /></Col>
                             ))}

@@ -2,7 +2,7 @@
  * @Author: Await
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
- * @LastEditTime: 2025-05-26 17:53:38
+ * @LastEditTime: 2025-05-27 16:19:27
  * @Description: 请填写简介
  */
 import React, { useState } from "react";
@@ -104,7 +104,6 @@ function JavDBItem(props: { item: any }) {
             <div
                 className="overflow-hidden rounded-lg transition-shadow hover:shadow-lg hover:border-0"
                 style={{ background: token.colorBorderBg, border: `1px solid ${token.colorBorderSecondary}` }}
-                onClick={(e) => e.stopPropagation()} // 阻止事件冒泡到父元素的Col
             >
                 <div style={{ position: 'relative' }}>
                     <VideoCover src={item.cover} />

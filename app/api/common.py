@@ -2,7 +2,7 @@
 Author: Await
 Date: 2025-05-24 17:05:38
 LastEditors: Await
-LastEditTime: 2025-05-26 18:33:42
+LastEditTime: 2025-05-27 16:16:27
 Description: 请填写简介
 '''
 import hashlib
@@ -62,7 +62,7 @@ def get_versions():
     latest = current  # 默认值为当前版本
 
     try:
-        response = requests.get("https://raw.githubusercontent.com/Await-d/tissue/main/version.py", timeout=10)
+        response = requests.get("https://raw.githubusercontent.com/Await-d/tissue/master/version.py", timeout=10)
         if response.status_code == 200:
             # 使用更灵活的正则表达式匹配
             match = re.search(r"APP_VERSION\s*=\s*['\"]v?(.+?)['\"]", response.text)
