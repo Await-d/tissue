@@ -30,6 +30,8 @@ class ActorSubscribeUpdate(ActorSubscribeCreate):
 
 class ActorSubscribe(ActorSubscribeUpdate):
     last_updated: Optional[datetime] = None
+    download_count: Optional[int] = 0  # 添加下载数量统计字段
+    subscribed_works_count: Optional[int] = 0  # 添加订阅作品总数统计字段
 
 
 class ActorSubscribeStatusUpdate(BaseModel):

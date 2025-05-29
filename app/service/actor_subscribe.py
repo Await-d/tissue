@@ -27,7 +27,51 @@ def get_actor_subscribe_service(db: Session = Depends(get_db)):
 class ActorSubscribeService(BaseService):
 
     def get_actor_subscriptions(self):
-        return self.db.query(ActorSubscribe).order_by(ActorSubscribe.id.desc()).all()
+        """获取所有演员订阅列表，包含下载统计"""
+        try:
+            # 使用SQL联表查询获取演员订阅信息和下载数量统计
+            query = text("""
+            SELECT a.*, COALESCE(COUNT(d.id), 0) as download_count
+            FROM actor_subscribe a
+            LEFT JOIN actor_subscribe_download d ON a.id = d.actor_subscribe_id
+            GROUP BY a.id
+            ORDER BY a.id DESC
+            """)
+            result = self.db.execute(query)
+            subscriptions = []
+            
+            for row in result:
+                # 将查询结果转换为字典
+                subscription_dict = {
+                    'id': row.id,
+                    'actor_name': row.actor_name,
+                    'actor_url': row.actor_url,
+                    'actor_thumb': row.actor_thumb,
+                    'from_date': row.from_date,
+                    'last_updated': row.last_updated,
+                    'is_hd': row.is_hd,
+                    'is_zh': row.is_zh,
+                    'is_uncensored': row.is_uncensored,
+                    'is_paused': row.is_paused,
+                    'download_count': row.download_count,
+                    'subscribed_works_count': 0  # 默认值，将在下面计算
+                }
+                
+                # 计算订阅作品总数（符合订阅条件的作品数量）
+                try:
+                    subscribed_works_count = self._calculate_subscribed_works_count(subscription_dict)
+                    subscription_dict['subscribed_works_count'] = subscribed_works_count
+                except Exception as e:
+                    logger.error(f"计算演员 {subscription_dict['actor_name']} 的订阅作品数量失败: {e}")
+                    subscription_dict['subscribed_works_count'] = 0
+                
+                subscriptions.append(subscription_dict)
+            
+            return subscriptions
+        except Exception as e:
+            logger.error(f"获取演员订阅列表失败: {e}")
+            # 如果查询失败，回退到原来的简单查询
+            return self.db.query(ActorSubscribe).order_by(ActorSubscribe.id.desc()).all()
 
     def get_actor_subscription_by_name(self, actor_name: str):
         """通过演员名称查找订阅"""
@@ -194,20 +238,20 @@ class ActorSubscribeService(BaseService):
         logger.info(f"获取到{len(subscriptions)}个演员订阅")
         
         # 过滤掉已暂停的订阅
-        active_subscriptions = [s for s in subscriptions if not s.is_paused]
+        active_subscriptions = [s for s in subscriptions if not s['is_paused']]
         if len(active_subscriptions) < len(subscriptions):
             logger.info(f"跳过{len(subscriptions) - len(active_subscriptions)}个已暂停的订阅")
         
         for subscription in active_subscriptions:
             try:
                 # 获取演员的作品列表
-                actor_videos = spider.get_web_actor_videos(subscription.actor_name, "javdb")
+                actor_videos = spider.get_web_actor_videos(subscription['actor_name'], "javdb")
                 if not actor_videos:
-                    logger.error(f"未获取到演员 {subscription.actor_name} 的作品列表")
+                    logger.error(f"未获取到演员 {subscription['actor_name']} 的作品列表")
                     continue
                 
                 # 获取该演员已下载的作品列表
-                downloaded_videos = self.get_actor_subscription_downloads(subscription.id)
+                downloaded_videos = self.get_actor_subscription_downloads(subscription['id'])
                 downloaded_nums = {video.num for video in downloaded_videos}
                 
                 # 筛选出符合条件的新作品
@@ -223,7 +267,7 @@ class ActorSubscribeService(BaseService):
                                 # 如果已经是日期对象
                                 video_date = video["publish_date"]
                                 
-                            if video_date < subscription.from_date:
+                            if video_date < subscription['from_date']:
                                 continue
                         except Exception as e:
                             logger.error(f"解析日期失败: {e}")
@@ -235,7 +279,7 @@ class ActorSubscribeService(BaseService):
                     
                     new_videos.append(video)
                 
-                logger.info(f"演员 {subscription.actor_name} 有 {len(new_videos)} 个新作品")
+                logger.info(f"演员 {subscription['actor_name']} 有 {len(new_videos)} 个新作品")
                 
                 # 处理每个新作品
                 for video in new_videos:
@@ -248,13 +292,13 @@ class ActorSubscribeService(BaseService):
                         traceback.print_exc()
                 
             except Exception as e:
-                logger.error(f"处理演员 {subscription.actor_name} 订阅失败: {e}")
+                logger.error(f"处理演员 {subscription['actor_name']} 订阅失败: {e}")
                 traceback.print_exc()
             
             # 每个演员处理完后随机等待一段时间
             time.sleep(randint(30, 60))
     
-    def process_new_video(self, subscription: ActorSubscribe, video_info: dict):
+    def process_new_video(self, subscription: dict, video_info: dict):
         """处理单个新视频，获取下载链接并选择最佳资源下载"""
         video_num = video_info.get("num")
         if not video_num:
@@ -272,9 +316,9 @@ class ActorSubscribeService(BaseService):
         # 筛选符合条件的资源
         matched_resources = []
         for resource in video_detail.downloads:
-            if (not subscription.is_hd or resource.is_hd) and \
-               (not subscription.is_zh or resource.is_zh) and \
-               (not subscription.is_uncensored or resource.is_uncensored):
+            if (not subscription['is_hd'] or resource.is_hd) and \
+               (not subscription['is_zh'] or resource.is_zh) and \
+               (not subscription['is_uncensored'] or resource.is_uncensored):
                 matched_resources.append(resource)
         
         if not matched_resources:
@@ -333,7 +377,7 @@ class ActorSubscribeService(BaseService):
                 logger.info(f"种子已存在于qBittorrent中，跳过下载，直接记录: {video_detail.num}")
                 # 虽然不添加下载任务，但仍然记录为已下载
                 download = ActorSubscribeDownload(
-                    actor_subscribe_id=subscription.id,
+                    actor_subscribe_id=subscription['id'],
                     num=video_detail.num,
                     title=video_detail.title,
                     cover=video_detail.cover,
@@ -355,7 +399,7 @@ class ActorSubscribeService(BaseService):
             
             # 记录下载
             download = ActorSubscribeDownload(
-                actor_subscribe_id=subscription.id,
+                actor_subscribe_id=subscription['id'],
                 num=video_detail.num,
                 title=video_detail.title,
                 cover=video_detail.cover,
@@ -373,7 +417,7 @@ class ActorSubscribeService(BaseService):
             try:
                 from app.schema.actor_subscribe import ActorSubscribeNotify
                 notify_data = ActorSubscribeNotify(
-                    actor_name=subscription.actor_name,
+                    actor_name=subscription['actor_name'],
                     num=video_detail.num,
                     title=video_detail.title,
                     cover=video_detail.cover,
@@ -396,4 +440,40 @@ class ActorSubscribeService(BaseService):
         with SessionFactory() as db:
             service = ActorSubscribeService(db)
             service.do_actor_subscribe()
-            db.commit() 
+            db.commit()
+
+    def _calculate_subscribed_works_count(self, subscription: dict) -> int:
+        """计算订阅作品总数（从订阅开始日期到现在，符合条件的作品数量）"""
+        try:
+            # 获取演员的作品列表
+            actor_videos = spider.get_web_actor_videos(subscription['actor_name'], "javdb")
+            if not actor_videos:
+                return 0
+            
+            # 获取订阅起始日期，确保是date对象
+            from_date = subscription['from_date']
+            if isinstance(from_date, str):
+                from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+            
+            # 筛选出符合订阅条件的作品
+            qualified_videos = []
+            for video in actor_videos:
+                # 检查发布日期是否晚于订阅起始日期
+                if video.get("publish_date"):
+                    try:
+                        # 处理不同格式的日期
+                        if isinstance(video["publish_date"], str):
+                            video_date = datetime.strptime(video["publish_date"], "%Y-%m-%d").date()
+                        else:
+                            video_date = video["publish_date"]
+                            
+                        if video_date >= from_date:
+                            qualified_videos.append(video)
+                    except Exception as e:
+                        logger.error(f"解析日期失败: {e}")
+                        continue
+            
+            return len(qualified_videos)
+        except Exception as e:
+            logger.error(f"获取演员 {subscription['actor_name']} 作品列表失败: {e}")
+            return 0 

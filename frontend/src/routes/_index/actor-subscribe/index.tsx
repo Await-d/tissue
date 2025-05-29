@@ -326,7 +326,7 @@ function ActorSubscribe() {
                                     >
                                         <div style={{ padding: '0 4px' }}>
                                             <Row gutter={[16, 8]}>
-                                                <Col span={12}>
+                                                <Col span={8}>
                                                     <Statistic
                                                         title="订阅日期"
                                                         value={item.from_date}
@@ -334,12 +334,21 @@ function ActorSubscribe() {
                                                         prefix={<CalendarOutlined />}
                                                     />
                                                 </Col>
-                                                <Col span={12}>
+                                                <Col span={8}>
                                                     <Statistic
                                                         title="已下载"
                                                         value={downloadCount}
                                                         suffix="部"
                                                         valueStyle={{ fontSize: '14px' }}
+                                                    />
+                                                </Col>
+                                                <Col span={8}>
+                                                    <Statistic
+                                                        title="订阅作品"
+                                                        value={item.subscribed_works_count || 0}
+                                                        suffix="部"
+                                                        valueStyle={{ fontSize: '14px' }}
+                                                        prefix={<FileOutlined />}
                                                     />
                                                 </Col>
                                             </Row>
