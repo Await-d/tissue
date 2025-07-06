@@ -176,6 +176,15 @@ class QBittorent:
         )
 
     @auth
+    def pause_torrent(self, torrent_hash: str):
+        """暂停种子"""
+        host = self._get_host_with_scheme()
+        return self.session.post(
+            urljoin(host, "/api/v2/torrents/pause"),
+            data={"hashes": torrent_hash},
+        )
+
+    @auth
     def get_trans_info(self):
         host = self._get_host_with_scheme()
         return self.session.get(urljoin(host, "/api/v2/transfer/info")).json()

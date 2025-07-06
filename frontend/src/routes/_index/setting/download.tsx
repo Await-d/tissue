@@ -104,6 +104,10 @@ function SettingDownload() {
                         tooltip={'整理完成后自动删除种子及数据'}>
                         <Switch />
                     </Form.Item>
+                    <Form.Item label={'完成后停止做种'} name={'stop_seeding'} valuePropName={'checked'}
+                        tooltip={'种子下载完成并整理成功后自动停止做种，默认开启'}>
+                        <Switch />
+                    </Form.Item>
                     <Form.Item label={'任务分类'} name={'category'}
                         tooltip="只有指定类别的任务会被识别，留空则为所有任务"
                     >

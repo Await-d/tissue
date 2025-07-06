@@ -32,6 +32,7 @@ class SettingDownload(BaseModel):
     delete_auto: bool = False
     category: Optional[str] = ""
     tracker_subscribe: Optional[str] = ""
+    stop_seeding: bool = True
 
 
 class SettingNotify(BaseModel):

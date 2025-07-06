@@ -110,6 +110,14 @@ class DownloadService(BaseService):
 
     def complete_download(self, torrent_hash: str, is_success: bool = True):
         self.qb.add_torrent_tags(torrent_hash, ['整理成功' if is_success else '整理失败'])
+        
+        # 如果设置了完成后停止做种，则暂停种子
+        if is_success and self.setting.download.stop_seeding:
+            try:
+                self.qb.pause_torrent(torrent_hash)
+                logger.info(f"种子已暂停做种: {torrent_hash}")
+            except Exception as e:
+                logger.error(f"暂停种子做种失败: {torrent_hash}, 错误: {e}")
 
     def delete_download(self, torrent_hash: str):
         self.qb.delete_torrent(torrent_hash)
