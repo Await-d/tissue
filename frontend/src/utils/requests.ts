@@ -26,7 +26,8 @@ request.interceptors.response.use(response => response, error => {
     if (error.response.status === 401) {
         store.dispatch.auth.logout()
     } else if (error.response.data) {
-        message.error(error.response.data)
+        const errorMsg = error.response.data?.detail || error.response.data?.message || JSON.stringify(error.response.data)
+        message.error(errorMsg)
     }
     return Promise.reject(error)
 })

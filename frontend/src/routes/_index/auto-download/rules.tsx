@@ -87,11 +87,15 @@ function AutoDownloadRules() {
   // 创建/更新规则
   const handleSubmit = async (values: any) => {
     try {
+      console.log('提交表单数据:', values)
       if (editingRule) {
+        console.log('更新规则:', editingRule.id, values)
         await updateRule(editingRule.id, values)
         message.success('规则更新成功')
       } else {
-        await createRule(values)
+        console.log('创建新规则:', values)
+        const result = await createRule(values)
+        console.log('创建规则响应:', result)
         message.success('规则创建成功')
       }
       setModalVisible(false)
@@ -99,8 +103,11 @@ function AutoDownloadRules() {
       form.resetFields()
       loadRules(pagination.current, pagination.pageSize)
       loadStatistics()
-    } catch (error) {
-      message.error(editingRule ? '规则更新失败' : '规则创建失败')
+    } catch (error: any) {
+      console.error('创建规则失败:', error)
+      console.error('错误详情:', error?.response?.data)
+      const errorMessage = error?.response?.data?.detail || error?.message || '未知错误'
+      message.error(`${editingRule ? '规则更新失败' : '规则创建失败'}: ${errorMessage}`)
     }
   }
 
