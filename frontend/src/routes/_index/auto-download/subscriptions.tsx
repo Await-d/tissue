@@ -145,13 +145,13 @@ function AutoDownloadSubscriptions() {
   // 状态颜色映射
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
+      case 'PENDING':
         return 'default'
-      case 'downloading':
+      case 'DOWNLOADING':
         return 'processing'
-      case 'completed':
+      case 'COMPLETED':
         return 'success'
-      case 'failed':
+      case 'FAILED':
         return 'error'
       default:
         return 'default'
@@ -161,13 +161,13 @@ function AutoDownloadSubscriptions() {
   // 状态文本映射
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending':
+      case 'PENDING':
         return '待处理'
-      case 'downloading':
+      case 'DOWNLOADING':
         return '下载中'
-      case 'completed':
+      case 'COMPLETED':
         return '已完成'
-      case 'failed':
+      case 'FAILED':
         return '失败'
       default:
         return status
@@ -258,7 +258,7 @@ function AutoDownloadSubscriptions() {
       key: 'actions',
       render: (_, record) => (
         <Space>
-          {record.status === 'failed' && (
+          {record.status === 'FAILED' && (
             <Button
               type="text"
               icon={<ReloadOutlined />}
@@ -321,10 +321,10 @@ function AutoDownloadSubscriptions() {
               onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
               style={{ width: '100%' }}
             >
-              <Option value="pending">待处理</Option>
-              <Option value="downloading">下载中</Option>
-              <Option value="completed">已完成</Option>
-              <Option value="failed">失败</Option>
+              <Option value="PENDING">待处理</Option>
+              <Option value="DOWNLOADING">下载中</Option>
+              <Option value="COMPLETED">已完成</Option>
+              <Option value="FAILED">失败</Option>
             </Select>
           </Col>
           <Col span={4}>
