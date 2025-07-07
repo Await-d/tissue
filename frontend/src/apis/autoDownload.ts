@@ -67,23 +67,23 @@ export const getRules = (params: {
   is_enabled?: boolean
   name?: string
 }): Promise<ListResponse<AutoDownloadRule>> => {
-  return request.get('/api/auto-download/rules', { params })
+  return request.get('/auto-download/rules', { params })
 }
 
 export const createRule = (data: Omit<AutoDownloadRule, 'id' | 'created_at' | 'updated_at' | 'subscription_count' | 'success_count'>): Promise<ApiResponse> => {
-  return request.post('/api/auto-download/rules', data)
+  return request.post('/auto-download/rules', data)
 }
 
 export const updateRule = (id: number, data: Partial<AutoDownloadRule>): Promise<ApiResponse> => {
-  return request.put(`/api/auto-download/rules/${id}`, data)
+  return request.put(`/auto-download/rules/${id}`, data)
 }
 
 export const deleteRule = (id: number): Promise<ApiResponse> => {
-  return request.delete(`/api/auto-download/rules/${id}`)
+  return request.delete(`/auto-download/rules/${id}`)
 }
 
 export const toggleRule = (id: number, enabled: boolean): Promise<ApiResponse> => {
-  return request.patch(`/api/auto-download/rules/${id}/toggle`, null, {
+  return request.patch(`/auto-download/rules/${id}/toggle`, null, {
     params: { enabled }
   })
 }
@@ -98,34 +98,34 @@ export const getSubscriptions = (params: {
   start_date?: string
   end_date?: string
 }): Promise<ListResponse<AutoDownloadSubscription>> => {
-  return request.get('/api/auto-download/subscriptions', { params })
+  return request.get('/auto-download/subscriptions', { params })
 }
 
 export const deleteSubscription = (id: number): Promise<ApiResponse> => {
-  return request.delete(`/api/auto-download/subscriptions/${id}`)
+  return request.delete(`/auto-download/subscriptions/${id}`)
 }
 
 export const batchOperation = (data: {
   ids: number[]
   action: 'delete' | 'retry' | 'pause' | 'resume'
 }): Promise<ApiResponse> => {
-  return request.post('/api/auto-download/subscriptions/batch', data)
+  return request.post('/auto-download/subscriptions/batch', data)
 }
 
 // 统计和管理API
 export const getStatistics = (): Promise<AutoDownloadStatistics> => {
-  return request.get('/api/auto-download/statistics')
+  return request.get('/auto-download/statistics')
 }
 
 export const triggerAutoDownload = (data: {
   rule_ids?: number[]
   force?: boolean
 }): Promise<ApiResponse> => {
-  return request.post('/api/auto-download/trigger', data)
+  return request.post('/auto-download/trigger', data)
 }
 
 export const testRule = (id: number, limit?: number): Promise<ApiResponse> => {
-  return request.post(`/api/auto-download/rules/${id}/test`, null, {
+  return request.post(`/auto-download/rules/${id}/test`, null, {
     params: { limit }
   })
 }
