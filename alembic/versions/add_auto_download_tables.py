@@ -31,6 +31,10 @@ def upgrade() -> None:
         sa.Column('is_enabled', sa.Boolean(), nullable=False, default=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('create_by', sa.Integer(), nullable=True),
+        sa.Column('create_time', sa.DateTime(), nullable=True),
+        sa.Column('update_by', sa.Integer(), nullable=True),
+        sa.Column('update_time', sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
     
@@ -48,6 +52,10 @@ def upgrade() -> None:
         sa.Column('download_url', sa.String(length=1000), nullable=True),
         sa.Column('download_time', sa.DateTime(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('create_by', sa.Integer(), nullable=True),
+        sa.Column('create_time', sa.DateTime(), nullable=True),
+        sa.Column('update_by', sa.Integer(), nullable=True),
+        sa.Column('update_time', sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['rule_id'], ['auto_download_rules.id'], ondelete='CASCADE')
     )

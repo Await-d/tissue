@@ -1,0 +1,13 @@
+{
+  "version": "v0.1.0",
+  "updated_at": "2025-07-07T15:22:22.471248",
+  "migration_success": true,
+  "notes": "修复自动下载功能数据库表结构问题",
+  "previous_versions": [
+    {
+      "version": "v0.1.0",
+      "updated_at": "2025-01-07T00:00:00.000000",
+      "migration_success": true
+    }
+  ]
+}
