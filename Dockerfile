@@ -36,7 +36,9 @@ RUN mkdir -p /app/dist \
     && locale-gen zh_CN.UTF-8 \
     && groupadd -r tissue-plus -g 911 \
     && useradd -r tissue-plus -g tissue-plus -s /bin/bash -u 911 \
-    && chmod +x /app/entrypoint
+    && chmod +x /app/entrypoint \
+    && chmod +x /app/startup_check.py \
+    && chmod +x /app/start.sh
 
 EXPOSE 9193
 VOLUME [ "/app/config" ]
