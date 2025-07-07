@@ -16,6 +16,7 @@ import {
 } from 'antd'
 import { DeleteOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { createFileRoute } from '@tanstack/react-router'
 import {
   getSubscriptions,
   deleteSubscription,
@@ -29,7 +30,7 @@ const { Search } = Input
 const { Option } = Select
 const { RangePicker } = DatePicker
 
-const AutoDownloadSubscriptions: React.FC = () => {
+function AutoDownloadSubscriptions() {
   const [subscriptions, setSubscriptions] = useState<AutoDownloadSubscription[]>([])
   const [rules, setRules] = useState<AutoDownloadRule[]>([])
   const [loading, setLoading] = useState(false)
@@ -58,8 +59,8 @@ const AutoDownloadSubscriptions: React.FC = () => {
       }
       // 移除空值参数
       Object.keys(params).forEach(key => {
-        if (params[key] === '' || params[key] === undefined) {
-          delete params[key]
+        if ((params as any)[key] === '' || (params as any)[key] === undefined) {
+          delete (params as any)[key]
         }
       })
       
@@ -410,5 +411,9 @@ const AutoDownloadSubscriptions: React.FC = () => {
     </div>
   )
 }
+
+export const Route = createFileRoute('/_index/auto-download/subscriptions')({
+  component: AutoDownloadSubscriptions
+})
 
 export default AutoDownloadSubscriptions

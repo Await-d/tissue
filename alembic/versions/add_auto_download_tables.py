@@ -30,7 +30,7 @@ def upgrade() -> None:
         sa.Column('is_uncensored', sa.Boolean(), nullable=False, default=False),
         sa.Column('is_enabled', sa.Boolean(), nullable=False, default=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
         sa.PrimaryKeyConstraint('id')
     )
     

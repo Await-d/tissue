@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { Tabs, Card } from 'antd'
 import { SettingOutlined, UnorderedListOutlined, BarChartOutlined } from '@ant-design/icons'
+import { createFileRoute } from '@tanstack/react-router'
 import AutoDownloadRules from './rules'
 import AutoDownloadSubscriptions from './subscriptions'
 
-const AutoDownload: React.FC = () => {
+function AutoDownload() {
   const [activeTab, setActiveTab] = useState('rules')
 
   const tabItems = [
@@ -53,5 +54,9 @@ const AutoDownload: React.FC = () => {
     </div>
   )
 }
+
+export const Route = createFileRoute('/_index/auto-download/')({
+  component: AutoDownload
+})
 
 export default AutoDownload

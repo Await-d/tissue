@@ -19,6 +19,7 @@ import {
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { createFileRoute } from '@tanstack/react-router'
 import {
   getRules,
   createRule,
@@ -33,7 +34,7 @@ import {
 
 const { Option } = Select
 
-const AutoDownloadRules: React.FC = () => {
+function AutoDownloadRules() {
   const [rules, setRules] = useState<AutoDownloadRule[]>([])
   const [statistics, setStatistics] = useState<AutoDownloadStatistics | null>(null)
   const [loading, setLoading] = useState(false)
@@ -450,5 +451,9 @@ const AutoDownloadRules: React.FC = () => {
     </div>
   )
 }
+
+export const Route = createFileRoute('/_index/auto-download/rules')({
+  component: AutoDownloadRules
+})
 
 export default AutoDownloadRules

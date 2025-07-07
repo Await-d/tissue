@@ -65,7 +65,7 @@ function VersionManagement() {
       ])
       
       setVersionInfo(info)
-      setVersionStatus(status.data)
+      setVersionStatus(status.data || null)
       setVersionHistory(historyResponse.data?.history || [])
     } catch (error) {
       message.error('加载版本信息失败')
@@ -113,7 +113,7 @@ function VersionManagement() {
             <div>
               <p>{requirementsResponse.data?.recommendation}</p>
               <ul>
-                {requirementsResponse.data?.details.errors.map((error, index) => (
+                {requirementsResponse.data?.details.errors.map((error: string, index: number) => (
                   <li key={index}>{error}</li>
                 ))}
               </ul>
@@ -274,7 +274,7 @@ function VersionManagement() {
             <Title level={5}>系统健康状态</Title>
             <Progress
               percent={versionStatus.health_score}
-              status={getHealthStatusColor(versionStatus.health_status)}
+              status={getHealthStatusColor(versionStatus.health_status) as any}
               format={() => `${versionStatus.health_score}% - ${versionStatus.health_message}`}
             />
           </div>
@@ -348,7 +348,7 @@ function VersionManagement() {
               <List
                 size="small"
                 dataSource={versionStatus.recommendations}
-                renderItem={(item, index) => (
+                renderItem={(item: string, index: number) => (
                   <List.Item>
                     <Text>{index + 1}. {item}</Text>
                   </List.Item>
