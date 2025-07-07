@@ -17,4 +17,4 @@ api_router.include_router(history.router, prefix='/history', dependencies=[Depen
 api_router.include_router(schedule.router, prefix='/schedule', dependencies=[Depends(verify_token)])
 api_router.include_router(home.router, prefix='/home', dependencies=[Depends(verify_token)])
 api_router.include_router(subscribe.router, prefix='/subscribe', dependencies=[Depends(verify_token)])
-api_router.include_router(auto_download.router, prefix='/auto-download', dependencies=[Depends(verify_token)])
+api_router.include_router(auto_download.router, prefix='/api/auto-download', dependencies=[Depends(verify_token)])
