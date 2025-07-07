@@ -13,7 +13,7 @@ from fastapi import FastAPI
 
 from app import middleware, db, exception
 from app.scheduler import scheduler
-from app.api import api_router, actor_subscribe, auto_download, version
+from app.api import api_router, actor_subscribe, version
 from app.utils.version_manager import version_manager
 from app.utils.logger import logger
 from version import APP_VERSION
@@ -34,16 +34,11 @@ def on_startup():
     perform_version_check_and_migration()
     
     # 注册路由
-    app.include_router(api_router)
+    app.include_router(api_router, prefix="/api")
     app.include_router(
         actor_subscribe.router,
         prefix="/actor-subscribe",
         tags=["actor-subscribe"],
-    )
-    app.include_router(
-        auto_download.router,
-        prefix="/api",
-        tags=["auto-download"],
     )
     app.include_router(
         version.router,

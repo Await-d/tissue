@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from app import schema
-from app.dependencies.security import get_current_user
+from app.dependencies.security import verify_token
 from app.service.auto_download import get_auto_download_service, AutoDownloadService
 
 
-router = APIRouter(prefix="/auto-download", tags=["自动下载"], dependencies=[Depends(get_current_user)])
+router = APIRouter(tags=["自动下载"], dependencies=[Depends(verify_token)])
 
 
 # 规则管理API
