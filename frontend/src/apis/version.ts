@@ -42,7 +42,7 @@ export interface ApiResponse<T = any> {
 
 // 版本信息API
 export const getVersionInfo = (): Promise<VersionInfo> => {
-  return request.get('/api/version/info')
+  return request.get('/version/info')
 }
 
 export const getVersionHistory = (): Promise<ApiResponse<{
@@ -50,7 +50,7 @@ export const getVersionHistory = (): Promise<ApiResponse<{
   history: VersionHistory[]
   total_count: number
 }>> => {
-  return request.get('/api/version/history')
+  return request.get('/version/history')
 }
 
 export const checkVersionUpdate = (): Promise<ApiResponse<{
@@ -59,7 +59,7 @@ export const checkVersionUpdate = (): Promise<ApiResponse<{
   stored_version?: string
   needs_migration: boolean
 }>> => {
-  return request.get('/api/version/check')
+  return request.get('/version/check')
 }
 
 // 迁移管理API
@@ -67,7 +67,7 @@ export const triggerMigration = (data: {
   force_backup?: boolean
   force_migration?: boolean
 }): Promise<ApiResponse> => {
-  return request.post('/api/version/migrate', data)
+  return request.post('/version/migrate', data)
 }
 
 export const checkMigrationRequirements = (): Promise<ApiResponse<{
@@ -75,16 +75,16 @@ export const checkMigrationRequirements = (): Promise<ApiResponse<{
   details: MigrationRequirements
   recommendation: string
 }>> => {
-  return request.get('/api/version/requirements')
+  return request.get('/version/requirements')
 }
 
 export const forceSaveVersion = (): Promise<ApiResponse<{
   version: string
   saved_at: string
 }>> => {
-  return request.post('/api/version/force-save')
+  return request.post('/version/force-save')
 }
 
 export const getVersionStatus = (): Promise<ApiResponse<VersionStatus>> => {
-  return request.get('/api/version/status')
+  return request.get('/version/status')
 }
