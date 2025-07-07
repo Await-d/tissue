@@ -13,7 +13,7 @@ from fastapi import FastAPI
 
 from app import middleware, db, exception
 from app.scheduler import scheduler
-from app.api import api_router, actor_subscribe, version
+from app.api import api_router, actor_subscribe
 from app.utils.version_manager import version_manager
 from app.utils.logger import logger
 from version import APP_VERSION
@@ -39,11 +39,6 @@ def on_startup():
         actor_subscribe.router,
         prefix="/actor-subscribe",
         tags=["actor-subscribe"],
-    )
-    app.include_router(
-        version.router,
-        prefix="/api",
-        tags=["version"],
     )
     
     # 初始化数据库和调度器

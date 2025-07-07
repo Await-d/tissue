@@ -10,7 +10,7 @@ from app.utils.version_manager import version_manager
 from version import APP_VERSION
 
 
-router = APIRouter(prefix="/version", tags=["版本管理"], dependencies=[Depends(get_current_user)])
+router = APIRouter(tags=["版本管理"])
 
 
 class VersionInfo(BaseModel):
