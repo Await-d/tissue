@@ -41,13 +41,18 @@ class AutoDownloadRuleBase(BaseModel):
     def normalize_time_range_type(cls, v):
         """标准化时间范围类型，确保枚举值正确"""
         if isinstance(v, str):
-            # 将输入转换为小写，然后映射到正确的枚举值
+            # 处理大写和小写输入，直接映射到枚举值的字符串表示
+            v_upper = v.upper()
+            if v_upper == 'DAY':
+                return 'day'
+            elif v_upper == 'WEEK':
+                return 'week'
+            elif v_upper == 'MONTH':
+                return 'month'
+            # 如果已经是小写，也需要验证
             v_lower = v.lower()
             if v_lower in ['day', 'week', 'month']:
                 return v_lower
-            # 处理可能的大写输入
-            elif v.upper() in ['DAY', 'WEEK', 'MONTH']:
-                return v.lower()
         return v
 
 
@@ -75,13 +80,18 @@ class AutoDownloadRuleUpdate(BaseModel):
         if v is None:
             return v
         if isinstance(v, str):
-            # 将输入转换为小写，然后映射到正确的枚举值
+            # 处理大写和小写输入，直接映射到枚举值的字符串表示
+            v_upper = v.upper()
+            if v_upper == 'DAY':
+                return 'day'
+            elif v_upper == 'WEEK':
+                return 'week'
+            elif v_upper == 'MONTH':
+                return 'month'
+            # 如果已经是小写，也需要验证
             v_lower = v.lower()
             if v_lower in ['day', 'week', 'month']:
                 return v_lower
-            # 处理可能的大写输入
-            elif v.upper() in ['DAY', 'WEEK', 'MONTH']:
-                return v.lower()
         return v
 
 

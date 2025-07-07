@@ -108,7 +108,7 @@ class AutoDownloadService(BaseService):
         
         # 转换数据，确保枚举值正确
         rule_dict = rule_data.model_dump()
-        # 转换时间范围类型枚举
+        # 转换时间范围类型枚举（现在validator返回小写字符串）
         if rule_dict.get('time_range_type'):
             time_range_str = rule_dict['time_range_type']
             if time_range_str == 'day':
