@@ -37,6 +37,19 @@ class AutoDownloadRuleBase(BaseModel):
     is_uncensored: bool = Field(default=False, description="是否无码")
     is_enabled: bool = Field(default=True, description="是否启用")
 
+    @validator('time_range_type', pre=True)
+    def normalize_time_range_type(cls, v):
+        """标准化时间范围类型，确保枚举值正确"""
+        if isinstance(v, str):
+            # 将输入转换为小写，然后映射到正确的枚举值
+            v_lower = v.lower()
+            if v_lower in ['day', 'week', 'month']:
+                return v_lower
+            # 处理可能的大写输入
+            elif v.upper() in ['DAY', 'WEEK', 'MONTH']:
+                return v.lower()
+        return v
+
 
 class AutoDownloadRuleCreate(AutoDownloadRuleBase):
     """创建自动下载规则"""
@@ -55,6 +68,21 @@ class AutoDownloadRuleUpdate(BaseModel):
     is_zh: Optional[bool] = None
     is_uncensored: Optional[bool] = None
     is_enabled: Optional[bool] = None
+
+    @validator('time_range_type', pre=True)
+    def normalize_time_range_type(cls, v):
+        """标准化时间范围类型，确保枚举值正确"""
+        if v is None:
+            return v
+        if isinstance(v, str):
+            # 将输入转换为小写，然后映射到正确的枚举值
+            v_lower = v.lower()
+            if v_lower in ['day', 'week', 'month']:
+                return v_lower
+            # 处理可能的大写输入
+            elif v.upper() in ['DAY', 'WEEK', 'MONTH']:
+                return v.lower()
+        return v
 
 
 class AutoDownloadRuleResponse(AutoDownloadRuleBase):
@@ -82,6 +110,21 @@ class AutoDownloadSubscriptionBase(BaseModel):
     status: Optional[DownloadStatus] = Field(default=DownloadStatus.PENDING, description="下载状态")
     download_url: Optional[str] = Field(None, description="下载链接")
     download_time: Optional[datetime] = Field(None, description="下载时间")
+
+    @validator('status', pre=True)
+    def normalize_status(cls, v):
+        """标准化状态，确保枚举值正确"""
+        if v is None:
+            return v
+        if isinstance(v, str):
+            # 将输入转换为小写
+            v_lower = v.lower()
+            if v_lower in ['pending', 'downloading', 'completed', 'failed']:
+                return v_lower
+            # 处理可能的大写输入
+            elif v.upper() in ['PENDING', 'DOWNLOADING', 'COMPLETED', 'FAILED']:
+                return v.lower()
+        return v
 
 
 class AutoDownloadSubscriptionCreate(AutoDownloadSubscriptionBase):
