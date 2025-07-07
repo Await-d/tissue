@@ -5,6 +5,10 @@ LastEditors: Await
 LastEditTime: 2025-05-26 18:33:25
 Description: 请填写简介
 '''
+# 初始化兼容性修复
+from app.utils.compat import init_compatibility
+init_compatibility()
+
 from fastapi import FastAPI
 
 from app import middleware, db, exception
