@@ -55,7 +55,7 @@ function AutoDownloadRules() {
         page,
         page_size: pageSize
       })
-      setRules(response.items)
+      setRules(response.items || [])
       setPagination({
         current: page,
         pageSize,
@@ -63,6 +63,7 @@ function AutoDownloadRules() {
       })
     } catch (error) {
       message.error('加载规则列表失败')
+      setRules([]) // 确保在错误情况下rules为空数组
     } finally {
       setLoading(false)
     }

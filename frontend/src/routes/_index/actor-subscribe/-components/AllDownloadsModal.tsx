@@ -163,7 +163,10 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                                 style={{ width: 160 }}
                                 allowClear
                                 onChange={(value) => setFilters(prev => ({ ...prev, actor: value || '' }))}
-                                options={Array.from(new Set(downloads.map(item => item.actor_name))).map(name => ({
+                                options={Array.from(new Set((downloads || [])
+                                    .filter(item => item?.actor_name)
+                                    .map(item => item.actor_name)
+                                )).map(name => ({
                                     label: name,
                                     value: name
                                 }))}

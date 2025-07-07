@@ -82,9 +82,10 @@ function AutoDownloadSubscriptions() {
   const loadRules = async () => {
     try {
       const response = await getRules({ page: 1, page_size: 100 })
-      setRules(response.items)
+      setRules(response.items || [])
     } catch (error) {
       message.error('加载规则列表失败')
+      setRules([]) // 确保在错误情况下rules为空数组
     }
   }
 
@@ -305,7 +306,7 @@ function AutoDownloadSubscriptions() {
               onChange={(value) => setFilters(prev => ({ ...prev, rule_id: value }))}
               style={{ width: '100%' }}
             >
-              {rules.map(rule => (
+              {(rules || []).map(rule => (
                 <Option key={rule.id} value={rule.id}>
                   {rule.name}
                 </Option>
