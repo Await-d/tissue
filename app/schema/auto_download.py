@@ -30,7 +30,7 @@ class AutoDownloadRuleBase(BaseModel):
     name: str = Field(..., description="规则名称")
     min_rating: Optional[Decimal] = Field(default=0.0, ge=0, le=10, description="最低评分")
     min_comments: Optional[int] = Field(default=0, ge=0, description="最低评论数")
-    time_range_type: Optional[TimeRangeType] = Field(default=TimeRangeType.WEEK, description="时间范围类型")
+    time_range_type: Optional[str] = Field(default="week", description="时间范围类型")
     time_range_value: Optional[int] = Field(default=1, ge=1, description="时间范围值")
     is_hd: bool = Field(default=True, description="是否高清")
     is_zh: bool = Field(default=False, description="是否中文")
@@ -62,7 +62,7 @@ class AutoDownloadRuleUpdate(BaseModel):
     name: Optional[str] = None
     min_rating: Optional[Decimal] = None
     min_comments: Optional[int] = None
-    time_range_type: Optional[TimeRangeType] = None
+    time_range_type: Optional[str] = None
     time_range_value: Optional[int] = None
     is_hd: Optional[bool] = None
     is_zh: Optional[bool] = None
@@ -107,7 +107,7 @@ class AutoDownloadSubscriptionBase(BaseModel):
     comments_count: Optional[int] = Field(default=0, description="评论数")
     cover: Optional[str] = Field(None, description="封面URL")
     actors: Optional[str] = Field(None, description="演员信息(JSON格式)")
-    status: Optional[DownloadStatus] = Field(default=DownloadStatus.PENDING, description="下载状态")
+    status: Optional[str] = Field(default="pending", description="下载状态")
     download_url: Optional[str] = Field(None, description="下载链接")
     download_time: Optional[datetime] = Field(None, description="下载时间")
 
@@ -135,7 +135,7 @@ class AutoDownloadSubscriptionCreate(AutoDownloadSubscriptionBase):
 class AutoDownloadSubscriptionUpdate(BaseModel):
     """更新自动下载订阅记录"""
     id: int
-    status: Optional[DownloadStatus] = None
+    status: Optional[str] = None
     download_url: Optional[str] = None
     download_time: Optional[datetime] = None
 
@@ -164,7 +164,7 @@ class AutoDownloadSubscriptionQuery(BaseModel):
     page: int = Field(default=1, ge=1, description="页码")
     page_size: int = Field(default=20, ge=1, le=100, description="每页数量")
     rule_id: Optional[int] = Field(None, description="规则ID")
-    status: Optional[DownloadStatus] = Field(None, description="下载状态")
+    status: Optional[str] = Field(None, description="下载状态")
     num: Optional[str] = Field(None, description="番号(模糊搜索)")
     start_date: Optional[date] = Field(None, description="开始日期")
     end_date: Optional[date] = Field(None, description="结束日期")

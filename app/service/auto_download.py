@@ -106,7 +106,19 @@ class AutoDownloadService(BaseService):
         if existing_rule:
             raise BizException(f"规则名称 '{rule_data.name}' 已存在")
         
-        rule = AutoDownloadRule(**rule_data.model_dump())
+        # 转换数据，确保枚举值正确
+        rule_dict = rule_data.model_dump()
+        # 转换时间范围类型枚举
+        if rule_dict.get('time_range_type'):
+            time_range_str = rule_dict['time_range_type']
+            if time_range_str == 'day':
+                rule_dict['time_range_type'] = TimeRangeType.DAY
+            elif time_range_str == 'week':
+                rule_dict['time_range_type'] = TimeRangeType.WEEK
+            elif time_range_str == 'month':
+                rule_dict['time_range_type'] = TimeRangeType.MONTH
+        
+        rule = AutoDownloadRule(**rule_dict)
         rule.add(self.db)
         
         logger.info(f"创建自动下载规则: {rule.name}")
