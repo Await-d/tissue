@@ -71,10 +71,9 @@ class StartupChecker:
             """)
             
             if not cursor.fetchone():
-                logger.warning("⚠️ auto_download_rules表不存在")
-                self.issues_found.append("auto_download_rules表不存在")
+                logger.info("ℹ️ auto_download_rules表不存在，将通过迁移创建")
                 conn.close()
-                return False
+                return True  # 表不存在时返回True，让迁移来处理
             
             # 检查枚举值格式
             cursor.execute("""
@@ -105,6 +104,17 @@ class StartupChecker:
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
+            
+            # 先检查表是否存在
+            cursor.execute("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='auto_download_rules'
+            """)
+            
+            if not cursor.fetchone():
+                logger.info("ℹ️ auto_download_rules表不存在，将通过迁移创建")
+                conn.close()
+                return True  # 表不存在时返回True，让迁移来处理
             
             # 检查auto_download_rules表结构
             cursor.execute("PRAGMA table_info(auto_download_rules)")
