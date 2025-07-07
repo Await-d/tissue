@@ -109,6 +109,24 @@ class Spider:
         """获取演员的视频列表，子类可以选择性实现"""
         logger.info(f"获取{self.name}演员视频列表: {actor_url}")
         return []
+    
+    # 获取热门视频列表
+    def get_trending_videos(self, page: int = 1, time_range: str = "week"):
+        """获取热门视频列表，子类可以选择性实现"""
+        logger.info(f"获取{self.name}热门视频列表: page={page}, time_range={time_range}")
+        return []
+    
+    # 获取最新视频列表
+    def get_latest_videos(self, page: int = 1, date_range: int = 7):
+        """获取最新视频列表，子类可以选择性实现"""
+        logger.info(f"获取{self.name}最新视频列表: page={page}, date_range={date_range}")
+        return []
+    
+    # 获取评论数
+    def get_comments_count(self, url: str):
+        """获取视频评论数，子类可以选择性实现"""
+        logger.info(f"获取{self.name}视频评论数: {url}")
+        return 0
 
     @classmethod
     def get_cover(cls, url):

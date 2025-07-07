@@ -106,6 +106,14 @@ class JavdbSpider(Spider):
             score = pattern_result.group(1)
             meta.rating = score
 
+        # 获取评论数
+        comments_elements = html.xpath("//a[contains(@href,'/reviews?')]/text()")
+        if comments_elements:
+            comments_text = comments_elements[0]
+            comments_match = re.search(r"(\d+)", comments_text)
+            if comments_match:
+                meta.comments_count = int(comments_match.group(1))
+
         meta.website.append(url)
 
         if include_downloads:
@@ -144,6 +152,154 @@ class JavdbSpider(Spider):
             result.append(preview)
 
         return [VideoPreview(website=self.name, items=result)]
+
+    def get_trending_videos(self, page: int = 1, time_range: str = "week"):
+        """获取热门视频列表"""
+        try:
+            # 构造热门页面URL
+            url = urljoin(self.host, f"/rankings/videos?t={time_range}&page={page}")
+            response = self.session.get(url)
+            html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
+            
+            videos = []
+            video_elements = html.xpath("//div[@class='item']")
+            
+            for element in video_elements:
+                try:
+                    # 获取番号
+                    title_element = element.xpath(".//div[@class='video-title']/strong")
+                    if not title_element:
+                        continue
+                    
+                    num = title_element[0].text.strip()
+                    
+                    # 获取链接
+                    link_element = element.xpath(".//a[@class='box']")
+                    if not link_element:
+                        continue
+                    
+                    video_url = urljoin(self.host, link_element[0].get('href'))
+                    
+                    # 获取封面
+                    cover_element = element.xpath(".//img")
+                    cover = cover_element[0].get('src') if cover_element else None
+                    
+                    # 获取评分
+                    rating_element = element.xpath(".//span[@class='score']")
+                    rating = None
+                    if rating_element:
+                        rating_text = rating_element[0].text
+                        rating_match = re.search(r"(\d+\.\d+)", rating_text)
+                        if rating_match:
+                            rating = float(rating_match.group(1))
+                    
+                    video_info = {
+                        'num': num,
+                        'title': f"{num} {title_element[0].tail or ''}".strip(),
+                        'url': video_url,
+                        'cover': cover,
+                        'rating': rating,
+                        'website': self.name
+                    }
+                    
+                    videos.append(video_info)
+                    
+                except Exception as e:
+                    logger.warning(f"解析视频信息时出错: {str(e)}")
+                    continue
+            
+            return videos
+            
+        except Exception as e:
+            logger.error(f"获取热门视频列表时出错: {str(e)}")
+            return []
+
+    def get_latest_videos(self, page: int = 1, date_range: int = 7):
+        """获取最新视频列表"""
+        try:
+            # 构造最新页面URL  
+            url = urljoin(self.host, f"/videos?page={page}")
+            response = self.session.get(url)
+            html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
+            
+            videos = []
+            video_elements = html.xpath("//div[@class='item']")
+            
+            for element in video_elements:
+                try:
+                    # 获取番号
+                    title_element = element.xpath(".//div[@class='video-title']/strong")
+                    if not title_element:
+                        continue
+                    
+                    num = title_element[0].text.strip()
+                    
+                    # 获取链接
+                    link_element = element.xpath(".//a[@class='box']")
+                    if not link_element:
+                        continue
+                    
+                    video_url = urljoin(self.host, link_element[0].get('href'))
+                    
+                    # 获取发布日期
+                    date_element = element.xpath(".//div[@class='meta']/text()")
+                    publish_date = None
+                    if date_element:
+                        date_text = date_element[0].strip()
+                        try:
+                            publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
+                        except:
+                            pass
+                    
+                    # 检查是否在指定日期范围内
+                    if publish_date and date_range > 0:
+                        days_ago = (datetime.now().date() - publish_date).days
+                        if days_ago > date_range:
+                            continue
+                    
+                    # 获取封面
+                    cover_element = element.xpath(".//img")
+                    cover = cover_element[0].get('src') if cover_element else None
+                    
+                    video_info = {
+                        'num': num,
+                        'title': f"{num} {title_element[0].tail or ''}".strip(),
+                        'url': video_url,
+                        'cover': cover,
+                        'publish_date': publish_date,
+                        'website': self.name
+                    }
+                    
+                    videos.append(video_info)
+                    
+                except Exception as e:
+                    logger.warning(f"解析视频信息时出错: {str(e)}")
+                    continue
+            
+            return videos
+            
+        except Exception as e:
+            logger.error(f"获取最新视频列表时出错: {str(e)}")
+            return []
+
+    def get_comments_count(self, url: str):
+        """获取视频评论数"""
+        try:
+            response = self.session.get(url)
+            html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
+            
+            comments_elements = html.xpath("//a[contains(@href,'/reviews?')]/text()")
+            if comments_elements:
+                comments_text = comments_elements[0]
+                comments_match = re.search(r"(\d+)", comments_text)
+                if comments_match:
+                    return int(comments_match.group(1))
+            
+            return 0
+            
+        except Exception as e:
+            logger.error(f"获取评论数时出错: {str(e)}")
+            return 0
 
     def get_downloads(self, url: str, html: etree.HTML):
         result = []

@@ -92,6 +92,11 @@ export default [
                 path: '/actor-subscribe',
                 icon: (<StarOutlined />),
             },
+            {
+                title: '智能下载',
+                path: '/auto-download',
+                icon: (<HeartOutlined />),
+            },
         ]
     },
     {

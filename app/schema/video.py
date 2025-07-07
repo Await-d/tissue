@@ -70,6 +70,8 @@ class VideoDetail(BaseModel):
     num: Optional[str] = None
     # 评分
     rating: Optional[str] = None
+    # 评论数
+    comments_count: Optional[int] = None
     # 发行时间
     premiered: Optional[str] = None
     # 大纲

@@ -13,6 +13,7 @@ from app.service.job import clean_cache
 from app.service.subscribe import SubscribeService
 from app.utils.logger import logger
 from app.service.actor_subscribe import ActorSubscribeService
+from app.service.auto_download import AutoDownloadService
 
 
 class Job(BaseModel):
@@ -46,6 +47,10 @@ class Scheduler:
                            name='清理缓存',
                            job=clean_cache,
                            interval=7 * 24 * 60),
+        'auto_download': Job(key='auto_download',
+                            name='智能自动下载',
+                            job=AutoDownloadService.job_auto_download,
+                            interval=60, jitter=10 * 60),
     }
 
     def __init__(self):
@@ -57,6 +62,7 @@ class Scheduler:
         self.add('subscribe')
         self.add('subscribe_meta_update')
         self.add('clean_cache')
+        self.add('auto_download')
 
         setting = Setting()
         if setting.download.trans_auto:
