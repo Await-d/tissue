@@ -84,9 +84,9 @@ class AutoDownloadService:
                     is_zh=rule.is_zh,
                     is_uncensored=rule.is_uncensored,
                     days=time_range_days,
-                    required_actor_id=rule.actor_id,
-                    required_tags=rule.tags.split(',') if rule.tags and rule.tags.strip() else None,
-                    exclude_tags=rule.exclude_tags.split(',') if rule.exclude_tags and rule.exclude_tags.strip() else None
+                    required_actor_id=getattr(rule, 'actor_id', None),
+                    required_tags=getattr(rule, 'tags', '').split(',') if getattr(rule, 'tags', '') and getattr(rule, 'tags', '').strip() else None,
+                    exclude_tags=getattr(rule, 'exclude_tags', '').split(',') if getattr(rule, 'exclude_tags', '') and getattr(rule, 'exclude_tags', '').strip() else None
                 )
                 
                 logger.info(f"规则 [{rule.name}] 初步筛选得到 {len(videos)} 个视频")
