@@ -169,14 +169,18 @@ function AutoDownloadRules() {
     {
       title: '筛选条件',
       key: 'conditions',
-      render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <div>评分 ≥ {record.min_rating}</div>
-          <div>评论 ≥ {record.min_comments}</div>
-          <div>时间: {record.time_range_value} {record.time_range_type === 'DAY' ? '天' : record.time_range_type === 'WEEK' ? '周' : '月'}</div>
-          <div style={{ fontSize: '10px', color: '#999' }}>枚举值: {record.time_range_type}</div>
-        </Space>
-      ),
+      render: (_, record) => {
+        // 确保time_range_type是大写的
+        const timeRangeType = record.time_range_type?.toUpperCase();
+        return (
+          <Space direction="vertical" size="small">
+            <div>评分 ≥ {record.min_rating}</div>
+            <div>评论 ≥ {record.min_comments}</div>
+            <div>时间: {record.time_range_value} {timeRangeType === 'DAY' ? '天' : timeRangeType === 'WEEK' ? '周' : '月'}</div>
+            <div style={{ fontSize: '10px', color: '#999' }}>枚举值: {record.time_range_type}</div>
+          </Space>
+        );
+      },
       width: 120
     },
     {
