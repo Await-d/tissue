@@ -37,6 +37,13 @@ class AutoDownloadRuleBase(BaseModel):
     is_uncensored: bool = Field(default=False, description="是否无码")
     is_enabled: bool = Field(default=True, description="是否启用")
 
+    @validator('time_range_type', pre=True)
+    def normalize_time_range_type(cls, v):
+        """兼容处理：将小写的枚举值转换为大写"""
+        if isinstance(v, str):
+            return v.upper()
+        return v
+
 
 class AutoDownloadRuleCreate(AutoDownloadRuleBase):
     """创建自动下载规则"""
@@ -55,6 +62,15 @@ class AutoDownloadRuleUpdate(BaseModel):
     is_zh: Optional[bool] = None
     is_uncensored: Optional[bool] = None
     is_enabled: Optional[bool] = None
+    
+    @validator('time_range_type', pre=True)
+    def normalize_time_range_type(cls, v):
+        """兼容处理：将小写的枚举值转换为大写"""
+        if v is None:
+            return v
+        if isinstance(v, str):
+            return v.upper()
+        return v
 
 
 class AutoDownloadRuleResponse(AutoDownloadRuleBase):
