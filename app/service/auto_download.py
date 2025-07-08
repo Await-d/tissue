@@ -2,11 +2,11 @@
 自动下载服务
 """
 import traceback
-from datetime import datetime, date
+from datetime import datetime
 import time
 from random import randint
 from typing import List, Dict, Any, Optional
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -14,15 +14,6 @@ from sqlalchemy.orm import Session
 from app.db import get_db, SessionFactory
 from app.db.models.auto_download import AutoDownloadRule, AutoDownloadSubscription, DownloadStatus, TimeRangeType
 from app.schema import subscribe as schema
-from app.schema.auto_download import (
-    AutoDownloadRuleQuery, 
-    AutoDownloadListResponse, 
-    AutoDownloadRuleResponse, 
-    AutoDownloadStatistics, 
-    AutoDownloadSubscriptionResponse,
-    AutoDownloadSubscriptionQuery,
-    AutoDownloadBatchOperation
-)
 from app.utils.video_collector import VideoCollector
 from app.utils.logger import logger
 from app.service.download import DownloadService
@@ -38,15 +29,10 @@ def get_auto_download_service(db: Session = Depends(get_db)):
 class AutoDownloadService:
     """自动下载服务"""
 
-    def __init__(self, db: Session = None):
-        """初始化服务
-        
-        Args:
-            db: 数据库会话，如果为None，则创建新会话
-        """
-        self.db = db or SessionFactory()
-        self.download_service = DownloadService(db=self.db)
-        self.subscribe_service = SubscribeService(db=self.db)
+    def __init__(self, db=None):
+        """初始化自动下载服务"""
+        self.db = db or next(get_db())
+        self.download_service = DownloadService()
     
     def execute_rules(self, rule_ids: Optional[List[int]] = None, force: bool = False) -> Dict[str, Any]:
         """执行自动下载规则"""
@@ -340,8 +326,8 @@ class AutoDownloadService:
         
         # 返回第一个符合条件的下载
         return suitable_downloads[0]
-        
-    def get_rules(self, query: AutoDownloadRuleQuery):
+
+    def get_rules(self, query):
         """获取自动下载规则列表"""
         try:
             # 构建基本查询
@@ -363,6 +349,9 @@ class AutoDownloadService:
             # 计算总页数
             total_pages = (total + query.page_size - 1) // query.page_size if query.page_size > 0 else 0
             
+            # 转换为响应模型
+            from app.schema.auto_download import AutoDownloadRuleResponse, AutoDownloadListResponse
+            
             # 为每个规则添加统计信息
             rule_responses = []
             for rule in rules:
@@ -377,16 +366,13 @@ class AutoDownloadService:
                     AutoDownloadSubscription.status == DownloadStatus.COMPLETED
                 ).count()
                 
-                # 处理枚举值
-                time_range_type_value = rule.time_range_type.value if rule.time_range_type else None
-                
                 # 构建响应对象
                 rule_dict = {
                     "id": rule.id,
                     "name": rule.name,
                     "min_rating": rule.min_rating,
                     "min_comments": rule.min_comments,
-                    "time_range_type": time_range_type_value,
+                    "time_range_type": rule.time_range_type,
                     "time_range_value": rule.time_range_value,
                     "is_hd": rule.is_hd,
                     "is_zh": rule.is_zh,
@@ -412,7 +398,7 @@ class AutoDownloadService:
             logger.debug(traceback.format_exc())
             raise
             
-    def get_subscriptions(self, query: AutoDownloadSubscriptionQuery):
+    def get_subscriptions(self, query):
         """获取自动下载订阅记录"""
         try:
             # 构建基本查询
@@ -432,56 +418,59 @@ class AutoDownloadService:
                 base_query = base_query.filter(AutoDownloadSubscription.rule_id == query.rule_id)
                 
             if query.status:
-                # 将字符串状态转换为枚举值
-                try:
-                    enum_status = DownloadStatus[query.status.upper()]
-                    base_query = base_query.filter(AutoDownloadSubscription.status == enum_status)
-                except (KeyError, AttributeError):
-                    pass  # 忽略无效状态
+                base_query = base_query.filter(AutoDownloadSubscription.status == query.status)
                 
             if query.num:
                 base_query = base_query.filter(AutoDownloadSubscription.num.like(f"%{query.num}%"))
                 
             if query.start_date:
-                base_query = base_query.filter(func.date(AutoDownloadSubscription.created_at) >= query.start_date)
+                base_query = base_query.filter(func.date(AutoDownloadSubscription.create_time) >= query.start_date)
                 
             if query.end_date:
-                base_query = base_query.filter(func.date(AutoDownloadSubscription.created_at) <= query.end_date)
+                base_query = base_query.filter(func.date(AutoDownloadSubscription.create_time) <= query.end_date)
             
-            # 计算总数
+            # 获取总数
             total = base_query.count()
             
             # 应用分页
-            results = base_query.order_by(AutoDownloadSubscription.created_at.desc()).offset(
+            subscriptions = base_query.order_by(
+                AutoDownloadSubscription.create_time.desc()
+            ).offset(
                 (query.page - 1) * query.page_size
-            ).limit(query.page_size).all()
+            ).limit(
+                query.page_size
+            ).all()
             
             # 计算总页数
             total_pages = (total + query.page_size - 1) // query.page_size if query.page_size > 0 else 0
             
+            # 转换为响应模型
+            from app.schema.auto_download import AutoDownloadSubscriptionResponse, AutoDownloadListResponse
+            
             # 构建响应列表
             subscription_responses = []
-            for subscription, rule_name in results:
-                # 处理枚举值
-                status_value = subscription.status.value if subscription.status else None
+            for subscription_tuple in subscriptions:
+                subscription = subscription_tuple[0]
+                rule_name = subscription_tuple[1]
                 
-                # 构建响应对象
+                # 构建响应字典
                 subscription_dict = {
                     "id": subscription.id,
                     "rule_id": subscription.rule_id,
                     "num": subscription.num,
                     "title": subscription.title,
-                    "rating": subscription.rating,
-                    "comments_count": subscription.comments_count,
                     "cover": subscription.cover,
-                    "actors": subscription.actors,
-                    "status": status_value,
+                    "status": subscription.status,
                     "download_url": subscription.download_url,
                     "download_time": subscription.download_time,
-                    "created_at": subscription.created_at,
+                    "created_at": subscription.create_time,
                     "rule_name": rule_name
                 }
-                subscription_responses.append(AutoDownloadSubscriptionResponse.model_validate(subscription_dict))
+                
+                # 添加到响应列表
+                subscription_responses.append(
+                    AutoDownloadSubscriptionResponse.model_validate(subscription_dict)
+                )
             
             # 返回列表响应
             return AutoDownloadListResponse(
@@ -493,209 +482,5 @@ class AutoDownloadService:
             )
         except Exception as e:
             logger.error(f"获取自动下载订阅记录出错: {str(e)}")
-            logger.debug(traceback.format_exc())
-            raise
-            
-    def get_statistics(self):
-        """获取自动下载统计信息"""
-        try:
-            # 获取规则统计
-            total_rules = self.db.query(AutoDownloadRule).count()
-            active_rules = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.is_enabled == True).count()
-            
-            # 获取订阅统计
-            total_subscriptions = self.db.query(AutoDownloadSubscription).count()
-            
-            # 根据状态统计
-            status_counts = {}
-            for status in [DownloadStatus.PENDING, DownloadStatus.DOWNLOADING, DownloadStatus.COMPLETED, DownloadStatus.FAILED]:
-                count = self.db.query(AutoDownloadSubscription).filter(
-                    AutoDownloadSubscription.status == status
-                ).count()
-                status_counts[status] = count
-            
-            # 获取今日新增订阅
-            today = date.today()
-            today_subscriptions = self.db.query(AutoDownloadSubscription).filter(
-                func.date(AutoDownloadSubscription.create_time) == today
-            ).count()
-            
-            # 计算成功率
-            success_rate = 0.0
-            if total_subscriptions > 0:
-                success_rate = round(status_counts.get(DownloadStatus.COMPLETED, 0) / total_subscriptions * 100, 2)
-            
-            # 构建统计响应
-            return AutoDownloadStatistics(
-                total_rules=total_rules,
-                active_rules=active_rules,
-                total_subscriptions=total_subscriptions,
-                pending_subscriptions=status_counts.get(DownloadStatus.PENDING, 0),
-                downloading_subscriptions=status_counts.get(DownloadStatus.DOWNLOADING, 0),
-                completed_subscriptions=status_counts.get(DownloadStatus.COMPLETED, 0),
-                failed_subscriptions=status_counts.get(DownloadStatus.FAILED, 0),
-                today_subscriptions=today_subscriptions,
-                success_rate=success_rate
-            )
-        except Exception as e:
-            logger.error(f"获取统计信息出错: {str(e)}")
-            logger.debug(traceback.format_exc())
-            raise
-            
-    def delete_rule(self, rule_id: int):
-        """删除自动下载规则"""
-        try:
-            rule = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.id == rule_id).first()
-            if not rule:
-                raise ValueError(f"规则ID {rule_id} 不存在")
-                
-            # 删除规则前先删除关联的订阅
-            self.db.query(AutoDownloadSubscription).filter(
-                AutoDownloadSubscription.rule_id == rule_id
-            ).delete()
-            
-            # 删除规则
-            self.db.delete(rule)
-            self.db.commit()
-        except Exception as e:
-            self.db.rollback()
-            logger.error(f"删除规则出错: {str(e)}")
-            logger.debug(traceback.format_exc())
-            raise
-            
-    def delete_subscription(self, subscription_id: int):
-        """删除自动下载订阅记录"""
-        try:
-            subscription = self.db.query(AutoDownloadSubscription).filter(
-                AutoDownloadSubscription.id == subscription_id
-            ).first()
-            
-            if not subscription:
-                raise ValueError(f"订阅ID {subscription_id} 不存在")
-                
-            self.db.delete(subscription)
-            self.db.commit()
-        except Exception as e:
-            self.db.rollback()
-            logger.error(f"删除订阅记录出错: {str(e)}")
-            logger.debug(traceback.format_exc())
-            raise
-            
-    def batch_operation(self, operation: AutoDownloadBatchOperation):
-        """批量操作订阅记录"""
-        result = {
-            'success_count': 0,
-            'failed_count': 0,
-            'failed_ids': []
-        }
-        
-        try:
-            for subscription_id in operation.ids:
-                try:
-                    subscription = self.db.query(AutoDownloadSubscription).filter(
-                        AutoDownloadSubscription.id == subscription_id
-                    ).first()
-                    
-                    if not subscription:
-                        raise ValueError(f"订阅ID {subscription_id} 不存在")
-                    
-                    if operation.action == 'delete':
-                        # 删除订阅
-                        self.db.delete(subscription)
-                        result['success_count'] += 1
-                    elif operation.action == 'retry':
-                        # 重试订阅，将状态设为待处理
-                        subscription.status = DownloadStatus.PENDING
-                        result['success_count'] += 1
-                    elif operation.action == 'pause':
-                        # 暂停订阅，暂时没有暂停状态，可以自定义
-                        # 这里暂时不做处理
-                        result['success_count'] += 1
-                    elif operation.action == 'resume':
-                        # 恢复订阅，如果是失败状态则恢复为待处理
-                        if subscription.status == DownloadStatus.FAILED:
-                            subscription.status = DownloadStatus.PENDING
-                        result['success_count'] += 1
-                except Exception as e:
-                    logger.error(f"批量操作订阅记录 {subscription_id} 出错: {str(e)}")
-                    result['failed_count'] += 1
-                    result['failed_ids'].append(subscription_id)
-            
-            self.db.commit()
-            return result
-        except Exception as e:
-            self.db.rollback()
-            logger.error(f"批量操作订阅记录出错: {str(e)}")
-            logger.debug(traceback.format_exc())
-            raise
-            
-    def update_rule(self, rule_data):
-        """更新自动下载规则"""
-        try:
-            rule = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.id == rule_data.id).first()
-            if not rule:
-                raise ValueError(f"规则ID {rule_data.id} 不存在")
-            
-            # 更新非空字段
-            if rule_data.name is not None:
-                rule.name = rule_data.name
-            if rule_data.min_rating is not None:
-                rule.min_rating = rule_data.min_rating
-            if rule_data.min_comments is not None:
-                rule.min_comments = rule_data.min_comments
-            if rule_data.time_range_type is not None:
-                rule.time_range_type = rule_data.time_range_type
-            if rule_data.time_range_value is not None:
-                rule.time_range_value = rule_data.time_range_value
-            if rule_data.is_hd is not None:
-                rule.is_hd = rule_data.is_hd
-            if rule_data.is_zh is not None:
-                rule.is_zh = rule_data.is_zh
-            if rule_data.is_uncensored is not None:
-                rule.is_uncensored = rule_data.is_uncensored
-            if rule_data.is_enabled is not None:
-                rule.is_enabled = rule_data.is_enabled
-                
-            rule.updated_at = datetime.now()
-            self.db.commit()
-            return rule
-        except Exception as e:
-            self.db.rollback()
-            logger.error(f"更新规则出错: {str(e)}")
-            logger.debug(traceback.format_exc())
-            raise
-            
-    def create_rule(self, rule_data):
-        """创建自动下载规则"""
-        try:
-            # 检查名称是否重复
-            existing_rule = self.db.query(AutoDownloadRule).filter(
-                AutoDownloadRule.name == rule_data.name
-            ).first()
-            if existing_rule:
-                raise ValueError(f"规则名称 '{rule_data.name}' 已存在")
-            
-            # 创建规则
-            now = datetime.now()
-            rule = AutoDownloadRule(
-                name=rule_data.name,
-                min_rating=rule_data.min_rating,
-                min_comments=rule_data.min_comments,
-                time_range_type=rule_data.time_range_type,
-                time_range_value=rule_data.time_range_value,
-                is_hd=rule_data.is_hd,
-                is_zh=rule_data.is_zh,
-                is_uncensored=rule_data.is_uncensored,
-                is_enabled=rule_data.is_enabled,
-                created_at=now,
-                updated_at=now
-            )
-            
-            self.db.add(rule)
-            self.db.commit()
-            return rule
-        except Exception as e:
-            self.db.rollback()
-            logger.error(f"创建规则出错: {str(e)}")
             logger.debug(traceback.format_exc())
             raise
