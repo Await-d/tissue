@@ -9,6 +9,8 @@ from fastapi.responses import JSONResponse
 from app import schema
 from app.dependencies.security import verify_token
 from app.service.auto_download import get_auto_download_service, AutoDownloadService
+from app.dependencies.auto_download import normalize_time_range_type
+from app.db.models.auto_download import TimeRangeType
 
 
 router = APIRouter(tags=["自动下载"], dependencies=[Depends(verify_token)])
@@ -43,6 +45,10 @@ async def create_rule(
 ):
     """创建自动下载规则"""
     try:
+        # 确保time_range_type为大写
+        if hasattr(rule_data, 'time_range_type') and rule_data.time_range_type and isinstance(rule_data.time_range_type, str):
+            rule_data.time_range_type = rule_data.time_range_type.upper()
+        
         rule = service.create_rule(rule_data)
         return schema.AutoDownloadResponse(
             success=True,
@@ -65,6 +71,11 @@ async def update_rule(
     """更新自动下载规则"""
     try:
         rule_data.id = rule_id
+        
+        # 确保time_range_type为大写
+        if hasattr(rule_data, 'time_range_type') and rule_data.time_range_type and isinstance(rule_data.time_range_type, str):
+            rule_data.time_range_type = rule_data.time_range_type.upper()
+            
         rule = service.update_rule(rule_data)
         return schema.AutoDownloadResponse(
             success=True,

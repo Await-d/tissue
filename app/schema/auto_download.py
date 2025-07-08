@@ -39,10 +39,28 @@ class AutoDownloadRuleBase(BaseModel):
 
     @validator('time_range_type', pre=True)
     def normalize_time_range_type(cls, v):
-        """兼容处理：将小写的枚举值转换为大写"""
+        """兼容处理：处理各种形式的枚举值输入"""
+        if v is None:
+            return v
+            
+        # 如果是枚举实例，直接返回
+        if isinstance(v, TimeRangeType):
+            return v
+            
+        # 如果是字符串，转换为大写并检查有效性
         if isinstance(v, str):
-            return v.upper()
-        return v
+            v = v.upper()
+            try:
+                return TimeRangeType(v)
+            except ValueError:
+                # 尝试通过名称匹配
+                try:
+                    return getattr(TimeRangeType, v)
+                except AttributeError:
+                    raise ValueError(f"'{v}' 不是有效的时间范围类型。可用值: DAY, WEEK, MONTH")
+                    
+        # 其他类型，尝试转换为字符串后处理
+        return cls.normalize_time_range_type(str(v))
 
 
 class AutoDownloadRuleCreate(AutoDownloadRuleBase):
@@ -63,14 +81,31 @@ class AutoDownloadRuleUpdate(BaseModel):
     is_uncensored: Optional[bool] = None
     is_enabled: Optional[bool] = None
     
+    # 重用相同的验证器
     @validator('time_range_type', pre=True)
     def normalize_time_range_type(cls, v):
-        """兼容处理：将小写的枚举值转换为大写"""
+        """兼容处理：处理各种形式的枚举值输入"""
         if v is None:
             return v
+            
+        # 如果是枚举实例，直接返回
+        if isinstance(v, TimeRangeType):
+            return v
+            
+        # 如果是字符串，转换为大写并检查有效性
         if isinstance(v, str):
-            return v.upper()
-        return v
+            v = v.upper()
+            try:
+                return TimeRangeType(v)
+            except ValueError:
+                # 尝试通过名称匹配
+                try:
+                    return getattr(TimeRangeType, v)
+                except AttributeError:
+                    raise ValueError(f"'{v}' 不是有效的时间范围类型。可用值: DAY, WEEK, MONTH")
+                    
+        # 其他类型，尝试转换为字符串后处理
+        return cls.normalize_time_range_type(str(v))
 
 
 class AutoDownloadRuleResponse(AutoDownloadRuleBase):

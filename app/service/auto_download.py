@@ -108,7 +108,22 @@ class AutoDownloadService(BaseService):
         
         # 转换数据
         rule_dict = rule_data.model_dump()
-        # TimeRangeType已经是枚举类型，无需额外转换
+        # 确保枚举值处理正确
+        if rule_dict.get('time_range_type') is not None:
+            time_range_type = rule_dict['time_range_type']
+            # 如果是枚举实例，保持原样
+            if not isinstance(time_range_type, TimeRangeType):
+                # 如果是字符串，尝试转换
+                if isinstance(time_range_type, str):
+                    time_range_type = time_range_type.upper()
+                    if time_range_type == 'DAY':
+                        rule_dict['time_range_type'] = TimeRangeType.DAY
+                    elif time_range_type == 'WEEK':
+                        rule_dict['time_range_type'] = TimeRangeType.WEEK
+                    elif time_range_type == 'MONTH':
+                        rule_dict['time_range_type'] = TimeRangeType.MONTH
+                    else:
+                        raise BizException(f"无效的时间范围类型: {time_range_type}")
         
         rule = AutoDownloadRule(**rule_dict)
         rule.add(self.db)
@@ -137,6 +152,24 @@ class AutoDownloadService(BaseService):
         
         # 更新字段
         update_data = {k: v for k, v in rule_data.model_dump().items() if v is not None and k != 'id'}
+        
+        # 确保枚举值处理正确
+        if update_data.get('time_range_type') is not None:
+            time_range_type = update_data['time_range_type']
+            # 如果是枚举实例，保持原样
+            if not isinstance(time_range_type, TimeRangeType):
+                # 如果是字符串，尝试转换
+                if isinstance(time_range_type, str):
+                    time_range_type = time_range_type.upper()
+                    if time_range_type == 'DAY':
+                        update_data['time_range_type'] = TimeRangeType.DAY
+                    elif time_range_type == 'WEEK':
+                        update_data['time_range_type'] = TimeRangeType.WEEK
+                    elif time_range_type == 'MONTH':
+                        update_data['time_range_type'] = TimeRangeType.MONTH
+                    else:
+                        raise BizException(f"无效的时间范围类型: {time_range_type}")
+        
         rule.update(self.db, update_data)
         
         logger.info(f"更新自动下载规则: {rule.name}")
