@@ -9,8 +9,7 @@ from typing import List, Dict, Any, Optional
 from sqlalchemy import and_
 
 from app.db import get_db, SessionFactory
-from app.models import AutoDownloadRule, AutoDownloadSubscription
-from app.schema import DownloadStatus
+from app.db.models.auto_download import AutoDownloadRule, AutoDownloadSubscription, DownloadStatus, TimeRangeType
 from app.schema import subscribe as schema
 from app.utils.video_collector import VideoCollector
 from app.utils.logger import logger
@@ -19,15 +18,9 @@ from app.service.subscribe import SubscribeService
 from app.utils import spider
 
 
-class TimeRangeType:
-    DAY = "day"
-    WEEK = "week"
-    MONTH = "month"
-
-
 class AutoDownloadService:
     """自动下载服务"""
-    
+
     def __init__(self):
         """初始化自动下载服务"""
         self.db = next(get_db())
@@ -99,9 +92,9 @@ class AutoDownloadService:
                 rule_new_subscriptions = 0
                 for video in filtered_videos:
                     try:
-                        if self._create_subscription(rule, video):
+                    if self._create_subscription(rule, video):
                             rule_new_subscriptions += 1
-                            new_subscriptions += 1
+                        new_subscriptions += 1
                     except Exception as e:
                         logger.error(f"处理视频 {video.get('num')} 时出错: {str(e)}")
                 
@@ -118,7 +111,7 @@ class AutoDownloadService:
             'processed_count': processed_count,
             'new_subscriptions': new_subscriptions
         }
-            
+
     def _get_candidate_videos(self, rule: AutoDownloadRule, force: bool = False) -> List[Dict[str, Any]]:
         """获取候选视频"""
         try:
@@ -127,19 +120,19 @@ class AutoDownloadService:
             # 创建视频收集器实例
             collector = VideoCollector()
             
-            # 计算时间范围
-            if not force:
-                if rule.time_range_type == TimeRangeType.DAY:
-                    time_range_days = rule.time_range_value
-                elif rule.time_range_type == TimeRangeType.WEEK:
-                    time_range_days = rule.time_range_value * 7
-                elif rule.time_range_type == TimeRangeType.MONTH:
-                    time_range_days = rule.time_range_value * 30
-                else:
-                    time_range_days = 7  # 默认一周
+        # 计算时间范围
+        if not force:
+            if rule.time_range_type == TimeRangeType.DAY:
+                time_range_days = rule.time_range_value
+            elif rule.time_range_type == TimeRangeType.WEEK:
+                time_range_days = rule.time_range_value * 7
+            elif rule.time_range_type == TimeRangeType.MONTH:
+                time_range_days = rule.time_range_value * 30
             else:
-                time_range_days = 365  # 强制执行时扩大范围
-                
+                time_range_days = 7  # 默认一周
+        else:
+            time_range_days = 365  # 强制执行时扩大范围
+            
             # 使用视频收集器获取符合条件的视频
             videos = collector.get_videos_by_criteria(
                 min_rating=float(rule.min_rating) if rule.min_rating else None,
@@ -183,12 +176,12 @@ class AutoDownloadService:
             if existing_subscription:
                 logger.debug(f"视频 {video.get('num')} 已经被此规则订阅过，状态: {existing_subscription.status}")
                 continue
-                
+            
             # 通过所有检查，添加到结果
             filtered_videos.append(video)
-            
+        
         return filtered_videos
-    
+
     def _create_subscription(self, rule: AutoDownloadRule, video: Dict[str, Any]) -> bool:
         """创建订阅记录"""
         try:
@@ -236,18 +229,18 @@ class AutoDownloadService:
         try:
             logger.info("开始执行自动下载任务...")
             service = AutoDownloadService()
-            result = service.execute_rules()
-            
-            # 处理待下载的订阅
-            service._process_pending_subscriptions()
-            
+                result = service.execute_rules()
+                
+                # 处理待下载的订阅
+                service._process_pending_subscriptions()
+                
             logger.info(f"自动下载任务完成: {result.get('message')}")
             return result
         except Exception as e:
             logger.error(f"执行自动下载任务出错: {str(e)}")
             logger.debug(traceback.format_exc())
             return {'message': f'执行出错: {str(e)}', 'processed_count': 0}
-            
+
     def _process_pending_subscriptions(self):
         """处理待下载的订阅"""
         # 获取待下载的订阅
