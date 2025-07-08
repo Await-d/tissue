@@ -46,7 +46,7 @@ def on_startup():
         # 注册actor-subscribe路由
         app.include_router(
             actor_subscribe.router,
-            prefix="/actor-subscribe",
+            prefix="/api/actor-subscribe",
             tags=["actor-subscribe"],
         )
         logger.info("actor-subscribe路由注册成功")

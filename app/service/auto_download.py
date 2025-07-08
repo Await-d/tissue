@@ -564,6 +564,10 @@ class AutoDownloadService:
     def update_rule(self, rule_data):
         """更新自动下载规则"""
         try:
+            # 确保rule_data有id
+            if not rule_data.id:
+                raise ValueError("规则ID不能为空")
+            
             # 查找规则
             rule = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.id == rule_data.id).first()
             

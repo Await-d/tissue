@@ -15,7 +15,11 @@ import {
   Card,
   Row,
   Col,
-  Statistic
+  Statistic,
+  List,
+  Avatar,
+  Divider,
+  Grid
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -33,6 +37,7 @@ import {
 } from '@/apis/autoDownload'
 
 const { Option } = Select
+const { useBreakpoint } = Grid
 
 function AutoDownloadRules() {
   const [rules, setRules] = useState<AutoDownloadRule[]>([])
@@ -46,6 +51,7 @@ function AutoDownloadRules() {
     pageSize: 20,
     total: 0
   })
+  const screens = useBreakpoint()
 
   // 加载规则列表
   const loadRules = async (page = 1, pageSize = 20) => {
@@ -276,22 +282,22 @@ function AutoDownloadRules() {
       {/* 统计卡片 */}
       {statistics && (
         <Row gutter={16} style={{ marginBottom: 16 }}>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Card>
               <Statistic title="总规则数" value={statistics.total_rules} />
             </Card>
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Card>
               <Statistic title="活跃规则" value={statistics.active_rules} />
             </Card>
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Card>
               <Statistic title="总订阅数" value={statistics.total_subscriptions} />
             </Card>
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={6}>
             <Card>
               <Statistic 
                 title="成功率" 
@@ -330,24 +336,140 @@ function AutoDownloadRules() {
         </Space>
       </div>
 
-      {/* 规则表格 */}
-      <Table
-        columns={columns}
-        dataSource={rules}
-        rowKey="id"
-        loading={loading}
-        pagination={{
-          current: pagination.current,
-          pageSize: pagination.pageSize,
-          total: pagination.total,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total) => `共 ${total} 条`,
-          onChange: (page, pageSize) => {
-            loadRules(page, pageSize)
-          }
-        }}
-      />
+      {/* 规则显示 - 根据屏幕大小选择表格或卡片 */}
+      {screens.md ? (
+        // 桌面模式：使用表格
+        <Table
+          columns={columns}
+          dataSource={rules}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => {
+              loadRules(page, pageSize)
+            }
+          }}
+        />
+      ) : (
+        // 手机模式：使用卡片列表
+        <List
+          loading={loading}
+          dataSource={rules}
+          renderItem={(rule) => (
+            <List.Item style={{ padding: 0, marginBottom: 16 }}>
+              <Card
+                size="small"
+                title={
+                  <Space>
+                    <span>{rule.name}</span>
+                    <Tag color={rule.is_enabled ? 'green' : 'default'}>
+                      {rule.is_enabled ? '启用' : '禁用'}
+                    </Tag>
+                  </Space>
+                }
+                extra={
+                  <Space>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => handleEdit(rule)}
+                    />
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={rule.is_enabled ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                      onClick={() => handleToggle(rule.id, !rule.is_enabled)}
+                    />
+                  </Space>
+                }
+                style={{ width: '100%' }}
+              >
+                <Row gutter={[16, 8]}>
+                  <Col span={24}>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      <div>评分 ≥ {rule.min_rating} | 评论 ≥ {rule.min_comments}</div>
+                      <div>时间: {rule.time_range_value} {rule.time_range_type === 'DAY' ? '天' : rule.time_range_type === 'WEEK' ? '周' : '月'}</div>
+                    </div>
+                  </Col>
+                  <Col span={24}>
+                    <Space size="small">
+                      {rule.is_hd && <Tag color="blue" size="small">高清</Tag>}
+                      {rule.is_zh && <Tag color="green" size="small">中文</Tag>}
+                      {rule.is_uncensored && <Tag color="red" size="small">无码</Tag>}
+                    </Space>
+                  </Col>
+                  <Col span={12}>
+                    <div style={{ fontSize: '12px', color: '#999' }}>
+                      订阅: {rule.subscription_count || 0} | 成功: {rule.success_count || 0}
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div style={{ fontSize: '12px', color: '#999', textAlign: 'right' }}>
+                      {new Date(rule.created_at).toLocaleDateString()}
+                    </div>
+                  </Col>
+                </Row>
+                <Divider style={{ margin: '8px 0' }} />
+                <Row gutter={8}>
+                  <Col span={8}>
+                    <Button
+                      type="text"
+                      size="small"
+                      block
+                      onClick={() => handleTrigger([rule.id])}
+                    >
+                      执行
+                    </Button>
+                  </Col>
+                  <Col span={8}>
+                    <Button
+                      type="text"
+                      size="small"
+                      block
+                      onClick={() => handleToggle(rule.id, !rule.is_enabled)}
+                    >
+                      {rule.is_enabled ? '禁用' : '启用'}
+                    </Button>
+                  </Col>
+                  <Col span={8}>
+                    <Popconfirm
+                      title="确定要删除这个规则吗？"
+                      onConfirm={() => handleDelete(rule.id)}
+                    >
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        block
+                      >
+                        删除
+                      </Button>
+                    </Popconfirm>
+                  </Col>
+                </Row>
+              </Card>
+            </List.Item>
+          )}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: false,
+            showQuickJumper: false,
+            showTotal: (total) => `共 ${total} 条`,
+            onChange: (page, pageSize) => {
+              loadRules(page, pageSize)
+            }
+          }}
+        />
+      )}
 
       {/* 创建/编辑对话框 */}
       <Modal
@@ -359,7 +481,7 @@ function AutoDownloadRules() {
           form.resetFields()
         }}
         onOk={() => form.submit()}
-        width={600}
+        width={screens.md ? 600 : '90%'}
       >
         <Form
           form={form}
@@ -385,7 +507,7 @@ function AutoDownloadRules() {
           </Form.Item>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="min_rating"
                 label="最低评分"
@@ -400,7 +522,7 @@ function AutoDownloadRules() {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="min_comments"
                 label="最低评论数"
@@ -416,7 +538,7 @@ function AutoDownloadRules() {
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="time_range_type"
                 label="时间范围类型"
@@ -429,7 +551,7 @@ function AutoDownloadRules() {
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="time_range_value"
                 label="时间范围值"
@@ -445,18 +567,18 @@ function AutoDownloadRules() {
           </Row>
 
           <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="is_hd" valuePropName="checked">
+            <Col xs={24} sm={8}>
+              <Form.Item name="is_hd" valuePropName="checked" label="质量要求">
                 <Switch checkedChildren="高清" unCheckedChildren="不限" />
               </Form.Item>
             </Col>
-            <Col span={8}>
-              <Form.Item name="is_zh" valuePropName="checked">
+            <Col xs={24} sm={8}>
+              <Form.Item name="is_zh" valuePropName="checked" label=" ">
                 <Switch checkedChildren="中文" unCheckedChildren="不限" />
               </Form.Item>
             </Col>
-            <Col span={8}>
-              <Form.Item name="is_uncensored" valuePropName="checked">
+            <Col xs={24} sm={8}>
+              <Form.Item name="is_uncensored" valuePropName="checked" label=" ">
                 <Switch checkedChildren="无码" unCheckedChildren="不限" />
               </Form.Item>
             </Col>
