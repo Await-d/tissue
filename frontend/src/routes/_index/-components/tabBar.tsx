@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-05-27 18:08:05
  * @Description: 请填写简介
  */
-import { CarryOutOutlined, HomeOutlined, MenuOutlined, SearchOutlined, UserOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import { CarryOutOutlined, HomeOutlined, MenuOutlined, SearchOutlined, UserOutlined, VideoCameraOutlined, RobotOutlined } from "@ant-design/icons";
 import React from "react";
 import { theme, Badge } from "antd";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -39,9 +39,9 @@ function TabBar() {
             title: '搜索'
         },
         {
-            link: '/actor',
-            icon: <UserOutlined />,
-            title: '演员'
+            link: '/auto-download',
+            icon: <RobotOutlined />,
+            title: '智能下载'
         },
         {
             link: '/menu',

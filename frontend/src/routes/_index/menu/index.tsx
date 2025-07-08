@@ -3,7 +3,7 @@ import { Card, Divider, theme, Row, Col } from "antd";
 import { useResponsive } from "ahooks";
 import React from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { HomeOutlined, SearchOutlined, UserOutlined, StarOutlined, HeartOutlined, ClockCircleOutlined, FileOutlined, SettingOutlined, HistoryOutlined, DownloadOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { HomeOutlined, SearchOutlined, UserOutlined, StarOutlined, HeartOutlined, ClockCircleOutlined, FileOutlined, SettingOutlined, HistoryOutlined, DownloadOutlined, InfoCircleOutlined, RobotOutlined } from "@ant-design/icons";
 
 const { useToken } = theme
 
@@ -97,6 +97,12 @@ function Menu() {
             icon: <InfoCircleOutlined />,
             label: '关于',
             path: '/about'
+        },
+        {
+            key: 'auto-download',
+            icon: <RobotOutlined />,
+            label: '智能下载',
+            path: '/auto-download'
         }
     ]
 
@@ -104,7 +110,7 @@ function Menu() {
     const menuGroups: MenuGroup[] = [
         {
             title: '常用功能',
-            items: ['home', 'search', 'actor', 'subscribe']
+            items: ['home', 'search', 'actor', 'subscribe', 'auto-download']
         },
         {
             title: '内容管理',
