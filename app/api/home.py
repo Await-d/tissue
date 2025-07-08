@@ -2,10 +2,11 @@ import time
 from pathlib import Path
 
 import tailer
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from fastapi.responses import StreamingResponse
 from app.utils import spider
+from app.dependencies.security import verify_token
 
 router = APIRouter()
 
@@ -38,7 +39,7 @@ def get_ranking_detail(source: str, num: str, url: str):
         return spider.JavbusSpider().get_info(num, url=url, include_downloads=True, include_previews=True)
 
 
-@router.get('/log')
+@router.get('/log', dependencies=[Depends(verify_token)])
 async def get_logs():
     log_path = Path(f'{Path(__file__).cwd()}/config/app.log')
 
