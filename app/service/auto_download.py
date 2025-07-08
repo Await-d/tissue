@@ -517,3 +517,231 @@ class AutoDownloadService:
             logger.error(f"获取自动下载订阅记录出错: {str(e)}")
             logger.debug(traceback.format_exc())
             raise
+            
+    def create_rule(self, rule_data):
+        """创建自动下载规则"""
+        try:
+            # 创建规则实例
+            rule = AutoDownloadRule(
+                name=rule_data.name,
+                min_rating=rule_data.min_rating,
+                min_comments=rule_data.min_comments,
+                time_range_type=rule_data.time_range_type,
+                time_range_value=rule_data.time_range_value,
+                is_hd=rule_data.is_hd,
+                is_zh=rule_data.is_zh,
+                is_uncensored=rule_data.is_uncensored,
+                is_enabled=rule_data.is_enabled,
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+            
+            # 保存到数据库
+            self.db.add(rule)
+            self.db.commit()
+            self.db.refresh(rule)
+            
+            logger.info(f"创建规则成功: {rule.name} (ID: {rule.id})")
+            return rule
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"创建规则失败: {str(e)}")
+            logger.debug(traceback.format_exc())
+            raise
+
+    def update_rule(self, rule_data):
+        """更新自动下载规则"""
+        try:
+            # 查找规则
+            rule = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.id == rule_data.id).first()
+            
+            if not rule:
+                raise ValueError(f"规则不存在: ID {rule_data.id}")
+            
+            # 更新字段
+            if rule_data.name is not None:
+                rule.name = rule_data.name
+            if rule_data.min_rating is not None:
+                rule.min_rating = rule_data.min_rating
+            if rule_data.min_comments is not None:
+                rule.min_comments = rule_data.min_comments
+            if rule_data.time_range_type is not None:
+                rule.time_range_type = rule_data.time_range_type
+            if rule_data.time_range_value is not None:
+                rule.time_range_value = rule_data.time_range_value
+            if rule_data.is_hd is not None:
+                rule.is_hd = rule_data.is_hd
+            if rule_data.is_zh is not None:
+                rule.is_zh = rule_data.is_zh
+            if rule_data.is_uncensored is not None:
+                rule.is_uncensored = rule_data.is_uncensored
+            if rule_data.is_enabled is not None:
+                rule.is_enabled = rule_data.is_enabled
+            
+            rule.updated_at = datetime.now()
+            
+            # 保存到数据库
+            self.db.commit()
+            self.db.refresh(rule)
+            
+            logger.info(f"更新规则成功: {rule.name} (ID: {rule.id})")
+            return rule
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"更新规则失败: {str(e)}")
+            logger.debug(traceback.format_exc())
+            raise
+
+    def delete_rule(self, rule_id):
+        """删除自动下载规则"""
+        try:
+            # 查找规则
+            rule = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.id == rule_id).first()
+            
+            if not rule:
+                raise ValueError(f"规则不存在: ID {rule_id}")
+            
+            # 删除关联的订阅
+            self.db.query(AutoDownloadSubscription).filter(AutoDownloadSubscription.rule_id == rule_id).delete()
+            
+            # 删除规则
+            self.db.delete(rule)
+            self.db.commit()
+            
+            logger.info(f"删除规则成功: {rule.name} (ID: {rule_id})")
+            return True
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"删除规则失败: {str(e)}")
+            logger.debug(traceback.format_exc())
+            raise
+
+    def delete_subscription(self, subscription_id):
+        """删除订阅记录"""
+        try:
+            # 查找订阅
+            subscription = self.db.query(AutoDownloadSubscription).filter(
+                AutoDownloadSubscription.id == subscription_id
+            ).first()
+            
+            if not subscription:
+                raise ValueError(f"订阅记录不存在: ID {subscription_id}")
+            
+            # 删除订阅
+            self.db.delete(subscription)
+            self.db.commit()
+            
+            logger.info(f"删除订阅记录成功: {subscription.num} (ID: {subscription_id})")
+            return True
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"删除订阅记录失败: {str(e)}")
+            logger.debug(traceback.format_exc())
+            raise
+
+    def batch_operation(self, operation):
+        """批量操作订阅记录"""
+        try:
+            success_count = 0
+            failed_count = 0
+            
+            for subscription_id in operation.ids:
+                try:
+                    subscription = self.db.query(AutoDownloadSubscription).filter(
+                        AutoDownloadSubscription.id == subscription_id
+                    ).first()
+                    
+                    if not subscription:
+                        logger.warning(f"订阅记录不存在: ID {subscription_id}")
+                        failed_count += 1
+                        continue
+                        
+                    # 根据操作类型执行不同的逻辑
+                    if operation.action == 'delete':
+                        self.db.delete(subscription)
+                    elif operation.action == 'retry':
+                        subscription.status = DownloadStatus.PENDING
+                    elif operation.action == 'pause':
+                        if subscription.status != DownloadStatus.COMPLETED:
+                            subscription.status = DownloadStatus.FAILED
+                    elif operation.action == 'resume':
+                        if subscription.status == DownloadStatus.FAILED:
+                            subscription.status = DownloadStatus.PENDING
+                    
+                    self.db.commit()
+                    success_count += 1
+                except Exception as e:
+                    self.db.rollback()
+                    logger.error(f"处理订阅ID {subscription_id} 时出错: {str(e)}")
+                    failed_count += 1
+            
+            logger.info(f"批量操作完成: 成功 {success_count} 个，失败 {failed_count} 个")
+            return {
+                'success_count': success_count,
+                'failed_count': failed_count
+            }
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"批量操作失败: {str(e)}")
+            logger.debug(traceback.format_exc())
+            raise
+
+    def get_statistics(self):
+        """获取自动下载统计信息"""
+        try:
+            from app.schema.auto_download import AutoDownloadStatistics
+            from datetime import datetime, timedelta
+            from sqlalchemy import func
+            
+            # 获取规则统计
+            total_rules = self.db.query(func.count(AutoDownloadRule.id)).scalar() or 0
+            active_rules = self.db.query(func.count(AutoDownloadRule.id)).filter(
+                AutoDownloadRule.is_enabled == True
+            ).scalar() or 0
+            
+            # 获取订阅统计
+            total_subscriptions = self.db.query(func.count(AutoDownloadSubscription.id)).scalar() or 0
+            
+            # 按状态分组统计
+            status_counts = {}
+            for status in [DownloadStatus.PENDING, DownloadStatus.DOWNLOADING, DownloadStatus.COMPLETED, DownloadStatus.FAILED]:
+                count = self.db.query(func.count(AutoDownloadSubscription.id)).filter(
+                    AutoDownloadSubscription.status == status
+                ).scalar() or 0
+                status_counts[status] = count
+            
+            # 获取今日新增订阅数
+            today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_subscriptions = self.db.query(func.count(AutoDownloadSubscription.id)).filter(
+                AutoDownloadSubscription.create_time >= today_start
+            ).scalar() or 0
+            
+            # 计算成功率
+            success_rate = 0.0
+            if total_subscriptions > 0:
+                success_rate = round(status_counts.get(DownloadStatus.COMPLETED, 0) / total_subscriptions * 100, 2)
+            
+            # 构建统计结果
+            statistics = {
+                "total_rules": total_rules,
+                "active_rules": active_rules,
+                "total_subscriptions": total_subscriptions,
+                "pending_subscriptions": status_counts.get(DownloadStatus.PENDING, 0),
+                "downloading_subscriptions": status_counts.get(DownloadStatus.DOWNLOADING, 0),
+                "completed_subscriptions": status_counts.get(DownloadStatus.COMPLETED, 0),
+                "failed_subscriptions": status_counts.get(DownloadStatus.FAILED, 0),
+                "today_subscriptions": today_subscriptions,
+                "success_rate": success_rate
+            }
+            
+            try:
+                # Pydantic v2
+                return AutoDownloadStatistics.model_validate(statistics)
+            except AttributeError:
+                # Pydantic v1
+                return AutoDownloadStatistics(**statistics)
+                
+        except Exception as e:
+            logger.error(f"获取统计信息失败: {str(e)}")
+            logger.debug(traceback.format_exc())
+            raise
