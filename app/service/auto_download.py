@@ -32,7 +32,7 @@ class AutoDownloadService:
     def __init__(self, db=None):
         """初始化自动下载服务"""
         self.db = db or next(get_db())
-        self.download_service = DownloadService()
+        self.download_service = DownloadService(db=self.db)
     
     def execute_rules(self, rule_ids: Optional[List[int]] = None, force: bool = False) -> Dict[str, Any]:
         """执行自动下载规则"""
@@ -372,7 +372,7 @@ class AutoDownloadService:
                     "name": rule.name,
                     "min_rating": rule.min_rating,
                     "min_comments": rule.min_comments,
-                    "time_range_type": rule.time_range_type,
+                    "time_range_type": self._normalize_enum_value(rule.time_range_type),
                     "time_range_value": rule.time_range_value,
                     "is_hd": rule.is_hd,
                     "is_zh": rule.is_zh,
@@ -478,7 +478,7 @@ class AutoDownloadService:
                     "num": subscription.num,
                     "title": subscription.title,
                     "cover": subscription.cover,
-                    "status": subscription.status,
+                    "status": self._normalize_enum_value(subscription.status),
                     "download_url": subscription.download_url,
                     "download_time": subscription.download_time,
                     "created_at": subscription.create_time,
@@ -745,3 +745,30 @@ class AutoDownloadService:
             logger.error(f"获取统计信息失败: {str(e)}")
             logger.debug(traceback.format_exc())
             raise
+
+    @staticmethod
+    def _normalize_enum_value(enum_value):
+        """统一处理枚举值格式，将各种可能的枚举格式转换为标准字符串形式"""
+        if enum_value is None:
+            return None
+            
+        # 处理字符串形式
+        if isinstance(enum_value, str):
+            # 如果是"TIMERANGETYPE.WEEK"格式，提取WEEK部分
+            if "." in enum_value:
+                parts = enum_value.split(".")
+                if len(parts) == 2:
+                    return parts[1]  # 返回"WEEK"部分
+            return enum_value
+            
+        # 处理枚举对象
+        if hasattr(enum_value, 'name'):
+            return enum_value.name  # 返回枚举的名称，如"WEEK"
+        
+        # 处理带value属性的对象
+        if hasattr(enum_value, 'value'):
+            # 递归处理value
+            return AutoDownloadService._normalize_enum_value(enum_value.value)
+            
+        # 其他情况，转为字符串并大写
+        return str(enum_value).upper()

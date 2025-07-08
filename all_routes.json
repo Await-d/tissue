@@ -1,0 +1,38 @@
+[
+  {
+    "path": "/openapi.json",
+    "methods": [
+      "HEAD",
+      "GET"
+    ],
+    "name": "openapi",
+    "tags": []
+  },
+  {
+    "path": "/docs",
+    "methods": [
+      "HEAD",
+      "GET"
+    ],
+    "name": "swagger_ui_html",
+    "tags": []
+  },
+  {
+    "path": "/docs/oauth2-redirect",
+    "methods": [
+      "HEAD",
+      "GET"
+    ],
+    "name": "swagger_ui_redirect",
+    "tags": []
+  },
+  {
+    "path": "/redoc",
+    "methods": [
+      "HEAD",
+      "GET"
+    ],
+    "name": "redoc_html",
+    "tags": []
+  }
+]

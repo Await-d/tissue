@@ -34,12 +34,29 @@ def on_startup():
     perform_version_check_and_migration()
     
     # 注册路由
-    app.include_router(api_router)
-    app.include_router(
-        actor_subscribe.router,
-        prefix="/actor-subscribe",
-        tags=["actor-subscribe"],
-    )
+    logger.info("开始注册API路由...")
+    try:
+        # 打印路由信息
+        logger.info(f"API路由器中的路由数: {len(api_router.routes)}")
+        
+        # 注册主API路由
+        app.include_router(api_router, prefix="/api")
+        logger.info("API路由注册成功")
+        
+        # 注册actor-subscribe路由
+        app.include_router(
+            actor_subscribe.router,
+            prefix="/actor-subscribe",
+            tags=["actor-subscribe"],
+        )
+        logger.info("actor-subscribe路由注册成功")
+        
+        # 打印路由注册后的信息
+        auto_download_routes = [r for r in app.routes if '/api/auto-download/' in getattr(r, 'path', '')]
+        logger.info(f"注册后，自动下载相关路由数量: {len(auto_download_routes)}")
+        
+    except Exception as e:
+        logger.error(f"注册路由时出错: {str(e)}")
     
     # 初始化数据库和调度器
     db.init()
