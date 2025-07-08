@@ -70,7 +70,7 @@ class AutoDownloadRuleCreate(AutoDownloadRuleBase):
 
 class AutoDownloadRuleUpdate(BaseModel):
     """更新自动下载规则"""
-    id: int
+    id: Optional[int] = None  # 改为可选字段，API中会自动设置
     name: Optional[str] = None
     min_rating: Optional[Decimal] = None
     min_comments: Optional[int] = None

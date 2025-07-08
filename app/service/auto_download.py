@@ -15,7 +15,10 @@ from app.db import get_db, SessionFactory
 from app.db.models.auto_download import AutoDownloadRule, AutoDownloadSubscription, DownloadStatus, TimeRangeType
 from app.schema import subscribe as schema
 from app.utils.video_collector import VideoCollector
-from app.utils.logger import logger
+from app.utils.async_logger import get_logger
+
+# 获取适合智能下载的日志记录器
+logger = get_logger()
 from app.service.download import DownloadService
 from app.service.subscribe import SubscribeService
 from app.utils import spider
@@ -114,6 +117,10 @@ class AutoDownloadService:
                 logger.debug(traceback.format_exc())
         
         logger.info(f"规则执行完成，共处理 {processed_count} 个规则，新增 {new_subscriptions} 个订阅")
+        
+        # 刷新批量日志
+        if hasattr(logger, 'flush'):
+            logger.flush()
         return {
             'message': f'规则执行完成，共处理 {processed_count} 个规则，新增 {new_subscriptions} 个订阅',
             'processed_count': processed_count,
@@ -163,8 +170,8 @@ class AutoDownloadService:
         filtered_videos = []
         
         for video in videos:
-            # 记录视频信息
-            logger.debug(f"过滤视频: {video.get('num')}, 标题: {video.get('title')}")
+            # 减少调试日志输出
+            pass
             
             # 如果视频已经被标记为详情获取失败，暂时保留
             if video.get('detail_missing', False):
@@ -182,7 +189,8 @@ class AutoDownloadService:
             ).first()
             
             if existing_subscription:
-                logger.debug(f"视频 {video.get('num')} 已经被此规则订阅过，状态: {existing_subscription.status}")
+                # 减少调试日志输出
+                pass
                 continue
             
             # 通过所有检查，添加到结果
@@ -243,6 +251,10 @@ class AutoDownloadService:
             service._process_pending_subscriptions()
             
             logger.info(f"自动下载任务完成: {result.get('message')}")
+            
+            # 刷新批量日志
+            if hasattr(logger, 'flush'):
+                logger.flush()
             return result
         except Exception as e:
             logger.error(f"执行自动下载任务出错: {str(e)}")

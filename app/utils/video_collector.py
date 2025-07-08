@@ -8,7 +8,10 @@ from datetime import datetime, timedelta
 from random import randint
 
 from app.utils import spider
-from app.utils.logger import logger
+from app.utils.async_logger import get_logger
+
+# 获取适合智能下载的日志记录器
+logger = get_logger()
 
 
 class VideoCollector:
@@ -142,11 +145,13 @@ class VideoCollector:
         # 进行基础筛选
         for video in videos:
             if min_rating and video.get('rating', 0) < min_rating:
-                logger.debug(f"视频 {video.get('num')} 评分不足: {video.get('rating', 0)} < {min_rating}")
+                # 减少调试日志输出
+                pass
                 continue
                 
             if min_comments and video.get('comments', 0) < min_comments:
-                logger.debug(f"视频 {video.get('num')} 评论数不足: {video.get('comments', 0)} < {min_comments}")
+                # 减少调试日志输出
+                pass
                 continue
             
             # 获取视频详细信息
@@ -163,15 +168,18 @@ class VideoCollector:
             
             # 根据详细信息筛选
             if is_uncensored is not None and video.get('is_uncensored', False) != is_uncensored:
-                logger.debug(f"视频 {video.get('num')} 无码状态不匹配: {video.get('is_uncensored', False)} != {is_uncensored}")
+                # 减少调试日志输出
+            pass
                 continue
                 
             if is_hd is not None and video.get('is_hd', False) != is_hd:
-                logger.debug(f"视频 {video.get('num')} 高清状态不匹配: {video.get('is_hd', False)} != {is_hd}")
+                # 减少调试日志输出
+                pass
                 continue
                 
             if is_zh is not None and video.get('is_zh', False) != is_zh:
-                logger.debug(f"视频 {video.get('num')} 中文字幕状态不匹配: {video.get('is_zh', False)} != {is_zh}")
+                # 减少调试日志输出
+                pass
                 continue
             
             # 检查演员
@@ -179,14 +187,16 @@ class VideoCollector:
                 actors = video.get('actors', [])
                 actor_ids = [a.get('id') for a in actors]
                 if required_actor_id not in actor_ids:
-                    logger.debug(f"视频 {video.get('num')} 不包含所需演员: {required_actor_id}")
+                    # 减少调试日志输出
+                    pass
                     continue
             
             if exclude_actor_id:
                 actors = video.get('actors', [])
                 actor_ids = [a.get('id') for a in actors]
                 if exclude_actor_id in actor_ids:
-                    logger.debug(f"视频 {video.get('num')} 包含排除的演员: {exclude_actor_id}")
+                    # 减少调试日志输出
+                    pass
                     continue
             
             # 检查标签
@@ -194,14 +204,16 @@ class VideoCollector:
                 tags = video.get('tags', [])
                 tag_names = [t.get('name').lower() for t in tags]
                 if not all(tag.lower() in tag_names for tag in required_tags):
-                    logger.debug(f"视频 {video.get('num')} 不包含所有所需标签")
+                    # 减少调试日志输出
+                    pass
                     continue
             
             if exclude_tags:
                 tags = video.get('tags', [])
                 tag_names = [t.get('name').lower() for t in tags]
                 if any(tag.lower() in tag_names for tag in exclude_tags):
-                    logger.debug(f"视频 {video.get('num')} 包含排除的标签")
+                    # 减少调试日志输出
+                    pass
                     continue
             
             # 通过所有筛选条件，添加到结果列表
@@ -219,13 +231,16 @@ class VideoCollector:
         cache_key = f"detail_{num}"
         cached_data = self._get_from_cache(cache_key)
         if cached_data:
-            logger.debug(f"从缓存获取视频 {num} 详情")
+            # 减少调试日志输出
+            pass
             return cached_data
             
         try:
             # 添加随机延迟，避免频繁请求
             delay = randint(5, 10)
-            logger.info(f"获取视频 {num} 详情前等待 {delay} 秒...")
+            # 减少日志输出，只记录关键信息
+            if delay > 8:  # 只在延迟较长时记录
+                logger.info(f"获取视频 {num} 详情前等待 {delay} 秒...")
             time.sleep(delay)
             
             # 使用现有的spider.get_video方法
@@ -254,7 +269,8 @@ class VideoCollector:
             'data': data,
             'timestamp': datetime.now()
         }
-        logger.debug(f"缓存数据已保存: {key}")
+        # 减少调试日志输出
+        pass
         
     def _get_from_cache(self, key: str) -> Optional[Any]:
         """从缓存获取数据，如果有效返回数据，否则返回None"""
@@ -267,7 +283,8 @@ class VideoCollector:
         
         # 检查缓存是否过期
         if now - cache_time > timedelta(hours=self.cache_ttl_hours):
-            logger.debug(f"缓存已过期: {key}")
+            # 减少调试日志输出
+            pass
             return None
             
         return cache_entry['data']
