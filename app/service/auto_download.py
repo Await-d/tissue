@@ -38,10 +38,15 @@ def get_auto_download_service(db: Session = Depends(get_db)):
 class AutoDownloadService:
     """自动下载服务"""
 
-    def __init__(self, db=None):
-        """初始化自动下载服务"""
-        self.db = db or next(get_db())
-        self.download_service = DownloadService()
+    def __init__(self, db: Session = None):
+        """初始化服务
+        
+        Args:
+            db: 数据库会话，如果为None，则创建新会话
+        """
+        self.db = db or SessionFactory()
+        self.download_service = DownloadService(db=self.db)
+        self.subscribe_service = SubscribeService(db=self.db)
     
     def execute_rules(self, rule_ids: Optional[List[int]] = None, force: bool = False) -> Dict[str, Any]:
         """执行自动下载规则"""
