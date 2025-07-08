@@ -8,6 +8,9 @@ from random import randint
 from typing import List, Dict, Any, Optional
 from sqlalchemy import and_
 
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
 from app.db import get_db, SessionFactory
 from app.db.models.auto_download import AutoDownloadRule, AutoDownloadSubscription, DownloadStatus, TimeRangeType
 from app.schema import subscribe as schema
@@ -18,12 +21,17 @@ from app.service.subscribe import SubscribeService
 from app.utils import spider
 
 
+def get_auto_download_service(db: Session = Depends(get_db)):
+    """获取自动下载服务实例"""
+    return AutoDownloadService(db=db)
+
+
 class AutoDownloadService:
     """自动下载服务"""
 
-    def __init__(self):
+    def __init__(self, db=None):
         """初始化自动下载服务"""
-        self.db = next(get_db())
+        self.db = db or next(get_db())
         self.download_service = DownloadService()
     
     def execute_rules(self, rule_ids: Optional[List[int]] = None, force: bool = False) -> Dict[str, Any]:
@@ -92,9 +100,9 @@ class AutoDownloadService:
                 rule_new_subscriptions = 0
                 for video in filtered_videos:
                     try:
-                    if self._create_subscription(rule, video):
+                        if self._create_subscription(rule, video):
                             rule_new_subscriptions += 1
-                        new_subscriptions += 1
+                            new_subscriptions += 1
                     except Exception as e:
                         logger.error(f"处理视频 {video.get('num')} 时出错: {str(e)}")
                 
@@ -120,18 +128,18 @@ class AutoDownloadService:
             # 创建视频收集器实例
             collector = VideoCollector()
             
-        # 计算时间范围
-        if not force:
-            if rule.time_range_type == TimeRangeType.DAY:
-                time_range_days = rule.time_range_value
-            elif rule.time_range_type == TimeRangeType.WEEK:
-                time_range_days = rule.time_range_value * 7
-            elif rule.time_range_type == TimeRangeType.MONTH:
-                time_range_days = rule.time_range_value * 30
+            # 计算时间范围
+            if not force:
+                if rule.time_range_type == TimeRangeType.DAY:
+                    time_range_days = rule.time_range_value
+                elif rule.time_range_type == TimeRangeType.WEEK:
+                    time_range_days = rule.time_range_value * 7
+                elif rule.time_range_type == TimeRangeType.MONTH:
+                    time_range_days = rule.time_range_value * 30
+                else:
+                    time_range_days = 7  # 默认一周
             else:
-                time_range_days = 7  # 默认一周
-        else:
-            time_range_days = 365  # 强制执行时扩大范围
+                time_range_days = 365  # 强制执行时扩大范围
             
             # 使用视频收集器获取符合条件的视频
             videos = collector.get_videos_by_criteria(
@@ -229,11 +237,11 @@ class AutoDownloadService:
         try:
             logger.info("开始执行自动下载任务...")
             service = AutoDownloadService()
-                result = service.execute_rules()
-                
-                # 处理待下载的订阅
-                service._process_pending_subscriptions()
-                
+            result = service.execute_rules()
+            
+            # 处理待下载的订阅
+            service._process_pending_subscriptions()
+            
             logger.info(f"自动下载任务完成: {result.get('message')}")
             return result
         except Exception as e:

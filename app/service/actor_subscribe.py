@@ -30,13 +30,14 @@ class ActorSubscribeService(BaseService):
         """获取所有演员订阅列表，包含下载统计"""
         try:
             # 使用SQL联表查询获取演员订阅信息和下载数量统计
-            query = text("""
+            sql_str = """
             SELECT a.*, COALESCE(COUNT(d.id), 0) as download_count
             FROM actor_subscribe a
             LEFT JOIN actor_subscribe_download d ON a.id = d.actor_subscribe_id
             GROUP BY a.id
             ORDER BY a.id DESC
-            """)
+            """
+            query = text(sql_str)
             result = self.db.execute(query)
             subscriptions = []
             
@@ -176,12 +177,13 @@ class ActorSubscribeService(BaseService):
         """获取所有演员订阅的下载记录，带有演员信息"""
         try:
             # 使用SQL联表查询获取下载记录和对应的演员信息
-            query = text("""
+            sql_str = """
             SELECT d.*, a.actor_name, a.actor_thumb
             FROM actor_subscribe_download d
             JOIN actor_subscribe a ON d.actor_subscribe_id = a.id
             ORDER BY d.download_time DESC
-            """)
+            """
+            query = text(sql_str)
             result = self.db.execute(query)
             downloads = []
             
@@ -206,7 +208,8 @@ class ActorSubscribeService(BaseService):
             
             return downloads
         except Exception as e:
-            logger.error(f"获取所有下载记录失败: {e}")
+            logger.error(f"actor_subscribe - 获取所有下载记录失败: {e}")
+            # 如果查询失败，回退到简单查询
             return []
 
     @transaction
