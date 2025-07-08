@@ -6,7 +6,7 @@ export interface AutoDownloadRule {
   name: string
   min_rating: number
   min_comments: number
-  time_range_type: 'day' | 'week' | 'month'
+  time_range_type: 'DAY' | 'WEEK' | 'MONTH'
   time_range_value: number
   is_hd: boolean
   is_zh: boolean

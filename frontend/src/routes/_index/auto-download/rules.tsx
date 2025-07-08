@@ -171,7 +171,7 @@ function AutoDownloadRules() {
         <Space direction="vertical" size="small">
           <div>评分 ≥ {record.min_rating}</div>
           <div>评论 ≥ {record.min_comments}</div>
-          <div>时间: {record.time_range_value} {record.time_range_type === 'day' ? '天' : record.time_range_type === 'week' ? '周' : '月'}</div>
+          <div>时间: {record.time_range_value} {record.time_range_type === 'DAY' ? '天' : record.time_range_type === 'WEEK' ? '周' : '月'}</div>
         </Space>
       ),
       width: 120
@@ -357,7 +357,7 @@ function AutoDownloadRules() {
           initialValues={{
             min_rating: 0,
             min_comments: 0,
-            time_range_type: 'week',
+            time_range_type: 'WEEK',
             time_range_value: 1,
             is_hd: true,
             is_zh: false,
@@ -412,9 +412,9 @@ function AutoDownloadRules() {
                 rules={[{ required: true, message: '请选择时间范围类型' }]}
               >
                 <Select>
-                  <Option value="day">天</Option>
-                  <Option value="week">周</Option>
-                  <Option value="month">月</Option>
+                  <Option value="DAY">天</Option>
+                  <Option value="WEEK">周</Option>
+                  <Option value="MONTH">月</Option>
                 </Select>
               </Form.Item>
             </Col>
