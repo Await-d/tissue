@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field, validator
 
 class TimeRangeType(str, Enum):
     """时间范围类型枚举"""
-    DAY = "day"
-    WEEK = "week"
-    MONTH = "month"
+    DAY = "DAY"
+    WEEK = "WEEK"
+    MONTH = "MONTH"
 
 
 class DownloadStatus(str, Enum):
@@ -30,30 +30,12 @@ class AutoDownloadRuleBase(BaseModel):
     name: str = Field(..., description="规则名称")
     min_rating: Optional[Decimal] = Field(default=0.0, ge=0, le=10, description="最低评分")
     min_comments: Optional[int] = Field(default=0, ge=0, description="最低评论数")
-    time_range_type: Optional[str] = Field(default="week", description="时间范围类型")
+    time_range_type: Optional[TimeRangeType] = Field(default=TimeRangeType.WEEK, description="时间范围类型")
     time_range_value: Optional[int] = Field(default=1, ge=1, description="时间范围值")
     is_hd: bool = Field(default=True, description="是否高清")
     is_zh: bool = Field(default=False, description="是否中文")
     is_uncensored: bool = Field(default=False, description="是否无码")
     is_enabled: bool = Field(default=True, description="是否启用")
-
-    @validator('time_range_type', pre=True)
-    def normalize_time_range_type(cls, v):
-        """标准化时间范围类型，确保枚举值正确"""
-        if isinstance(v, str):
-            # 处理大写和小写输入，直接映射到枚举值的字符串表示
-            v_upper = v.upper()
-            if v_upper == 'DAY':
-                return 'day'
-            elif v_upper == 'WEEK':
-                return 'week'
-            elif v_upper == 'MONTH':
-                return 'month'
-            # 如果已经是小写，也需要验证
-            v_lower = v.lower()
-            if v_lower in ['day', 'week', 'month']:
-                return v_lower
-        return v
 
 
 class AutoDownloadRuleCreate(AutoDownloadRuleBase):
@@ -67,32 +49,12 @@ class AutoDownloadRuleUpdate(BaseModel):
     name: Optional[str] = None
     min_rating: Optional[Decimal] = None
     min_comments: Optional[int] = None
-    time_range_type: Optional[str] = None
+    time_range_type: Optional[TimeRangeType] = None
     time_range_value: Optional[int] = None
     is_hd: Optional[bool] = None
     is_zh: Optional[bool] = None
     is_uncensored: Optional[bool] = None
     is_enabled: Optional[bool] = None
-
-    @validator('time_range_type', pre=True)
-    def normalize_time_range_type(cls, v):
-        """标准化时间范围类型，确保枚举值正确"""
-        if v is None:
-            return v
-        if isinstance(v, str):
-            # 处理大写和小写输入，直接映射到枚举值的字符串表示
-            v_upper = v.upper()
-            if v_upper == 'DAY':
-                return 'day'
-            elif v_upper == 'WEEK':
-                return 'week'
-            elif v_upper == 'MONTH':
-                return 'month'
-            # 如果已经是小写，也需要验证
-            v_lower = v.lower()
-            if v_lower in ['day', 'week', 'month']:
-                return v_lower
-        return v
 
 
 class AutoDownloadRuleResponse(AutoDownloadRuleBase):

@@ -11,9 +11,9 @@ from app.db.models.base import Base
 
 class TimeRangeType(enum.Enum):
     """时间范围类型枚举"""
-    DAY = "day"
-    WEEK = "week"
-    MONTH = "month"
+    DAY = "DAY"
+    WEEK = "WEEK"
+    MONTH = "MONTH"
 
 
 class DownloadStatus(enum.Enum):
