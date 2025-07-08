@@ -156,9 +156,26 @@ class JavdbSpider(Spider):
     def get_trending_videos(self, page: int = 1, time_range: str = "week"):
         """获取热门视频列表"""
         try:
+            # 添加随机延迟，避免被识别为爬虫
+            delay = randint(3, 8)
+            logger.info(f"获取热门视频列表前等待 {delay} 秒...")
+            time.sleep(delay)
+            
             # 构造热门页面URL
             url = urljoin(self.host, f"/rankings/videos?t={time_range}&page={page}")
-            response = self.session.get(url)
+            logger.info(f"获取热门视频列表: {url}")
+            
+            # 构建请求头，模拟浏览器
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Cache-Control": "max-age=0",
+                "Connection": "keep-alive",
+                "Referer": self.host
+            }
+            
+            response = self.session.get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             videos = []
@@ -217,9 +234,26 @@ class JavdbSpider(Spider):
     def get_latest_videos(self, page: int = 1, date_range: int = 7):
         """获取最新视频列表"""
         try:
+            # 添加随机延迟，避免被识别为爬虫
+            delay = randint(3, 8)
+            logger.info(f"获取最新视频列表前等待 {delay} 秒...")
+            time.sleep(delay)
+            
             # 构造最新页面URL  
             url = urljoin(self.host, f"/videos?page={page}")
-            response = self.session.get(url)
+            logger.info(f"获取最新视频列表: {url}")
+            
+            # 构建请求头，模拟浏览器
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Cache-Control": "max-age=0",
+                "Connection": "keep-alive",
+                "Referer": self.host
+            }
+            
+            response = self.session.get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             videos = []
@@ -285,7 +319,22 @@ class JavdbSpider(Spider):
     def get_comments_count(self, url: str):
         """获取视频评论数"""
         try:
-            response = self.session.get(url)
+            # 添加随机延迟，避免被识别为爬虫
+            delay = randint(2, 5)
+            logger.debug(f"获取评论数前等待 {delay} 秒...")
+            time.sleep(delay)
+            
+            # 构建请求头，模拟浏览器
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Cache-Control": "max-age=0",
+                "Connection": "keep-alive",
+                "Referer": self.host
+            }
+            
+            response = self.session.get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             comments_elements = html.xpath("//a[contains(@href,'/reviews?')]/text()")
