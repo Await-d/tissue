@@ -383,16 +383,34 @@ class AutoDownloadService:
                     "subscription_count": subscription_count,
                     "success_count": success_count
                 }
-                rule_responses.append(AutoDownloadRuleResponse.model_validate(rule_dict))
+                # 兼容Pydantic v1和v2
+                try:
+                    # Pydantic v2
+                    rule_response = AutoDownloadRuleResponse.model_validate(rule_dict)
+                except AttributeError:
+                    # Pydantic v1
+                    rule_response = AutoDownloadRuleResponse(**rule_dict)
+                rule_responses.append(rule_response)
             
             # 返回列表响应
-            return AutoDownloadListResponse(
-                items=rule_responses,
-                total=total,
-                page=query.page,
-                page_size=query.page_size,
-                total_pages=total_pages
-            )
+            try:
+                # Pydantic v2
+                return AutoDownloadListResponse.model_validate({
+                    "items": rule_responses,
+                    "total": total,
+                    "page": query.page,
+                    "page_size": query.page_size,
+                    "total_pages": total_pages
+                })
+            except AttributeError:
+                # Pydantic v1
+                return AutoDownloadListResponse(
+                    items=rule_responses,
+                    total=total,
+                    page=query.page,
+                    page_size=query.page_size,
+                    total_pages=total_pages
+                )
         except Exception as e:
             logger.error(f"获取自动下载规则列表出错: {str(e)}")
             logger.debug(traceback.format_exc())
@@ -468,18 +486,33 @@ class AutoDownloadService:
                 }
                 
                 # 添加到响应列表
-                subscription_responses.append(
-                    AutoDownloadSubscriptionResponse.model_validate(subscription_dict)
-                )
+                try:
+                    # Pydantic v2
+                    subscription_response = AutoDownloadSubscriptionResponse.model_validate(subscription_dict)
+                except AttributeError:
+                    # Pydantic v1
+                    subscription_response = AutoDownloadSubscriptionResponse(**subscription_dict)
+                subscription_responses.append(subscription_response)
             
             # 返回列表响应
-            return AutoDownloadListResponse(
-                items=subscription_responses,
-                total=total,
-                page=query.page,
-                page_size=query.page_size,
-                total_pages=total_pages
-            )
+            try:
+                # Pydantic v2
+                return AutoDownloadListResponse.model_validate({
+                    "items": subscription_responses,
+                    "total": total,
+                    "page": query.page,
+                    "page_size": query.page_size,
+                    "total_pages": total_pages
+                })
+            except AttributeError:
+                # Pydantic v1
+                return AutoDownloadListResponse(
+                    items=subscription_responses,
+                    total=total,
+                    page=query.page,
+                    page_size=query.page_size,
+                    total_pages=total_pages
+                )
         except Exception as e:
             logger.error(f"获取自动下载订阅记录出错: {str(e)}")
             logger.debug(traceback.format_exc())
