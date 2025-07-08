@@ -55,6 +55,7 @@ function AutoDownloadRules() {
         page,
         page_size: pageSize
       })
+      console.log('接收到的规则数据:', response)
       setRules(response.items || [])
       setPagination({
         current: page,
@@ -62,6 +63,7 @@ function AutoDownloadRules() {
         total: response.total
       })
     } catch (error) {
+      console.error('加载规则失败:', error)
       message.error('加载规则列表失败')
       setRules([]) // 确保在错误情况下rules为空数组
     } finally {
@@ -172,6 +174,7 @@ function AutoDownloadRules() {
           <div>评分 ≥ {record.min_rating}</div>
           <div>评论 ≥ {record.min_comments}</div>
           <div>时间: {record.time_range_value} {record.time_range_type === 'DAY' ? '天' : record.time_range_type === 'WEEK' ? '周' : '月'}</div>
+          <div style={{ fontSize: '10px', color: '#999' }}>枚举值: {record.time_range_type}</div>
         </Space>
       ),
       width: 120
