@@ -40,7 +40,7 @@ function Log() {
             },
             signal: ctrl.signal,
             openWhenHidden: true,
-            onopen(response) {
+            async onopen(response) {
                 console.log('日志连接已打开', response.status);
                 setLoading(false);
                 if (response.status !== 200) {
