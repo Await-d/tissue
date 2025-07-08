@@ -56,11 +56,15 @@ function AutoDownloadRules() {
         page_size: pageSize
       })
       console.log('接收到的规则数据:', response)
-      setRules(response.items || [])
+      
+      // API返回的数据在response.data中
+      const { items = [], total = 0 } = response.data || {};
+      
+      setRules(items)
       setPagination({
         current: page,
         pageSize,
-        total: response.total
+        total: total
       })
     } catch (error) {
       console.error('加载规则失败:', error)
