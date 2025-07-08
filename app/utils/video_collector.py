@@ -169,7 +169,7 @@ class VideoCollector:
             # 根据详细信息筛选
             if is_uncensored is not None and video.get('is_uncensored', False) != is_uncensored:
                 # 减少调试日志输出
-            pass
+                pass
                 continue
                 
             if is_hd is not None and video.get('is_hd', False) != is_hd:
