@@ -2,11 +2,11 @@
 自动下载服务
 """
 import traceback
-from datetime import datetime
+from datetime import datetime, date
 import time
 from random import randint
 from typing import List, Dict, Any, Optional
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -14,6 +14,15 @@ from sqlalchemy.orm import Session
 from app.db import get_db, SessionFactory
 from app.db.models.auto_download import AutoDownloadRule, AutoDownloadSubscription, DownloadStatus, TimeRangeType
 from app.schema import subscribe as schema
+from app.schema.auto_download import (
+    AutoDownloadRuleQuery, 
+    AutoDownloadListResponse, 
+    AutoDownloadRuleResponse, 
+    AutoDownloadStatistics, 
+    AutoDownloadSubscriptionResponse,
+    AutoDownloadSubscriptionQuery,
+    AutoDownloadBatchOperation
+)
 from app.utils.video_collector import VideoCollector
 from app.utils.logger import logger
 from app.service.download import DownloadService
@@ -327,7 +336,7 @@ class AutoDownloadService:
         # 返回第一个符合条件的下载
         return suitable_downloads[0]
         
-    def get_rules(self, query):
+    def get_rules(self, query: AutoDownloadRuleQuery):
         """获取自动下载规则列表"""
         try:
             # 构建基本查询
@@ -348,9 +357,6 @@ class AutoDownloadService:
             
             # 计算总页数
             total_pages = (total + query.page_size - 1) // query.page_size if query.page_size > 0 else 0
-            
-            # 转换为响应模型
-            from app.schema.auto_download import AutoDownloadRuleResponse, AutoDownloadListResponse
             
             # 为每个规则添加统计信息
             rule_responses = []
@@ -398,7 +404,7 @@ class AutoDownloadService:
             logger.debug(traceback.format_exc())
             raise
             
-    def get_subscriptions(self, query):
+    def get_subscriptions(self, query: AutoDownloadSubscriptionQuery):
         """获取自动下载订阅记录"""
         try:
             # 构建基本查询
@@ -445,7 +451,6 @@ class AutoDownloadService:
             total_pages = (total + query.page_size - 1) // query.page_size if query.page_size > 0 else 0
             
             # 转换为响应模型
-            from app.schema.auto_download import AutoDownloadSubscriptionResponse, AutoDownloadListResponse
             
             # 构建响应列表
             subscription_responses = []
@@ -487,10 +492,6 @@ class AutoDownloadService:
             
     def get_statistics(self):
         """获取自动下载统计信息"""
-        from app.schema.auto_download import AutoDownloadStatistics
-        from datetime import date
-        from sqlalchemy import func
-        
         try:
             # 获取规则统计
             total_rules = self.db.query(AutoDownloadRule).count()
@@ -574,7 +575,7 @@ class AutoDownloadService:
             logger.debug(traceback.format_exc())
             raise
             
-    def batch_operation(self, operation):
+    def batch_operation(self, operation: AutoDownloadBatchOperation):
         """批量操作订阅记录"""
         result = {
             'success_count': 0,
