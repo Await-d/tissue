@@ -400,9 +400,9 @@ function AutoDownloadRules() {
                   </Col>
                   <Col span={24}>
                     <Space size="small">
-                      {rule.is_hd && <Tag color="blue" size="small">高清</Tag>}
-                      {rule.is_zh && <Tag color="green" size="small">中文</Tag>}
-                      {rule.is_uncensored && <Tag color="red" size="small">无码</Tag>}
+                      {rule.is_hd && <Tag color="blue">高清</Tag>}
+                      {rule.is_zh && <Tag color="green">中文</Tag>}
+                      {rule.is_uncensored && <Tag color="red">无码</Tag>}
                     </Space>
                   </Col>
                   <Col span={12}>
