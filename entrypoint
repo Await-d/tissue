@@ -20,4 +20,4 @@ fi
 
 # 启动应用
 echo "🌟 启动应用服务..."
-gosu tissue-plus:tissue-plus uvicorn app.main:app --host 0.0.0.0 --port 9193 --log-level warning
+gosu tissue-plus:tissue-plus uvicorn app.main:app --log-level warning
