@@ -13,7 +13,7 @@ steps:
       - name: volume5
         path: /volume5
     commands:
-      - docker build -t tissue:latest .
+      - docker build -t tissue-plus:latest .
       - docker stop tissue || true
       - docker rm tissue || true
       - echo "开始诊断和创建必要目录..."
@@ -46,7 +46,7 @@ steps:
             -v /volume1/docker/1panel/apps/local/tissue_plus/localtissue/data/config:/app/config \
             --restart unless-stopped \
             --network 1panel-network \
-        tissue:latest
+        tissue-plus:latest
         else
           echo "错误：一个或多个必要目录不存在，无法启动容器"
           exit 1
