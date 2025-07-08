@@ -33,6 +33,14 @@ function Log() {
         setLoading(true);
         setError(null);
         
+        console.log('开始连接日志，token:', userToken ? '已有token' : '无token');
+        
+        if (!userToken) {
+            setError('用户未登录，请先登录');
+            setLoading(false);
+            return;
+        }
+        
         fetchEventSource(`${configs.BASE_API}/home/log`, {
             method: 'GET',
             headers: {
@@ -44,7 +52,11 @@ function Log() {
                 console.log('日志连接已打开', response.status);
                 setLoading(false);
                 if (response.status !== 200) {
-                    setError(`连接失败: HTTP ${response.status}`);
+                    if (response.status === 401) {
+                        setError('认证失败，请重新登录');
+                    } else {
+                        setError(`连接失败: HTTP ${response.status}`);
+                    }
                 }
             },
             onmessage(msg) {
@@ -66,7 +78,7 @@ function Log() {
             },
             onerror(err) {
                 console.error('日志连接错误:', err);
-                setError('连接日志服务失败，请检查网络连接');
+                setError('连接日志服务失败，请检查网络连接或重新登录');
                 setLoading(false);
             },
             onclose() {
