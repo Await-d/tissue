@@ -377,13 +377,16 @@ class AutoDownloadService:
                     AutoDownloadSubscription.status == DownloadStatus.COMPLETED
                 ).count()
                 
+                # 处理枚举值
+                time_range_type_value = rule.time_range_type.value if rule.time_range_type else None
+                
                 # 构建响应对象
                 rule_dict = {
                     "id": rule.id,
                     "name": rule.name,
                     "min_rating": rule.min_rating,
                     "min_comments": rule.min_comments,
-                    "time_range_type": rule.time_range_type,
+                    "time_range_type": time_range_type_value,
                     "time_range_value": rule.time_range_value,
                     "is_hd": rule.is_hd,
                     "is_zh": rule.is_zh,
@@ -429,58 +432,56 @@ class AutoDownloadService:
                 base_query = base_query.filter(AutoDownloadSubscription.rule_id == query.rule_id)
                 
             if query.status:
-                base_query = base_query.filter(AutoDownloadSubscription.status == query.status)
+                # 将字符串状态转换为枚举值
+                try:
+                    enum_status = DownloadStatus[query.status.upper()]
+                    base_query = base_query.filter(AutoDownloadSubscription.status == enum_status)
+                except (KeyError, AttributeError):
+                    pass  # 忽略无效状态
                 
             if query.num:
                 base_query = base_query.filter(AutoDownloadSubscription.num.like(f"%{query.num}%"))
                 
             if query.start_date:
-                base_query = base_query.filter(func.date(AutoDownloadSubscription.create_time) >= query.start_date)
+                base_query = base_query.filter(func.date(AutoDownloadSubscription.created_at) >= query.start_date)
                 
             if query.end_date:
-                base_query = base_query.filter(func.date(AutoDownloadSubscription.create_time) <= query.end_date)
+                base_query = base_query.filter(func.date(AutoDownloadSubscription.created_at) <= query.end_date)
             
-            # 获取总数
+            # 计算总数
             total = base_query.count()
             
             # 应用分页
-            subscriptions = base_query.order_by(
-                AutoDownloadSubscription.create_time.desc()
-            ).offset(
+            results = base_query.order_by(AutoDownloadSubscription.created_at.desc()).offset(
                 (query.page - 1) * query.page_size
-            ).limit(
-                query.page_size
-            ).all()
+            ).limit(query.page_size).all()
             
             # 计算总页数
             total_pages = (total + query.page_size - 1) // query.page_size if query.page_size > 0 else 0
             
-            # 转换为响应模型
-            
             # 构建响应列表
             subscription_responses = []
-            for subscription_tuple in subscriptions:
-                subscription = subscription_tuple[0]
-                rule_name = subscription_tuple[1]
+            for subscription, rule_name in results:
+                # 处理枚举值
+                status_value = subscription.status.value if subscription.status else None
                 
-                # 构建响应字典
+                # 构建响应对象
                 subscription_dict = {
                     "id": subscription.id,
                     "rule_id": subscription.rule_id,
                     "num": subscription.num,
                     "title": subscription.title,
+                    "rating": subscription.rating,
+                    "comments_count": subscription.comments_count,
                     "cover": subscription.cover,
-                    "status": subscription.status,
+                    "actors": subscription.actors,
+                    "status": status_value,
                     "download_url": subscription.download_url,
                     "download_time": subscription.download_time,
-                    "created_at": subscription.create_time,
+                    "created_at": subscription.created_at,
                     "rule_name": rule_name
                 }
-                
-                # 添加到响应列表
-                subscription_responses.append(
-                    AutoDownloadSubscriptionResponse.model_validate(subscription_dict)
-                )
+                subscription_responses.append(AutoDownloadSubscriptionResponse.model_validate(subscription_dict))
             
             # 返回列表响应
             return AutoDownloadListResponse(
