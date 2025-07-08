@@ -34,7 +34,7 @@ def on_startup():
     perform_version_check_and_migration()
     
     # 注册路由
-    app.include_router(api_router, prefix="/api")
+    app.include_router(api_router)
     app.include_router(
         actor_subscribe.router,
         prefix="/actor-subscribe",
