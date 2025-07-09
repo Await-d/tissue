@@ -25,3 +25,10 @@ def get_downloads(
 def complete_download(torrent_hash: str, service=Depends(get_download_service)):
     service.complete_download(torrent_hash)
     return R.ok()
+
+
+@router.get('/test-connection')
+def test_qbittorrent_connection(service=Depends(get_download_service)):
+    """测试qBittorrent连接状态"""
+    test_result = service.qb.test_connection()
+    return R.ok(test_result)

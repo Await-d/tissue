@@ -26,15 +26,21 @@ class QBittorent:
             
             # 获取带协议头的host
             host = self._get_host_with_scheme()
+            logger.info(f"尝试登录qBittorrent: {host}")
+            logger.info(f"用户名: {setting.username}")
                 
             response = self.session.post(
                 url=urljoin(host, "/api/v2/auth/login"),
                 data={"username": setting.username, "password": setting.password},
             )
+            logger.info(f"登录响应状态码: {response.status_code}")
             if response.status_code != 200:
+                logger.error(f"登录失败，响应内容: {response.text}")
                 raise BizException(response.text)
-        except:
-            logger.info("下载器连接失败")
+            else:
+                logger.info("qBittorrent登录成功")
+        except Exception as e:
+            logger.error(f"下载器连接失败: {str(e)}")
             raise BizException("下载器连接失败")
 
     def test_connection(self):
@@ -76,6 +82,20 @@ class QBittorent:
             if version_response.status_code != 200:
                 return {"status": False, "message": "无法获取版本信息，请检查权限设置"}
             
+            # 进一步测试获取种子列表API
+            torrents_response = self.session.get(
+                urljoin(host, "/api/v2/torrents/info"),
+                timeout=5
+            )
+            
+            if torrents_response.status_code != 200:
+                return {
+                    "status": False, 
+                    "message": f"无法获取种子列表，API响应错误: {torrents_response.status_code}"
+                }
+            
+            torrents_count = len(torrents_response.json())
+            
             # 检查保存路径是否设置
             save_path_message = ""
             if not self.savepath:
@@ -83,8 +103,9 @@ class QBittorent:
             
             return {
                 "status": True, 
-                "message": f"连接成功! qBittorrent版本: {version_response.text} {save_path_message}",
-                "version": version_response.text
+                "message": f"连接成功! qBittorrent版本: {version_response.text}, 当前种子数: {torrents_count} {save_path_message}",
+                "version": version_response.text,
+                "torrents_count": torrents_count
             }
         except requests.exceptions.ConnectionError:
             return {"status": False, "message": "连接错误，请检查下载器地址是否正确"}
@@ -97,14 +118,19 @@ class QBittorent:
     def auth(func):
         def wrapper(self, *args, **kwargs):
             try:
+                logger.debug(f"执行qBittorrent方法: {func.__name__}")
                 response = func(self, *args, **kwargs)
                 if response.status_code == 403:
-                    logger.info("登录信息失效，将尝试重新登登录...")
+                    logger.info("登录信息失效，将尝试重新登录...")
                     raise Exception()
-            except:
+                logger.debug(f"qBittorrent方法 {func.__name__} 执行成功")
+                return response
+            except Exception as e:
+                logger.info(f"qBittorrent方法 {func.__name__} 执行失败，尝试重新登录: {str(e)}")
                 self.login()
                 response = func(self, *args, **kwargs)
-            return response
+                logger.debug(f"重新登录后，qBittorrent方法 {func.__name__} 执行成功")
+                return response
 
         return wrapper
 
@@ -232,9 +258,29 @@ class QBittorent:
     def get_all_torrents(self):
         """获取所有种子信息，不过滤"""
         host = self._get_host_with_scheme()
-        return self.session.get(
-            urljoin(host, "/api/v2/torrents/info")
-        ).json()
+        logger.info(f"正在向qBittorrent请求种子列表: {host}/api/v2/torrents/info")
+        
+        response = self.session.get(
+            urljoin(host, "/api/v2/torrents/info"),
+            timeout=10
+        )
+        
+        logger.info(f"qBittorrent响应状态码: {response.status_code}")
+        
+        if response.status_code != 200:
+            logger.error(f"qBittorrent API响应错误: {response.status_code} - {response.text}")
+            return response  # 让装饰器处理错误响应
+        
+        torrents = response.json()
+        logger.info(f"成功获取到 {len(torrents)} 个种子")
+        
+        # 打印前几个种子的详细信息用于调试
+        if len(torrents) > 0:
+            logger.info("前3个种子信息:")
+            for i, torrent in enumerate(torrents[:3]):
+                logger.info(f"  种子{i+1}: 名称={torrent.get('name', 'N/A')}, 状态={torrent.get('state', 'N/A')}, 进度={torrent.get('progress', 0):.2%}, 标签={torrent.get('tags', 'N/A')}")
+        
+        return response
     
     def extract_hash_from_magnet(self, magnet: str) -> Optional[str]:
         """从磁力链接中提取hash值
