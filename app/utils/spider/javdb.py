@@ -295,11 +295,21 @@ class JavdbSpider(Spider):
                     cover_element = element.xpath(".//img")
                     cover = cover_element[0].get('src') if cover_element else None
                     
+                    # 获取评分（如果有）
+                    rating_element = element.xpath(".//span[@class='score']")
+                    rating = None
+                    if rating_element:
+                        rating_text = rating_element[0].text
+                        rating_match = re.search(r"(\d+\.\d+)", rating_text)
+                        if rating_match:
+                            rating = float(rating_match.group(1))
+                    
                     video_info = {
                         'num': num,
                         'title': f"{num} {title_element[0].tail or ''}".strip(),
                         'url': video_url,
                         'cover': cover,
+                        'rating': rating,
                         'publish_date': publish_date,
                         'website': self.name
                     }
@@ -315,6 +325,99 @@ class JavdbSpider(Spider):
         except Exception as e:
             logger.error(f"获取最新视频列表时出错: {str(e)}")
             return []
+
+    def get_ranking_with_details(self, video_type: str = 'censored', cycle: str = 'daily', max_pages: int = 3):
+        """获取排行榜视频，包含详细信息（评分、评论等）"""
+        all_videos = []
+        
+        for page in range(1, max_pages + 1):
+            try:
+                # 添加随机延迟
+                delay = randint(3, 8)
+                logger.info(f"获取排行榜第{page}页前等待 {delay} 秒...")
+                time.sleep(delay)
+                
+                # 构造排行榜URL
+                if video_type == 'uncensored':
+                    url = urljoin(self.host, f"/rankings/uncensored?t={cycle}&page={page}")
+                else:
+                    url = urljoin(self.host, f"/rankings/videos?t={cycle}&page={page}")
+                
+                logger.info(f"获取排行榜数据: {url}")
+                
+                # 构建请求头
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                    "Cache-Control": "max-age=0",
+                    "Connection": "keep-alive",
+                    "Referer": self.host
+                }
+                
+                response = self.session.get(url, headers=headers)
+                html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
+                
+                video_elements = html.xpath("//div[@class='item']")
+                
+                for element in video_elements:
+                    try:
+                        # 获取番号
+                        title_element = element.xpath(".//div[@class='video-title']/strong")
+                        if not title_element:
+                            continue
+                        
+                        num = title_element[0].text.strip()
+                        
+                        # 获取链接
+                        link_element = element.xpath(".//a[@class='box']")
+                        if not link_element:
+                            continue
+                        
+                        video_url = urljoin(self.host, link_element[0].get('href'))
+                        
+                        # 获取封面
+                        cover_element = element.xpath(".//img")
+                        cover = cover_element[0].get('src') if cover_element else None
+                        
+                        # 获取评分
+                        rating_element = element.xpath(".//span[@class='score']")
+                        rating = None
+                        if rating_element:
+                            rating_text = rating_element[0].text
+                            rating_match = re.search(r"(\d+\.\d+)", rating_text)
+                            if rating_match:
+                                rating = float(rating_match.group(1))
+                        
+                        # 获取评论数（需要访问详情页）
+                        comments_count = self.get_comments_count(video_url)
+                        
+                        video_info = {
+                            'num': num,
+                            'title': f"{num} {title_element[0].tail or ''}".strip(),
+                            'url': video_url,
+                            'cover': cover,
+                            'rating': rating,
+                            'comments': comments_count,
+                            'comments_count': comments_count,
+                            'is_uncensored': video_type == 'uncensored',
+                            'is_hd': True,  # 排行榜默认为高清
+                            'is_zh': False,  # 需要后续检测
+                            'website': self.name
+                        }
+                        
+                        all_videos.append(video_info)
+                        
+                    except Exception as e:
+                        logger.warning(f"解析排行榜视频信息时出错: {str(e)}")
+                        continue
+                        
+            except Exception as e:
+                logger.error(f"获取排行榜第{page}页时出错: {str(e)}")
+                continue
+        
+        logger.info(f"排行榜数据获取完成，共 {len(all_videos)} 个视频")
+        return all_videos
 
     def get_comments_count(self, url: str):
         """获取视频评论数"""

@@ -158,7 +158,8 @@ function AutoDownloadSubscriptions() {
 
   // 状态颜色映射
   const getStatusColor = (status: string) => {
-    switch (status) {
+    const upperStatus = status?.toUpperCase()
+    switch (upperStatus) {
       case 'PENDING':
         return 'default'
       case 'DOWNLOADING':
@@ -174,7 +175,8 @@ function AutoDownloadSubscriptions() {
 
   // 状态文本映射
   const getStatusText = (status: string) => {
-    switch (status) {
+    const upperStatus = status?.toUpperCase()
+    switch (upperStatus) {
       case 'PENDING':
         return '待处理'
       case 'DOWNLOADING':
@@ -279,7 +281,7 @@ function AutoDownloadSubscriptions() {
           >
             查看详情
           </Button>
-          {record.status === 'FAILED' && (
+          {record.status?.toLowerCase() === 'failed' && (
             <Button
               type="text"
               icon={<ReloadOutlined />}
@@ -350,10 +352,10 @@ function AutoDownloadSubscriptions() {
               allowClear
               style={{ width: '100%' }}
             >
-              <Option value="PENDING">待处理</Option>
-              <Option value="DOWNLOADING">下载中</Option>
-              <Option value="COMPLETED">已完成</Option>
-              <Option value="FAILED">失败</Option>
+              <Option value="pending">待处理</Option>
+              <Option value="downloading">下载中</Option>
+              <Option value="completed">已完成</Option>
+              <Option value="failed">失败</Option>
             </Select>
           </Col>
           <Col span={6}>
