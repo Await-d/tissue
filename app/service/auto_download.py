@@ -61,6 +61,7 @@ class AutoDownloadService:
             try:
                 logger.info(f"===== 执行规则 [{rule.name}] ID:{rule.id} =====" )
                 logger.info(f"规则条件: 评分>={rule.min_rating or '无限制'}, 评论>={rule.min_comments or '无限制'}")
+                logger.info(f"规则参数类型: min_rating={type(rule.min_rating)}, min_comments={type(rule.min_comments)}")
                 logger.info(f"规则条件: 高清={rule.is_hd}, 中文字幕={rule.is_zh}, 无码={rule.is_uncensored}")
                 
                 # 计算时间范围
@@ -90,6 +91,10 @@ class AutoDownloadService:
                 )
                 
                 logger.info(f"规则 [{rule.name}] 初步筛选得到 {len(videos)} 个视频")
+                
+                # 显示前3个视频的详细信息用于调试
+                for i, video in enumerate(videos[:3]):
+                    logger.info(f"视频 {i+1}: {video.get('num')} - 评分: {video.get('rating')} - 评论: {video.get('comments')} - 评论数: {video.get('comments_count')}")
                 
                 # 额外筛选（比如排除已订阅的）
                 filtered_videos = self._filter_videos(rule, videos)

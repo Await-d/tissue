@@ -153,6 +153,16 @@ class VideoCollector:
         
         logger.info(f"收集到 {len(all_videos)} 个独特的排行榜视频，包含评分和评论信息")
         
+        # 输出前5个视频的详细信息用于调试
+        for i, video in enumerate(all_videos[:5]):
+            logger.info(f"排行榜视频 {i+1}: {video.get('num')} - 评分: {video.get('rating')} - 评论: {video.get('comments')} - 评论数: {video.get('comments_count')}")
+        
+        # 统计有效评分和评论数据
+        valid_ratings = [v for v in all_videos if v.get('rating') is not None]
+        valid_comments = [v for v in all_videos if v.get('comments') is not None and v.get('comments') > 0]
+        valid_comments_count = [v for v in all_videos if v.get('comments_count') is not None and v.get('comments_count') > 0]
+        logger.info(f"有效评分数据: {len(valid_ratings)}/{len(all_videos)}, 有效评论数据: {len(valid_comments)}/{len(all_videos)}, 有效评论数数据: {len(valid_comments_count)}/{len(all_videos)}")
+        
         # 保存到缓存
         self._save_to_cache(cache_key, all_videos)
         return all_videos
@@ -201,14 +211,44 @@ class VideoCollector:
         # 2. 对排行榜视频进行基础筛选（这些视频已经包含评分和评论信息）
         basic_filtered = []
         for video in filtered_videos:
-            # 评分筛选
+            # 添加详细的日志输出，显示每个视频的评分和评论数据
             video_rating = video.get('rating')
-            if min_rating and video_rating is not None and float(video_rating) < float(min_rating):
-                continue
+            video_comments = video.get('comments', 0)
+            video_comments_count = video.get('comments_count', 0)
+            logger.info(f"视频 {video.get('num')} - 评分: {video_rating} (类型: {type(video_rating)}), 评论: {video_comments} (类型: {type(video_comments)}), 评论数: {video_comments_count} (类型: {type(video_comments_count)})")
+            
+            # 尝试从多个字段获取评论数
+            if video_comments == 0 and video_comments_count != 0:
+                video_comments = video_comments_count
+                logger.info(f"视频 {video.get('num')} 使用 comments_count 字段: {video_comments}")
+            
+            # 评分筛选
+            if min_rating and video_rating is not None:
+                try:
+                    rating_float = float(video_rating)
+                    min_rating_float = float(min_rating)
+                    logger.info(f"视频 {video.get('num')} 评分比较: {rating_float} >= {min_rating_float} ? {rating_float >= min_rating_float}")
+                    if rating_float < min_rating_float:
+                        logger.info(f"视频 {video.get('num')} 评分 {rating_float} 低于要求 {min_rating_float}，跳过")
+                        continue
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"视频 {video.get('num')} 评分转换失败: {video_rating} (类型: {type(video_rating)}), 错误: {e}")
+                    continue
                 
             # 评论数筛选
-            video_comments = video.get('comments', 0)
-            if min_comments and video_comments is not None and int(video_comments) < int(min_comments):
+            if min_comments and video_comments is not None:
+                try:
+                    comments_int = int(video_comments)
+                    min_comments_int = int(min_comments)
+                    logger.info(f"视频 {video.get('num')} 评论数比较: {comments_int} >= {min_comments_int} ? {comments_int >= min_comments_int}")
+                    if comments_int < min_comments_int:
+                        logger.info(f"视频 {video.get('num')} 评论数 {comments_int} 低于要求 {min_comments_int}，跳过")
+                        continue
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"视频 {video.get('num')} 评论数转换失败: {video_comments} (类型: {type(video_comments)}), 错误: {e}")
+                    continue
+            elif min_comments and video_comments == 0:
+                logger.info(f"视频 {video.get('num')} 评论数为0，低于要求 {min_comments}，跳过")
                 continue
             
             # 质量要求筛选（排行榜数据已包含这些信息）

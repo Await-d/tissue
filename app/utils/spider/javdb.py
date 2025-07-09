@@ -310,6 +310,8 @@ class JavdbSpider(Spider):
                         'url': video_url,
                         'cover': cover,
                         'rating': rating,
+                        'comments': 0,  # 最新视频页面没有评论数信息，设置为0
+                        'comments_count': 0,  # 最新视频页面没有评论数信息，设置为0
                         'publish_date': publish_date,
                         'website': self.name
                     }
@@ -590,6 +592,7 @@ class JavdbSpider(Spider):
                             if score_match:
                                 video_info['rating'] = float(score_match.group(1))
                                 video_info['comments'] = int(score_match.group(2))
+                                video_info['comments_count'] = int(score_match.group(2))  # 同时设置comments_count字段
                                 logger.debug(f"解析到评分: {video_info['rating']}, 评论: {video_info['comments']}")
                         
                         # 获取标签信息 - 直接从排行榜页面获取
