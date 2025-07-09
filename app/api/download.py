@@ -13,6 +13,11 @@ def get_downloads(
     service=Depends(get_download_service)
 ):
     downloads = service.get_downloads(include_success=include_success, include_failed=include_failed)
+    
+    # 如果返回空列表且配置未设置，返回提示信息
+    if len(downloads) == 0 and not service.setting.download.host:
+        return R.list(downloads, message="请先在设置页面配置qBittorrent连接信息")
+    
     return R.list(downloads)
 
 

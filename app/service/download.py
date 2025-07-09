@@ -28,22 +28,58 @@ class DownloadService(BaseService):
 
     def get_downloads(self, include_success=True, include_failed=True):
         if not self.setting.download.host:
+            logger.warning("qBittorrent主机地址未配置，请在设置页面配置下载器连接信息")
             return []
 
+        logger.info(f"获取下载列表，参数: include_success={include_success}, include_failed={include_failed}")
+        logger.info(f"qBittorrent主机: {self.setting.download.host}")
+        
         category = self.setting.download.category if self.setting.download.category else None
-        # 获取所有种子信息，不过滤已处理的种子
-        infos = self.qb.get_all_torrents()
-        
-        # 如果设置了分类，则过滤分类
         if category:
-            infos = [info for info in infos if info.get('category') == category]
+            logger.info(f"使用分类过滤: {category}")
         
-        # 根据参数决定是否包含已处理的种子
-        if not include_failed:
-            infos = [info for info in infos if "整理失败" not in info.get("tags", "")]
-        
-        if not include_success:
-            infos = [info for info in infos if "整理成功" not in info.get("tags", "")]
+        # 先尝试使用原来的方法获取种子
+        try:
+            logger.info("尝试使用原来的get_torrents方法...")
+            infos = self.qb.get_torrents(category, include_success=True, include_failed=True)
+            logger.info(f"使用get_torrents获取到 {len(infos)} 个种子")
+            
+            if len(infos) == 0:
+                logger.info("get_torrents返回空，尝试使用get_all_torrents...")
+                infos = self.qb.get_all_torrents()
+                logger.info(f"使用get_all_torrents获取到 {len(infos)} 个种子")
+                
+                # 如果设置了分类，则过滤分类
+                if category:
+                    original_count = len(infos)
+                    infos = [info for info in infos if info.get('category') == category]
+                    logger.info(f"分类过滤后: {len(infos)} 个种子 (原来 {original_count} 个)")
+                
+                # 根据参数决定是否包含已处理的种子
+                if not include_failed:
+                    original_count = len(infos)
+                    infos = [info for info in infos if "整理失败" not in info.get("tags", "")]
+                    logger.info(f"排除失败种子后: {len(infos)} 个种子 (原来 {original_count} 个)")
+                
+                if not include_success:
+                    original_count = len(infos)
+                    infos = [info for info in infos if "整理成功" not in info.get("tags", "")]
+                    logger.info(f"排除成功种子后: {len(infos)} 个种子 (原来 {original_count} 个)")
+            else:
+                # 对get_torrents的结果应用额外的过滤
+                if not include_failed:
+                    original_count = len(infos)
+                    infos = [info for info in infos if "整理失败" not in info.get("tags", "")]
+                    logger.info(f"额外排除失败种子后: {len(infos)} 个种子 (原来 {original_count} 个)")
+                
+                if not include_success:
+                    original_count = len(infos)
+                    infos = [info for info in infos if "整理成功" not in info.get("tags", "")]
+                    logger.info(f"额外排除成功种子后: {len(infos)} 个种子 (原来 {original_count} 个)")
+                    
+        except Exception as e:
+            logger.error(f"获取种子列表失败: {str(e)}")
+            return []
         torrents = []
         for info in infos:
             torrent = Torrent(hash=info['hash'], name=info['name'], size=utils.convert_size(info['total_size']),
@@ -117,7 +153,11 @@ class DownloadService(BaseService):
             # 只有当种子包含文件时才添加到列表中
             if torrent.files or not files:
                 torrents.append(torrent)
-                
+        
+        logger.info(f"最终返回 {len(torrents)} 个下载任务")
+        for i, torrent in enumerate(torrents[:3]):  # 只显示前3个作为示例
+            logger.info(f"下载任务 {i+1}: {torrent.name} ({len(torrent.files)} 个文件)")
+        
         return torrents
 
     def complete_download(self, torrent_hash: str, is_success: bool = True):
