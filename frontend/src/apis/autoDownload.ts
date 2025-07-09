@@ -124,7 +124,7 @@ export const batchOperation = (data: {
 
 // 统计和管理API
 export const getStatistics = (): Promise<AutoDownloadStatistics> => {
-  return request.get('/auto-download/statistics')
+  return request.get('/auto-download/statistics').then(response => response.data)
 }
 
 export const triggerAutoDownload = (data: {

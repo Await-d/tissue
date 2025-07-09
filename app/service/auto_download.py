@@ -180,11 +180,12 @@ class AutoDownloadService:
                 continue
             
             # 视频收集器已经应用了基础过滤条件，此处只检查是否已经订阅
-            # 检查是否已经订阅过
+            # 检查是否已经订阅过（只过滤非失败状态的订阅）
             existing_subscription = self.db.query(AutoDownloadSubscription).filter(
                 and_(
                     AutoDownloadSubscription.rule_id == rule.id,
-                    AutoDownloadSubscription.num == video.get('num')
+                    AutoDownloadSubscription.num == video.get('num'),
+                    AutoDownloadSubscription.status != DownloadStatus.FAILED  # 允许重新处理失败的订阅
                 )
             ).first()
             
@@ -215,17 +216,32 @@ class AutoDownloadService:
                 'create_time': datetime.now()
             }
             
-            # 查询是否已存在，避免重复
+            # 查询是否已存在，避免重复（但允许重新创建失败的订阅）
             existing = self.db.query(AutoDownloadSubscription).filter(
                 and_(
                     AutoDownloadSubscription.rule_id == rule.id,
-                    AutoDownloadSubscription.num == num
+                    AutoDownloadSubscription.num == num,
+                    AutoDownloadSubscription.status != DownloadStatus.FAILED  # 允许重新创建失败的订阅
                 )
             ).first()
             
             if existing:
-                logger.warning(f"订阅已存在: {num}, 跳过创建")
+                logger.warning(f"订阅已存在且状态非失败: {num}, 跳过创建")
                 return False
+                
+            # 如果存在失败的订阅，先删除它
+            failed_subscription = self.db.query(AutoDownloadSubscription).filter(
+                and_(
+                    AutoDownloadSubscription.rule_id == rule.id,
+                    AutoDownloadSubscription.num == num,
+                    AutoDownloadSubscription.status == DownloadStatus.FAILED
+                )
+            ).first()
+            
+            if failed_subscription:
+                logger.info(f"删除失败的订阅记录并重新创建: {num}")
+                self.db.delete(failed_subscription)
+                self.db.commit()
                 
             # 创建新订阅
             subscription = AutoDownloadSubscription(**subscription_data)

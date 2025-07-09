@@ -14,9 +14,9 @@ import {
   Col,
   Image
 } from 'antd'
-import { DeleteOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { DeleteOutlined, ReloadOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
   getSubscriptions,
   deleteSubscription,
@@ -31,6 +31,7 @@ const { Option } = Select
 const { RangePicker } = DatePicker
 
 function AutoDownloadSubscriptions() {
+  const navigate = useNavigate()
   const [subscriptions, setSubscriptions] = useState<AutoDownloadSubscription[]>([])
   const [rules, setRules] = useState<AutoDownloadRule[]>([])
   const [loading, setLoading] = useState(false)
@@ -57,22 +58,18 @@ function AutoDownloadSubscriptions() {
         page_size: pageSize,
         ...filters
       }
-      // 移除空值参数
-      Object.keys(params).forEach(key => {
-        if ((params as any)[key] === '' || (params as any)[key] === undefined) {
-          delete (params as any)[key]
-        }
-      })
-      
       const response = await getSubscriptions(params)
-      setSubscriptions(response.data?.items || [])
+      const { items = [], total = 0 } = response.data || {}
+      
+      setSubscriptions(items)
       setPagination({
         current: page,
         pageSize,
-        total: response.data?.total || 0
+        total: total
       })
     } catch (error) {
       message.error('加载订阅记录失败')
+      setSubscriptions([])
     } finally {
       setLoading(false)
     }
@@ -82,10 +79,11 @@ function AutoDownloadSubscriptions() {
   const loadRules = async () => {
     try {
       const response = await getRules({ page: 1, page_size: 100 })
-      setRules(response.data?.items || [])
+      const { items = [] } = response.data || {}
+      setRules(items)
     } catch (error) {
       message.error('加载规则列表失败')
-      setRules([]) // 确保在错误情况下rules为空数组
+      setRules([])
     }
   }
 
@@ -106,16 +104,17 @@ function AutoDownloadSubscriptions() {
   }
 
   // 批量操作
-  const handleBatchOperation = async (action: string) => {
-    if (selectedRowKeys.length === 0) {
+  const handleBatchOperation = async (action: "delete" | "pause" | "retry" | "resume") => {
+    if (selectedRowKeys.length === 0 && action !== 'retry') {
       message.warning('请选择要操作的记录')
       return
     }
 
     try {
+      const ids = action === 'retry' ? [] : selectedRowKeys.map(key => Number(key))
       await batchOperation({
-        ids: selectedRowKeys as number[],
-        action: action as any
+        action,
+        ids: ids
       })
       message.success('操作成功')
       setSelectedRowKeys([])
@@ -125,7 +124,12 @@ function AutoDownloadSubscriptions() {
     }
   }
 
-  // 应用筛选
+  // 表格筛选
+  const handleTableChange = (pagination: any) => {
+    loadSubscriptions(pagination.current, pagination.pageSize)
+  }
+
+  // 搜索
   const handleSearch = () => {
     loadSubscriptions(1, pagination.pageSize)
   }
@@ -140,6 +144,16 @@ function AutoDownloadSubscriptions() {
       end_date: ''
     })
     loadSubscriptions(1, pagination.pageSize)
+  }
+
+  // 查看详情
+  const handleViewDetail = (record: AutoDownloadSubscription) => {
+    navigate({
+      to: '/search',
+      search: {
+        num: record.num
+      }
+    })
   }
 
   // 状态颜色映射
@@ -189,7 +203,7 @@ function AutoDownloadSubscriptions() {
             width={60}
             height={40}
             style={{ objectFit: 'cover' }}
-            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgBCW3A2yQxvjy2A3Wya2wya4A+wG8A3gBvANsDfAXsBuwF6A2AC3wXsDfwPYBnA2sIE2uAEsDJSCPjmVIWkm09M/u6vep+qpb6qf5LdeeOq9b1dXd+UiBBoIhVAJh1AI5XAIFW+FUAKxhILIhUIohZLIhUIohVIIlRBKIZZQELlQCKVQErlQCKVQCqESTVsIlYglFEQubV8IZYZCKIVSyCUURCmsQiykbQuhzFAIpVAKuYSCyIVCKIVSCJVo2kKohFhCQeSy3wqhzFAIpVAKuYSCyIVCKIVSCJVo2kKohFhCQeTyoVAIZYZCKIVSyCUURC4UQimUQqhE0xZCJcQSCiIXCqEUSiGXUBC5UAilUAqhEk1bCJUQSyiIXCiEUiiFXEJB5EIhlEIphEo0bSFUQiyhIHKhEEqhFHIJBZELhVAKpRAq0bSFUAmxhILIhUIohVLIJRRELhRCKZRCqETTFkIlxBIKIhcKoRRKIZdQELlQCKVQCqESTVsIlRBLKIhcKIRSKIVcQkHkQiGUQimESjRtIVRCLKEgcqEQSqEUcgkFkQuFUAqlECrRtIVQCbGEgshlvxVCmaEQSqEUcgkFkQuFUAqlECrRtIVQCbGEgsjlNYtQKYVcQkHkQiGUQimESjRtIVRCLKEgcqEQSqEUcgkFkQuFUAqlECrRtIVQCbGEgsiFQiiFUsglFEQuFEIplEKoRNMWQiXEEgoiFwqhFEohl1AQuVAIpVAKoRJNWwiVEEsoiFwohFIohVxCQeRCIZRCKYRKNG0hVEIsoSByoRBKoRRyCQWRC4VQCqUQKtG0hVAJsYSCyOW/FkKZoRBKoRRyCQWRC4VQCqUQKtG0hVAJsYSCyGUfFUKZoRBKoRRyCQWRC4VQCqUQKtG0hVAJsYSCyIVCKIVSyCUURC4UQimUQqhE0xZCJcQSCiIXCqEUSiGXUBC5UAilUAqhEk1bCJUQSyiIXCiEUiiFXEJB5EIhlEIphEo0bSFUQiyhIHKhEEqhFHIJBZELhVAKpRAq0bSFUAmxhILIhUIohVLIJRRELhRCKZRCqETTFkIlxBIKIhcKoRRKIZdQELlQCKVQCqESTVsIlRBLKIhcKIRSKIVcQkHkQiGUQimESjRtIVRCLKEgcqEQSqEUcgkFkQuFUAqlECrRtIVQCbGEgsiFQiiFUsglFEQuFEIplEKoRNMWQiXEEgoiFwqhFEohl1AQuVAIpVAKoRJNWwiVEEsoiFwohFIohVxCQeRCIZRCKYRKNG0hVEIsoSByoRBKoRRyCQWRC4VQCqUQKtG0hVAJsYSCyIVCKIVSyCUURC4UQimUQqhE0xZCJcQSCiIXCqEUSiGXUBC5UAilUAqhEk1bCJUQSyiIXCiEUiiFXEJB5EIhlEIphEo0bSFUQiyhIHKhEEqhFHIJBZELhVAKpRAq0bSFUAmxhILIhUIohVLIJRRELhRCKZRCqETTFkIlxBIKIhcKoRRKIZdQELlQCKVQCqESTVsIlRBLKIhcKIRSKIVcQkHkQiGUQimESjRtIVRCLKEgcqEQSqEUcgkFkQuFUAqlECrRtIVQCbGEgsiFQiiFUsglFEQuFEIplEKoRNMWQiXEEgoiFwqhFEohl1AQuVAIpVAKoRJNWwiVEEsoiFwohFIohVxCQeRCIZRCKYRKNG0hVEIsoSByoRBKoRRyCQWRC4VQCqUQKtG0hVAJsYSCyIVCKIVSyCUURC4UQimUQqhE0xZCJcQSCiIXCqEUSiGXUBC5UAilUAqhEk1bCJUQSyiIXP4P2wEMKFXNfSkAAAAASUVORK5CYII="
+            fallback="data:image/png;base64,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"
           />
         ) : (
           <div style={{ width: 60, height: 40, background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -258,6 +272,13 @@ function AutoDownloadSubscriptions() {
       key: 'actions',
       render: (_, record) => (
         <Space>
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetail(record)}
+          >
+            查看详情
+          </Button>
           {record.status === 'FAILED' && (
             <Button
               type="text"
@@ -281,7 +302,7 @@ function AutoDownloadSubscriptions() {
           </Popconfirm>
         </Space>
       ),
-      width: 120
+      width: 200
     }
   ]
 
@@ -297,28 +318,36 @@ function AutoDownloadSubscriptions() {
     <div>
       {/* 筛选栏 */}
       <Card style={{ marginBottom: 16 }}>
-        <Row gutter={16} align="middle">
+        <Row gutter={16}>
+          <Col span={6}>
+            <Input.Search
+              placeholder="搜索番号"
+              value={filters.num}
+              onChange={(e) => setFilters(prev => ({ ...prev, num: e.target.value }))}
+              onSearch={handleSearch}
+            />
+          </Col>
           <Col span={4}>
             <Select
               placeholder="选择规则"
-              allowClear
               value={filters.rule_id}
               onChange={(value) => setFilters(prev => ({ ...prev, rule_id: value }))}
+              allowClear
               style={{ width: '100%' }}
             >
-              {(rules || []).map(rule => (
+              {rules.map(rule => (
                 <Option key={rule.id} value={rule.id}>
                   {rule.name}
                 </Option>
               ))}
             </Select>
           </Col>
-          <Col span={3}>
+          <Col span={4}>
             <Select
-              placeholder="状态"
-              allowClear
+              placeholder="选择状态"
               value={filters.status}
               onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+              allowClear
               style={{ width: '100%' }}
             >
               <Option value="PENDING">待处理</Option>
@@ -327,26 +356,27 @@ function AutoDownloadSubscriptions() {
               <Option value="FAILED">失败</Option>
             </Select>
           </Col>
-          <Col span={4}>
-            <Search
-              placeholder="搜索番号"
-              value={filters.num}
-              onChange={(e) => setFilters(prev => ({ ...prev, num: e.target.value }))}
-              onSearch={handleSearch}
-            />
-          </Col>
           <Col span={6}>
             <RangePicker
-              onChange={(dates, dateStrings) => {
-                setFilters(prev => ({
-                  ...prev,
-                  start_date: dateStrings[0],
-                  end_date: dateStrings[1]
-                }))
+              style={{ width: '100%' }}
+              onChange={(dates) => {
+                if (dates && dates.length === 2) {
+                  setFilters(prev => ({
+                    ...prev,
+                    start_date: dates[0]?.format('YYYY-MM-DD') || '',
+                    end_date: dates[1]?.format('YYYY-MM-DD') || ''
+                  }))
+                } else {
+                  setFilters(prev => ({
+                    ...prev,
+                    start_date: '',
+                    end_date: ''
+                  }))
+                }
               }}
             />
           </Col>
-          <Col span={7}>
+          <Col span={4}>
             <Space>
               <Button
                 type="primary"
@@ -355,60 +385,51 @@ function AutoDownloadSubscriptions() {
               >
                 搜索
               </Button>
-              <Button onClick={handleReset}>
-                重置
-              </Button>
-              <Button onClick={() => loadSubscriptions()}>
-                刷新
-              </Button>
+              <Button onClick={handleReset}>重置</Button>
             </Space>
           </Col>
         </Row>
       </Card>
 
       {/* 批量操作栏 */}
-      {selectedRowKeys.length > 0 && (
-        <Card style={{ marginBottom: 16 }}>
-          <Space>
-            <span>已选择 {selectedRowKeys.length} 项</span>
-            <Popconfirm
-              title="确定要删除选中的记录吗？"
-              onConfirm={() => handleBatchOperation('delete')}
-            >
-              <Button danger>
-                批量删除
-              </Button>
-            </Popconfirm>
-            <Button onClick={() => handleBatchOperation('retry')}>
-              批量重试
-            </Button>
-            <Button onClick={() => setSelectedRowKeys([])}>
-              取消选择
-            </Button>
-          </Space>
-        </Card>
-      )}
+      <Card style={{ marginBottom: 16 }}>
+        <Space>
+          <Button
+            danger
+            disabled={selectedRowKeys.length === 0}
+            onClick={() => handleBatchOperation('delete')}
+          >
+            批量删除
+          </Button>
+          <Button
+            disabled={selectedRowKeys.length === 0}
+            onClick={() => handleBatchOperation('retry')}
+          >
+            批量重试
+          </Button>
+          <span>已选择 {selectedRowKeys.length} 项</span>
+        </Space>
+      </Card>
 
-      {/* 订阅记录表格 */}
-      <Table
-        columns={columns}
-        dataSource={subscriptions}
-        rowKey="id"
-        loading={loading}
-        rowSelection={rowSelection}
-        pagination={{
-          current: pagination.current,
-          pageSize: pagination.pageSize,
-          total: pagination.total,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total) => `共 ${total} 条`,
-          onChange: (page, pageSize) => {
-            loadSubscriptions(page, pageSize)
-          }
-        }}
-        scroll={{ x: 1200 }}
-      />
+      {/* 数据表格 */}
+      <Card>
+        <Table
+          columns={columns}
+          dataSource={subscriptions}
+          rowKey="id"
+          loading={loading}
+          rowSelection={rowSelection}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) =>
+              `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
+          }}
+          onChange={handleTableChange}
+          scroll={{ x: 1200 }}
+        />
+      </Card>
     </div>
   )
 }

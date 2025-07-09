@@ -134,10 +134,10 @@ class QBittorent:
         ).json()
 
         if not include_failed:
-            result = filter(lambda item: "整理失败" not in item["tags"], result)
+            result = list(filter(lambda item: "整理失败" not in item["tags"], result))
 
         if not include_success:
-            result = filter(lambda item: "整理成功" not in item["tags"], result)
+            result = list(filter(lambda item: "整理成功" not in item["tags"], result))
 
         return result
 

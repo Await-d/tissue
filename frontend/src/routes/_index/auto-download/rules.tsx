@@ -85,8 +85,10 @@ function AutoDownloadRules() {
   const loadStatistics = async () => {
     try {
       const stats = await getStatistics()
+      console.log('获取到的统计数据:', stats)
       setStatistics(stats)
     } catch (error) {
+      console.error('加载统计信息失败:', error)
       message.error('加载统计信息失败')
     }
   }
