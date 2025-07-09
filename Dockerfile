@@ -40,7 +40,7 @@ RUN mkdir -p /app/dist \
     && chmod +x /app/startup_check.py \
     && chmod +x /app/start.sh
 
-EXPOSE 9193
+EXPOSE 9194
 VOLUME [ "/app/config" ]
 
 ENTRYPOINT ["./entrypoint"]

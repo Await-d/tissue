@@ -27,7 +27,7 @@ npm run preview
 pip install -r requirements.txt
 
 # 运行后端开发服务器
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 9193
 
 # 数据库迁移
 alembic upgrade head
