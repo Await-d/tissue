@@ -118,6 +118,11 @@ class AutoDownloadService:
         
         logger.info(f"规则执行完成，共处理 {processed_count} 个规则，新增 {new_subscriptions} 个订阅")
         
+        # 如果有新订阅，立即处理待下载的订阅
+        if new_subscriptions > 0:
+            logger.info("开始处理新创建的订阅...")
+            self._process_pending_subscriptions()
+        
         # 刷新批量日志
         if hasattr(logger, 'flush'):
             logger.flush()
@@ -211,9 +216,12 @@ class AutoDownloadService:
                 'rule_id': rule.id,
                 'num': num,
                 'title': title,
+                'rating': video.get('rating'),
+                'comments_count': video.get('comments_count', 0),
                 'cover': video.get('cover'),
+                'actors': video.get('actors'),
                 'status': DownloadStatus.PENDING,
-                'create_time': datetime.now()
+                'created_at': datetime.now()
             }
             
             # 查询是否已存在，避免重复（但允许重新创建失败的订阅）
@@ -284,8 +292,12 @@ class AutoDownloadService:
             AutoDownloadSubscription.status == DownloadStatus.PENDING
         ).limit(10).all()  # 限制数量避免过载
         
+        logger.info(f"开始处理 {len(pending_subscriptions)} 个待下载订阅")
+        
         for subscription in pending_subscriptions:
             try:
+                logger.info(f"开始处理订阅: {subscription.num}")
+                
                 # 更新状态为下载中
                 subscription.status = DownloadStatus.DOWNLOADING
                 subscription.download_time = datetime.now()
@@ -294,6 +306,7 @@ class AutoDownloadService:
                 # 获取视频详情和下载链接
                 video_detail = spider.get_video(subscription.num)
                 if not video_detail or not getattr(video_detail, 'downloads', []):
+                    logger.warning(f"视频 {subscription.num} 无法获取下载链接")
                     subscription.status = DownloadStatus.FAILED
                     self.db.commit()
                     continue
@@ -303,12 +316,13 @@ class AutoDownloadService:
                 suitable_download = self._find_suitable_download(rule, video_detail.downloads)
                 
                 if not suitable_download:
+                    logger.warning(f"视频 {subscription.num} 找不到合适的下载链接")
                     subscription.status = DownloadStatus.FAILED
                     self.db.commit()
                     continue
                 
                 # 调用现有的下载服务
-                subscribe_service = SubscribeService()
+                subscribe_service = SubscribeService(db=self.db)
                 subscribe_data = schema.SubscribeCreate(
                     num=subscription.num,
                     title=subscription.title,
@@ -329,11 +343,12 @@ class AutoDownloadService:
                 
             except Exception as e:
                 logger.error(f"处理订阅 {subscription.num} 时出错: {str(e)}")
+                logger.debug(traceback.format_exc())
                 subscription.status = DownloadStatus.FAILED
                 self.db.commit()
             
             # 添加延迟避免过于频繁
-            time.sleep(randint(10, 30))
+            time.sleep(randint(2, 5))  # 减少延迟时间
 
     def _find_suitable_download(self, rule: AutoDownloadRule, downloads: List[Any]) -> Optional[Any]:
         """找到合适的下载链接"""
@@ -470,17 +485,17 @@ class AutoDownloadService:
                 base_query = base_query.filter(AutoDownloadSubscription.num.like(f"%{query.num}%"))
                 
             if query.start_date:
-                base_query = base_query.filter(func.date(AutoDownloadSubscription.create_time) >= query.start_date)
+                base_query = base_query.filter(func.date(AutoDownloadSubscription.created_at) >= query.start_date)
                 
             if query.end_date:
-                base_query = base_query.filter(func.date(AutoDownloadSubscription.create_time) <= query.end_date)
+                base_query = base_query.filter(func.date(AutoDownloadSubscription.created_at) <= query.end_date)
             
             # 获取总数
             total = base_query.count()
             
             # 应用分页
             subscriptions = base_query.order_by(
-                AutoDownloadSubscription.create_time.desc()
+                AutoDownloadSubscription.created_at.desc()
             ).offset(
                 (query.page - 1) * query.page_size
             ).limit(
@@ -505,11 +520,14 @@ class AutoDownloadService:
                     "rule_id": subscription.rule_id,
                     "num": subscription.num,
                     "title": subscription.title,
+                    "rating": subscription.rating,
+                    "comments_count": subscription.comments_count,
                     "cover": subscription.cover,
+                    "actors": subscription.actors,
                     "status": self._normalize_enum_value(subscription.status),
                     "download_url": subscription.download_url,
                     "download_time": subscription.download_time,
-                    "created_at": subscription.create_time,
+                    "created_at": subscription.created_at,
                     "rule_name": rule_name
                 }
                 
@@ -745,7 +763,7 @@ class AutoDownloadService:
             # 获取今日新增订阅数
             today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             today_subscriptions = self.db.query(func.count(AutoDownloadSubscription.id)).filter(
-                AutoDownloadSubscription.create_time >= today_start
+                AutoDownloadSubscription.created_at >= today_start
             ).scalar() or 0
             
             # 计算成功率
