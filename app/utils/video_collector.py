@@ -202,11 +202,13 @@ class VideoCollector:
         basic_filtered = []
         for video in filtered_videos:
             # 评分筛选
-            if min_rating and video.get('rating', 0) < min_rating:
+            video_rating = video.get('rating')
+            if min_rating and video_rating is not None and float(video_rating) < float(min_rating):
                 continue
                 
             # 评论数筛选
-            if min_comments and video.get('comments', 0) < min_comments:
+            video_comments = video.get('comments', 0)
+            if min_comments and video_comments is not None and int(video_comments) < int(min_comments):
                 continue
             
             # 质量要求筛选（排行榜数据已包含这些信息）
@@ -282,9 +284,11 @@ class VideoCollector:
                     continue  # 避免重复
                 
                 # 对补充的视频进行同样的筛选逻辑
-                if min_rating and video.get('rating', 0) < min_rating:
+                video_rating = video.get('rating')
+                if min_rating and video_rating is not None and float(video_rating) < float(min_rating):
                     continue
-                if min_comments and video.get('comments', 0) < min_comments:
+                video_comments = video.get('comments', 0)
+                if min_comments and video_comments is not None and int(video_comments) < int(min_comments):
                     continue
                 
                 # 需要详情信息的筛选
