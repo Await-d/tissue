@@ -62,6 +62,7 @@ class AutoDownloadService:
                 logger.info(f"===== 执行规则 [{rule.name}] ID:{rule.id} =====" )
                 logger.info(f"规则条件: 评分>={rule.min_rating or '无限制'}, 评论>={rule.min_comments or '无限制'}")
                 logger.info(f"规则参数类型: min_rating={type(rule.min_rating)}, min_comments={type(rule.min_comments)}")
+                logger.info(f"规则参数值: min_rating={rule.min_rating}, min_comments={rule.min_comments}")
                 logger.info(f"规则条件: 高清={rule.is_hd}, 中文字幕={rule.is_zh}, 无码={rule.is_uncensored}")
                 
                 # 计算时间范围

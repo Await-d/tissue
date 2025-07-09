@@ -223,7 +223,7 @@ class VideoCollector:
                 logger.info(f"视频 {video.get('num')} 使用 comments_count 字段: {video_comments}")
             
             # 评分筛选
-            if min_rating and video_rating is not None:
+            if min_rating is not None and min_rating > 0 and video_rating is not None:
                 try:
                     rating_float = float(video_rating)
                     min_rating_float = float(min_rating)
@@ -236,7 +236,7 @@ class VideoCollector:
                     continue
                 
             # 评论数筛选
-            if min_comments and video_comments is not None:
+            if min_comments is not None and min_comments > 0 and video_comments is not None:
                 try:
                     comments_int = int(video_comments)
                     min_comments_int = int(min_comments)
@@ -247,7 +247,7 @@ class VideoCollector:
                 except (ValueError, TypeError) as e:
                     logger.warning(f"视频 {video.get('num')} 评论数转换失败: {video_comments} (类型: {type(video_comments)}), 错误: {e}")
                     continue
-            elif min_comments and video_comments == 0:
+            elif min_comments is not None and min_comments > 0 and video_comments == 0:
                 logger.info(f"视频 {video.get('num')} 评论数为0，低于要求 {min_comments}，跳过")
                 continue
             
@@ -325,10 +325,10 @@ class VideoCollector:
                 
                 # 对补充的视频进行同样的筛选逻辑
                 video_rating = video.get('rating')
-                if min_rating and video_rating is not None and float(video_rating) < float(min_rating):
+                if min_rating is not None and min_rating > 0 and video_rating is not None and float(video_rating) < float(min_rating):
                     continue
                 video_comments = video.get('comments', 0)
-                if min_comments and video_comments is not None and int(video_comments) < int(min_comments):
+                if min_comments is not None and min_comments > 0 and video_comments is not None and int(video_comments) < int(min_comments):
                     continue
                 
                 # 需要详情信息的筛选
