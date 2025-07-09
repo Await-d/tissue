@@ -217,7 +217,7 @@ class AutoDownloadService:
                 'num': num,
                 'title': title,
                 'rating': video.get('rating'),
-                'comments_count': video.get('comments_count', 0),
+                'comments_count': video.get('comments_count', 0) or video.get('comments', 0),
                 'cover': video.get('cover'),
                 'actors': video.get('actors'),
                 'status': DownloadStatus.PENDING,
