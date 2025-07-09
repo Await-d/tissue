@@ -7,7 +7,7 @@ chown -R tissue-plus:tissue-plus /app
 
 umask ${UMASK}
 
-nginx
+nginx -g "daemon off;" &
 
 # 运行启动检查和修复脚本
 echo "🚀 正在进行启动检查和修复..."

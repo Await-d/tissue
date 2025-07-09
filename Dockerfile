@@ -15,7 +15,8 @@ RUN apt-get update -y \
     && npm --version
 
 # 复制Nginx配置
-COPY ./nginx/ /etc/nginx/conf.d/
+COPY ./nginx/app.conf /etc/nginx/sites-available/default
+RUN rm -f /etc/nginx/sites-enabled/default && ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # 首先只复制前端部分，提高缓存利用率
 COPY ./frontend /app/frontend/
