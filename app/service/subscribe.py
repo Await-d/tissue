@@ -101,7 +101,12 @@ class SubscribeService(BaseService):
                     continue
 
     def download_video(self, video: schema.SubscribeCreate, link: schema.VideoDownload):
-        response = qbittorent.add_magnet(link.magnet, link.savepath)
+        # 获取下载设置中的分类
+        from app.utils.setting import Setting
+        setting = Setting()
+        category = setting.download.category if setting.download.category else None
+        
+        response = qbittorent.add_magnet(link.magnet, link.savepath, category=category)
         if response.status_code != 200:
             raise BizException("下载创建失败")
         logger.info(f"下载创建成功")
@@ -110,6 +115,7 @@ class SubscribeService(BaseService):
             torrent.hash = response.hash
             torrent.num = video.num
             torrent.is_zh = link.is_zh
+            torrent.is_hd = getattr(link, 'is_hd', False)
             torrent.is_uncensored = link.is_uncensored
             self.db.add(torrent)
 

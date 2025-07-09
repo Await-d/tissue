@@ -216,7 +216,7 @@ class QBittorent:
         return self.session.get(urljoin(host, "/api/v2/transfer/info")).json()
 
     @auth
-    def add_magnet(self, magnet: str, savepath: Optional[str] = None):
+    def add_magnet(self, magnet: str, savepath: Optional[str] = None, category: Optional[str] = None):
         host = self._get_host_with_scheme()
         nonce = "".join(random.sample("abcdefghijklmnopqrstuvwxyz", 5))
         data = {"urls": magnet, "tags": nonce}
@@ -225,6 +225,12 @@ class QBittorent:
             data["savepath"] = savepath
         elif self.savepath:
             data["savepath"] = self.savepath
+            
+        # 设置分类
+        if category:
+            data["category"] = category
+        elif self.category:
+            data["category"] = self.category
 
         response = self.session.post(
             urljoin(host, "/api/v2/torrents/add"), data=data

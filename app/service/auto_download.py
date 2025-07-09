@@ -269,6 +269,82 @@ class AutoDownloadService:
             logger.error(f"创建订阅记录时出错: {str(e)}")
             return False
 
+    def update_subscription_status(self):
+        """更新智能下载订阅状态，检查qBittorrent中的实际下载状态"""
+        try:
+            # 获取所有下载中的订阅
+            downloading_subscriptions = self.db.query(AutoDownloadSubscription).filter(
+                AutoDownloadSubscription.status == DownloadStatus.DOWNLOADING
+            ).all()
+            
+            if not downloading_subscriptions:
+                logger.info("没有下载中的智能订阅需要检查状态")
+                return
+            
+            logger.info(f"检查 {len(downloading_subscriptions)} 个下载中的智能订阅状态")
+            
+            # 获取qBittorrent中的所有种子
+            from app.utils import qbittorent
+            try:
+                response = qbittorent.get_all_torrents()
+                if hasattr(response, 'json'):
+                    torrents = response.json() if response.status_code == 200 else []
+                else:
+                    torrents = response
+            except Exception as e:
+                logger.error(f"获取qBittorrent种子列表失败: {str(e)}")
+                return
+            
+            # 根据种子状态更新订阅状态
+            for subscription in downloading_subscriptions:
+                try:
+                    # 在数据库中查找对应的种子记录
+                    from app.db.models.torrent import Torrent
+                    torrent_record = self.db.query(Torrent).filter(
+                        Torrent.num == subscription.num
+                    ).first()
+                    
+                    if not torrent_record:
+                        logger.warning(f"订阅 {subscription.num} 没有找到对应的种子记录")
+                        continue
+                    
+                    # 在qBittorrent中查找对应的种子
+                    qb_torrent = None
+                    for torrent in torrents:
+                        if torrent.get('hash') == str(torrent_record.hash):
+                            qb_torrent = torrent
+                            break
+                    
+                    if not qb_torrent:
+                        logger.warning(f"订阅 {subscription.num} 在qBittorrent中没有找到对应种子")
+                        continue
+                    
+                    # 检查种子状态
+                    torrent_state = qb_torrent.get('state', '')
+                    torrent_tags = qb_torrent.get('tags', '')
+                    
+                    # 如果种子已完成并整理成功，更新为完成状态
+                    if '整理成功' in torrent_tags:
+                        subscription.status = DownloadStatus.COMPLETED
+                        self.db.commit()
+                        logger.info(f"订阅 {subscription.num} 下载并整理完成，状态已更新")
+                    elif '整理失败' in torrent_tags:
+                        subscription.status = DownloadStatus.FAILED
+                        self.db.commit()
+                        logger.info(f"订阅 {subscription.num} 整理失败，状态已更新")
+                    elif torrent_state in ['error', 'missingFiles']:
+                        subscription.status = DownloadStatus.FAILED
+                        self.db.commit()
+                        logger.info(f"订阅 {subscription.num} 种子状态异常({torrent_state})，状态已更新为失败")
+                    
+                except Exception as e:
+                    logger.error(f"更新订阅 {subscription.num} 状态时出错: {str(e)}")
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"更新智能下载订阅状态时出错: {str(e)}")
+            logger.debug(traceback.format_exc())
+
     @staticmethod
     def job_auto_download():
         """自动下载定时任务"""
@@ -279,6 +355,9 @@ class AutoDownloadService:
             
             # 处理待下载的订阅
             service._process_pending_subscriptions()
+            
+            # 更新智能下载订阅状态
+            service.update_subscription_status()
             
             logger.info(f"自动下载任务完成: {result.get('message')}")
             
@@ -340,12 +419,13 @@ class AutoDownloadService:
                 # 执行下载
                 subscribe_service.download_video(subscribe_data, suitable_download)
                 
-                # 更新订阅状态
-                subscription.status = DownloadStatus.COMPLETED
+                # 更新订阅状态为下载中（不是完成！）
+                # 注意：download_video只是提交下载任务，不等待下载完成
+                # 真正的完成状态应该由定时任务检查qBittorrent状态来更新
                 subscription.download_url = getattr(suitable_download, 'magnet', None) or getattr(suitable_download, 'url', None)
                 self.db.commit()
                 
-                logger.info(f"成功下载: {subscription.num}")
+                logger.info(f"已提交下载任务: {subscription.num}，状态保持为DOWNLOADING")
                 
             except Exception as e:
                 logger.error(f"处理订阅 {subscription.num} 时出错: {str(e)}")
