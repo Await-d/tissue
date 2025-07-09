@@ -31,7 +31,19 @@ class DownloadService(BaseService):
             return []
 
         category = self.setting.download.category if self.setting.download.category else None
-        infos = self.qb.get_torrents(category, include_success=include_success, include_failed=include_failed)
+        # 获取所有种子信息，不过滤已处理的种子
+        infos = self.qb.get_all_torrents()
+        
+        # 如果设置了分类，则过滤分类
+        if category:
+            infos = [info for info in infos if info.get('category') == category]
+        
+        # 根据参数决定是否包含已处理的种子
+        if not include_failed:
+            infos = [info for info in infos if "整理失败" not in info.get("tags", "")]
+        
+        if not include_success:
+            infos = [info for info in infos if "整理成功" not in info.get("tags", "")]
         torrents = []
         for info in infos:
             torrent = Torrent(hash=info['hash'], name=info['name'], size=utils.convert_size(info['total_size']),

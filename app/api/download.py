@@ -7,8 +7,12 @@ router = APIRouter()
 
 
 @router.get("/")
-def get_downloads(service=Depends(get_download_service)):
-    downloads = service.get_downloads()
+def get_downloads(
+    include_success: bool = True,
+    include_failed: bool = True,
+    service=Depends(get_download_service)
+):
+    downloads = service.get_downloads(include_success=include_success, include_failed=include_failed)
     return R.list(downloads)
 
 

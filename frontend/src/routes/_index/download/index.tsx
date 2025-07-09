@@ -1,4 +1,4 @@
-import { Card, Collapse, Empty, Input, List, message, Modal, Space, Tag, theme, Tooltip, Progress } from "antd";
+import { Card, Collapse, Empty, Input, List, message, Modal, Space, Tag, theme, Tooltip, Progress, Switch, Row, Col } from "antd";
 import * as api from "../../../apis/download";
 import { useDebounce, useRequest } from "ahooks";
 import { FileDoneOutlined, FolderViewOutlined, UserOutlined } from "@ant-design/icons";
@@ -17,10 +17,21 @@ function Download() {
 
     const { token } = useToken()
     const navigate = useNavigate()
-    const { data = [], loading, refresh } = useRequest(api.getDownloads)
     const [selected, setSelected] = useState<string | undefined>()
     const [keyword, setKeyword] = useState<string>()
     const keywordDebounce = useDebounce(keyword, { wait: 1000 })
+    const [includeSuccess, setIncludeSuccess] = useState(true)
+    const [includeFailed, setIncludeFailed] = useState(true)
+    
+    const { data = [], loading, refresh } = useRequest(
+        () => api.getDownloads({
+            include_success: includeSuccess,
+            include_failed: includeFailed
+        }),
+        {
+            refreshDeps: [includeSuccess, includeFailed]
+        }
+    )
 
     const realData = useMemo(() => {
         return data.filter((item: any) => {
@@ -147,10 +158,37 @@ function Download() {
     return (
         <Card title={'下载列表'} loading={loading}
             extra={(<Input.Search value={keyword} onChange={e => setKeyword(e.target.value)} placeholder={'搜索'} />)}>
+            
+            {/* 过滤选项 */}
+            <div style={{ marginBottom: 16 }}>
+                <Row gutter={16}>
+                    <Col>
+                        <Space>
+                            <span>显示已完成:</span>
+                            <Switch 
+                                checked={includeSuccess} 
+                                onChange={setIncludeSuccess}
+                                size="small"
+                            />
+                        </Space>
+                    </Col>
+                    <Col>
+                        <Space>
+                            <span>显示失败:</span>
+                            <Switch 
+                                checked={includeFailed} 
+                                onChange={setIncludeFailed}
+                                size="small"
+                            />
+                        </Space>
+                    </Col>
+                </Row>
+            </div>
+            
             {realData.length > 0 ? (
                 <Collapse items={items} ghost={true} />
             ) : (
-                <Empty description={(<span>无完成下载，<Link to={'/setting/download'}>配置下载</Link></span>)} />
+                <Empty description={(<span>无下载任务，<Link to={'/setting/download'}>配置下载</Link></span>)} />
             )}
             <VideoDetail title={'下载整理'}
                 mode={'download'}
