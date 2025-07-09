@@ -86,7 +86,7 @@ start_frontend_dev() {
 start_backend_dev() {
     log_info "启动后端开发服务器..."
     source venv/bin/activate
-    uvicorn app.main:app --reload --host 0.0.0.0 --port 9193 &
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
     BACKEND_PID=$!
     log_success "后端开发服务器已启动 (PID: $BACKEND_PID)"
 }
@@ -103,7 +103,7 @@ start_production() {
     cd ..
     
     # 启动应用
-    uvicorn app.main:app --host 0.0.0.0 --port 9193
+    uvicorn app.main:app --host 0.0.0.0 --port 8000
 }
 
 # 停止服务
@@ -157,7 +157,7 @@ main() {
             start_backend_dev
             log_success "开发环境启动完成！"
             log_info "前端地址: http://localhost:3000"
-            log_info "后端地址: http://localhost:9193"
+            log_info "后端地址: http://localhost:8000"
             log_info "按 Ctrl+C 停止服务"
             # 等待用户中断
             wait
