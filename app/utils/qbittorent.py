@@ -237,6 +237,8 @@ class QBittorent:
             urljoin(host, "/api/v2/torrents/add"), data=data
         )
         if response.status_code != 200:
+            # 设置hash为None以避免AttributeError
+            response.hash = None
             return response
 
         torrent_hash = ""
@@ -247,8 +249,10 @@ class QBittorent:
             ).json()
             if torrents:
                 torrent_hash = torrents[0]["hash"]
-                response.hash = torrent_hash
                 break
+        
+        # 设置hash属性，即使为空也要设置以避免AttributeError
+        response.hash = torrent_hash
 
         if self.tracker_subscribe and torrent_hash:
             trackers_text = requests.get(self.tracker_subscribe).text

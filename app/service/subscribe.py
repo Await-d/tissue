@@ -110,9 +110,11 @@ class SubscribeService(BaseService):
         if response.status_code != 200:
             raise BizException("下载创建失败")
         logger.info(f"下载创建成功")
-        if response.hash:
+        # 检查是否成功获取到hash值
+        torrent_hash = getattr(response, 'hash', None)
+        if torrent_hash:
             torrent = Torrent()
-            torrent.hash = response.hash
+            torrent.hash = torrent_hash
             torrent.num = video.num
             torrent.is_zh = link.is_zh
             torrent.is_hd = getattr(link, 'is_hd', False)
