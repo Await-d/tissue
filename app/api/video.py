@@ -201,6 +201,10 @@ def _get_web_actor_videos(actor_name: str, source: str = 'javdb'):
             # 处理日期：如果是日期对象，转换为字符串
             if video.publish_date:
                 video_dict['publish_date'] = video.publish_date.isoformat()
+            
+            # 为演员订阅兼容性添加comments_count字段
+            if 'rank_count' in video_dict and video_dict['rank_count'] is not None:
+                video_dict['comments_count'] = video_dict['rank_count']
                 
             result_videos.append(video_dict)
             

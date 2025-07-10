@@ -781,7 +781,9 @@ class JavdbSpider(Spider):
                         score_match = re.search(r'(\d+\.\d+)分', score_text)
                         if score_match:
                             try:
-                                item.rank = float(score_match.group(1))
+                                rating_value = float(score_match.group(1))
+                                item.rank = rating_value  # 前端使用
+                                item.rating = str(rating_value)  # 演员订阅使用
                             except:
                                 pass
                         
@@ -789,7 +791,8 @@ class JavdbSpider(Spider):
                         count_match = re.search(r'由(\d+)人評價', score_text)
                         if count_match:
                             try:
-                                item.rank_count = int(count_match.group(1))
+                                comments_value = int(count_match.group(1))
+                                item.rank_count = comments_value
                             except:
                                 pass
                     
