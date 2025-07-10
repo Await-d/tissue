@@ -110,6 +110,7 @@ class SubscribeService(BaseService):
         if response.status_code != 200:
             raise BizException("下载创建失败")
         logger.info(f"下载创建成功")
+        
         # 检查是否成功获取到hash值
         torrent_hash = getattr(response, 'hash', None)
         if torrent_hash:
@@ -121,9 +122,57 @@ class SubscribeService(BaseService):
             torrent.is_uncensored = link.is_uncensored
             self.db.add(torrent)
 
+        # 检查是否属于演员订阅，如果是则记录到演员订阅下载表
+        self._check_and_record_actor_subscribe_download(video, link)
+
         subscribe_notify = schema.SubscribeNotify.model_validate(video)
         subscribe_notify = subscribe_notify.model_copy(update=link.model_dump())
         notify.send_subscribe(subscribe_notify)
+
+    def _check_and_record_actor_subscribe_download(self, video: schema.SubscribeCreate, link: schema.VideoDownload):
+        """检查并记录演员订阅下载"""
+        try:
+            from app.db.models.actor_subscribe import ActorSubscribe, ActorSubscribeDownload
+            from app.utils import spider
+            
+            # 获取视频详情以获取演员信息
+            video_detail = spider.get_video(video.num)
+            if not video_detail or not video_detail.actors:
+                return
+            
+            # 检查是否有对应的演员订阅
+            for actor in video_detail.actors:
+                actor_subscription = self.db.query(ActorSubscribe).filter(
+                    ActorSubscribe.actor_name == actor.name
+                ).first()
+                
+                if actor_subscription:
+                    # 检查是否已经记录过这个下载
+                    existing_download = self.db.query(ActorSubscribeDownload).filter(
+                        ActorSubscribeDownload.actor_subscribe_id == actor_subscription.id,
+                        ActorSubscribeDownload.num == video.num
+                    ).first()
+                    
+                    if not existing_download:
+                        # 记录到演员订阅下载表
+                        download = ActorSubscribeDownload(
+                            actor_subscribe_id=actor_subscription.id,
+                            num=video.num,
+                            title=video_detail.title,
+                            cover=video_detail.cover,
+                            magnet=link.magnet,
+                            size=link.size if hasattr(link, 'size') else None,
+                            download_time=datetime.now(),
+                            is_hd=getattr(link, 'is_hd', False),
+                            is_zh=link.is_zh,
+                            is_uncensored=link.is_uncensored
+                        )
+                        download.add(self.db)
+                        logger.info(f"已记录演员订阅下载: {actor.name} - {video.num}")
+                    
+        except Exception as e:
+            logger.error(f"记录演员订阅下载失败: {e}")
+            # 不影响主要下载流程，只记录错误
 
     def do_subscribe_meta_update(self):
         subscribes = self.get_subscribes()
