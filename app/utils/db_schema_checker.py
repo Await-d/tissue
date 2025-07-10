@@ -50,6 +50,21 @@ class DatabaseSchemaChecker:
             logger.error(f"添加列时发生未知错误: {e}")
             return False
     
+    def check_and_add_torrent_is_hd_field(self) -> bool:
+        """检查并添加torrent表的is_hd字段"""
+        table_name = "torrent"
+        column_name = "is_hd"
+        column_definition = "BOOLEAN DEFAULT 0"
+        
+        try:
+            result = self.add_column_if_not_exists(table_name, column_name, column_definition)
+            if result:
+                logger.info("torrent表is_hd字段添加成功")
+            return True
+        except Exception as e:
+            logger.error(f"检查和添加torrent表is_hd字段时出错: {e}")
+            return False
+    
     def check_and_add_actor_subscribe_rating_fields(self) -> bool:
         """检查并添加演员订阅表的评分和评论筛选字段"""
         table_name = "actor_subscribe"
@@ -113,6 +128,18 @@ class DatabaseSchemaChecker:
         }
         
         try:
+            # 检查torrent表是否存在并添加is_hd字段
+            if self.check_table_exists('torrent'):
+                check_result = self.check_and_add_torrent_is_hd_field()
+                if check_result:
+                    results['checks_performed'].append('torrent.is_hd字段检查完成')
+                else:
+                    results['success'] = False
+                    results['errors'].append('torrent.is_hd字段检查失败')
+            else:
+                logger.warning("torrent表不存在，跳过is_hd字段检查")
+                results['checks_performed'].append('torrent表不存在')
+            
             # 检查auto_download_subscriptions表是否存在并添加字段
             if self.check_table_exists('auto_download_subscriptions'):
                 check_result = self.check_and_add_auto_download_error_message()
