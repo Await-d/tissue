@@ -60,7 +60,7 @@ function AutoDownloadSubscriptions() {
       }
       const response = await getSubscriptions(params)
       const { items = [], total = 0 } = response.data || {}
-      
+
       setSubscriptions(items)
       setPagination({
         current: page,
@@ -107,7 +107,7 @@ function AutoDownloadSubscriptions() {
   const handleBatchOperation = async (action: "delete" | "pause" | "retry" | "resume", recordIds?: number[]) => {
     // 如果传入了特定的记录ID，则使用这些ID；否则使用选中的记录
     const targetIds = recordIds || selectedRowKeys.map(key => Number(key))
-    
+
     if (targetIds.length === 0) {
       message.warning('请选择要操作的记录')
       return
@@ -279,11 +279,11 @@ function AutoDownloadSubscriptions() {
       key: 'download_time',
       render: (time: string) => (
         <div style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
-          {time ? new Date(time).toLocaleString('zh-CN', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit' 
+          {time ? new Date(time).toLocaleString('zh-CN', {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
           }) : '-'}
         </div>
       ),
@@ -295,11 +295,11 @@ function AutoDownloadSubscriptions() {
       key: 'created_at',
       render: (time: string) => (
         <div style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
-          {new Date(time).toLocaleString('zh-CN', { 
-            month: '2-digit', 
-            day: '2-digit', 
-            hour: '2-digit', 
-            minute: '2-digit' 
+          {new Date(time).toLocaleString('zh-CN', {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
           })}
         </div>
       ),
@@ -359,7 +359,6 @@ function AutoDownloadSubscriptions() {
       setSelectedRowKeys(newSelectedRowKeys)
     },
     columnWidth: 48
-  }
   }
 
   return (
@@ -501,3 +500,4 @@ export const Route = createFileRoute('/_index/auto-download/subscriptions')({
 })
 
 export default AutoDownloadSubscriptions
+
