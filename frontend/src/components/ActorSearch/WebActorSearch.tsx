@@ -11,6 +11,7 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import DownloadModal from "../../routes/_index/search/-components/downloadModal";
 import DownloadListModal from "../../routes/_index/search/-components/downloadListModal";
 import ActorSubscribeModal from '../../routes/_index/actor-subscribe/-components/ActorSubscribeModal';
+import LoadingComponent from '@/components/Loading';
 
 // 本地存储的键名
 const STORAGE_KEY = 'web_actor_search_state';
@@ -393,12 +394,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     // 显示热门演员列表
     const renderActorsList = () => {
         if (loadingActors) {
-            return (
-                <div style={{ textAlign: 'center', margin: '32px 0' }}>
-                    <Spin />
-                    <div style={{ marginTop: 8 }}>加载中...</div>
-                </div>
-            );
+            return <LoadingComponent tip="正在加载热门演员..." minHeight={200} />;
         }
 
         if (!actors || actors.length === 0) {
@@ -438,12 +434,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     // 显示搜索结果列表
     const renderSearchResults = () => {
         if (searching) {
-            return (
-                <div style={{ textAlign: 'center', margin: '32px 0' }}>
-                    <Spin />
-                    <div style={{ marginTop: 8 }}>搜索中...</div>
-                </div>
-            );
+            return <LoadingComponent tip="正在搜索演员..." minHeight={200} simple />;
         }
 
         if (!searchResults || searchResults.length === 0) {
@@ -627,10 +618,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     </div>
 
                     {loadingVideos ? (
-                        <div style={{ textAlign: 'center', margin: '32px 0' }}>
-                            <Spin />
-                            <div style={{ marginTop: 8 }}>加载中...</div>
-                        </div>
+                        <LoadingComponent tip="正在加载作品列表..." minHeight={300} />
                     ) : actorVideos.length > 0 ? (
                         <List
                             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 5 }}
