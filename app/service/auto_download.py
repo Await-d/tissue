@@ -5,6 +5,8 @@ import traceback
 from datetime import datetime
 import time
 from random import randint
+import hashlib
+import json
 from typing import List, Dict, Any, Optional
 from sqlalchemy import and_
 
@@ -36,6 +38,69 @@ class AutoDownloadService:
         """初始化自动下载服务"""
         self.db = db or next(get_db())
         self.download_service = DownloadService(db=self.db)
+    
+    def _generate_resource_hash(self, video: Dict[str, Any]) -> str:
+        """
+        生成资源唯一标识哈希
+        基于影片的关键特征生成唯一标识，用于重复检测
+        """
+        # 提取关键信息用于生成哈希
+        key_info = {
+            'num': video.get('num', '').strip().upper(),  # 番号标准化
+            'title': video.get('title', '').strip().lower(),  # 标题标准化（小写）
+            # 可选：添加演员信息作为区分因素
+            'actors': sorted([actor.strip().lower() for actor in video.get('actors', []) if actor.strip()]) if video.get('actors') else []
+        }
+        
+        # 生成JSON字符串并计算哈希
+        key_string = json.dumps(key_info, ensure_ascii=False, sort_keys=True)
+        return hashlib.md5(key_string.encode('utf-8')).hexdigest()
+
+    def _check_duplicate_by_resource_hash(self, resource_hash: str, rule_id: Optional[int] = None) -> bool:
+        """
+        检查是否存在相同资源哈希的记录（跨规则重复检测）
+        
+        Args:
+            resource_hash: 资源哈希值
+            rule_id: 规则ID，如果提供则排除该规则的记录
+        
+        Returns:
+            bool: 存在重复则返回True
+        """
+        query = self.db.query(AutoDownloadSubscription).filter(
+            and_(
+                AutoDownloadSubscription.resource_hash == resource_hash,
+                AutoDownloadSubscription.status != DownloadStatus.FAILED  # 允许重新处理失败的订阅
+            )
+        )
+        
+        # 如果指定了规则ID，则排除该规则的记录（允许同规则内的重试）
+        if rule_id:
+            query = query.filter(AutoDownloadSubscription.rule_id != rule_id)
+        
+        existing = query.first()
+        return existing is not None
+
+    def _check_duplicate_by_num(self, rule_id: int, num: str) -> bool:
+        """
+        检查是否存在相同番号的记录（同规则内重复检测）
+        
+        Args:
+            rule_id: 规则ID
+            num: 番号
+            
+        Returns:
+            bool: 存在重复则返回True
+        """
+        existing = self.db.query(AutoDownloadSubscription).filter(
+            and_(
+                AutoDownloadSubscription.rule_id == rule_id,
+                AutoDownloadSubscription.num == num,
+                AutoDownloadSubscription.status != DownloadStatus.FAILED  # 允许重新处理失败的订阅
+            )
+        ).first()
+        
+        return existing is not None
     
     def execute_rules(self, rule_ids: Optional[List[int]] = None, force: bool = False) -> Dict[str, Any]:
         """执行自动下载规则"""
@@ -190,19 +255,19 @@ class AutoDownloadService:
                 filtered_videos.append(video)
                 continue
             
-            # 视频收集器已经应用了基础过滤条件，此处只检查是否已经订阅
-            # 检查是否已经订阅过（只过滤非失败状态的订阅）
-            existing_subscription = self.db.query(AutoDownloadSubscription).filter(
-                and_(
-                    AutoDownloadSubscription.rule_id == rule.id,
-                    AutoDownloadSubscription.num == video.get('num'),
-                    AutoDownloadSubscription.status != DownloadStatus.FAILED  # 允许重新处理失败的订阅
-                )
-            ).first()
+            # 执行智能重复检测
             
-            if existing_subscription:
-                # 减少调试日志输出
-                pass
+            # 1. 生成资源哈希
+            resource_hash = self._generate_resource_hash(video)
+            
+            # 2. 检查跨规则重复（基于资源哈希）
+            if self._check_duplicate_by_resource_hash(resource_hash, rule.id):
+                logger.debug(f"跳过重复影片（跨规则）: {video.get('num')} - {video.get('title')}")
+                continue
+            
+            # 3. 检查同规则内重复（基于番号）
+            if self._check_duplicate_by_num(rule.id, video.get('num')):
+                logger.debug(f"跳过重复影片（同规则）: {video.get('num')} - {video.get('title')}")
                 continue
             
             # 通过所有检查，添加到结果
@@ -217,6 +282,9 @@ class AutoDownloadService:
             title = video.get('title')
             logger.info(f"为规则 [{rule.name}] 创建新订阅: {num} - {title}")
             
+            # 生成资源哈希
+            resource_hash = self._generate_resource_hash(video)
+            
             # 创建订阅记录
             subscription_data = {
                 'rule_id': rule.id,
@@ -227,6 +295,7 @@ class AutoDownloadService:
                 'cover': video.get('cover'),
                 'actors': video.get('actors'),
                 'status': DownloadStatus.PENDING,
+                'resource_hash': resource_hash,
                 'created_at': datetime.now()
             }
             
@@ -781,6 +850,19 @@ class AutoDownloadService:
             success_count = 0
             failed_count = 0
             
+            # 如果没有指定ID，则处理所有失败的记录（仅适用于重试操作）
+            if not operation.ids and operation.action == 'retry':
+                failed_subscriptions = self.db.query(AutoDownloadSubscription).filter(
+                    AutoDownloadSubscription.status == DownloadStatus.FAILED
+                ).all()
+                operation.ids = [sub.id for sub in failed_subscriptions]
+                logger.info(f"重试操作：找到 {len(operation.ids)} 个失败的订阅记录")
+            
+            if not operation.ids:
+                return {'success_count': 0, 'failed_count': 0}
+            
+            logger.info(f"开始批量操作 '{operation.action}'，涉及 {len(operation.ids)} 个记录")
+            
             for subscription_id in operation.ids:
                 try:
                     subscription = self.db.query(AutoDownloadSubscription).filter(
@@ -791,27 +873,42 @@ class AutoDownloadService:
                         logger.warning(f"订阅记录不存在: ID {subscription_id}")
                         failed_count += 1
                         continue
-                        
+                    
+                    # 记录操作前的状态
+                    old_status = subscription.status
+                    
                     # 根据操作类型执行不同的逻辑
                     if operation.action == 'delete':
+                        logger.info(f"删除订阅记录: {subscription.num} (ID: {subscription_id})")
                         self.db.delete(subscription)
                     elif operation.action == 'retry':
-                        subscription.status = DownloadStatus.PENDING
+                        if subscription.status == DownloadStatus.FAILED:
+                            subscription.status = DownloadStatus.PENDING
+                            logger.info(f"重试失败记录: {subscription.num} (ID: {subscription_id})")
+                        else:
+                            logger.warning(f"订阅记录状态不是失败，无法重试: {subscription.num} (当前状态: {subscription.status})")
                     elif operation.action == 'pause':
                         if subscription.status != DownloadStatus.COMPLETED:
                             subscription.status = DownloadStatus.FAILED
+                            logger.info(f"暂停订阅记录: {subscription.num} (ID: {subscription_id})")
+                        else:
+                            logger.warning(f"已完成的订阅无法暂停: {subscription.num}")
                     elif operation.action == 'resume':
                         if subscription.status == DownloadStatus.FAILED:
                             subscription.status = DownloadStatus.PENDING
+                            logger.info(f"恢复订阅记录: {subscription.num} (ID: {subscription_id})")
+                        else:
+                            logger.warning(f"只能恢复失败状态的订阅: {subscription.num} (当前状态: {subscription.status})")
                     
                     self.db.commit()
                     success_count += 1
                 except Exception as e:
                     self.db.rollback()
                     logger.error(f"处理订阅ID {subscription_id} 时出错: {str(e)}")
+                    logger.debug(traceback.format_exc())
                     failed_count += 1
             
-            logger.info(f"批量操作完成: 成功 {success_count} 个，失败 {failed_count} 个")
+            logger.info(f"批量操作 '{operation.action}' 完成: 成功 {success_count} 个，失败 {failed_count} 个")
             return {
                 'success_count': success_count,
                 'failed_count': failed_count

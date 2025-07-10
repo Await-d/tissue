@@ -63,6 +63,7 @@ class AutoDownloadSubscription(Base):
     status = Column(Enum(DownloadStatus), nullable=True, default=DownloadStatus.PENDING, comment="下载状态")
     download_url = Column(String(1000), nullable=True, comment="下载链接")
     download_time = Column(DateTime, nullable=True, comment="下载时间")
+    resource_hash = Column(String(64), nullable=True, comment="资源唯一标识（用于重复检测）", index=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now(), comment="创建时间")
 
     # 关联规则

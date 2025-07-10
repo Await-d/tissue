@@ -104,23 +104,39 @@ function AutoDownloadSubscriptions() {
   }
 
   // 批量操作
-  const handleBatchOperation = async (action: "delete" | "pause" | "retry" | "resume") => {
-    if (selectedRowKeys.length === 0 && action !== 'retry') {
+  const handleBatchOperation = async (action: "delete" | "pause" | "retry" | "resume", recordIds?: number[]) => {
+    // 如果传入了特定的记录ID，则使用这些ID；否则使用选中的记录
+    const targetIds = recordIds || selectedRowKeys.map(key => Number(key))
+    
+    if (targetIds.length === 0) {
       message.warning('请选择要操作的记录')
       return
     }
 
     try {
-      const ids = action === 'retry' ? [] : selectedRowKeys.map(key => Number(key))
       await batchOperation({
         action,
-        ids: ids
+        ids: targetIds
       })
       message.success('操作成功')
       setSelectedRowKeys([])
       loadSubscriptions(pagination.current, pagination.pageSize)
     } catch (error) {
       message.error('操作失败')
+    }
+  }
+
+  // 单个记录重试
+  const handleSingleRetry = async (recordId: number) => {
+    try {
+      await batchOperation({
+        action: 'retry',
+        ids: [recordId]
+      })
+      message.success('重试成功')
+      loadSubscriptions(pagination.current, pagination.pageSize)
+    } catch (error) {
+      message.error('重试失败')
     }
   }
 
@@ -285,7 +301,7 @@ function AutoDownloadSubscriptions() {
             <Button
               type="text"
               icon={<ReloadOutlined />}
-              onClick={() => handleBatchOperation('retry')}
+              onClick={() => handleSingleRetry(record.id)}
             >
               重试
             </Button>
