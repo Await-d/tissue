@@ -751,6 +751,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                         <Select.Option value="date-asc">发布日期 (旧→新)</Select.Option>
                                         <Select.Option value="rating-desc">评分 (高→低)</Select.Option>
                                         <Select.Option value="rating-asc">评分 (低→高)</Select.Option>
+                                        <Select.Option value="comments-desc">评论数 (多→少)</Select.Option>
+                                        <Select.Option value="comments-asc">评论数 (少→多)</Select.Option>
                                     </Select>
                                 </Col>
                             </Row>
@@ -797,6 +799,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                 compareValue = dateA.getTime() - dateB.getTime();
                             } else if (sortBy === 'rating') {
                                 compareValue = (a.rank || 0) - (b.rank || 0);
+                            } else if (sortBy === 'comments') {
+                                compareValue = (a.rank_count || 0) - (b.rank_count || 0);
                             }
                             
                             return sortOrder === 'desc' ? -compareValue : compareValue;
