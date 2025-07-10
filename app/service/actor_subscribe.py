@@ -292,11 +292,16 @@ class ActorSubscribeService(BaseService):
                     # 检查评分筛选条件
                     if subscription.get('min_rating', 0.0) > 0.0:
                         video_rating = video.get('rating', 0.0)
-                        if isinstance(video_rating, str):
+                        # 确保 video_rating 不为 None
+                        if video_rating is None:
+                            video_rating = 0.0
+                        elif isinstance(video_rating, str):
                             try:
                                 video_rating = float(video_rating)
                             except (ValueError, TypeError):
                                 video_rating = 0.0
+                        elif not isinstance(video_rating, (int, float)):
+                            video_rating = 0.0
                         if video_rating < subscription['min_rating']:
                             logger.debug(f"视频 {video['num']} 评分 {video_rating} 低于要求的 {subscription['min_rating']}")
                             continue
@@ -304,11 +309,16 @@ class ActorSubscribeService(BaseService):
                     # 检查评论数筛选条件
                     if subscription.get('min_comments', 0) > 0:
                         video_comments = video.get('comments_count', 0)
-                        if isinstance(video_comments, str):
+                        # 确保 video_comments 不为 None
+                        if video_comments is None:
+                            video_comments = 0
+                        elif isinstance(video_comments, str):
                             try:
                                 video_comments = int(video_comments)
                             except (ValueError, TypeError):
                                 video_comments = 0
+                        elif not isinstance(video_comments, (int, float)):
+                            video_comments = 0
                         if video_comments < subscription['min_comments']:
                             logger.debug(f"视频 {video['num']} 评论数 {video_comments} 低于要求的 {subscription['min_comments']}")
                             continue
