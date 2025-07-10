@@ -50,12 +50,31 @@ function Download() {
 
     const realData = useMemo(() => {
         let filteredData = data.filter((item: any) => {
-            return !keywordDebounce ||
+            // 首先根据关键词筛选
+            const matchKeyword = !keywordDebounce ||
                 item.name.indexOf(keywordDebounce) != -1 ||
                 item.files.some((sub: any) => (
                     sub.name.indexOf(keywordDebounce) != -1 ||
                     sub.path.indexOf(keywordDebounce) != -1
-                ))
+                ));
+
+            if (!matchKeyword) return false;
+
+            // 然后根据完成状态筛选
+            const hasCompleted = item.files.some((file: any) => file.progress >= 1);
+            const hasFailed = item.files.some((file: any) => file.progress === 0);
+
+            // 如果不显示已完成，则过滤掉全部完成的任务
+            if (!includeSuccess && hasCompleted && !item.files.some((file: any) => file.progress < 1)) {
+                return false;
+            }
+
+            // 如果不显示失败，则过滤掉有失败文件的任务
+            if (!includeFailed && hasFailed) {
+                return false;
+            }
+
+            return true;
         });
 
         // 高级过滤
@@ -75,7 +94,7 @@ function Download() {
         }
 
         return filteredData;
-    }, [data, keywordDebounce, showAdvancedFilters, advancedFilters])
+    }, [data, keywordDebounce, showAdvancedFilters, advancedFilters, includeSuccess, includeFailed])
 
     const { run: onComplete } = useRequest(api.completeDownload, {
         manual: true,
