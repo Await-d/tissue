@@ -449,59 +449,7 @@ class AutoDownloadService:
         logger.info(f"开始处理 {len(pending_subscriptions)} 个待下载订阅")
         
         for subscription in pending_subscriptions:
-            try:
-                logger.info(f"开始处理订阅: {subscription.num}")
-                
-                # 更新状态为下载中
-                subscription.status = DownloadStatus.DOWNLOADING
-                subscription.download_time = datetime.now()
-                self.db.commit()
-                
-                # 获取视频详情和下载链接
-                video_detail = spider.get_video(subscription.num)
-                if not video_detail or not getattr(video_detail, 'downloads', []):
-                    logger.warning(f"视频 {subscription.num} 无法获取下载链接")
-                    subscription.status = DownloadStatus.FAILED
-                    self.db.commit()
-                    continue
-                
-                # 筛选合适的下载链接
-                rule = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.id == subscription.rule_id).first()
-                suitable_download = self._find_suitable_download(rule, video_detail.downloads)
-                
-                if not suitable_download:
-                    logger.warning(f"视频 {subscription.num} 找不到合适的下载链接")
-                    subscription.status = DownloadStatus.FAILED
-                    self.db.commit()
-                    continue
-                
-                # 调用现有的下载服务
-                subscribe_service = SubscribeService(db=self.db)
-                subscribe_data = schema.SubscribeCreate(
-                    num=subscription.num,
-                    title=subscription.title,
-                    is_hd=rule.is_hd if rule else False,
-                    is_zh=rule.is_zh if rule else False,
-                    is_uncensored=rule.is_uncensored if rule else False
-                )
-                
-                # 执行下载
-                subscribe_service.download_video(subscribe_data, suitable_download)
-                
-                # 更新订阅状态为下载中（不是完成！）
-                # 注意：download_video只是提交下载任务，不等待下载完成
-                # 真正的完成状态应该由定时任务检查qBittorrent状态来更新
-                subscription.download_url = getattr(suitable_download, 'magnet', None) or getattr(suitable_download, 'url', None)
-                self.db.commit()
-                
-                logger.info(f"已提交下载任务: {subscription.num}，状态保持为DOWNLOADING")
-                
-            except Exception as e:
-                logger.error(f"处理订阅 {subscription.num} 时出错: {str(e)}")
-                logger.debug(traceback.format_exc())
-                subscription.status = DownloadStatus.FAILED
-                self.db.commit()
-            
+            self._process_single_subscription(subscription)
             # 添加延迟避免过于频繁
             time.sleep(randint(2, 5))  # 减少延迟时间
 
@@ -524,6 +472,61 @@ class AutoDownloadService:
         
         # 返回第一个符合条件的下载
         return suitable_downloads[0]
+
+    def _process_single_subscription(self, subscription):
+        """处理单个订阅下载"""
+        try:
+            logger.info(f"开始处理订阅: {subscription.num}")
+            
+            # 更新状态为下载中
+            subscription.status = DownloadStatus.DOWNLOADING
+            subscription.download_time = datetime.now()
+            self.db.commit()
+            
+            # 获取视频详情和下载链接
+            video_detail = spider.get_video(subscription.num)
+            if not video_detail or not getattr(video_detail, 'downloads', []):
+                logger.warning(f"视频 {subscription.num} 无法获取下载链接")
+                subscription.status = DownloadStatus.FAILED
+                self.db.commit()
+                return False
+            
+            # 筛选合适的下载链接
+            rule = self.db.query(AutoDownloadRule).filter(AutoDownloadRule.id == subscription.rule_id).first()
+            suitable_download = self._find_suitable_download(rule, video_detail.downloads)
+            
+            if not suitable_download:
+                logger.warning(f"视频 {subscription.num} 找不到合适的下载链接")
+                subscription.status = DownloadStatus.FAILED
+                self.db.commit()
+                return False
+            
+            # 调用现有的下载服务
+            subscribe_service = SubscribeService(db=self.db)
+            subscribe_data = schema.SubscribeCreate(
+                num=subscription.num,
+                title=subscription.title,
+                is_hd=rule.is_hd if rule else False,
+                is_zh=rule.is_zh if rule else False,
+                is_uncensored=rule.is_uncensored if rule else False
+            )
+            
+            # 执行下载
+            subscribe_service.download_video(subscribe_data, suitable_download)
+            
+            # 更新订阅状态和下载链接
+            subscription.download_url = getattr(suitable_download, 'magnet', None) or getattr(suitable_download, 'url', None)
+            self.db.commit()
+            
+            logger.info(f"已提交下载任务: {subscription.num}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"处理订阅 {subscription.num} 时出错: {str(e)}")
+            logger.debug(traceback.format_exc())
+            subscription.status = DownloadStatus.FAILED
+            self.db.commit()
+            return False
 
     def get_rules(self, query):
         """获取自动下载规则列表"""
@@ -885,6 +888,14 @@ class AutoDownloadService:
                         if subscription.status == DownloadStatus.FAILED:
                             subscription.status = DownloadStatus.PENDING
                             logger.info(f"重试失败记录: {subscription.num} (ID: {subscription_id})")
+                            # 立即处理重试的订阅，不等待下一个调度周期
+                            self.db.commit()  # 先提交状态更改
+                            try:
+                                self._process_single_subscription(subscription)
+                            except Exception as process_error:
+                                logger.error(f"立即处理重试订阅失败: {str(process_error)}")
+                                subscription.status = DownloadStatus.FAILED
+                                self.db.commit()
                         else:
                             logger.warning(f"订阅记录状态不是失败，无法重试: {subscription.num} (当前状态: {subscription.status})")
                     elif operation.action == 'pause':

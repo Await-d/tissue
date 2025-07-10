@@ -234,7 +234,8 @@ function AutoDownloadSubscriptions() {
       title: '番号',
       dataIndex: 'num',
       key: 'num',
-      width: 120
+      width: 120,
+      ellipsis: true
     },
     {
       title: '标题',
@@ -247,61 +248,84 @@ function AutoDownloadSubscriptions() {
       title: '规则',
       dataIndex: 'rule_name',
       key: 'rule_name',
-      width: 120
+      width: 100,
+      ellipsis: true
     },
     {
       title: '评分/评论',
       key: 'rating_comments',
       render: (_, record) => (
-        <Space direction="vertical" size="small">
+        <div style={{ fontSize: '12px', lineHeight: '1.2' }}>
           <div>评分: {record.rating || 'N/A'}</div>
           <div>评论: {record.comments_count || 0}</div>
-        </Space>
+        </div>
       ),
-      width: 100
+      width: 90
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
+        <Tag color={getStatusColor(status)} style={{ fontSize: '12px' }}>
           {getStatusText(status)}
         </Tag>
       ),
-      width: 100
+      width: 80
     },
     {
       title: '下载时间',
       dataIndex: 'download_time',
       key: 'download_time',
-      render: (time: string) => time ? new Date(time).toLocaleString() : '-',
-      width: 140
+      render: (time: string) => (
+        <div style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+          {time ? new Date(time).toLocaleString('zh-CN', { 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }) : '-'}
+        </div>
+      ),
+      width: 100
     },
     {
       title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (time: string) => new Date(time).toLocaleString(),
-      width: 140
+      render: (time: string) => (
+        <div style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+          {new Date(time).toLocaleString('zh-CN', { 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}
+        </div>
+      ),
+      width: 100
     },
     {
       title: '操作',
       key: 'actions',
       render: (_, record) => (
-        <Space>
+        <Space direction="vertical" size="small">
           <Button
             type="text"
+            size="small"
             icon={<EyeOutlined />}
             onClick={() => handleViewDetail(record)}
+            style={{ fontSize: '12px', padding: '0 4px' }}
           >
-            查看详情
+            查看
           </Button>
           {record.status?.toLowerCase() === 'failed' && (
             <Button
               type="text"
+              size="small"
               icon={<ReloadOutlined />}
               onClick={() => handleSingleRetry(record.id)}
+              style={{ fontSize: '12px', padding: '0 4px' }}
             >
               重试
             </Button>
@@ -309,18 +333,22 @@ function AutoDownloadSubscriptions() {
           <Popconfirm
             title="确定要删除这条记录吗？"
             onConfirm={() => handleDelete(record.id)}
+            placement="topRight"
           >
             <Button
               type="text"
+              size="small"
               danger
               icon={<DeleteOutlined />}
+              style={{ fontSize: '12px', padding: '0 4px' }}
             >
               删除
             </Button>
           </Popconfirm>
         </Space>
       ),
-      width: 200
+      width: 80,
+      fixed: 'right'
     }
   ]
 
@@ -329,28 +357,32 @@ function AutoDownloadSubscriptions() {
     selectedRowKeys,
     onChange: (newSelectedRowKeys: React.Key[]) => {
       setSelectedRowKeys(newSelectedRowKeys)
-    }
+    },
+    columnWidth: 48
+  }
   }
 
   return (
-    <div>
+    <div style={{ padding: '0 8px' }}>
       {/* 筛选栏 */}
-      <Card style={{ marginBottom: 16 }}>
-        <Row gutter={16}>
-          <Col span={6}>
+      <Card size="small" style={{ marginBottom: 8 }}>
+        <Row gutter={8}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <Input.Search
               placeholder="搜索番号"
               value={filters.num}
               onChange={(e) => setFilters(prev => ({ ...prev, num: e.target.value }))}
               onSearch={handleSearch}
+              size="small"
             />
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <Select
               placeholder="选择规则"
               value={filters.rule_id}
               onChange={(value) => setFilters(prev => ({ ...prev, rule_id: value }))}
               allowClear
+              size="small"
               style={{ width: '100%' }}
             >
               {rules.map(rule => (
@@ -360,12 +392,13 @@ function AutoDownloadSubscriptions() {
               ))}
             </Select>
           </Col>
-          <Col span={4}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <Select
               placeholder="选择状态"
               value={filters.status}
               onChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
               allowClear
+              size="small"
               style={{ width: '100%' }}
             >
               <Option value="pending">待处理</Option>
@@ -374,8 +407,9 @@ function AutoDownloadSubscriptions() {
               <Option value="failed">失败</Option>
             </Select>
           </Col>
-          <Col span={6}>
+          <Col xs={24} sm={12} md={8} lg={6}>
             <RangePicker
+              size="small"
               style={{ width: '100%' }}
               onChange={(dates) => {
                 if (dates && dates.length === 2) {
@@ -394,43 +428,50 @@ function AutoDownloadSubscriptions() {
               }}
             />
           </Col>
-          <Col span={4}>
+        </Row>
+        <Row gutter={8} style={{ marginTop: 8 }}>
+          <Col>
             <Space>
               <Button
                 type="primary"
+                size="small"
                 icon={<SearchOutlined />}
                 onClick={handleSearch}
               >
                 搜索
               </Button>
-              <Button onClick={handleReset}>重置</Button>
+              <Button size="small" onClick={handleReset}>重置</Button>
             </Space>
           </Col>
         </Row>
       </Card>
 
       {/* 批量操作栏 */}
-      <Card style={{ marginBottom: 16 }}>
+      <Card size="small" style={{ marginBottom: 8 }}>
         <Space>
           <Button
             danger
+            size="small"
             disabled={selectedRowKeys.length === 0}
             onClick={() => handleBatchOperation('delete')}
           >
             批量删除
           </Button>
           <Button
+            size="small"
             disabled={selectedRowKeys.length === 0}
             onClick={() => handleBatchOperation('retry')}
           >
             批量重试
           </Button>
-          <span>已选择 {selectedRowKeys.length} 项</span>
+          <span style={{ fontSize: '12px', color: '#666' }}>
+            已选择 {selectedRowKeys.length} 项
+          </span>
         </Space>
       </Card>
 
       {/* 数据表格 */}
-      <Card>
+      <Card size="small">
         <Table
           columns={columns}
           dataSource={subscriptions}
@@ -442,10 +483,13 @@ function AutoDownloadSubscriptions() {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
-              `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
+              `${range[0]}-${range[1]} / ${total}`,
+            size: 'small',
+            pageSizeOptions: ['10', '20', '50', '100'],
+            showLessItems: true
           }}
           onChange={handleTableChange}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 800, y: window.innerHeight - 300 }}
         />
       </Card>
     </div>
