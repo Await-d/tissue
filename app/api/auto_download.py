@@ -111,7 +111,7 @@ async def get_subscriptions(
     page: int = 1,
     page_size: int = 20,
     rule_id: Optional[int] = None,
-    status: Optional[schema.DownloadStatus] = None,
+    download_status: Optional[schema.DownloadStatus] = None,
     num: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -133,7 +133,7 @@ async def get_subscriptions(
             page=page,
             page_size=page_size,
             rule_id=rule_id,
-            status=status,
+            status=download_status,
             num=num,
             start_date=start_date_obj,
             end_date=end_date_obj
