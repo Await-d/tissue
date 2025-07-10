@@ -102,7 +102,7 @@ class SubscribeService(BaseService):
 
     def download_video(self, video: schema.SubscribeCreate, link: schema.VideoDownload):
         # 获取下载设置中的分类
-        from app.utils.setting import Setting
+        from app.schema.setting import Setting
         setting = Setting()
         category = setting.download.category if setting.download.category else None
         

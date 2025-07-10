@@ -18,6 +18,7 @@ class QBittorent:
         self.host = setting.host
         self.tracker_subscribe = setting.tracker_subscribe
         self.savepath = setting.savepath
+        self.category = setting.category
         self.session = requests.Session()
 
     def login(self):
