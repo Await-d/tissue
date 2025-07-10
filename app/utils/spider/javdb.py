@@ -676,7 +676,7 @@ class JavdbSpider(Spider):
         return result
         
     def get_actor_videos(self, actor_url: str):
-        """获取演员的所有视频"""
+        """获取演员的所有视频 - 优化版本，直接从演员页面提取所有信息"""
         import logging
         import re
         logger = logging.getLogger('spider')
@@ -684,7 +684,7 @@ class JavdbSpider(Spider):
         # 处理不同格式的actor_url输入
         if not actor_url.startswith(self.host):
             if not actor_url.startswith('http'):
-                # 如果提供的是演员名称而不是URL
+                # 如果提供的是演员名称而不是URL，先搜索获取演员信息
                 actors = self.search_actor(actor_url)
                 if not actors:
                     logger.info(f"未找到演员: {actor_url}")
@@ -701,11 +701,10 @@ class JavdbSpider(Spider):
                     # 排除掉有碼、無碼、歐美等类别标签
                     filtered_actors = [a for a in actors if a.name not in ['有碼', '無碼', '歐美']]
                     if filtered_actors:
-                        actor_match = filtered_actors[0]  # 使用第一个结果
+                        actor_match = filtered_actors[0]
                     elif actors:
-                        actor_match = actors[0]  # 如果没有过滤结果，使用第一个结果
+                        actor_match = actors[0]
                     else:
-                        # 没有找到任何演员
                         logger.error(f"没有找到任何匹配的演员: {actor_url}")
                         return []
                 
@@ -716,48 +715,32 @@ class JavdbSpider(Spider):
                 actor_code = thumb_url.split('/')[-1].split('.')[0]
                 actor_url = urljoin(self.host, f'/actors/{actor_code}')
             elif '/actors/' not in actor_url:
-                # 如果是其他网站的URL，无法处理
                 return []
             else:
-                # 包含/actors/但不是完整URL
                 actor_url = urljoin(self.host, actor_url)
         
-        logger.info(f"访问演员详情页: {actor_url}")
+        logger.info(f"访问演员作品页: {actor_url}")
         
-        # 使用更完整的浏览器请求头
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
             'Referer': self.host,
         }
         
-        # 保存原始头信息用于后续恢复
         original_headers = self.session.headers.copy()
-        
-        # 临时替换会话头信息
         self.session.headers.update(headers)
         
         try:
-            # 访问演员详情页
+            # 访问演员页面
             response = self.session.get(actor_url)
-            
-            # 使用lxml解析HTML，比正则表达式更可靠
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
-            
-            # 保存页面内容用于调试
-            try:
-                with open("javdb_actor_debug.html", "wb") as f:
-                    f.write(response.content)
-                logger.info("已保存演员详情页HTML文件")
-            except:
-                pass
             
             result = []
             
-            # 获取所有视频条目
+            # 从演员页面直接提取作品信息（包含评分、评论数、日期等）
             movie_boxes = html.xpath('//a[@class="box"]')
-            logger.info(f"找到 {len(movie_boxes)} 个视频条目")
+            logger.info(f"从演员页面找到 {len(movie_boxes)} 个作品")
             
             for box in movie_boxes:
                 try:
@@ -769,7 +752,7 @@ class JavdbSpider(Spider):
                         video_url = urljoin(self.host, video_url)
                     item.url = video_url
                     
-                    # 提取视频标题和番号
+                    # 提取番号和标题
                     title_element = box.xpath('.//div[contains(@class, "video-title")]')
                     if title_element:
                         # 提取番号
@@ -790,10 +773,11 @@ class JavdbSpider(Spider):
                             cover_url = 'https:' + cover_url if cover_url.startswith('//') else urljoin(self.host, cover_url)
                         item.cover = cover_url
                     
-                    # 提取评分
+                    # 直接从演员页面提取评分和评论数信息
                     score_element = box.xpath('.//div[contains(@class, "score")]//span[@class="value"]/text()')
                     if score_element:
                         score_text = score_element[0]
+                        # 解析评分
                         score_match = re.search(r'(\d+\.\d+)分', score_text)
                         if score_match:
                             try:
@@ -801,42 +785,41 @@ class JavdbSpider(Spider):
                             except:
                                 pass
                         
-                        # 提取评论数
+                        # 解析评论数
                         count_match = re.search(r'由(\d+)人評價', score_text)
                         if count_match:
                             try:
                                 item.rank_count = int(count_match.group(1))
-                                logger.info(f"解析到评论数: {item.rank_count}")
-                            except Exception as e:
-                                logger.error(f"评论数解析失败: {score_text}, 错误: {str(e)}")
+                            except:
+                                pass
                     
-                    # 检查标签
+                    # 检查中文字幕和无码标签
                     cnsub_element = box.xpath('.//span[contains(@class, "cnsub")]')
                     item.isZh = len(cnsub_element) > 0
                     
                     uncensored_element = box.xpath('.//span[contains(@class, "uncensored")]')
                     item.is_uncensored = len(uncensored_element) > 0
                     
-                    # 尝试获取发布日期
+                    # 提取发布日期
                     date_element = box.xpath('.//div[contains(@class, "meta")]/text()')
                     if date_element and len(date_element) > 0:
                         date_text = date_element[0].strip()
                         try:
-                            # 尝试解析日期格式 YYYY-MM-DD
+                            # 解析日期格式 YYYY-MM-DD
                             if re.match(r'\d{4}-\d{2}-\d{2}', date_text):
                                 item.publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
-                                logger.info(f"解析到日期: {item.publish_date} 从 {date_text}")
-                        except Exception as e:
-                            logger.error(f"日期解析失败: {date_text}, 错误: {str(e)}")
+                        except:
+                            pass
                     
-                    # 如果没有找到番号，则跳过这个条目
-                    if not item.num:
-                        continue
+                    # 只有有番号的条目才添加到结果中
+                    if item.num:
+                        result.append(item)
                         
-                    result.append(item)
                 except Exception as e:
-                    logger.error(f"处理视频条目时出错: {str(e)}")
+                    logger.error(f"处理作品条目时出错: {str(e)}")
+                    continue
             
+            logger.info(f"成功提取到 {len(result)} 个作品信息，包含评分、评论数、日期等完整信息")
             return result
             
         finally:

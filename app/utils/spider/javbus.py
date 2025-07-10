@@ -610,9 +610,8 @@ class JavbusSpider(Spider):
                     item.isZh = is_zh
                     item.is_uncensored = is_uncensored
                     
-                    # 尝试提取评分和评论数
-                    # 在JavBus中评分信息可能不在当前页面，这里添加一个默认值
-                    item.rating = '0.0'
+                    # 优化评分和评论数提取 - JavBus演员页面已包含基础信息
+                    item.rank = None  # 使用rank字段保持与前端一致
                     item.rank_count = 0
                     
                     # 尝试从页面中提取评分信息，例如"★4.82分"这样的格式
