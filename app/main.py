@@ -33,6 +33,9 @@ def on_startup():
     # 版本检测和自动迁移
     perform_version_check_and_migration()
     
+    # 数据库Schema检查和自动修复
+    perform_schema_checks()
+    
     # 注册路由
     logger.info("开始注册API路由...")
     try:
@@ -100,6 +103,31 @@ def perform_version_check_and_migration():
     except Exception as e:
         logger.error(f"版本检测和迁移过程中发生异常: {str(e)}")
         logger.warning("应用将继续启动，但可能存在版本不一致的问题")
+
+
+def perform_schema_checks():
+    """执行数据库Schema检查和自动修复"""
+    try:
+        logger.info("开始执行数据库Schema检查...")
+        
+        from app.utils.db_schema_checker import schema_checker
+        
+        # 运行Schema检查
+        check_result = schema_checker.run_schema_checks()
+        
+        if check_result['success']:
+            logger.info("数据库Schema检查完成")
+            for check in check_result['checks_performed']:
+                logger.info(f"  - {check}")
+        else:
+            logger.error("数据库Schema检查失败:")
+            for error in check_result['errors']:
+                logger.error(f"  - {error}")
+            logger.warning("应用将继续启动，但可能存在数据库结构问题")
+            
+    except Exception as e:
+        logger.error(f"Schema检查过程中发生异常: {str(e)}")
+        logger.warning("应用将继续启动，但数据库结构可能不完整")
 
 
 if __name__ == '__main__':
