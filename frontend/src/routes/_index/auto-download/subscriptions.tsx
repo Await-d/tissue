@@ -266,12 +266,19 @@ function AutoDownloadSubscriptions() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)} style={{ fontSize: '12px' }}>
-          {getStatusText(status)}
-        </Tag>
+      render: (status: string, record: AutoDownloadSubscription) => (
+        <div>
+          <Tag color={getStatusColor(status)} style={{ fontSize: '12px' }}>
+            {getStatusText(status)}
+          </Tag>
+          {status?.toLowerCase() === 'failed' && record.error_message && (
+            <div style={{ fontSize: '11px', color: '#ff4d4f', marginTop: '2px', maxWidth: '100px' }}>
+              {record.error_message}
+            </div>
+          )}
+        </div>
       ),
-      width: 80
+      width: 120
     },
     {
       title: '下载时间',
