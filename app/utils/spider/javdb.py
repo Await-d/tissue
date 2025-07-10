@@ -823,6 +823,11 @@ class JavdbSpider(Spider):
                     continue
             
             logger.info(f"成功提取到 {len(result)} 个作品信息，包含评分、评论数、日期等完整信息")
+            
+            # 输出前3个作品的详细信息用于调试
+            for i, item in enumerate(result[:3]):
+                logger.info(f"作品 {i+1}: {item.num} - 评分: {item.rank}/{item.rating} - 评论: {item.rank_count} - 日期: {item.publish_date}")
+            
             return result
             
         finally:
