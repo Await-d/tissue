@@ -271,8 +271,15 @@ class ActorSubscribeService(BaseService):
                             else:
                                 # 如果已经是日期对象
                                 video_date = video["publish_date"]
+                            
+                            # 确保订阅起始日期也是date对象
+                            from_date = subscription['from_date']
+                            if isinstance(from_date, str):
+                                from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+                            elif hasattr(from_date, 'date'):
+                                from_date = from_date.date()
                                 
-                            if video_date < subscription['from_date']:
+                            if video_date < from_date:
                                 continue
                         except Exception as e:
                             logger.error(f"解析日期失败: {e}")
@@ -495,8 +502,16 @@ class ActorSubscribeService(BaseService):
                             video_date = datetime.strptime(video["publish_date"], "%Y-%m-%d").date()
                         else:
                             video_date = video["publish_date"]
+                        
+                        # 确保订阅起始日期也是date对象
+                        if isinstance(from_date, str):
+                            from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+                        elif hasattr(from_date, 'date'):
+                            from_date_obj = from_date.date()
+                        else:
+                            from_date_obj = from_date
                             
-                        if video_date >= from_date:
+                        if video_date >= from_date_obj:
                             qualified_videos.append(video)
                     except Exception as e:
                         logger.error(f"解析日期失败: {e}")
