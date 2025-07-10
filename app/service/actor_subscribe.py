@@ -54,6 +54,8 @@ class ActorSubscribeService(BaseService):
                     'is_zh': row.is_zh,
                     'is_uncensored': row.is_uncensored,
                     'is_paused': row.is_paused,
+                    'min_rating': getattr(row, 'min_rating', 0.0),
+                    'min_comments': getattr(row, 'min_comments', 0),
                     'download_count': row.download_count,
                     'subscribed_works_count': 0  # 默认值，将在下面计算
                 }
@@ -279,6 +281,30 @@ class ActorSubscribeService(BaseService):
                     # 检查是否已下载
                     if video["num"] in downloaded_nums:
                         continue
+                    
+                    # 检查评分筛选条件
+                    if subscription.get('min_rating', 0.0) > 0.0:
+                        video_rating = video.get('rating', 0.0)
+                        if isinstance(video_rating, str):
+                            try:
+                                video_rating = float(video_rating)
+                            except (ValueError, TypeError):
+                                video_rating = 0.0
+                        if video_rating < subscription['min_rating']:
+                            logger.debug(f"视频 {video['num']} 评分 {video_rating} 低于要求的 {subscription['min_rating']}")
+                            continue
+                    
+                    # 检查评论数筛选条件
+                    if subscription.get('min_comments', 0) > 0:
+                        video_comments = video.get('comments_count', 0)
+                        if isinstance(video_comments, str):
+                            try:
+                                video_comments = int(video_comments)
+                            except (ValueError, TypeError):
+                                video_comments = 0
+                        if video_comments < subscription['min_comments']:
+                            logger.debug(f"视频 {video['num']} 评论数 {video_comments} 低于要求的 {subscription['min_comments']}")
+                            continue
                     
                     new_videos.append(video)
                 

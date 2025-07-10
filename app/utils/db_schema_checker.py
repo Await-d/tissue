@@ -50,6 +50,33 @@ class DatabaseSchemaChecker:
             logger.error(f"添加列时发生未知错误: {e}")
             return False
     
+    def check_and_add_actor_subscribe_rating_fields(self) -> bool:
+        """检查并添加演员订阅表的评分和评论筛选字段"""
+        table_name = "actor_subscribe"
+        
+        try:
+            # 检查并添加min_rating字段
+            rating_added = self.add_column_if_not_exists(
+                table_name, 
+                "min_rating", 
+                "DECIMAL(3,1) DEFAULT 0.0"
+            )
+            
+            # 检查并添加min_comments字段
+            comments_added = self.add_column_if_not_exists(
+                table_name, 
+                "min_comments", 
+                "INTEGER DEFAULT 0"
+            )
+            
+            if rating_added or comments_added:
+                logger.info("演员订阅表评分和评论筛选字段添加成功")
+            
+            return True
+        except Exception as e:
+            logger.error(f"检查和添加演员订阅表筛选字段时出错: {e}")
+            return False
+    
     def check_and_add_auto_download_error_message(self) -> bool:
         """检查并添加自动下载订阅表的error_message字段"""
         table_name = "auto_download_subscriptions"
@@ -86,19 +113,29 @@ class DatabaseSchemaChecker:
         }
         
         try:
-            # 检查auto_download_subscriptions表是否存在
-            if not self.check_table_exists('auto_download_subscriptions'):
-                logger.warning("auto_download_subscriptions表不存在，跳过字段检查")
-                results['checks_performed'].append('auto_download_subscriptions表不存在')
-                return results
-            
-            # 检查并添加error_message字段
-            check_result = self.check_and_add_auto_download_error_message()
-            if check_result:
-                results['checks_performed'].append('error_message字段检查完成')
+            # 检查auto_download_subscriptions表是否存在并添加字段
+            if self.check_table_exists('auto_download_subscriptions'):
+                check_result = self.check_and_add_auto_download_error_message()
+                if check_result:
+                    results['checks_performed'].append('auto_download_subscriptions.error_message字段检查完成')
+                else:
+                    results['success'] = False
+                    results['errors'].append('auto_download_subscriptions.error_message字段检查失败')
             else:
-                results['success'] = False
-                results['errors'].append('error_message字段检查失败')
+                logger.warning("auto_download_subscriptions表不存在，跳过error_message字段检查")
+                results['checks_performed'].append('auto_download_subscriptions表不存在')
+            
+            # 检查actor_subscribe表是否存在并添加字段
+            if self.check_table_exists('actor_subscribe'):
+                check_result = self.check_and_add_actor_subscribe_rating_fields()
+                if check_result:
+                    results['checks_performed'].append('actor_subscribe筛选字段检查完成')
+                else:
+                    results['success'] = False
+                    results['errors'].append('actor_subscribe筛选字段检查失败')
+            else:
+                logger.warning("actor_subscribe表不存在，跳过筛选字段检查")
+                results['checks_performed'].append('actor_subscribe表不存在')
             
             # 可以在这里添加更多的字段检查
             

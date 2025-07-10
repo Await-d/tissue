@@ -5,7 +5,7 @@ LastEditors: Await
 LastEditTime: 2025-05-26 23:42:36
 Description: 请填写简介
 '''
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date, DECIMAL
 
 from app.db.models.base import Base
 
@@ -23,6 +23,8 @@ class ActorSubscribe(Base):
     is_zh = Column(Boolean, nullable=False, default=False)
     is_uncensored = Column(Boolean, nullable=False, default=False)
     is_paused = Column(Boolean, nullable=False, default=False)  # 是否暂停订阅
+    min_rating = Column(DECIMAL(3, 1), nullable=True, default=0.0, comment="最低评分要求")
+    min_comments = Column(Integer, nullable=True, default=0, comment="最低评论数要求")
 
 
 class ActorSubscribeDownload(Base):
