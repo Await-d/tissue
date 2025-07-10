@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip, Tag, App, Rate } from 'antd';
-import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined, StarFilled, CheckCircleFilled } from '@ant-design/icons';
+import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip, Tag, App, Rate, Select, Checkbox, Row, Col, InputNumber, Switch } from 'antd';
+import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined, StarFilled, CheckCircleFilled, FilterOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -84,6 +84,20 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     const [subscribeModalVisible, setSubscribeModalVisible] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [checkingSubscription, setCheckingSubscription] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({
+        rating: { min: 0, max: 10 },
+        year: { min: 1990, max: new Date().getFullYear() },
+        showOnlyZh: false,
+        showOnlyUncensored: false,
+        sortBy: 'date',
+        sortOrder: 'desc'
+    });
+    const [progress, setProgress] = useState({
+        total: 0,
+        loaded: 0,
+        isLoading: false
+    });
 
     // 保存状态到localStorage
     const saveState = () => {
@@ -599,7 +613,21 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                         </Button>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <div>
+                            <Button
+                                icon={<FilterOutlined />}
+                                onClick={() => setShowFilters(!showFilters)}
+                                style={{ marginRight: 8 }}
+                            >
+                                筛选 {showFilters ? '▼' : '▶'}
+                            </Button>
+                            {actorVideos.length > 0 && (
+                                <span style={{ color: '#666', fontSize: '12px' }}>
+                                    共找到 {actorVideos.length} 个作品
+                                </span>
+                            )}
+                        </div>
                         <Tooltip title="刷新作品列表">
                             <Button
                                 type="primary"
@@ -617,13 +645,176 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                         </Tooltip>
                     </div>
 
-                    {loadingVideos ? (
-                        <LoadingComponent tip="正在加载作品列表..." minHeight={300} />
-                    ) : actorVideos.length > 0 ? (
-                        <List
-                            grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 5 }}
-                            dataSource={actorVideos}
-                            renderItem={(video: WebVideo, index: number) => {
+                    {showFilters && (
+                        <Card size="small" style={{ marginBottom: 16 }}>
+                            <Row gutter={[16, 16]}>
+                                <Col span={12}>
+                                    <div style={{ marginBottom: 8 }}>评分范围</div>
+                                    <Row gutter={8}>
+                                        <Col span={12}>
+                                            <InputNumber
+                                                min={0}
+                                                max={10}
+                                                step={0.1}
+                                                value={filters.rating.min}
+                                                onChange={(value) => setFilters({
+                                                    ...filters,
+                                                    rating: { ...filters.rating, min: value || 0 }
+                                                })}
+                                                placeholder="最低评分"
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Col>
+                                        <Col span={12}>
+                                            <InputNumber
+                                                min={0}
+                                                max={10}
+                                                step={0.1}
+                                                value={filters.rating.max}
+                                                onChange={(value) => setFilters({
+                                                    ...filters,
+                                                    rating: { ...filters.rating, max: value || 10 }
+                                                })}
+                                                placeholder="最高评分"
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Col>
+                                    </Row>
+                                </Col>
+                                <Col span={12}>
+                                    <div style={{ marginBottom: 8 }}>年份范围</div>
+                                    <Row gutter={8}>
+                                        <Col span={12}>
+                                            <InputNumber
+                                                min={1990}
+                                                max={new Date().getFullYear()}
+                                                value={filters.year.min}
+                                                onChange={(value) => setFilters({
+                                                    ...filters,
+                                                    year: { ...filters.year, min: value || 1990 }
+                                                })}
+                                                placeholder="最早年份"
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Col>
+                                        <Col span={12}>
+                                            <InputNumber
+                                                min={1990}
+                                                max={new Date().getFullYear()}
+                                                value={filters.year.max}
+                                                onChange={(value) => setFilters({
+                                                    ...filters,
+                                                    year: { ...filters.year, max: value || new Date().getFullYear() }
+                                                })}
+                                                placeholder="最晚年份"
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Col>
+                                    </Row>
+                                </Col>
+                                <Col span={8}>
+                                    <Checkbox
+                                        checked={filters.showOnlyZh}
+                                        onChange={(e) => setFilters({
+                                            ...filters,
+                                            showOnlyZh: e.target.checked
+                                        })}
+                                    >
+                                        仅中文字幕
+                                    </Checkbox>
+                                </Col>
+                                <Col span={8}>
+                                    <Checkbox
+                                        checked={filters.showOnlyUncensored}
+                                        onChange={(e) => setFilters({
+                                            ...filters,
+                                            showOnlyUncensored: e.target.checked
+                                        })}
+                                    >
+                                        仅无码
+                                    </Checkbox>
+                                </Col>
+                                <Col span={8}>
+                                    <Select
+                                        value={`${filters.sortBy}-${filters.sortOrder}`}
+                                        onChange={(value) => {
+                                            const [sortBy, sortOrder] = value.split('-');
+                                            setFilters({
+                                                ...filters,
+                                                sortBy,
+                                                sortOrder
+                                            });
+                                        }}
+                                        style={{ width: '100%' }}
+                                    >
+                                        <Select.Option value="date-desc">发布日期 (新→旧)</Select.Option>
+                                        <Select.Option value="date-asc">发布日期 (旧→新)</Select.Option>
+                                        <Select.Option value="rating-desc">评分 (高→低)</Select.Option>
+                                        <Select.Option value="rating-asc">评分 (低→高)</Select.Option>
+                                    </Select>
+                                </Col>
+                            </Row>
+                        </Card>
+                    )}
+
+                    {(() => {
+                        // 过滤和排序逻辑
+                        const filteredVideos = actorVideos.filter((video: WebVideo) => {
+                            // 评分过滤
+                            if (video.rank) {
+                                if (video.rank < filters.rating.min || video.rank > filters.rating.max) {
+                                    return false;
+                                }
+                            }
+                            
+                            // 年份过滤
+                            if (video.publish_date) {
+                                const videoYear = new Date(video.publish_date).getFullYear();
+                                if (videoYear < filters.year.min || videoYear > filters.year.max) {
+                                    return false;
+                                }
+                            }
+                            
+                            // 中文字幕过滤
+                            if (filters.showOnlyZh && !video.is_zh) {
+                                return false;
+                            }
+                            
+                            // 无码过滤
+                            if (filters.showOnlyUncensored && !video.is_uncensored) {
+                                return false;
+                            }
+                            
+                            return true;
+                        }).sort((a: WebVideo, b: WebVideo) => {
+                            // 排序逻辑
+                            const { sortBy, sortOrder } = filters;
+                            let compareValue = 0;
+                            
+                            if (sortBy === 'date') {
+                                const dateA = new Date(a.publish_date || '1900-01-01');
+                                const dateB = new Date(b.publish_date || '1900-01-01');
+                                compareValue = dateA.getTime() - dateB.getTime();
+                            } else if (sortBy === 'rating') {
+                                compareValue = (a.rank || 0) - (b.rank || 0);
+                            }
+                            
+                            return sortOrder === 'desc' ? -compareValue : compareValue;
+                        });
+
+                        return loadingVideos ? (
+                            <LoadingComponent tip="正在加载作品列表..." minHeight={300} />
+                        ) : filteredVideos.length > 0 ? (
+                            <>
+                                {filteredVideos.length !== actorVideos.length && (
+                                    <div style={{ marginBottom: 16, color: '#666', fontSize: '12px' }}>
+                                        筛选结果：{filteredVideos.length} / {actorVideos.length} 个作品
+                                    </div>
+                                )}
+                                <List
+                                    grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 5 }}
+                                    dataSource={filteredVideos}
+                                    renderItem={(video: WebVideo, index: number) => {
                                 // 为每个视频生成一个唯一的ID用于加载状态跟踪
                                 const videoId = `${video.num}-${index}-${Math.random().toString(36).substring(2, 7)}`;
                                 return (
@@ -695,10 +886,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                     </List.Item>
                                 );
                             }}
-                        />
-                    ) : (
-                        <Empty description="没有找到相关视频" />
-                    )}
+                                />
+                            </>
+                        ) : actorVideos.length > 0 ? (
+                            <Empty description="没有符合筛选条件的视频" />
+                        ) : (
+                            <Empty description="没有找到相关视频" />
+                        );
+                    })()}
                 </>
             ) : searchValue && searchResults.length > 0 ? (
                 // 有搜索内容且有搜索结果，显示搜索结果列表

@@ -1,4 +1,5 @@
 import {Layout, theme, Drawer, ConfigProvider, FloatButton} from "antd";
+import ProgressFloatButton from "../../components/ProgressFloatButton";
 import React, {useEffect, useState} from "react";
 import {useResponsive} from "ahooks";
 import Styles from "./router.module.css";
@@ -107,6 +108,7 @@ function RouteLayout() {
                                 <FloatButton.Group className={'index-float-button-group'}>
                                     <FloatButton.BackTop/>
                                 </FloatButton.Group>
+                                <ProgressFloatButton />
                             </div>
                         </Layout.Content>
                     </Layout>
