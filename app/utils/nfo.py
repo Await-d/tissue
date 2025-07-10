@@ -55,35 +55,35 @@ def get_full(path: str):
 
     nfo = VideoDetail(path=path)
     for element in root:
-        match element.tag:
-            case 'actor':
-                actor = VideoActor()
-                actor_name = element.find('name')
-                if actor_name is not None:
-                    actor.name = actor_name.text
+        tag = element.tag
+        if tag == 'actor':
+            actor = VideoActor()
+            actor_name = element.find('name')
+            if actor_name is not None:
+                actor.name = actor_name.text
 
-                actor_thumb = element.find('thumb')
-                if actor_thumb is not None:
-                    actor.thumb = actor_thumb.text
+            actor_thumb = element.find('thumb')
+            if actor_thumb is not None:
+                actor.thumb = actor_thumb.text
 
-                nfo.actors.append(actor)
-            case 'tag':
-                if element.text.startswith('系列:'):
-                    nfo.series = element.text[3:]
-                elif element.text.startswith('發行:'):
-                    nfo.publisher = (element.text[3:])
-                elif ':' not in element.text:
-                    nfo.tags.append(element.text)
-            case 'website':
-                nfo.website.append(element.text)
-            case 'plot':
-                if not nfo.outline: nfo.outline = element.text
-            case 'extra':
-                nfo.is_zh = element.attrib.get('is_zh') == '1'
-                nfo.is_uncensored = element.attrib.get('is_uncensored') == '1'
-            case _:
-                if hasattr(nfo, element.tag):
-                    setattr(nfo, element.tag, element.text)
+            nfo.actors.append(actor)
+        elif tag == 'tag':
+            if element.text.startswith('系列:'):
+                nfo.series = element.text[3:]
+            elif element.text.startswith('發行:'):
+                nfo.publisher = (element.text[3:])
+            elif ':' not in element.text:
+                nfo.tags.append(element.text)
+        elif tag == 'website':
+            nfo.website.append(element.text)
+        elif tag == 'plot':
+            if not nfo.outline: nfo.outline = element.text
+        elif tag == 'extra':
+            nfo.is_zh = element.attrib.get('is_zh') == '1'
+            nfo.is_uncensored = element.attrib.get('is_uncensored') == '1'
+        else:
+            if hasattr(nfo, element.tag):
+                setattr(nfo, element.tag, element.text)
     return nfo
 
 

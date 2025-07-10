@@ -1,4 +1,5 @@
 import traceback
+from typing import List
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -27,20 +28,20 @@ def get_video_cover(url: str):
     if cached is not None:
         return cached
 
-    match component.hostname:
-        case 'www.javbus.com':
-            response = JavbusSpider.get_cover(url)
-        case 'c0.jdbstatic.com':
-            response = JavdbSpider.get_cover(url)
-        case _:
-            response = Spider.get_cover(url)
+    hostname = component.hostname
+    if hostname == 'www.javbus.com':
+        response = JavbusSpider.get_cover(url)
+    elif hostname == 'c0.jdbstatic.com':
+        response = JavdbSpider.get_cover(url)
+    else:
+        response = Spider.get_cover(url)
 
     if response:
         cache.cache_file('cover', url, response)
     return response
 
 
-def _merge_video_info(metas: list[VideoDetail]) -> VideoDetail:
+def _merge_video_info(metas: List[VideoDetail]) -> VideoDetail:
     meta = metas[0]
     if len(metas) >= 2:
         logger.info("合并多个刮削信息...")

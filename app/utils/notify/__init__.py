@@ -23,11 +23,14 @@ from app.utils.notify.webhook import Webhook
 def match_notification() -> Base:
     setting = Setting().notify
 
-    match setting.type:
-        case 'telegram':
-            return Telegram(setting)
-        case 'webhook':
-            return Webhook(setting)
+    notification_type = setting.type
+    if notification_type == 'telegram':
+        return Telegram(setting)
+    elif notification_type == 'webhook':
+        return Webhook(setting)
+    else:
+        # 默认返回Webhook或抛出异常
+        return Webhook(setting)
 
 
 def send_video(video: VideoNotify):
