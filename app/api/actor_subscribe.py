@@ -113,6 +113,7 @@ def run_actor_subscribe():
     def task_with_db_session():
         """在独立的数据库会话中执行任务"""
         from app.db import SessionFactory
+        from app.service.actor_subscribe import ActorSubscribeService
         with SessionFactory() as db:
             service = ActorSubscribeService(db)
             service.do_actor_subscribe()
