@@ -132,28 +132,40 @@ class SubscribeService(BaseService):
     def _check_and_record_actor_subscribe_download(self, video: schema.SubscribeCreate, link: schema.VideoDownload):
         """检查并记录演员订阅下载"""
         try:
+            logger.info(f"[智能下载] 开始检查演员订阅下载记录: {video.num}")
             from app.db.models.actor_subscribe import ActorSubscribe, ActorSubscribeDownload
             from app.utils import spider
             
             # 获取视频详情以获取演员信息
             video_detail = spider.get_video(video.num)
-            if not video_detail or not video_detail.actors:
+            if not video_detail:
+                logger.info(f"[智能下载] 未能获取视频详情: {video.num}")
                 return
+            
+            if not video_detail.actors:
+                logger.info(f"视频无演员信息: {video.num}")
+                return
+            
+            logger.info(f"视频 {video.num} 包含 {len(video_detail.actors)} 个演员")
             
             # 检查是否有对应的演员订阅
             for actor in video_detail.actors:
+                logger.info(f"检查演员订阅: {actor.name}")
                 actor_subscription = self.db.query(ActorSubscribe).filter(
                     ActorSubscribe.actor_name == actor.name
                 ).first()
                 
                 if actor_subscription:
+                    logger.info(f"找到演员订阅: {actor.name} (ID: {actor_subscription.id})")
                     # 检查是否已经记录过这个下载
                     existing_download = self.db.query(ActorSubscribeDownload).filter(
                         ActorSubscribeDownload.actor_subscribe_id == actor_subscription.id,
                         ActorSubscribeDownload.num == video.num
                     ).first()
                     
-                    if not existing_download:
+                    if existing_download:
+                        logger.info(f"下载记录已存在: {actor.name} - {video.num}")
+                    else:
                         # 记录到演员订阅下载表
                         download = ActorSubscribeDownload(
                             actor_subscribe_id=actor_subscription.id,
@@ -168,10 +180,15 @@ class SubscribeService(BaseService):
                             is_uncensored=link.is_uncensored
                         )
                         download.add(self.db)
-                        logger.info(f"已记录演员订阅下载: {actor.name} - {video.num}")
+                        self.db.commit()  # 立即提交以确保记录被保存
+                        logger.info(f"[智能下载] 成功记录演员订阅下载: {actor.name} - {video.num}")
+                else:
+                    logger.info(f"未找到演员订阅: {actor.name}")
                     
         except Exception as e:
             logger.error(f"记录演员订阅下载失败: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             # 不影响主要下载流程，只记录错误
 
     def do_subscribe_meta_update(self):
