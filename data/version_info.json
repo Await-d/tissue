@@ -1,7 +1,13 @@
 {
-  "version": "v0.1.1",
-  "updated_at": "2025-07-10T09:07:12.009685",
+  "version": "v0.1.2",
+  "updated_at": "2025-07-10T22:24:00.757634",
   "migration_success": true,
-  "notes": "自动升级到版本 v0.1.1",
-  "previous_versions": []
+  "notes": "自动升级到版本 v0.1.2",
+  "previous_versions": [
+    {
+      "version": "v0.1.1",
+      "updated_at": "2025-07-10T09:07:12.009685",
+      "migration_success": true
+    }
+  ]
 }
