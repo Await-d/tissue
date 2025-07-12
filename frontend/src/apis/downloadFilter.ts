@@ -12,6 +12,8 @@ export interface FilterSettings {
   enable_smart_filter: boolean
   skip_sample_files: boolean
   skip_subtitle_only: boolean
+  media_files_only: boolean
+  include_subtitles: boolean
   is_active?: boolean
   created_at?: string
   updated_at?: string

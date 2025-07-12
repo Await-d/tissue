@@ -28,6 +28,8 @@ class DownloadFilterSettings(Base):
     enable_smart_filter = Column(Boolean, nullable=False, default=True, comment="启用智能过滤")
     skip_sample_files = Column(Boolean, nullable=False, default=True, comment="跳过样本文件")
     skip_subtitle_only = Column(Boolean, nullable=False, default=True, comment="跳过仅字幕文件")
+    media_files_only = Column(Boolean, nullable=False, default=False, comment="只保留媒体文件(视频+字幕)")
+    include_subtitles = Column(Boolean, nullable=False, default=True, comment="包含字幕文件")
     
     # 系统字段
     is_active = Column(Boolean, nullable=False, default=True, comment="是否激活")

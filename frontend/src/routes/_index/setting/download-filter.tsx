@@ -104,6 +104,8 @@ function DownloadFilterSettings() {
       enable_smart_filter: values.enable_smart_filter !== false,
       skip_sample_files: values.skip_sample_files !== false,
       skip_subtitle_only: values.skip_subtitle_only !== false,
+      media_files_only: values.media_files_only === true,
+      include_subtitles: values.include_subtitles !== false,
     }
 
     saveSettings(settings)
@@ -204,7 +206,9 @@ function DownloadFilterSettings() {
             min_file_size_mb: 300,
             enable_smart_filter: true,
             skip_sample_files: true,
-            skip_subtitle_only: true
+            skip_subtitle_only: true,
+            media_files_only: false,
+            include_subtitles: true
           }}
         >
           <Row gutter={24}>
@@ -283,8 +287,57 @@ function DownloadFilterSettings() {
 
             <Col span={8}>
               <Form.Item
+                name="media_files_only"
+                label={
+                  <Space>
+                    只保留媒体文件
+                    <Tooltip title="启用后只保留视频文件和字幕文件，过滤其他所有文件类型">
+                      <InfoCircleOutlined />
+                    </Tooltip>
+                  </Space>
+                }
+                valuePropName="checked"
+              >
+                <Switch 
+                  checkedChildren="开启" 
+                  unCheckedChildren="关闭"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col span={12}>
+              <Form.Item
+                name="include_subtitles"
+                label={
+                  <Space>
+                    包含字幕文件
+                    <Tooltip title="在媒体文件模式下是否包含字幕文件">
+                      <InfoCircleOutlined />
+                    </Tooltip>
+                  </Space>
+                }
+                valuePropName="checked"
+              >
+                <Switch 
+                  checkedChildren="包含" 
+                  unCheckedChildren="排除"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
                 name="skip_subtitle_only"
-                label="跳过字幕文件"
+                label={
+                  <Space>
+                    跳过纯字幕文件
+                    <Tooltip title="在非媒体文件模式下是否跳过字幕文件">
+                      <InfoCircleOutlined />
+                    </Tooltip>
+                  </Space>
+                }
                 valuePropName="checked"
               >
                 <Switch 
@@ -335,7 +388,8 @@ function DownloadFilterSettings() {
             <ul>
               <li><strong>文件大小过滤</strong>：设置最小和最大文件大小限制</li>
               <li><strong>智能过滤</strong>：自动识别和过滤样本文件、宣传文件等</li>
-              <li><strong>类型过滤</strong>：可选择只保留视频文件，跳过字幕文件</li>
+              <li><strong>媒体文件模式</strong>：只保留视频文件和字幕文件，过滤其他类型</li>
+              <li><strong>字幕控制</strong>：可单独控制是否包含字幕文件</li>
               <li><strong>实时生效</strong>：新设置会应用到后续的下载任务</li>
             </ul>
             
@@ -344,6 +398,8 @@ function DownloadFilterSettings() {
               <li>过滤规则会应用到所有新添加的种子</li>
               <li>已存在的种子需要手动应用过滤规则</li>
               <li>建议合理设置文件大小，避免过滤掉重要内容</li>
+              <li><strong>媒体文件模式</strong>：开启后只保留视频和字幕文件，忽略图片、文档等</li>
+              <li><strong>字幕控制</strong>：在媒体文件模式下，可选择是否包含字幕文件</li>
               <li>样本文件通常很小，建议保持"跳过样本文件"开启</li>
             </ul>
           </div>

@@ -75,7 +75,9 @@ class DownloadFilterService(BaseService):
             "max_total_size_gb": None,
             "enable_smart_filter": True,
             "skip_sample_files": True,
-            "skip_subtitle_only": True
+            "skip_subtitle_only": True,
+            "media_files_only": False,
+            "include_subtitles": True
         }
     
     def apply_filter_to_magnet(self, magnet_url: str) -> Dict:
@@ -222,7 +224,9 @@ class DownloadFilterService(BaseService):
             "enable_smart_filter": filter_settings.enable_smart_filter,
             "skip_sample_files": filter_settings.skip_sample_files,
             "skip_subtitle_only": filter_settings.skip_subtitle_only,
-            "video_only": True,  # 默认只保留视频文件
+            "media_files_only": getattr(filter_settings, 'media_files_only', False),
+            "include_subtitles": getattr(filter_settings, 'include_subtitles', True),
+            "video_only": not getattr(filter_settings, 'media_files_only', False),  # 如果启用媒体文件模式则不使用video_only
         }
         
         # 处理扩展名设置

@@ -24,6 +24,8 @@ class FilterSettingsRequest(BaseModel):
     enable_smart_filter: bool = Field(default=True, description="启用智能过滤")
     skip_sample_files: bool = Field(default=True, description="跳过样本文件")
     skip_subtitle_only: bool = Field(default=True, description="跳过仅字幕文件")
+    media_files_only: bool = Field(default=False, description="只保留媒体文件(视频+字幕)")
+    include_subtitles: bool = Field(default=True, description="包含字幕文件")
 
 
 class MagnetFilterRequest(BaseModel):
@@ -61,6 +63,8 @@ def get_filter_settings(service: DownloadFilterService = Depends(get_download_fi
             "enable_smart_filter": settings.enable_smart_filter,
             "skip_sample_files": settings.skip_sample_files,
             "skip_subtitle_only": settings.skip_subtitle_only,
+            "media_files_only": getattr(settings, 'media_files_only', False),
+            "include_subtitles": getattr(settings, 'include_subtitles', True),
             "is_active": settings.is_active,
             "created_at": settings.created_at.isoformat() if settings.created_at else None,
             "updated_at": settings.updated_at.isoformat() if settings.updated_at else None,

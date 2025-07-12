@@ -110,6 +110,8 @@ class DatabaseMigration:
             'enable_smart_filter': "ALTER TABLE download_filter_settings ADD COLUMN enable_smart_filter BOOLEAN NOT NULL DEFAULT 1 COMMENT '启用智能过滤'",
             'skip_sample_files': "ALTER TABLE download_filter_settings ADD COLUMN skip_sample_files BOOLEAN NOT NULL DEFAULT 1 COMMENT '跳过样本文件'",
             'skip_subtitle_only': "ALTER TABLE download_filter_settings ADD COLUMN skip_subtitle_only BOOLEAN NOT NULL DEFAULT 1 COMMENT '跳过仅字幕文件'",
+            'media_files_only': "ALTER TABLE download_filter_settings ADD COLUMN media_files_only BOOLEAN NOT NULL DEFAULT 0 COMMENT '只保留媒体文件(视频+字幕)'",
+            'include_subtitles': "ALTER TABLE download_filter_settings ADD COLUMN include_subtitles BOOLEAN NOT NULL DEFAULT 1 COMMENT '包含字幕文件'",
             'is_active': "ALTER TABLE download_filter_settings ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1 COMMENT '是否激活'",
             'created_at': "ALTER TABLE download_filter_settings ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'",
             'updated_at': "ALTER TABLE download_filter_settings ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'"

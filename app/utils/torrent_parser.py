@@ -188,7 +188,9 @@ class TorrentParser:
     def filter_files_by_type(self, files: List[TorrentFile], 
                            allowed_extensions: Optional[List[str]] = None,
                            blocked_extensions: Optional[List[str]] = None,
-                           video_only: bool = False) -> List[TorrentFile]:
+                           video_only: bool = False,
+                           media_files_only: bool = False,
+                           include_subtitles: bool = True) -> List[TorrentFile]:
         """
         根据文件类型过滤文件
         
@@ -197,6 +199,8 @@ class TorrentParser:
             allowed_extensions: 允许的扩展名列表
             blocked_extensions: 禁止的扩展名列表
             video_only: 是否只保留视频文件
+            media_files_only: 是否只保留媒体文件(视频+字幕)
+            include_subtitles: 是否包含字幕文件
             
         Returns:
             List[TorrentFile]: 过滤后的文件列表
@@ -204,8 +208,13 @@ class TorrentParser:
         filtered_files = []
         
         for file in files:
+            # 如果设置了只保留媒体文件(视频+字幕)
+            if media_files_only:
+                is_media_file = file.is_video or (file.is_subtitle and include_subtitles)
+                if not is_media_file:
+                    continue
             # 如果设置了只保留视频文件
-            if video_only and not file.is_video:
+            elif video_only and not file.is_video:
                 continue
                 
             # 检查禁止的扩展名
@@ -290,13 +299,17 @@ class TorrentParser:
         allowed_ext = filter_settings.get('allowed_extensions')
         blocked_ext = filter_settings.get('blocked_extensions')
         video_only = filter_settings.get('video_only', False)
+        media_files_only = filter_settings.get('media_files_only', False)
+        include_subtitles = filter_settings.get('include_subtitles', True)
         
-        if allowed_ext or blocked_ext or video_only:
+        if allowed_ext or blocked_ext or video_only or media_files_only:
             filtered_files = self.filter_files_by_type(
                 filtered_files,
                 allowed_extensions=allowed_ext,
                 blocked_extensions=blocked_ext,
-                video_only=video_only
+                video_only=video_only,
+                media_files_only=media_files_only,
+                include_subtitles=include_subtitles
             )
             logger.info(f"类型过滤后文件数: {len(filtered_files)}")
         
