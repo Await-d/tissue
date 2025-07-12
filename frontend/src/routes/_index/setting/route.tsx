@@ -1,6 +1,6 @@
 import {Card, Tabs} from "antd";
 import React from "react";
-import {AppstoreOutlined, CloudDownloadOutlined, FolderOpenOutlined, NotificationOutlined, RobotOutlined, BranchesOutlined} from "@ant-design/icons";
+import {AppstoreOutlined, CloudDownloadOutlined, FolderOpenOutlined, NotificationOutlined, RobotOutlined, BranchesOutlined, FilterOutlined} from "@ant-design/icons";
 import {createFileRoute, Outlet, useLocation, useNavigate} from "@tanstack/react-router";
 
 export const Route = createFileRoute('/_index/setting')({
@@ -27,6 +27,11 @@ function Setting() {
             key: '/setting/download',
             label: '下载',
             icon: <CloudDownloadOutlined/>,
+        },
+        {
+            key: '/setting/download-filter',
+            label: '下载过滤',
+            icon: <FilterOutlined/>,
         },
         {
             key: '/setting/notify',

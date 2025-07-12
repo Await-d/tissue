@@ -260,6 +260,45 @@ class QBittorent:
 
         self.remove_torrent_tags(torrent_hash, [nonce])
         return response
+    
+    @auth
+    def set_file_priority(self, torrent_hash: str, file_ids: List[int], priority: int):
+        """
+        设置种子文件下载优先级
+        
+        Args:
+            torrent_hash: 种子hash
+            file_ids: 文件ID列表
+            priority: 优先级 (0=不下载, 1=普通, 6=高, 7=最高)
+        """
+        host = self._get_host_with_scheme()
+        return self.session.post(
+            urljoin(host, "/api/v2/torrents/filePrio"),
+            data={
+                "hash": torrent_hash, 
+                "id": "|".join(map(str, file_ids)), 
+                "priority": priority
+            }
+        )
+    
+    @auth
+    def set_files_priority_bulk(self, torrent_hash: str, priorities: List[int]):
+        """
+        批量设置种子所有文件的下载优先级
+        
+        Args:
+            torrent_hash: 种子hash
+            priorities: 优先级列表，按文件索引顺序 (0=不下载, 1=普通, 6=高, 7=最高)
+        """
+        host = self._get_host_with_scheme()
+        return self.session.post(
+            urljoin(host, "/api/v2/torrents/filePrio"),
+            data={
+                "hash": torrent_hash, 
+                "id": "|".join(map(str, range(len(priorities)))), 
+                "priority": "|".join(map(str, priorities))
+            }
+        )
 
     @auth
     def get_all_torrents(self):

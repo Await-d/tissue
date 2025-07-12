@@ -34,6 +34,7 @@ import { Route as IndexVideoNumImport } from './routes/_index/video/$num'
 import { Route as IndexSettingVersionImport } from './routes/_index/setting/version'
 import { Route as IndexSettingNotifyImport } from './routes/_index/setting/notify'
 import { Route as IndexSettingFileImport } from './routes/_index/setting/file'
+import { Route as IndexSettingDownloadFilterImport } from './routes/_index/setting/download-filter'
 import { Route as IndexSettingDownloadImport } from './routes/_index/setting/download'
 import { Route as IndexSettingAutoDownloadImport } from './routes/_index/setting/auto-download'
 import { Route as IndexSettingAppImport } from './routes/_index/setting/app'
@@ -181,6 +182,14 @@ const IndexSettingFileRoute = IndexSettingFileImport.update({
   getParentRoute: () => IndexSettingRouteRoute,
 } as any)
 
+const IndexSettingDownloadFilterRoute = IndexSettingDownloadFilterImport.update(
+  {
+    id: '/download-filter',
+    path: '/download-filter',
+    getParentRoute: () => IndexSettingRouteRoute,
+  } as any,
+)
+
 const IndexSettingDownloadRoute = IndexSettingDownloadImport.update({
   id: '/download',
   path: '/download',
@@ -303,6 +312,13 @@ declare module '@tanstack/react-router' {
       path: '/download'
       fullPath: '/setting/download'
       preLoaderRoute: typeof IndexSettingDownloadImport
+      parentRoute: typeof IndexSettingRouteImport
+    }
+    '/_index/setting/download-filter': {
+      id: '/_index/setting/download-filter'
+      path: '/download-filter'
+      fullPath: '/setting/download-filter'
+      preLoaderRoute: typeof IndexSettingDownloadFilterImport
       parentRoute: typeof IndexSettingRouteImport
     }
     '/_index/setting/file': {
@@ -447,6 +463,7 @@ interface IndexSettingRouteRouteChildren {
   IndexSettingAppRoute: typeof IndexSettingAppRoute
   IndexSettingAutoDownloadRoute: typeof IndexSettingAutoDownloadRoute
   IndexSettingDownloadRoute: typeof IndexSettingDownloadRoute
+  IndexSettingDownloadFilterRoute: typeof IndexSettingDownloadFilterRoute
   IndexSettingFileRoute: typeof IndexSettingFileRoute
   IndexSettingNotifyRoute: typeof IndexSettingNotifyRoute
   IndexSettingVersionRoute: typeof IndexSettingVersionRoute
@@ -457,6 +474,7 @@ const IndexSettingRouteRouteChildren: IndexSettingRouteRouteChildren = {
   IndexSettingAppRoute: IndexSettingAppRoute,
   IndexSettingAutoDownloadRoute: IndexSettingAutoDownloadRoute,
   IndexSettingDownloadRoute: IndexSettingDownloadRoute,
+  IndexSettingDownloadFilterRoute: IndexSettingDownloadFilterRoute,
   IndexSettingFileRoute: IndexSettingFileRoute,
   IndexSettingNotifyRoute: IndexSettingNotifyRoute,
   IndexSettingVersionRoute: IndexSettingVersionRoute,
@@ -530,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/setting/app': typeof IndexSettingAppRoute
   '/setting/auto-download': typeof IndexSettingAutoDownloadRoute
   '/setting/download': typeof IndexSettingDownloadRoute
+  '/setting/download-filter': typeof IndexSettingDownloadFilterRoute
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
   '/setting/version': typeof IndexSettingVersionRoute
@@ -561,6 +580,7 @@ export interface FileRoutesByTo {
   '/setting/app': typeof IndexSettingAppRoute
   '/setting/auto-download': typeof IndexSettingAutoDownloadRoute
   '/setting/download': typeof IndexSettingDownloadRoute
+  '/setting/download-filter': typeof IndexSettingDownloadFilterRoute
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
   '/setting/version': typeof IndexSettingVersionRoute
@@ -595,6 +615,7 @@ export interface FileRoutesById {
   '/_index/setting/app': typeof IndexSettingAppRoute
   '/_index/setting/auto-download': typeof IndexSettingAutoDownloadRoute
   '/_index/setting/download': typeof IndexSettingDownloadRoute
+  '/_index/setting/download-filter': typeof IndexSettingDownloadFilterRoute
   '/_index/setting/file': typeof IndexSettingFileRoute
   '/_index/setting/notify': typeof IndexSettingNotifyRoute
   '/_index/setting/version': typeof IndexSettingVersionRoute
@@ -630,6 +651,7 @@ export interface FileRouteTypes {
     | '/setting/app'
     | '/setting/auto-download'
     | '/setting/download'
+    | '/setting/download-filter'
     | '/setting/file'
     | '/setting/notify'
     | '/setting/version'
@@ -660,6 +682,7 @@ export interface FileRouteTypes {
     | '/setting/app'
     | '/setting/auto-download'
     | '/setting/download'
+    | '/setting/download-filter'
     | '/setting/file'
     | '/setting/notify'
     | '/setting/version'
@@ -692,6 +715,7 @@ export interface FileRouteTypes {
     | '/_index/setting/app'
     | '/_index/setting/auto-download'
     | '/_index/setting/download'
+    | '/_index/setting/download-filter'
     | '/_index/setting/file'
     | '/_index/setting/notify'
     | '/_index/setting/version'
@@ -771,6 +795,7 @@ export const routeTree = rootRoute
         "/_index/setting/app",
         "/_index/setting/auto-download",
         "/_index/setting/download",
+        "/_index/setting/download-filter",
         "/_index/setting/file",
         "/_index/setting/notify",
         "/_index/setting/version",
@@ -810,6 +835,10 @@ export const routeTree = rootRoute
     },
     "/_index/setting/download": {
       "filePath": "_index/setting/download.tsx",
+      "parent": "/_index/setting"
+    },
+    "/_index/setting/download-filter": {
+      "filePath": "_index/setting/download-filter.tsx",
       "parent": "/_index/setting"
     },
     "/_index/setting/file": {

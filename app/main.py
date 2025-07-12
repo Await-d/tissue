@@ -9,6 +9,9 @@ Description: 请填写简介
 from app.utils.compat import init_compatibility
 init_compatibility()
 
+# 导入数据库迁移工具
+from app.utils.db_migration import db_migration
+
 from fastapi import FastAPI
 
 from app import middleware, db, exception
@@ -60,6 +63,16 @@ def on_startup():
     
     # 初始化数据库和调度器
     db.init()
+    
+    # 执行数据库迁移
+    try:
+        logger.info("开始执行数据库迁移检查...")
+        db_migration.check_and_migrate()
+        logger.info("数据库迁移检查完成")
+    except Exception as e:
+        logger.error(f"数据库迁移失败: {e}")
+        # 迁移失败不影响应用启动
+    
     scheduler.init()
 
 
