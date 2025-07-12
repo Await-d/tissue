@@ -134,6 +134,7 @@ class AutoDownloadSubscriptionBase(BaseModel):
     download_url: Optional[str] = Field(None, description="下载链接")
     download_time: Optional[datetime] = Field(None, description="下载时间")
     resource_hash: Optional[str] = Field(None, description="资源唯一标识（用于重复检测）")
+    error_message: Optional[str] = Field(None, description="错误信息")
 
     @validator('status', pre=True)
     def normalize_status(cls, v):
@@ -162,6 +163,7 @@ class AutoDownloadSubscriptionUpdate(BaseModel):
     status: Optional[str] = None
     download_url: Optional[str] = None
     download_time: Optional[datetime] = None
+    error_message: Optional[str] = None
 
 
 class AutoDownloadSubscriptionResponse(AutoDownloadSubscriptionBase):

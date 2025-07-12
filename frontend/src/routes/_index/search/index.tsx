@@ -10,10 +10,17 @@ import {
     Row, Segmented, Skeleton,
     Space,
     Tag,
-    Tooltip
+    Tooltip,
+    Switch,
+    Select,
+    InputNumber,
+    Checkbox,
+    Progress,
+    Badge,
+    Divider
 } from "antd";
 import React, { useEffect, useState } from "react";
-import { CarryOutOutlined, CloudDownloadOutlined, CopyOutlined, HistoryOutlined, RedoOutlined, UserOutlined, ClearOutlined } from "@ant-design/icons";
+import { CarryOutOutlined, CloudDownloadOutlined, CopyOutlined, HistoryOutlined, RedoOutlined, UserOutlined, ClearOutlined, FilterOutlined, SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons";
 import * as api from "../../../apis/subscribe";
 import * as videoApi from "../../../apis/video";
 import { useRequest, useResponsive } from "ahooks";
@@ -83,6 +90,20 @@ export function Search() {
     const [searchInput, setSearchInput] = useState(search?.num)
     const [filter, setFilter] = useState({ isHd: false, isZh: false, isUncensored: false })
     const [previewSelected, setPreviewSelected] = useState<string>()
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+    const [advancedFilters, setAdvancedFilters] = useState({
+        minSize: 0,
+        maxSize: 10000,
+        sortBy: 'date',
+        sortOrder: 'desc',
+        showOnlyWithPreviews: false,
+        website: 'all'
+    })
+    const [searchProgress, setSearchProgress] = useState({
+        current: 0,
+        total: 0,
+        isSearching: false
+    })
 
     const [selectedVideo, setSelectedVideo] = useState<any>()
     const [selectedDownload, setSelectedDownload] = useState<any>()
@@ -437,9 +458,20 @@ export function Search() {
                                 }}
                             </Await>
                             <Card
-                                title={'资源列表'}
+                                title={
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span>资源列表</span>
+                                        <Button
+                                            icon={<FilterOutlined />}
+                                            size="small"
+                                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                        >
+                                            高级筛选 {showAdvancedFilters ? '▼' : '▶'}
+                                        </Button>
+                                    </div>
+                                }
                                 extra={
-                                    <>
+                                    <Space wrap>
                                         <Tag
                                             color={filter.isHd ? 'red' : 'default'}
                                             className={'cursor-pointer'}
@@ -464,17 +496,164 @@ export function Search() {
                                         >
                                             无码
                                         </Tag>
-                                    </>
+                                    </Space>
                                 }>
+                                {showAdvancedFilters && (
+                                    <Card size="small" style={{ marginBottom: 16 }}>
+                                        <Row gutter={[16, 8]}>
+                                            <Col span={12}>
+                                                <div style={{ marginBottom: 8 }}>文件大小范围 (MB)</div>
+                                                <Row gutter={8}>
+                                                    <Col span={12}>
+                                                        <InputNumber
+                                                            min={0}
+                                                            value={advancedFilters.minSize}
+                                                            onChange={(value) => setAdvancedFilters({
+                                                                ...advancedFilters,
+                                                                minSize: value || 0
+                                                            })}
+                                                            placeholder="最小"
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                    </Col>
+                                                    <Col span={12}>
+                                                        <InputNumber
+                                                            min={0}
+                                                            value={advancedFilters.maxSize}
+                                                            onChange={(value) => setAdvancedFilters({
+                                                                ...advancedFilters,
+                                                                maxSize: value || 10000
+                                                            })}
+                                                            placeholder="最大"
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                            <Col span={8}>
+                                                <div style={{ marginBottom: 8 }}>排序方式</div>
+                                                <Select
+                                                    value={`${advancedFilters.sortBy}-${advancedFilters.sortOrder}`}
+                                                    onChange={(value) => {
+                                                        const [sortBy, sortOrder] = value.split('-');
+                                                        setAdvancedFilters({
+                                                            ...advancedFilters,
+                                                            sortBy,
+                                                            sortOrder
+                                                        });
+                                                    }}
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    <Select.Option value="date-desc">日期 (新→旧)</Select.Option>
+                                                    <Select.Option value="date-asc">日期 (旧→新)</Select.Option>
+                                                    <Select.Option value="size-desc">大小 (大→小)</Select.Option>
+                                                    <Select.Option value="size-asc">大小 (小→大)</Select.Option>
+                                                </Select>
+                                            </Col>
+                                            <Col span={4}>
+                                                <div style={{ marginBottom: 8 }}>数据源</div>
+                                                <Select
+                                                    value={advancedFilters.website}
+                                                    onChange={(value) => setAdvancedFilters({
+                                                        ...advancedFilters,
+                                                        website: value
+                                                    })}
+                                                    style={{ width: '100%' }}
+                                                >
+                                                    <Select.Option value="all">全部</Select.Option>
+                                                    <Select.Option value="javbus">JavBus</Select.Option>
+                                                    <Select.Option value="javdb">JavDB</Select.Option>
+                                                </Select>
+                                            </Col>
+                                        </Row>
+                                    </Card>
+                                )}
+                                
                                 <Await promise={loaderData}>
                                     {(video: any, loading) => {
-                                        const downloads = video?.downloads?.filter((item: any) => (
+                                        if (!video?.downloads) {
+                                            return loading ? <Skeleton active /> : <Empty description="没有找到下载资源" />;
+                                        }
+
+                                        // 基础过滤
+                                        let downloads = video.downloads.filter((item: any) => (
                                             (!filter.isHd || item.is_hd) &&
                                             (!filter.isZh || item.is_zh) &&
                                             ((!filter.isUncensored || item.is_uncensored))
-                                        ))
+                                        ));
+
+                                        // 高级过滤
+                                        if (showAdvancedFilters) {
+                                            downloads = downloads.filter((item: any) => {
+                                                // 大小过滤
+                                                const sizeMatch = item.size?.match(/([0-9.]+)/);
+                                                const sizeInMB = sizeMatch ? parseFloat(sizeMatch[1]) : 0;
+                                                if (sizeInMB < advancedFilters.minSize || sizeInMB > advancedFilters.maxSize) {
+                                                    return false;
+                                                }
+                                                
+                                                // 数据源过滤
+                                                if (advancedFilters.website !== 'all' && 
+                                                    item.website?.toLowerCase() !== advancedFilters.website) {
+                                                    return false;
+                                                }
+                                                
+                                                return true;
+                                            });
+
+                                            // 排序
+                                            downloads = downloads.sort((a: any, b: any) => {
+                                                const { sortBy, sortOrder } = advancedFilters;
+                                                let compareValue = 0;
+                                                
+                                                if (sortBy === 'date') {
+                                                    const dateA = new Date(a.publish_date || '1900-01-01');
+                                                    const dateB = new Date(b.publish_date || '1900-01-01');
+                                                    compareValue = dateA.getTime() - dateB.getTime();
+                                                } else if (sortBy === 'size') {
+                                                    const sizeMatchA = a.size?.match(/([0-9.]+)/);
+                                                    const sizeMatchB = b.size?.match(/([0-9.]+)/);
+                                                    const sizeA = sizeMatchA ? parseFloat(sizeMatchA[1]) : 0;
+                                                    const sizeB = sizeMatchB ? parseFloat(sizeMatchB[1]) : 0;
+                                                    compareValue = sizeA - sizeB;
+                                                }
+                                                
+                                                return sortOrder === 'desc' ? -compareValue : compareValue;
+                                            });
+                                        }
+
+                                        const filteredCount = downloads.length;
+                                        const totalCount = video.downloads.length
                                         return downloads ? (
-                                            <List
+                                            <>
+                                                {filteredCount !== totalCount && (
+                                                    <div style={{ marginBottom: 16, padding: '8px 12px', background: '#f0f2f5', borderRadius: 4 }}>
+                                                        <Space>
+                                                            <Badge count={filteredCount} style={{ backgroundColor: '#1890ff' }} />
+                                                            <span>筛选结果：{filteredCount} / {totalCount} 个资源</span>
+                                                            {showAdvancedFilters && (
+                                                                <Button 
+                                                                    size="small" 
+                                                                    onClick={() => {
+                                                                        setFilter({ isHd: false, isZh: false, isUncensored: false });
+                                                                        setAdvancedFilters({
+                                                                            minSize: 0,
+                                                                            maxSize: 10000,
+                                                                            sortBy: 'date',
+                                                                            sortOrder: 'desc',
+                                                                            showOnlyWithPreviews: false,
+                                                                            website: 'all'
+                                                                        });
+                                                                    }}
+                                                                >
+                                                                    重置筛选
+                                                                </Button>
+                                                            )}
+                                                        </Space>
+                                                    </div>
+                                                )}
+                                                
+                                                <List
                                                 dataSource={downloads}
                                                 renderItem={(item: any) => (
                                                     <List.Item
@@ -526,7 +705,8 @@ export function Search() {
                                                         />
                                                     </List.Item>
                                                 )}
-                                            />
+                                                />
+                                            </>
                                         ) : (
                                             loading ? (
                                                 <Skeleton active />

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Union
 import warnings
 
 import jwt
@@ -32,7 +32,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(subject: str | Any) -> str:
+def create_access_token(subject: Union[str, Any]) -> str:
     expire = datetime.now() + timedelta(minutes=60 * 24 * 8)
     payload = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(payload, secret_key, algorithm=algorithm)

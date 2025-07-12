@@ -7,6 +7,7 @@ Description: 请填写简介
 '''
 from datetime import datetime, date
 from typing import Optional, List
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -22,6 +23,8 @@ class ActorSubscribeCreate(BaseModel):
     is_zh: bool = False
     is_uncensored: bool = False
     is_paused: bool = False
+    min_rating: Optional[Decimal] = 0.0
+    min_comments: Optional[int] = 0
 
 
 class ActorSubscribeUpdate(ActorSubscribeCreate):

@@ -20,7 +20,7 @@ export function ActorSearch() {
     const search: any = useSearch({ from: '/_index/actor/' });
 
     return (
-        <Row gutter={[15, 15]}>
+        <Row gutter={[15, 15]} style={{ height: '100%' }}>
             <Col span={24}>
                 <Card
                     title="演员搜索"
@@ -31,6 +31,8 @@ export function ActorSearch() {
                             </Button>
                         </Link>
                     }
+                    style={{ height: '100%' }}
+                    bodyStyle={{ padding: 0 }}
                 >
                     <WebActorSearch
                         defaultSearchValue={search?.actorName || ""}
@@ -39,4 +41,4 @@ export function ActorSearch() {
             </Col>
         </Row>
     );
-} 
+}

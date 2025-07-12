@@ -24,8 +24,8 @@ class VideoCollector:
         ]
         # 添加缓存存储
         self._cache = {}
-        # 缓存有效期（小时）
-        self.cache_ttl_hours = 24
+        # 缓存有效期（小时）- 临时设置为0以强制刷新
+        self.cache_ttl_hours = 0
     
     def get_trending_videos(self, time_range: str = "week", max_pages: int = 3) -> List[Dict[str, Any]]:
         """获取热门视频"""

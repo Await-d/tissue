@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, Checkbox, Input, Switch } from 'antd';
-import { UserOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Modal, Form, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, Checkbox, Input, Switch, InputNumber } from 'antd';
+import { UserOutlined, InfoCircleOutlined, StarOutlined, MessageOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/video';
 import * as subscribeApi from '../../../../apis/subscribe';
 import { useRequest } from 'ahooks';
@@ -78,6 +78,8 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                     is_hd: true,
                     is_zh: false,
                     is_uncensored: false,
+                    min_rating: 0.0,
+                    min_comments: 0,
                     from_date: dayjs()
                 }}
             >
@@ -156,6 +158,52 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                     </Col>
                 </Row>
 
+                <Row gutter={16}>
+                    <Col span={12}>
+                        <Form.Item
+                            label={
+                                <Space>
+                                    <StarOutlined />
+                                    <span>最低评分</span>
+                                    <Tooltip title="只订阅评分不低于此值的作品，0表示不限制">
+                                        <InfoCircleOutlined />
+                                    </Tooltip>
+                                </Space>
+                            }
+                            name="min_rating"
+                        >
+                            <InputNumber
+                                min={0}
+                                max={10}
+                                step={0.1}
+                                precision={1}
+                                placeholder="0.0"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item
+                            label={
+                                <Space>
+                                    <MessageOutlined />
+                                    <span>最低评论数</span>
+                                    <Tooltip title="只订阅评论数不少于此值的作品，0表示不限制">
+                                        <InfoCircleOutlined />
+                                    </Tooltip>
+                                </Space>
+                            }
+                            name="min_comments"
+                        >
+                            <InputNumber
+                                min={0}
+                                placeholder="0"
+                                style={{ width: '100%' }}
+                            />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
                 <Form.Item
                     label="暂停订阅"
                     name="is_paused"
@@ -166,7 +214,10 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                 </Form.Item>
 
                 <div style={{ marginTop: '16px', color: '#888', fontSize: '14px' }}>
-                    更改订阅设置后，系统将根据新的条件进行下载。
+                    <div style={{ marginBottom: '8px' }}>筛选条件说明：</div>
+                    <div>• 评分和评论数筛选可以帮助你只订阅高质量作品</div>
+                    <div>• 设置为 0 表示不启用该筛选条件</div>
+                    <div>• 更改设置后，系统将根据新的条件进行下载</div>
                 </div>
             </Form>
         </Modal>

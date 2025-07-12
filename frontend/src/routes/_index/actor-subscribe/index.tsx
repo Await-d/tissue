@@ -8,6 +8,7 @@ import { useRequest } from 'ahooks';
 import { createPortal } from 'react-dom';
 import EditSubscribeModal from './-components/EditSubscribeModal';
 import AllDownloadsModal from './-components/AllDownloadsModal';
+import LoadingComponent from '@/components/Loading';
 
 const { Title, Text } = Typography;
 
@@ -145,13 +146,7 @@ function ActorSubscribe() {
     };
 
     if (loading) {
-        return (
-            <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
-                <Spin size="large" tip="加载中..." spinning={true}>
-                    <div style={{ padding: '50px', minHeight: '200px' }}></div>
-                </Spin>
-            </div>
-        );
+        return <LoadingComponent tip="正在加载订阅列表..." minHeight="60vh" />;
     }
 
     // 根据最后更新时间获取状态颜色

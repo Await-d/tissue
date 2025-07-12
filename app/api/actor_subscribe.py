@@ -105,13 +105,22 @@ def delete_subscription_download(
 
 
 @router.post("/run")
-def run_actor_subscribe(service=Depends(get_actor_subscribe_service)):
+def run_actor_subscribe():
     """手动执行演员订阅任务"""
     # 导入线程模块
     import threading
     
+    def task_with_db_session():
+        """在独立的数据库会话中执行任务"""
+        from app.db import SessionFactory
+        from app.service.actor_subscribe import ActorSubscribeService
+        with SessionFactory() as db:
+            service = ActorSubscribeService(db)
+            service.do_actor_subscribe()
+            db.commit()  # 确保提交事务
+    
     # 创建一个线程来执行订阅任务
-    thread = threading.Thread(target=service.do_actor_subscribe)
+    thread = threading.Thread(target=task_with_db_session)
     thread.daemon = True  # 设置为守护线程，这样主程序退出时线程也会退出
     thread.start()
     

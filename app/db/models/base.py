@@ -1,5 +1,9 @@
 from datetime import datetime
-from typing import Self, Any
+from typing import Any
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 from sqlalchemy import Column, Integer, DateTime, inspect, event
 from sqlalchemy.orm import Session, as_declarative

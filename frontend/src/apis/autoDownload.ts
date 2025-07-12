@@ -32,6 +32,7 @@ export interface AutoDownloadSubscription {
   download_url?: string
   download_time?: string
   created_at: string
+  error_message?: string
 }
 
 export interface AutoDownloadStatistics {

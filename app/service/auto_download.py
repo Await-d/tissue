@@ -296,6 +296,7 @@ class AutoDownloadService:
                 'actors': video.get('actors'),
                 'status': DownloadStatus.PENDING,
                 'resource_hash': resource_hash,
+                'error_message': None,  # 初始化时错误信息为空
                 'created_at': datetime.now()
             }
             
@@ -374,7 +375,11 @@ class AutoDownloadService:
                     ).first()
                     
                     if not torrent_record:
-                        logger.warning(f"订阅 {subscription.num} 没有找到对应的种子记录")
+                        error_msg = f"订阅 {subscription.num} 没有找到对应的种子记录"
+                        logger.warning(error_msg)
+                        subscription.status = DownloadStatus.FAILED
+                        subscription.error_message = error_msg
+                        self.db.commit()
                         continue
                     
                     # 在qBittorrent中查找对应的种子
@@ -385,7 +390,11 @@ class AutoDownloadService:
                             break
                     
                     if not qb_torrent:
-                        logger.warning(f"订阅 {subscription.num} 在qBittorrent中没有找到对应种子")
+                        error_msg = f"订阅 {subscription.num} 在qBittorrent中没有找到对应种子"
+                        logger.warning(error_msg)
+                        subscription.status = DownloadStatus.FAILED
+                        subscription.error_message = error_msg
+                        self.db.commit()
                         continue
                     
                     # 检查种子状态
@@ -395,14 +404,18 @@ class AutoDownloadService:
                     # 如果种子已完成并整理成功，更新为完成状态
                     if '整理成功' in torrent_tags:
                         subscription.status = DownloadStatus.COMPLETED
+                        # 清空错误信息
+                        subscription.error_message = None
                         self.db.commit()
                         logger.info(f"订阅 {subscription.num} 下载并整理完成，状态已更新")
                     elif '整理失败' in torrent_tags:
                         subscription.status = DownloadStatus.FAILED
+                        subscription.error_message = f"种子整理失败"
                         self.db.commit()
                         logger.info(f"订阅 {subscription.num} 整理失败，状态已更新")
                     elif torrent_state in ['error', 'missingFiles']:
                         subscription.status = DownloadStatus.FAILED
+                        subscription.error_message = f"种子状态异常: {torrent_state}"
                         self.db.commit()
                         logger.info(f"订阅 {subscription.num} 种子状态异常({torrent_state})，状态已更新为失败")
                     
@@ -481,13 +494,17 @@ class AutoDownloadService:
             # 更新状态为下载中
             subscription.status = DownloadStatus.DOWNLOADING
             subscription.download_time = datetime.now()
+            # 清空之前的错误信息
+            subscription.error_message = None
             self.db.commit()
             
             # 获取视频详情和下载链接
             video_detail = spider.get_video(subscription.num)
             if not video_detail or not getattr(video_detail, 'downloads', []):
-                logger.warning(f"视频 {subscription.num} 无法获取下载链接")
+                error_msg = f"视频 {subscription.num} 无法获取下载链接"
+                logger.warning(error_msg)
                 subscription.status = DownloadStatus.FAILED
+                subscription.error_message = error_msg
                 self.db.commit()
                 return False
             
@@ -496,8 +513,10 @@ class AutoDownloadService:
             suitable_download = self._find_suitable_download(rule, video_detail.downloads)
             
             if not suitable_download:
-                logger.warning(f"视频 {subscription.num} 找不到合适的下载链接")
+                error_msg = f"视频 {subscription.num} 找不到合适的下载链接"
+                logger.warning(error_msg)
                 subscription.status = DownloadStatus.FAILED
+                subscription.error_message = error_msg
                 self.db.commit()
                 return False
             
@@ -512,7 +531,15 @@ class AutoDownloadService:
             )
             
             # 执行下载
-            subscribe_service.download_video(subscribe_data, suitable_download)
+            try:
+                subscribe_service.download_video(subscribe_data, suitable_download)
+            except Exception as download_error:
+                error_msg = f"视频 {subscription.num} 下载服务调用失败: {str(download_error)}"
+                logger.error(error_msg)
+                subscription.status = DownloadStatus.FAILED
+                subscription.error_message = error_msg
+                self.db.commit()
+                return False
             
             # 更新订阅状态和下载链接
             subscription.download_url = getattr(suitable_download, 'magnet', None) or getattr(suitable_download, 'url', None)
@@ -522,9 +549,11 @@ class AutoDownloadService:
             return True
             
         except Exception as e:
-            logger.error(f"处理订阅 {subscription.num} 时出错: {str(e)}")
+            error_msg = f"处理订阅 {subscription.num} 时出错: {str(e)}"
+            logger.error(error_msg)
             logger.debug(traceback.format_exc())
             subscription.status = DownloadStatus.FAILED
+            subscription.error_message = error_msg
             self.db.commit()
             return False
 
@@ -686,7 +715,8 @@ class AutoDownloadService:
                     "download_url": subscription.download_url,
                     "download_time": subscription.download_time,
                     "created_at": subscription.created_at,
-                    "rule_name": rule_name
+                    "rule_name": rule_name,
+                    "error_message": subscription.error_message
                 }
                 
                 # 添加到响应列表
@@ -887,14 +917,18 @@ class AutoDownloadService:
                     elif operation.action == 'retry':
                         if subscription.status == DownloadStatus.FAILED:
                             subscription.status = DownloadStatus.PENDING
+                            # 清空错误信息，准备重试
+                            subscription.error_message = None
                             logger.info(f"重试失败记录: {subscription.num} (ID: {subscription_id})")
                             # 立即处理重试的订阅，不等待下一个调度周期
                             self.db.commit()  # 先提交状态更改
                             try:
                                 self._process_single_subscription(subscription)
                             except Exception as process_error:
-                                logger.error(f"立即处理重试订阅失败: {str(process_error)}")
+                                error_msg = f"立即处理重试订阅失败: {str(process_error)}"
+                                logger.error(error_msg)
                                 subscription.status = DownloadStatus.FAILED
+                                subscription.error_message = error_msg
                                 self.db.commit()
                         else:
                             logger.warning(f"订阅记录状态不是失败，无法重试: {subscription.num} (当前状态: {subscription.status})")
@@ -907,6 +941,8 @@ class AutoDownloadService:
                     elif operation.action == 'resume':
                         if subscription.status == DownloadStatus.FAILED:
                             subscription.status = DownloadStatus.PENDING
+                            # 清空错误信息，准备恢复
+                            subscription.error_message = None
                             logger.info(f"恢复订阅记录: {subscription.num} (ID: {subscription_id})")
                         else:
                             logger.warning(f"只能恢复失败状态的订阅: {subscription.num} (当前状态: {subscription.status})")

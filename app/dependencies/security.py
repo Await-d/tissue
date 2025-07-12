@@ -1,4 +1,5 @@
 import jwt
+from typing import Union
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
@@ -40,7 +41,7 @@ def get_current_user(db: Session = Depends(get_db)):
     return user
 
 
-def get_current_admin_user(db: Session = Depends(get_db)) -> User | None:
+def get_current_admin_user(db: Session = Depends(get_db)) -> Union[User, None]:
     user_id = get_current_user_id()  # 使用安全的获取方法
     user = User.get(db, user_id)
     if not user:

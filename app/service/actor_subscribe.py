@@ -54,6 +54,8 @@ class ActorSubscribeService(BaseService):
                     'is_zh': row.is_zh,
                     'is_uncensored': row.is_uncensored,
                     'is_paused': row.is_paused,
+                    'min_rating': getattr(row, 'min_rating', 0.0),
+                    'min_comments': getattr(row, 'min_comments', 0),
                     'download_count': row.download_count,
                     'subscribed_works_count': 0  # 默认值，将在下面计算
                 }
@@ -247,19 +249,34 @@ class ActorSubscribeService(BaseService):
         
         for subscription in active_subscriptions:
             try:
+                logger.info(f"开始处理演员订阅: {subscription['actor_name']}")
+                logger.info(f"订阅条件 - 最低评分: {subscription.get('min_rating', 0.0)}, 最低评论数: {subscription.get('min_comments', 0)}")
+                
                 # 获取演员的作品列表
                 actor_videos = spider.get_web_actor_videos(subscription['actor_name'], "javdb")
                 if not actor_videos:
                     logger.error(f"未获取到演员 {subscription['actor_name']} 的作品列表")
                     continue
                 
+                logger.info(f"获取到演员 {subscription['actor_name']} 的 {len(actor_videos)} 个作品")
+                
                 # 获取该演员已下载的作品列表
                 downloaded_videos = self.get_actor_subscription_downloads(subscription['id'])
                 downloaded_nums = {video.num for video in downloaded_videos}
+                logger.info(f"已下载作品数量: {len(downloaded_nums)}")
                 
                 # 筛选出符合条件的新作品
                 new_videos = []
+                total_filtered = 0
                 for video in actor_videos:
+                    total_filtered += 1
+                    logger.info(f"检查作品 {total_filtered}/{len(actor_videos)}: {video.get('num')} - {video.get('title', '')[:50]}")
+                    
+                    # 显示作品的基本信息
+                    rating = video.get('rating', 'N/A')
+                    comments_count = video.get('comments_count', 'N/A')
+                    publish_date = video.get('publish_date', 'N/A')
+                    logger.info(f"  评分: {rating}, 评论数: {comments_count}, 发布日期: {publish_date}")
                     # 检查是否是新作品（发布日期晚于订阅起始日期）
                     if video.get("publish_date"):
                         try:
@@ -269,8 +286,16 @@ class ActorSubscribeService(BaseService):
                             else:
                                 # 如果已经是日期对象
                                 video_date = video["publish_date"]
+                            
+                            # 确保订阅起始日期也是date对象
+                            from_date = subscription['from_date']
+                            if isinstance(from_date, str):
+                                from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+                            elif hasattr(from_date, 'date'):
+                                from_date = from_date.date()
                                 
-                            if video_date < subscription['from_date']:
+                            if video_date < from_date:
+                                logger.info(f"  跳过: 发布日期 {video_date} 早于订阅起始日期 {from_date}")
                                 continue
                         except Exception as e:
                             logger.error(f"解析日期失败: {e}")
@@ -278,8 +303,44 @@ class ActorSubscribeService(BaseService):
                     
                     # 检查是否已下载
                     if video["num"] in downloaded_nums:
+                        logger.info(f"  跳过: 已下载 {video['num']}")
                         continue
                     
+                    # 检查评分筛选条件
+                    if subscription.get('min_rating', 0.0) > 0.0:
+                        video_rating = video.get('rating', 0.0)
+                        # 确保 video_rating 不为 None
+                        if video_rating is None:
+                            video_rating = 0.0
+                        elif isinstance(video_rating, str):
+                            try:
+                                video_rating = float(video_rating)
+                            except (ValueError, TypeError):
+                                video_rating = 0.0
+                        elif not isinstance(video_rating, (int, float)):
+                            video_rating = 0.0
+                        if video_rating < subscription['min_rating']:
+                            logger.info(f"  跳过: 评分 {video_rating} 低于要求的 {subscription['min_rating']}")
+                            continue
+                    
+                    # 检查评论数筛选条件
+                    if subscription.get('min_comments', 0) > 0:
+                        video_comments = video.get('comments_count', 0)
+                        # 确保 video_comments 不为 None
+                        if video_comments is None:
+                            video_comments = 0
+                        elif isinstance(video_comments, str):
+                            try:
+                                video_comments = int(video_comments)
+                            except (ValueError, TypeError):
+                                video_comments = 0
+                        elif not isinstance(video_comments, (int, float)):
+                            video_comments = 0
+                        if video_comments < subscription['min_comments']:
+                            logger.info(f"  跳过: 评论数 {video_comments} 低于要求的 {subscription['min_comments']}")
+                            continue
+                    
+                    logger.info(f"  ✓ 符合条件: {video['num']}")
                     new_videos.append(video)
                 
                 logger.info(f"演员 {subscription['actor_name']} 有 {len(new_videos)} 个新作品")
@@ -469,8 +530,16 @@ class ActorSubscribeService(BaseService):
                             video_date = datetime.strptime(video["publish_date"], "%Y-%m-%d").date()
                         else:
                             video_date = video["publish_date"]
+                        
+                        # 确保订阅起始日期也是date对象
+                        if isinstance(from_date, str):
+                            from_date_obj = datetime.strptime(from_date, "%Y-%m-%d").date()
+                        elif hasattr(from_date, 'date'):
+                            from_date_obj = from_date.date()
+                        else:
+                            from_date_obj = from_date
                             
-                        if video_date >= from_date:
+                        if video_date >= from_date_obj:
                             qualified_videos.append(video)
                     except Exception as e:
                         logger.error(f"解析日期失败: {e}")

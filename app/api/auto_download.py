@@ -1,7 +1,9 @@
 """
 自动下载API路由
 """
+import asyncio
 from typing import List, Optional
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -14,6 +16,9 @@ from app.db.models.auto_download import TimeRangeType
 
 
 router = APIRouter(tags=["自动下载"], dependencies=[Depends(verify_token)])
+
+# 任务状态存储（生产环境中应该使用Redis或数据库）
+_task_status = {}
 
 
 # 规则管理API
@@ -195,19 +200,84 @@ async def trigger_auto_download(
     trigger_data: schema.AutoDownloadTrigger,
     service: AutoDownloadService = Depends(get_auto_download_service)
 ):
-    """手动触发自动下载"""
+    """手动触发自动下载（异步后台执行）"""
     try:
-        result = service.execute_rules(
-            rule_ids=trigger_data.rule_ids,
-            force=trigger_data.force
-        )
+        # 生成任务ID
+        task_id = f"trigger_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # 初始化任务状态
+        _task_status[task_id] = {
+            "status": "running",
+            "started_at": datetime.now().isoformat(),
+            "completed_at": None,
+            "rule_ids": trigger_data.rule_ids,
+            "force": trigger_data.force,
+            "result": None,
+            "error": None
+        }
+        
+        async def background_task():
+            """后台执行任务"""
+            try:
+                # 在新的数据库会话中执行
+                from app.db import SessionFactory
+                with SessionFactory() as db:
+                    task_service = AutoDownloadService(db=db)
+                    result = task_service.execute_rules(
+                        rule_ids=trigger_data.rule_ids,
+                        force=trigger_data.force
+                    )
+                    db.commit()
+                
+                # 更新任务状态
+                _task_status[task_id].update({
+                    "status": "completed",
+                    "completed_at": datetime.now().isoformat(),
+                    "result": result
+                })
+                print(f"智能下载任务 {task_id} 执行完成: {result}")
+                
+            except Exception as e:
+                # 更新任务状态
+                _task_status[task_id].update({
+                    "status": "failed",
+                    "completed_at": datetime.now().isoformat(),
+                    "error": str(e)
+                })
+                print(f"智能下载任务 {task_id} 执行失败: {str(e)}")
+                import traceback
+                traceback.print_exc()
+        
+        # 在后台执行
+        asyncio.create_task(background_task())
+        
         return schema.AutoDownloadResponse(
             success=True,
-            message="触发成功",
-            data=result
+            message=f"智能下载任务已启动，任务ID: {task_id}。任务将在后台执行，可通过 /api/auto-download/tasks/{task_id} 查看状态。",
+            data={
+                "task_id": task_id,
+                "status": "started",
+                "started_at": datetime.now().isoformat(),
+                "rule_ids": trigger_data.rule_ids,
+                "force": trigger_data.force
+            }
         )
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/tasks/{task_id}", response_model=schema.AutoDownloadResponse, summary="查询任务状态")
+async def get_task_status(task_id: str):
+    """查询智能下载任务状态"""
+    if task_id not in _task_status:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="任务不存在")
+    
+    task_info = _task_status[task_id]
+    return schema.AutoDownloadResponse(
+        success=True,
+        message="任务状态查询成功",
+        data=task_info
+    )
 
 
 # 规则测试API
