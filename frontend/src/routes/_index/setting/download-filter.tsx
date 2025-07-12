@@ -20,7 +20,7 @@ import {
 } from 'antd'
 import { 
   InfoCircleOutlined, 
-  TestTubeOutlined, 
+  ExperimentOutlined, 
   ReloadOutlined,
   SettingOutlined,
   FilterOutlined
@@ -310,7 +310,7 @@ function DownloadFilterSettings() {
 
               <Button 
                 onClick={() => setTestModalVisible(true)}
-                icon={<TestTubeOutlined />}
+                icon={<ExperimentOutlined />}
               >
                 测试过滤
               </Button>
