@@ -249,3 +249,67 @@ class DownloadService(BaseService):
             for torrent in torrents:
                 if '整理成功' in torrent.tags:
                     download_service.delete_download(torrent.hash)
+
+    @classmethod
+    def job_stop_seeding_completed(cls):
+        """检查已完成种子并停止做种的定时任务"""
+        try:
+            logger.info("开始检查已完成种子并停止做种...")
+            with SessionFactory() as db:
+                download_service = DownloadService(db=db)
+                
+                # 检查设置是否启用停止做种功能
+                if not download_service.setting.download.stop_seeding:
+                    logger.info("停止做种功能未启用，跳过检查")
+                    return
+                
+                try:
+                    # 获取qBittorrent中的所有种子
+                    response = download_service.qb.get_all_torrents()
+                    if hasattr(response, 'json'):
+                        torrents = response.json() if response.status_code == 200 else []
+                    else:
+                        torrents = response
+                    
+                    stopped_count = 0
+                    checked_count = 0
+                    
+                    for torrent in torrents:
+                        # 只处理指定分类的种子（如果有设置分类）
+                        category = download_service.setting.download.category
+                        if category and torrent.get('category') != category:
+                            continue
+                            
+                        checked_count += 1
+                        
+                        # 检查种子状态：已完成下载且标记为整理成功，但仍在做种
+                        state = torrent.get('state', '')
+                        tags = torrent.get('tags', '')
+                        progress = torrent.get('progress', 0)
+                        
+                        # 条件：1) 下载完成 2) 标记为整理成功 3) 当前状态是做种相关
+                        is_completed = progress >= 1.0  # 下载进度100%
+                        is_organized = '整理成功' in tags  # 已整理成功
+                        is_seeding = state in ['uploading', 'stalledUP', 'queuedUP', 'forcedUP']  # 正在做种
+                        
+                        if is_completed and is_organized and is_seeding:
+                            try:
+                                # 暂停种子以停止做种
+                                download_service.qb.pause_torrent(torrent['hash'])
+                                stopped_count += 1
+                                logger.info(f"已停止种子做种: {torrent.get('name', 'Unknown')} (hash: {torrent['hash'][:8]}...)")
+                            except Exception as e:
+                                logger.error(f"停止种子做种失败: {torrent.get('name', 'Unknown')} - {str(e)}")
+                    
+                    if stopped_count > 0:
+                        logger.info(f"定时检查完成：检查了 {checked_count} 个种子，停止了 {stopped_count} 个种子的做种")
+                    else:
+                        logger.info(f"定时检查完成：检查了 {checked_count} 个种子，无需停止做种的种子")
+                        
+                except Exception as e:
+                    logger.error(f"获取qBittorrent种子列表失败: {str(e)}")
+                    
+        except Exception as e:
+            logger.error(f"执行停止做种检查任务时出错: {str(e)}")
+            import traceback
+            logger.error(f"详细错误信息: {traceback.format_exc()}")

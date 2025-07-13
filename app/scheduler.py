@@ -51,6 +51,10 @@ class Scheduler:
                             name='智能自动下载',
                             job=AutoDownloadService.job_auto_download,
                             interval=60, jitter=10 * 60),
+        'stop_seeding_completed': Job(key='stop_seeding_completed',
+                                      name='停止已完成种子做种',
+                                      job=DownloadService.job_stop_seeding_completed,
+                                      interval=10, jitter=2 * 60),
     }
 
     def __init__(self):
@@ -69,6 +73,8 @@ class Scheduler:
             self.add('scrape_download')
         if setting.download.delete_auto:
             self.add('delete_complete_download')
+        if setting.download.stop_seeding:
+            self.add('stop_seeding_completed')
 
         self.scheduler.add_job(
             ActorSubscribeService.job_actor_subscribe,
