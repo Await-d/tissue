@@ -286,13 +286,25 @@ class DownloadService(BaseService):
                         state = torrent.get('state', '')
                         tags = torrent.get('tags', '')
                         progress = torrent.get('progress', 0)
+                        name = torrent.get('name', 'Unknown')[:50]  # 截取前50个字符
                         
-                        # 条件：1) 下载完成 2) 标记为整理成功 3) 当前状态是做种相关
+                        # 条件检查
                         is_completed = progress >= 1.0  # 下载进度100%
                         is_organized = '整理成功' in tags  # 已整理成功
                         is_seeding = state in ['uploading', 'stalledUP', 'queuedUP', 'forcedUP']  # 正在做种
                         
-                        if is_completed and is_organized and is_seeding:
+                        # 输出详细调试信息（只显示前5个作为示例）
+                        if checked_count <= 5:
+                            logger.info(f"种子{checked_count}: {name}")
+                            logger.info(f"  状态: {state}, 进度: {progress:.1%}, 标签: {tags}")
+                            logger.info(f"  检查结果: 完成={is_completed}, 已整理={is_organized}, 做种中={is_seeding}")
+                        
+                        # 修改条件：已完成下载 且 (已整理成功 或 没有整理相关标签) 且 正在做种
+                        # 这样可以处理那些完成但还未整理的种子
+                        has_organize_tag = '整理成功' in tags or '整理失败' in tags
+                        should_stop = is_completed and is_seeding and (is_organized or not has_organize_tag)
+                        
+                        if should_stop:
                             try:
                                 # 暂停种子以停止做种
                                 download_service.qb.pause_torrent(torrent['hash'])
