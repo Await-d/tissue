@@ -99,22 +99,22 @@ class DatabaseMigration:
         Args:
             table_name: 表名
         """
-        # 定义需要检查的列及其SQL定义
+        # 定义需要检查的列及其SQL定义（SQLite不支持COMMENT语法）
         required_columns = {
-            'min_file_size_mb': "ALTER TABLE download_filter_settings ADD COLUMN min_file_size_mb INTEGER NOT NULL DEFAULT 300 COMMENT '最小文件大小(MB)'",
-            'max_file_size_mb': "ALTER TABLE download_filter_settings ADD COLUMN max_file_size_mb INTEGER NULL COMMENT '最大文件大小(MB), null表示无限制'",
-            'allowed_extensions': "ALTER TABLE download_filter_settings ADD COLUMN allowed_extensions TEXT NULL COMMENT '允许的文件扩展名，JSON格式'",
-            'blocked_extensions': "ALTER TABLE download_filter_settings ADD COLUMN blocked_extensions TEXT NULL COMMENT '禁止的文件扩展名，JSON格式'",
-            'min_seed_count': "ALTER TABLE download_filter_settings ADD COLUMN min_seed_count INTEGER NULL DEFAULT 1 COMMENT '最小种子数'",
-            'max_total_size_gb': "ALTER TABLE download_filter_settings ADD COLUMN max_total_size_gb DECIMAL(10,2) NULL COMMENT '种子总大小限制(GB)'",
-            'enable_smart_filter': "ALTER TABLE download_filter_settings ADD COLUMN enable_smart_filter BOOLEAN NOT NULL DEFAULT 1 COMMENT '启用智能过滤'",
-            'skip_sample_files': "ALTER TABLE download_filter_settings ADD COLUMN skip_sample_files BOOLEAN NOT NULL DEFAULT 1 COMMENT '跳过样本文件'",
-            'skip_subtitle_only': "ALTER TABLE download_filter_settings ADD COLUMN skip_subtitle_only BOOLEAN NOT NULL DEFAULT 1 COMMENT '跳过仅字幕文件'",
-            'media_files_only': "ALTER TABLE download_filter_settings ADD COLUMN media_files_only BOOLEAN NOT NULL DEFAULT 0 COMMENT '只保留媒体文件(视频+字幕)'",
-            'include_subtitles': "ALTER TABLE download_filter_settings ADD COLUMN include_subtitles BOOLEAN NOT NULL DEFAULT 1 COMMENT '包含字幕文件'",
-            'is_active': "ALTER TABLE download_filter_settings ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1 COMMENT '是否激活'",
-            'created_at': "ALTER TABLE download_filter_settings ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'",
-            'updated_at': "ALTER TABLE download_filter_settings ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'"
+            'min_file_size_mb': "ALTER TABLE download_filter_settings ADD COLUMN min_file_size_mb INTEGER NOT NULL DEFAULT 300",
+            'max_file_size_mb': "ALTER TABLE download_filter_settings ADD COLUMN max_file_size_mb INTEGER NULL",
+            'allowed_extensions': "ALTER TABLE download_filter_settings ADD COLUMN allowed_extensions TEXT NULL",
+            'blocked_extensions': "ALTER TABLE download_filter_settings ADD COLUMN blocked_extensions TEXT NULL",
+            'min_seed_count': "ALTER TABLE download_filter_settings ADD COLUMN min_seed_count INTEGER NULL DEFAULT 1",
+            'max_total_size_gb': "ALTER TABLE download_filter_settings ADD COLUMN max_total_size_gb DECIMAL(10,2) NULL",
+            'enable_smart_filter': "ALTER TABLE download_filter_settings ADD COLUMN enable_smart_filter BOOLEAN NOT NULL DEFAULT 1",
+            'skip_sample_files': "ALTER TABLE download_filter_settings ADD COLUMN skip_sample_files BOOLEAN NOT NULL DEFAULT 1",
+            'skip_subtitle_only': "ALTER TABLE download_filter_settings ADD COLUMN skip_subtitle_only BOOLEAN NOT NULL DEFAULT 1",
+            'media_files_only': "ALTER TABLE download_filter_settings ADD COLUMN media_files_only BOOLEAN NOT NULL DEFAULT 0",
+            'include_subtitles': "ALTER TABLE download_filter_settings ADD COLUMN include_subtitles BOOLEAN NOT NULL DEFAULT 1",
+            'is_active': "ALTER TABLE download_filter_settings ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1",
+            'created_at': "ALTER TABLE download_filter_settings ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            'updated_at': "ALTER TABLE download_filter_settings ADD COLUMN updated_at DATETIME NULL"
         }
         
         for column_name, alter_sql in required_columns.items():
