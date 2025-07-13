@@ -272,6 +272,7 @@ class DownloadService(BaseService):
                         torrents = response
                     
                     stopped_count = 0
+                    deleted_count = 0
                     checked_count = 0
                     
                     for torrent in torrents:
@@ -293,11 +294,26 @@ class DownloadService(BaseService):
                         is_organized = '整理成功' in tags  # 已整理成功
                         is_seeding = state in ['uploading', 'stalledUP', 'queuedUP', 'forcedUP']  # 正在做种
                         
+                        # 检查是否为丢失文件的种子
+                        is_missing_files = state in ['missingFiles', 'error']
+                        
                         # 输出详细调试信息（只显示前5个作为示例）
                         if checked_count <= 5:
                             logger.info(f"种子{checked_count}: {name}")
                             logger.info(f"  状态: {state}, 进度: {progress:.1%}, 标签: {tags}")
-                            logger.info(f"  检查结果: 完成={is_completed}, 已整理={is_organized}, 做种中={is_seeding}")
+                            logger.info(f"  检查结果: 完成={is_completed}, 已整理={is_organized}, 做种中={is_seeding}, 丢失文件={is_missing_files}")
+                        
+                        # 处理丢失文件的种子
+                        
+                        if is_missing_files:
+                            try:
+                                # 删除丢失文件的种子（包括数据）
+                                download_service.qb.delete_torrent(torrent['hash'], delete_files=True)
+                                deleted_count += 1
+                                logger.info(f"已删除丢失文件种子: {name} (hash: {torrent['hash'][:8]}...)")
+                            except Exception as e:
+                                logger.error(f"删除丢失文件种子失败: {name} - {str(e)}")
+                            continue  # 跳过后续的停止做种检查
                         
                         # 修改条件：已完成下载 且 (已整理成功 或 没有整理相关标签) 且 正在做种
                         # 这样可以处理那些完成但还未整理的种子
@@ -313,10 +329,17 @@ class DownloadService(BaseService):
                             except Exception as e:
                                 logger.error(f"停止种子做种失败: {torrent.get('name', 'Unknown')} - {str(e)}")
                     
+                    # 输出统计结果
+                    result_messages = []
                     if stopped_count > 0:
-                        logger.info(f"定时检查完成：检查了 {checked_count} 个种子，停止了 {stopped_count} 个种子的做种")
+                        result_messages.append(f"停止了 {stopped_count} 个种子的做种")
+                    if deleted_count > 0:
+                        result_messages.append(f"删除了 {deleted_count} 个丢失文件的种子")
+                    
+                    if result_messages:
+                        logger.info(f"定时检查完成：检查了 {checked_count} 个种子，" + "，".join(result_messages))
                     else:
-                        logger.info(f"定时检查完成：检查了 {checked_count} 个种子，无需停止做种的种子")
+                        logger.info(f"定时检查完成：检查了 {checked_count} 个种子，无需处理的种子")
                         
                 except Exception as e:
                     logger.error(f"获取qBittorrent种子列表失败: {str(e)}")
