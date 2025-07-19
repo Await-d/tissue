@@ -436,7 +436,8 @@ class JavdbSpider(Spider):
             for page in range(1, max_pages + 1):
                 # 构造排行榜URL
                 if video_type == 'uncensored':
-                    url = urljoin(self.host, f"/rankings/uncensored?t={cycle}&page={page}")
+                    # 无码排行榜使用movies路径，通过v参数指定uncensored
+                    url = urljoin(self.host, f"/rankings/movies?t={cycle}&v=uncensored&page={page}")
                 else:
                     url = urljoin(self.host, f"/rankings/videos?t={cycle}&page={page}")
                 logger.info(f"获取排行榜页面: {url}")
