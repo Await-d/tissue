@@ -461,6 +461,10 @@ class JavdbSpider(Spider):
                     "Referer": self.host
                 }
                 
+                # 设置年龄验证Cookie绕过成人内容确认
+                self.session.cookies.set('over18', '1', domain='.javdb.com')
+                self.session.cookies.set('locale', 'zh', domain='.javdb.com')
+                
                 response = self.session.get(url, headers=headers)
                 html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
                 
@@ -511,6 +515,36 @@ class JavdbSpider(Spider):
         # 排行榜页面使用movie-list结构
         video_elements = html.xpath("//div[@class='movie-list']//div[@class='item']")
         logger.info(f"{page_type}第 {page} 页找到 {len(video_elements)} 个视频元素")
+        
+        # 如果没找到，尝试其他可能的选择器
+        if not video_elements:
+            alternative_selectors = [
+                "//div[@class='item']",  # 直接查找item
+                "//div[contains(@class, 'movie-list')]//div[contains(@class, 'item')]",  # 更宽松的匹配
+                "//div[@class='grid-item']",  # 可能的替代class名
+                "//div[contains(@class, 'video-item')]"  # 其他可能的video item class
+            ]
+            
+            for selector in alternative_selectors:
+                video_elements = html.xpath(selector)
+                if video_elements:
+                    logger.info(f"使用备用选择器找到 {len(video_elements)} 个视频元素: {selector}")
+                    break
+                else:
+                    logger.debug(f"备用选择器无结果: {selector}")
+        
+        if not video_elements:
+            # 输出页面的一些基本信息用于调试
+            page_title = html.xpath("//title/text()")
+            if page_title:
+                logger.warning(f"页面标题: {page_title[0]}")
+            
+            # 检查是否有年龄验证模态框
+            modal_elements = html.xpath("//div[contains(@class, 'modal')]")
+            if modal_elements:
+                logger.warning(f"检测到 {len(modal_elements)} 个模态框元素，可能需要年龄验证")
+            
+            logger.warning(f"未找到任何视频元素，页面可能结构已变化或需要额外验证")
         
         for element in video_elements:
             try:
