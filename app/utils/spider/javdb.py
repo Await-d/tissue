@@ -492,25 +492,94 @@ class JavdbSpider(Spider):
                         if cover_element:
                             video_info['cover'] = cover_element[0].get('src')
                         
-                        # 获取评分
-                        rating_element = element.xpath(".//span[@class='score']")
+                        # 获取评分 - 多种XPath选择器尝试
                         rating = None
-                        if rating_element:
-                            rating_text = rating_element[0].text
-                            rating_match = re.search(r"(\d+\.\d+)", rating_text)
-                            if rating_match:
-                                rating = float(rating_match.group(1))
+                        # 尝试多种可能的评分元素选择器
+                        rating_selectors = [
+                            ".//span[@class='score']",
+                            ".//div[@class='score']//span[@class='value']",
+                            ".//div[contains(@class, 'score')]//span[contains(@class, 'value')]",
+                            ".//span[contains(@class, 'score')]",
+                            ".//div[contains(@class, 'rating')]",
+                            ".//span[contains(text(), '分')]"
+                        ]
+                        
+                        for selector in rating_selectors:
+                            rating_elements = element.xpath(selector)
+                            if rating_elements:
+                                rating_text = rating_elements[0].text or ""
+                                # 尝试多种评分格式匹配
+                                rating_patterns = [
+                                    r"(\d+\.\d+)分?",
+                                    r"(\d+\.\d+)",
+                                    r"(\d+)分"
+                                ]
+                                for pattern in rating_patterns:
+                                    rating_match = re.search(pattern, rating_text)
+                                    if rating_match:
+                                        try:
+                                            rating = float(rating_match.group(1))
+                                            logger.debug(f"成功提取评分: {rating} (选择器: {selector}, 文本: {rating_text})")
+                                            break
+                                        except ValueError:
+                                            continue
+                                if rating is not None:
+                                    break
+                        
+                        if rating is None:
+                            logger.debug(f"视频 {num} 未找到评分数据")
+                        
                         video_info['rating'] = rating
                         
-                        # 尝试从排行榜页面获取评论数
-                        comment_element = element.xpath(".//div[@class='meta']")
+                        # 尝试从排行榜页面获取评论数 - 多种选择器尝试
                         comments = 0
-                        if comment_element:
-                            meta_text = comment_element[0].text or ""
-                            # 尝试提取评论数，格式可能是 "123 評論" 或类似
-                            comment_match = re.search(r"(\d+)\s*評論", meta_text)
-                            if comment_match:
-                                comments = int(comment_match.group(1))
+                        # 尝试多种可能的评论数元素选择器
+                        comment_selectors = [
+                            ".//div[@class='meta']",
+                            ".//div[contains(@class, 'meta')]",
+                            ".//span[contains(@class, 'comments')]",
+                            ".//div[contains(@class, 'score')]",
+                            ".//span[contains(text(), '評論')]",
+                            ".//span[contains(text(), '评论')]",
+                            ".//a[contains(@href, '/reviews')]"
+                        ]
+                        
+                        for selector in comment_selectors:
+                            comment_elements = element.xpath(selector)
+                            if comment_elements:
+                                # 获取元素文本，尝试多种方式
+                                element_text = ""
+                                if hasattr(comment_elements[0], 'text') and comment_elements[0].text:
+                                    element_text = comment_elements[0].text
+                                elif hasattr(comment_elements[0], 'get'):
+                                    # 如果是链接元素，尝试获取文本内容
+                                    element_text = ''.join(comment_elements[0].itertext())
+                                
+                                if element_text:
+                                    # 尝试多种评论数格式匹配
+                                    comment_patterns = [
+                                        r"(\d+)\s*評論",
+                                        r"(\d+)\s*评论", 
+                                        r"(\d+)\s*條評論",
+                                        r"(\d+)\s*条评论",
+                                        r"由(\d+)人評價",
+                                        r"(\d+)\s*人评价",
+                                        r"(\d+)"  # 最后尝试纯数字
+                                    ]
+                                    for pattern in comment_patterns:
+                                        comment_match = re.search(pattern, element_text)
+                                        if comment_match:
+                                            try:
+                                                comments = int(comment_match.group(1))
+                                                logger.debug(f"成功提取评论数: {comments} (选择器: {selector}, 文本: {element_text})")
+                                                break
+                                            except ValueError:
+                                                continue
+                                    if comments > 0:
+                                        break
+                        
+                        if comments == 0:
+                            logger.debug(f"视频 {num} 未找到评论数据")
                         
                         video_info['comments'] = comments
                         video_info['comments_count'] = comments
