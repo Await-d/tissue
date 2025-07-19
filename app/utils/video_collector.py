@@ -197,16 +197,14 @@ class VideoCollector:
         logger.info("开始从排行榜获取视频数据，避免访问详情页...")
         
         # 获取有码排行榜
-        if is_uncensored is None or is_uncensored is False:
-            censored_videos = self.get_ranking_videos('censored', 'daily', max_pages)
-            filtered_videos.extend(censored_videos)
+        censored_videos = self.get_ranking_videos('censored', 'daily', max_pages)
+        filtered_videos.extend(censored_videos)
         
         # 获取无码排行榜
-        if is_uncensored is None or is_uncensored is True:
-            uncensored_videos = self.get_ranking_videos('uncensored', 'daily', max_pages)
-            filtered_videos.extend(uncensored_videos)
+        uncensored_videos = self.get_ranking_videos('uncensored', 'daily', max_pages)
+        filtered_videos.extend(uncensored_videos)
         
-        logger.info(f"从排行榜获取到 {len(filtered_videos)} 个视频，开始基础筛选...")
+        logger.info(f"从排行榜获取到 {len(filtered_videos)} 个视频（包含有码和无码），开始基础筛选...")
         
         # 2. 对排行榜视频进行基础筛选（这些视频已经包含评分和评论信息）
         basic_filtered = []
