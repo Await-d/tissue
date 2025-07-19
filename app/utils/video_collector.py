@@ -210,12 +210,21 @@ class VideoCollector:
         
         # 2. 对排行榜视频进行基础筛选（这些视频已经包含评分和评论信息）
         basic_filtered = []
-        for video in filtered_videos:
-            # 添加详细的日志输出，显示每个视频的评分和评论数据
+        logger.info(f"开始详细筛选，筛选条件: 最低评分={min_rating}, 最低评论数={min_comments}, 无码={is_uncensored}, 高清={is_hd}, 中文={is_zh}")
+        
+        for i, video in enumerate(filtered_videos, 1):
+            video_num = video.get('num', 'Unknown')
+            video_title = video.get('title', 'Unknown')[:30]  # 截取前30个字符
+            
+            # 获取视频的评分和评论数据
             video_rating = video.get('rating')
             video_comments = video.get('comments', 0)
             video_comments_count = video.get('comments_count', 0)
-            logger.info(f"视频 {video.get('num')} - 评分: {video_rating} (类型: {type(video_rating)}), 评论: {video_comments} (类型: {type(video_comments)}), 评论数: {video_comments_count} (类型: {type(video_comments_count)})")
+            
+            logger.info(f"[{i}/{len(filtered_videos)}] 检查视频: {video_num} - {video_title}")
+            logger.info(f"  评分: {video_rating} (类型: {type(video_rating).__name__})")
+            logger.info(f"  评论: {video_comments} (类型: {type(video_comments).__name__})")
+            logger.info(f"  评论数: {video_comments_count} (类型: {type(video_comments_count).__name__})")
             
             # 尝试从多个字段获取评论数
             if video_comments == 0 and video_comments_count != 0:
@@ -223,44 +232,91 @@ class VideoCollector:
                 logger.info(f"视频 {video.get('num')} 使用 comments_count 字段: {video_comments}")
             
             # 评分筛选
-            if min_rating is not None and min_rating > 0 and video_rating is not None:
-                try:
-                    rating_float = float(video_rating)
-                    min_rating_float = float(min_rating)
-                    logger.info(f"视频 {video.get('num')} 评分比较: {rating_float} >= {min_rating_float} ? {rating_float >= min_rating_float}")
-                    if rating_float < min_rating_float:
-                        logger.info(f"视频 {video.get('num')} 评分 {rating_float} 低于要求 {min_rating_float}，跳过")
+            rating_pass = True
+            if min_rating is not None and min_rating > 0:
+                if video_rating is not None:
+                    try:
+                        rating_float = float(video_rating)
+                        min_rating_float = float(min_rating)
+                        rating_pass = rating_float >= min_rating_float
+                        logger.info(f"  📊 评分检查: {rating_float} >= {min_rating_float} -> {'✅ 通过' if rating_pass else '❌ 不通过'}")
+                        if not rating_pass:
+                            logger.info(f"  ⏭️  跳过原因: 评分 {rating_float} 低于要求 {min_rating_float}")
+                            continue
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"  ⚠️  评分转换失败: {video_rating} ({type(video_rating).__name__}), 错误: {e}")
+                        logger.info(f"  ⏭️  跳过原因: 评分数据无效")
                         continue
-                except (ValueError, TypeError) as e:
-                    logger.warning(f"视频 {video.get('num')} 评分转换失败: {video_rating} (类型: {type(video_rating)}), 错误: {e}")
+                else:
+                    logger.info(f"  📊 评分检查: 无评分数据 -> ❌ 不通过")
+                    logger.info(f"  ⏭️  跳过原因: 无评分数据")
                     continue
+            else:
+                logger.info(f"  📊 评分检查: 无要求 -> ✅ 跳过检查")
                 
             # 评论数筛选
-            if min_comments is not None and min_comments > 0 and video_comments is not None:
-                try:
-                    comments_int = int(video_comments)
-                    min_comments_int = int(min_comments)
-                    logger.info(f"视频 {video.get('num')} 评论数比较: {comments_int} >= {min_comments_int} ? {comments_int >= min_comments_int}")
-                    if comments_int < min_comments_int:
-                        logger.info(f"视频 {video.get('num')} 评论数 {comments_int} 低于要求 {min_comments_int}，跳过")
+            comments_pass = True
+            if min_comments is not None and min_comments > 0:
+                # 尝试从多个字段获取评论数
+                final_comments = video_comments
+                if video_comments == 0 and video_comments_count != 0:
+                    final_comments = video_comments_count
+                    logger.info(f"  📝 使用 comments_count 字段: {final_comments}")
+                
+                if final_comments is not None and final_comments > 0:
+                    try:
+                        comments_int = int(final_comments)
+                        min_comments_int = int(min_comments)
+                        comments_pass = comments_int >= min_comments_int
+                        logger.info(f"  💬 评论数检查: {comments_int} >= {min_comments_int} -> {'✅ 通过' if comments_pass else '❌ 不通过'}")
+                        if not comments_pass:
+                            logger.info(f"  ⏭️  跳过原因: 评论数 {comments_int} 低于要求 {min_comments_int}")
+                            continue
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"  ⚠️  评论数转换失败: {final_comments} ({type(final_comments).__name__}), 错误: {e}")
+                        logger.info(f"  ⏭️  跳过原因: 评论数数据无效")
                         continue
-                except (ValueError, TypeError) as e:
-                    logger.warning(f"视频 {video.get('num')} 评论数转换失败: {video_comments} (类型: {type(video_comments)}), 错误: {e}")
+                else:
+                    logger.info(f"  💬 评论数检查: 评论数为0 -> ❌ 不通过")
+                    logger.info(f"  ⏭️  跳过原因: 评论数为0，低于要求 {min_comments}")
                     continue
-            elif min_comments is not None and min_comments > 0 and video_comments == 0:
-                logger.info(f"视频 {video.get('num')} 评论数为0，低于要求 {min_comments}，跳过")
-                continue
+            else:
+                logger.info(f"  💬 评论数检查: 无要求 -> ✅ 跳过检查")
             
             # 质量要求筛选（排行榜数据已包含这些信息）
-            if is_uncensored is not None and video.get('is_uncensored', False) != is_uncensored:
-                continue
-                
-            if is_hd is not None and video.get('is_hd', False) != is_hd:
-                continue
-                
-            if is_zh is not None and video.get('is_zh', False) != is_zh:
-                continue
+            quality_checks = []
+            quality_pass = True
             
+            if is_uncensored is not None:
+                video_uncensored = video.get('is_uncensored', False)
+                uncensored_pass = video_uncensored == is_uncensored
+                quality_checks.append(f"无码={video_uncensored}{'✅' if uncensored_pass else '❌'}")
+                if not uncensored_pass:
+                    quality_pass = False
+                    
+            if is_hd is not None:
+                video_hd = video.get('is_hd', False)
+                hd_pass = video_hd == is_hd
+                quality_checks.append(f"高清={video_hd}{'✅' if hd_pass else '❌'}")
+                if not hd_pass:
+                    quality_pass = False
+                    
+            if is_zh is not None:
+                video_zh = video.get('is_zh', False)
+                zh_pass = video_zh == is_zh
+                quality_checks.append(f"中文={video_zh}{'✅' if zh_pass else '❌'}")
+                if not zh_pass:
+                    quality_pass = False
+            
+            if quality_checks:
+                logger.info(f"  🎬 质量检查: {', '.join(quality_checks)} -> {'✅ 通过' if quality_pass else '❌ 不通过'}")
+                if not quality_pass:
+                    logger.info(f"  ⏭️  跳过原因: 质量要求不符合")
+                    continue
+            else:
+                logger.info(f"  🎬 质量检查: 无要求 -> ✅ 跳过检查")
+            
+            logger.info(f"  ✅ {video_num} 通过所有筛选条件，已添加到结果列表")
             basic_filtered.append(video)
         
         logger.info(f"基础筛选后剩余 {len(basic_filtered)} 个视频")
