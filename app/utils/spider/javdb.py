@@ -428,75 +428,69 @@ class JavdbSpider(Spider):
             result.append(ranking)
         return result
 
-    def get_ranking_with_details(self, video_type: str, cycle: str, max_pages: int = 3):
+    def get_ranking_with_details(self, video_type: str, cycle: str, max_pages: int = 1):
         """获取排行榜数据，包含评分和评论信息，用于智能下载规则"""
         try:
-            all_videos = []
+            # 构造排行榜URL - 排行榜页面不需要分页，一次返回全部数据
+            if video_type == 'uncensored':
+                # 无码排行榜使用movies路径，通过t参数指定uncensored
+                url = urljoin(self.host, f"/rankings/movies?p={cycle}&t=uncensored")
+                page_type = 'uncensored_ranking'
+            else:
+                # 有码排行榜同样使用movies路径，通过t参数指定censored
+                url = urljoin(self.host, f"/rankings/movies?p={cycle}&t=censored")
+                page_type = 'censored_ranking'
+                
+            logger.info(f"获取排行榜页面: {url} (类型: {page_type})")
+                
+            # 添加随机延迟，避免被识别为爬虫
+            delay = randint(3, 8)
+            logger.info(f"等待 {delay} 秒...")
+            time.sleep(delay)
             
-            for page in range(1, max_pages + 1):
-                # 构造排行榜URL - 修正为实际的URL格式
-                if video_type == 'uncensored':
-                    # 无码排行榜使用movies路径，通过t参数指定uncensored
-                    url = urljoin(self.host, f"/rankings/movies?p={cycle}&t=uncensored&page={page}")
-                    page_type = 'uncensored_ranking'
-                else:
-                    # 有码排行榜同样使用movies路径，通过t参数指定censored
-                    url = urljoin(self.host, f"/rankings/movies?p={cycle}&t=censored&page={page}")
-                    page_type = 'censored_ranking'
-                    
-                logger.info(f"获取排行榜页面: {url} (类型: {page_type})")
-                
-                # 添加随机延迟，避免被识别为爬虫
-                delay = randint(3, 8)
-                logger.info(f"等待 {delay} 秒...")
-                time.sleep(delay)
-                
-                # 构建请求头，模拟浏览器
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                    "Cache-Control": "max-age=0",
-                    "Connection": "keep-alive",
-                    "Referer": self.host
-                }
-                
-                # 设置年龄验证Cookie绕过成人内容确认
-                self.session.cookies.set('over18', '1', domain='.javdb.com')
-                self.session.cookies.set('locale', 'zh', domain='.javdb.com')
-                
-                response = self.session.get(url, headers=headers)
-                html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
-                
-                # 保存页面HTML用于调试
-                debug_filename = f"javdb_{page_type}_page{page}_debug.html"
-                try:
-                    with open(debug_filename, "wb") as f:
-                        f.write(response.content)
-                    logger.info(f"已保存调试页面到 {debug_filename}")
-                except:
-                    pass
-                
-                # 根据页面类型使用不同的解析策略
-                if page_type == 'uncensored_ranking':
-                    videos = self._parse_uncensored_ranking_page(html, page)
-                else:
-                    videos = self._parse_censored_ranking_page(html, page)
-                
-                if not videos:
-                    logger.warning(f"第 {page} 页没有解析到视频数据")
-                    break
-                
-                all_videos.extend(videos)
-                logger.info(f"第 {page} 页解析完成，获取到 {len(videos)} 个视频")
+            # 构建请求头，模拟浏览器
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Cache-Control": "max-age=0",
+                "Connection": "keep-alive",
+                "Referer": self.host
+            }
             
-            logger.info(f"总共获取到 {len(all_videos)} 个排行榜视频，包含评分和评论信息")
+            # 设置年龄验证Cookie绕过成人内容确认
+            self.session.cookies.set('over18', '1', domain='.javdb.com')
+            self.session.cookies.set('locale', 'zh', domain='.javdb.com')
+            
+            response = self.session.get(url, headers=headers)
+            html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
+            
+            # 保存页面HTML用于调试
+            debug_filename = f"javdb_{page_type}_debug.html"
+            try:
+                with open(debug_filename, "wb") as f:
+                    f.write(response.content)
+                logger.info(f"已保存调试页面到 {debug_filename}")
+            except:
+                pass
+            
+            # 根据页面类型使用不同的解析策略
+            if page_type == 'uncensored_ranking':
+                videos = self._parse_uncensored_ranking_page(html, 1)
+            else:
+                videos = self._parse_censored_ranking_page(html, 1)
+            
+            if not videos:
+                logger.warning(f"未解析到视频数据")
+                return []
+            
+            logger.info(f"排行榜解析完成，获取到 {len(videos)} 个视频")
             
             # 输出前3个视频的详细信息用于调试
-            for i, video in enumerate(all_videos[:3]):
+            for i, video in enumerate(videos[:3]):
                 logger.info(f"视频 {i+1}: {video.get('num')} - 评分: {video.get('rating')} - 评论: {video.get('comments')} - 页面类型: {video.get('page_type')}")
             
-            return all_videos
+            return videos
             
         except Exception as e:
             logger.error(f"获取排行榜数据时出错: {str(e)}")
