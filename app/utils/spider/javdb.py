@@ -552,19 +552,19 @@ class JavdbSpider(Spider):
                 if score_element:
                     # 提取所有文本内容，包括嵌套元素的文本
                     score_text = ''.join(score_element[0].itertext()).strip()
-                    logger.debug(f"原始评分文本: '{score_text}'")
+                    logger.info(f"原始评分文本: '{score_text}'")
                     
                     # 提取评分：格式如 "4.54分, 由346人評價"
                     rating_match = re.search(r"(\d+\.\d+)分", score_text)
                     if rating_match:
                         rating = float(rating_match.group(1))
-                        logger.debug(f"成功提取评分: {rating}")
+                        logger.info(f"成功提取评分: {rating}")
                     
                     # 提取评论数：格式如 "由346人評價"
                     comment_match = re.search(r"由(\d+)人評價", score_text)
                     if comment_match:
                         comments = int(comment_match.group(1))
-                        logger.debug(f"成功提取评论数: {comments}")
+                        logger.info(f"成功提取评论数: {comments}")
                 
                 video_info['rating'] = rating
                 video_info['comments'] = comments
@@ -577,11 +577,13 @@ class JavdbSpider(Spider):
                 video_info['website'] = self.name
                 
                 videos.append(video_info)
+                logger.info(f"✅ 成功解析视频: {num} - 评分: {rating} - 评论: {comments}")
                 
             except Exception as e:
                 logger.warning(f"解析{page_type}视频信息时出错: {str(e)}")
                 continue
         
+        logger.info(f"🎯 {page_type}第{page}页解析完成: 总数{len(videos)}个, 有评分{sum(1 for v in videos if v.get('rating'))}个, 有评论{sum(1 for v in videos if v.get('comments', 0) > 0)}个")
         return videos
     
     def _parse_uncensored_ranking_page(self, html, page):
