@@ -600,7 +600,7 @@ class JavdbSpider(Spider):
                 
                 # 设置质量标签
                 video_info['is_uncensored'] = (page_type == 'uncensored_ranking')
-                video_info['is_hd'] = True
+                video_info['is_hd'] = False  # 排行榜数据默认不标记为高清，避免影响筛选
                 video_info['is_zh'] = False
                 video_info['website'] = self.name
                 
