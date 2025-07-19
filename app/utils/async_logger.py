@@ -172,8 +172,9 @@ class SmartDownloadLogger:
         self.batch_size = 10
         
     def info(self, msg: str, *args, **kwargs):
-        # 对于智能下载，只记录重要信息
-        if any(keyword in msg for keyword in ['规则', '执行', '完成', '错误', '失败']):
+        # 对于智能下载，记录重要信息和筛选详情
+        important_keywords = ['规则', '执行', '完成', '错误', '失败', '检查视频', '评分检查', '评论数检查', '质量检查', '通过所有筛选', '跳过原因', '筛选条件', '基础筛选']
+        if any(keyword in msg for keyword in important_keywords):
             self.main_logger.info(msg, *args, **kwargs)
         else:
             # 批量处理次要日志
