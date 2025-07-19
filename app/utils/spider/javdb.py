@@ -434,13 +434,14 @@ class JavdbSpider(Spider):
             all_videos = []
             
             for page in range(1, max_pages + 1):
-                # 构造排行榜URL
+                # 构造排行榜URL - 修正为实际的URL格式
                 if video_type == 'uncensored':
-                    # 无码排行榜使用movies路径，通过v参数指定uncensored
-                    url = urljoin(self.host, f"/rankings/movies?t={cycle}&v=uncensored&page={page}")
+                    # 无码排行榜使用movies路径，通过t参数指定uncensored
+                    url = urljoin(self.host, f"/rankings/movies?p={cycle}&t=uncensored&page={page}")
                     page_type = 'uncensored_ranking'
                 else:
-                    url = urljoin(self.host, f"/rankings/videos?t={cycle}&page={page}")
+                    # 有码排行榜同样使用movies路径，通过t参数指定censored
+                    url = urljoin(self.host, f"/rankings/movies?p={cycle}&t=censored&page={page}")
                     page_type = 'censored_ranking'
                     
                 logger.info(f"获取排行榜页面: {url} (类型: {page_type})")
@@ -501,119 +502,76 @@ class JavdbSpider(Spider):
 
     def _parse_censored_ranking_page(self, html, page):
         """解析有码排行榜页面"""
+        return self._parse_ranking_page(html, page, 'censored_ranking')
+    
+    def _parse_ranking_page(self, html, page, page_type):
+        """统一的排行榜页面解析方法 - 根据实际HTML结构"""
         videos = []
         
-        # 有码排行榜可能使用不同的元素结构
-        video_elements = html.xpath("//div[@class='item']")
-        logger.info(f"有码排行榜第 {page} 页找到 {len(video_elements)} 个视频元素")
-        
-        if not video_elements:
-            # 尝试其他可能的选择器
-            video_elements = html.xpath("//div[contains(@class, 'movie-list')]//div[@class='item']")
-            logger.info(f"尝试备用选择器，找到 {len(video_elements)} 个视频元素")
+        # 排行榜页面使用movie-list结构
+        video_elements = html.xpath("//div[@class='movie-list']//div[@class='item']")
+        logger.info(f"{page_type}第 {page} 页找到 {len(video_elements)} 个视频元素")
         
         for element in video_elements:
             try:
                 video_info = {}
                 
-                # 获取番号 - 尝试多种选择器
-                num = None
-                title_selectors = [
-                    ".//div[@class='video-title']/strong",
-                    ".//strong",
-                    ".//div[contains(@class, 'title')]//strong"
-                ]
-                
-                for selector in title_selectors:
-                    title_element = element.xpath(selector)
-                    if title_element and title_element[0].text:
-                        num = title_element[0].text.strip()
-                        break
-                
-                if not num:
+                # 获取番号 - 从video-title下的strong元素
+                title_element = element.xpath(".//div[@class='video-title']/strong")
+                if not title_element or not title_element[0].text:
                     continue
-                    
+                num = title_element[0].text.strip()
                 video_info['num'] = num
-                video_info['page_type'] = 'censored_ranking'
+                video_info['page_type'] = page_type
                 
-                # 获取链接
-                link_element = element.xpath(".//a[@class='box']") or element.xpath(".//a[contains(@class, 'box')]")
+                # 获取链接 - 从a.box元素
+                link_element = element.xpath(".//a[@class='box']")
                 if link_element:
                     video_url = urljoin(self.host, link_element[0].get('href'))
                     video_info['url'] = video_url
                 
-                # 获取标题
-                video_info['title'] = f"{num} {title_element[0].tail or ''}".strip() if title_element else num
+                # 获取标题 - video-title的完整文本
+                title_div = element.xpath(".//div[@class='video-title']")
+                if title_div:
+                    # 提取完整标题文本
+                    full_title = ''.join(title_div[0].itertext()).strip()
+                    video_info['title'] = full_title
+                else:
+                    video_info['title'] = num
                 
                 # 获取封面
                 cover_element = element.xpath(".//img")
                 if cover_element:
                     video_info['cover'] = cover_element[0].get('src')
                 
-                # 有码排行榜的评分提取
+                # 获取评分和评论数 - 从score div中提取
+                score_element = element.xpath(".//div[@class='score']/span[@class='value']")
                 rating = None
-                rating_selectors = [
-                    ".//div[@class='score']/span[@class='value']",
-                    ".//span[@class='score']",
-                    ".//div[contains(@class, 'score')]//span[contains(@class, 'value')]",
-                    ".//span[contains(text(), '分')]"
-                ]
+                comments = 0
                 
-                for selector in rating_selectors:
-                    rating_elements = element.xpath(selector)
-                    if rating_elements:
-                        rating_text = rating_elements[0].text or ""
-                        rating_patterns = [r"(\d+\.\d+)分?", r"(\d+\.\d+)", r"(\d+)"]
-                        for pattern in rating_patterns:
-                            rating_match = re.search(pattern, rating_text)
-                            if rating_match:
-                                try:
-                                    rating = float(rating_match.group(1))
-                                    logger.debug(f"有码排行榜 - 成功提取评分: {rating} (选择器: {selector}, 文本: {rating_text})")
-                                    break
-                                except ValueError:
-                                    continue
-                        if rating is not None:
-                            break
+                if score_element:
+                    # 提取所有文本内容，包括嵌套元素的文本
+                    score_text = ''.join(score_element[0].itertext()).strip()
+                    logger.debug(f"原始评分文本: '{score_text}'")
+                    
+                    # 提取评分：格式如 "4.54分, 由346人評價"
+                    rating_match = re.search(r"(\d+\.\d+)分", score_text)
+                    if rating_match:
+                        rating = float(rating_match.group(1))
+                        logger.debug(f"成功提取评分: {rating}")
+                    
+                    # 提取评论数：格式如 "由346人評價"
+                    comment_match = re.search(r"由(\d+)人評價", score_text)
+                    if comment_match:
+                        comments = int(comment_match.group(1))
+                        logger.debug(f"成功提取评论数: {comments}")
                 
                 video_info['rating'] = rating
-                
-                # 有码排行榜的评论数提取
-                comments = 0
-                comment_selectors = [
-                    ".//div[@class='score']/span[contains(text(), '人評價')]",
-                    ".//span[contains(text(), '評論')]",
-                    ".//div[@class='meta']",
-                    ".//a[contains(@href, '/reviews')]"
-                ]
-                
-                for selector in comment_selectors:
-                    comment_elements = element.xpath(selector)
-                    if comment_elements:
-                        element_text = comment_elements[0].text or ""
-                        comment_patterns = [
-                            r"由(\d+)人評價",
-                            r"(\d+)\s*評論",
-                            r"(\d+)\s*评论",
-                            r"(\d+)"
-                        ]
-                        for pattern in comment_patterns:
-                            comment_match = re.search(pattern, element_text)
-                            if comment_match:
-                                try:
-                                    comments = int(comment_match.group(1))
-                                    logger.debug(f"有码排行榜 - 成功提取评论数: {comments} (选择器: {selector}, 文本: {element_text})")
-                                    break
-                                except ValueError:
-                                    continue
-                        if comments > 0:
-                            break
-                
                 video_info['comments'] = comments
                 video_info['comments_count'] = comments
                 
                 # 设置质量标签
-                video_info['is_uncensored'] = False
+                video_info['is_uncensored'] = (page_type == 'uncensored_ranking')
                 video_info['is_hd'] = True
                 video_info['is_zh'] = False
                 video_info['website'] = self.name
@@ -621,144 +579,14 @@ class JavdbSpider(Spider):
                 videos.append(video_info)
                 
             except Exception as e:
-                logger.warning(f"解析有码排行榜视频信息时出错: {str(e)}")
+                logger.warning(f"解析{page_type}视频信息时出错: {str(e)}")
                 continue
         
         return videos
     
     def _parse_uncensored_ranking_page(self, html, page):
         """解析无码排行榜页面"""
-        videos = []
-        
-        # 无码排行榜可能使用movies格式，结构可能不同
-        video_elements = html.xpath("//div[@class='item']")
-        logger.info(f"无码排行榜第 {page} 页找到 {len(video_elements)} 个视频元素")
-        
-        if not video_elements:
-            # 尝试movies页面的其他选择器
-            video_elements = html.xpath("//div[contains(@class, 'movie-list')]//div[@class='item']")
-            logger.info(f"尝试movies页面选择器，找到 {len(video_elements)} 个视频元素")
-        
-        for element in video_elements:
-            try:
-                video_info = {}
-                
-                # 获取番号 - 无码页面可能结构不同
-                num = None
-                title_selectors = [
-                    ".//div[@class='video-title']/strong",
-                    ".//strong",
-                    ".//div[contains(@class, 'title')]//strong",
-                    ".//h3/strong"  # movies页面可能用h3
-                ]
-                
-                for selector in title_selectors:
-                    title_element = element.xpath(selector)
-                    if title_element and title_element[0].text:
-                        num = title_element[0].text.strip()
-                        break
-                
-                if not num:
-                    continue
-                    
-                video_info['num'] = num
-                video_info['page_type'] = 'uncensored_ranking'
-                
-                # 获取链接
-                link_element = element.xpath(".//a[@class='box']") or element.xpath(".//a[contains(@class, 'box')]") or element.xpath(".//a[contains(@href, '/v/')]")
-                if link_element:
-                    video_url = urljoin(self.host, link_element[0].get('href'))
-                    video_info['url'] = video_url
-                
-                # 获取标题
-                video_info['title'] = f"{num} {title_element[0].tail or ''}".strip() if title_element else num
-                
-                # 获取封面
-                cover_element = element.xpath(".//img")
-                if cover_element:
-                    video_info['cover'] = cover_element[0].get('src')
-                
-                # 无码排行榜的评分提取 - 可能结构完全不同
-                rating = None
-                rating_selectors = [
-                    ".//div[@class='score']/span[@class='value']",
-                    ".//span[@class='score']", 
-                    ".//div[contains(@class, 'score')]//span",
-                    ".//span[contains(@class, 'rating')]",
-                    ".//span[contains(text(), '分')]",
-                    ".//div[contains(@class, 'rank')]//span"  # 可能有rank类
-                ]
-                
-                for selector in rating_selectors:
-                    rating_elements = element.xpath(selector)
-                    if rating_elements:
-                        rating_text = rating_elements[0].text or ""
-                        rating_patterns = [r"(\d+\.\d+)分?", r"(\d+\.\d+)", r"(\d+)"]
-                        for pattern in rating_patterns:
-                            rating_match = re.search(pattern, rating_text)
-                            if rating_match:
-                                try:
-                                    rating = float(rating_match.group(1))
-                                    logger.debug(f"无码排行榜 - 成功提取评分: {rating} (选择器: {selector}, 文本: {rating_text})")
-                                    break
-                                except ValueError:
-                                    continue
-                        if rating is not None:
-                            break
-                
-                video_info['rating'] = rating
-                
-                # 无码排行榜的评论数提取
-                comments = 0
-                comment_selectors = [
-                    ".//div[@class='score']/span[contains(text(), '人評價')]",
-                    ".//span[contains(text(), '評論')]",
-                    ".//span[contains(text(), '评论')]",
-                    ".//div[@class='meta']",
-                    ".//div[contains(@class, 'meta')]",
-                    ".//a[contains(@href, '/reviews')]",
-                    ".//span[contains(@class, 'comment')]"
-                ]
-                
-                for selector in comment_selectors:
-                    comment_elements = element.xpath(selector)
-                    if comment_elements:
-                        element_text = comment_elements[0].text or ""
-                        comment_patterns = [
-                            r"由(\d+)人評價",
-                            r"(\d+)\s*評論", 
-                            r"(\d+)\s*评论",
-                            r"(\d+)\s*條評論",
-                            r"(\d+)"
-                        ]
-                        for pattern in comment_patterns:
-                            comment_match = re.search(pattern, element_text)
-                            if comment_match:
-                                try:
-                                    comments = int(comment_match.group(1))
-                                    logger.debug(f"无码排行榜 - 成功提取评论数: {comments} (选择器: {selector}, 文本: {element_text})")
-                                    break
-                                except ValueError:
-                                    continue
-                        if comments > 0:
-                            break
-                
-                video_info['comments'] = comments
-                video_info['comments_count'] = comments
-                
-                # 设置质量标签
-                video_info['is_uncensored'] = True
-                video_info['is_hd'] = True
-                video_info['is_zh'] = False
-                video_info['website'] = self.name
-                
-                videos.append(video_info)
-                
-            except Exception as e:
-                logger.warning(f"解析无码排行榜视频信息时出错: {str(e)}")
-                continue
-        
-        return videos
+        return self._parse_ranking_page(html, page, 'uncensored_ranking')
 
     def get_actors(self):
         """获取JavDB网站上的热门演员列表"""
