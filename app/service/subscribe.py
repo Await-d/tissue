@@ -12,6 +12,7 @@ from app.db.models import Subscribe, Torrent
 from app.db.transaction import transaction
 from app.exception import BizException
 from app.service.base import BaseService
+from app.service.download_filter import DownloadFilterService
 from app.utils import spider, notify
 from app.utils.logger import logger
 from app.utils.qbittorent import qbittorent
@@ -23,6 +24,10 @@ def get_subscribe_service(db: Session = Depends(get_db)):
 
 
 class SubscribeService(BaseService):
+
+    def __init__(self, db: Session):
+        super().__init__(db)
+        self.filter_service = DownloadFilterService(db)
 
     def get_subscribes(self):
         return self.db.query(Subscribe).order_by(Subscribe.id.desc()).all()
@@ -106,6 +111,17 @@ class SubscribeService(BaseService):
         setting = Setting()
         category = setting.download.category if setting.download.category else None
         
+        # 下载前检查过滤规则
+        logger.info(f"检查磁力链接过滤规则: {video.num}")
+        filter_result = self.filter_service.apply_filter_to_magnet(link.magnet)
+        
+        if not filter_result['should_download']:
+            warning_msg = f"视频 {video.num} 不符合过滤条件: {filter_result['filter_reason']}"
+            logger.warning(warning_msg)
+            raise BizException(f"下载被过滤规则拒绝: {filter_result['filter_reason']}")
+        
+        logger.info(f"视频 {video.num} 通过过滤检查: {filter_result['filter_reason']}")
+        
         response = qbittorent.add_magnet(link.magnet, link.savepath, category=category)
         if response.status_code != 200:
             raise BizException("下载创建失败")
@@ -121,6 +137,17 @@ class SubscribeService(BaseService):
             torrent.is_hd = getattr(link, 'is_hd', False)
             torrent.is_uncensored = link.is_uncensored
             self.db.add(torrent)
+            
+            # 添加种子后立即应用过滤规则
+            try:
+                logger.info(f"对新添加的种子应用过滤规则: {torrent_hash}")
+                filter_apply_result = self.filter_service.filter_torrent_files(torrent_hash)
+                if filter_apply_result['success']:
+                    logger.info(f"过滤规则应用成功: {filter_apply_result['message']}")
+                else:
+                    logger.warning(f"过滤规则应用失败: {filter_apply_result['message']}")
+            except Exception as e:
+                logger.error(f"应用过滤规则时出错: {str(e)}")
 
         # 检查是否属于演员订阅，如果是则记录到演员订阅下载表
         self._check_and_record_actor_subscribe_download(video, link)
@@ -219,11 +246,11 @@ class SubscribeService(BaseService):
     @classmethod
     def job_subscribe(cls):
         with SessionFactory() as db:
-            SubscribeService(db).do_subscribe()
+            SubscribeService(db=db).do_subscribe()
             db.commit()
 
     @classmethod
     def job_subscribe_meta_update(cls):
         with SessionFactory() as db:
-            SubscribeService(db).do_subscribe_meta_update()
+            SubscribeService(db=db).do_subscribe_meta_update()
             db.commit()

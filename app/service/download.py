@@ -10,6 +10,7 @@ from app.exception import BizException
 from app.schema import Torrent, TorrentFile, Setting, VideoNotify, VideoDetail
 from app.service.base import BaseService
 from app.service.video import VideoService
+from app.service.download_filter import DownloadFilterService
 from app.utils import notify
 from app.utils.logger import logger
 from app.utils.qbittorent import qbittorent
@@ -25,6 +26,7 @@ class DownloadService(BaseService):
         super().__init__(db)
         self.setting = Setting()
         self.qb = qbittorent
+        self.filter_service = DownloadFilterService(db)
 
     def get_downloads(self, include_success=True, include_failed=True):
         logger.info(f"开始获取下载列表，参数: include_success={include_success}, include_failed={include_failed}")
@@ -101,26 +103,36 @@ class DownloadService(BaseService):
                 torrents.append(torrent)
                 continue
                 
-            # 处理文件列表
-            for file in files:
-                # 允许显示任何优先级不为0的文件，无论下载进度如何
-                if file['priority'] == 0:
-                    continue
+            # 使用新的过滤系统处理文件列表
+            filter_result = self.filter_service.filter_torrent_files(info['hash'])
+            if filter_result['success']:
+                # 获取过滤后的文件列表
+                filtered_files = filter_result['files']
+                logger.debug(f"种子 {info['hash']} 过滤结果: {len(filtered_files)} 个文件通过过滤")
+                
+                # 创建文件路径到qb文件信息的映射
+                qb_files_map = {file['name']: file for file in files}
+                
+                for filtered_file in filtered_files:
+                    # 查找对应的qBittorrent文件信息
+                    qb_file = qb_files_map.get(filtered_file['path'])
+                    if not qb_file:
+                        continue
                     
-                _, ext_name = os.path.splitext(file['name'])
-                name = file['name'].split('/')[-1]
-                size = file['size']
-                path = info['content_path'] if len(files) == 1 else os.path.join(info['save_path'],
-                                                                                 file['name'])
+                    # 允许显示任何优先级不为0的文件，无论下载进度如何
+                    if qb_file['priority'] == 0:
+                        continue
+                    
+                    name = filtered_file['name']
+                    size = filtered_file['size']
+                    path = info['content_path'] if len(files) == 1 else os.path.join(info['save_path'], filtered_file['path'])
 
-                if path.startswith(self.setting.download.download_path):
-                    path = path.replace(self.setting.download.download_path, self.setting.download.mapping_path, 1)
+                    if path.startswith(self.setting.download.download_path):
+                        path = path.replace(self.setting.download.download_path, self.setting.download.mapping_path, 1)
 
-                # 仍然只显示视频文件
-                if ext_name in self.setting.app.video_format.split(',') and size > (
-                        self.setting.app.video_size_minimum * 1024 * 1024):
+                    # 文件已经通过过滤系统筛选，直接处理
                     # 添加进度信息
-                    progress = file.get('progress', 0)
+                    progress = qb_file.get('progress', 0)
                     
                     # 尝试获取番号和演员信息
                     num = None
@@ -158,6 +170,36 @@ class DownloadService(BaseService):
                         actors=actors
                     )
                     torrent.files.append(file_info)
+            else:
+                # 如果过滤失败，使用旧的逻辑作为备用
+                logger.warning(f"种子 {info['hash']} 过滤失败: {filter_result.get('message', 'Unknown error')}，使用备用逻辑")
+                for file in files:
+                    # 允许显示任何优先级不为0的文件，无论下载进度如何
+                    if file['priority'] == 0:
+                        continue
+                        
+                    _, ext_name = os.path.splitext(file['name'])
+                    name = file['name'].split('/')[-1]
+                    size = file['size']
+                    path = info['content_path'] if len(files) == 1 else os.path.join(info['save_path'], file['name'])
+
+                    if path.startswith(self.setting.download.download_path):
+                        path = path.replace(self.setting.download.download_path, self.setting.download.mapping_path, 1)
+
+                    # 仍然只显示视频文件，使用基本的大小检查
+                    if ext_name in self.setting.app.video_format.split(',') and size > (300 * 1024 * 1024):
+                        # 添加进度信息
+                        progress = file.get('progress', 0)
+                        
+                        file_info = TorrentFile(
+                            name=name, 
+                            size=utils.convert_size(size), 
+                            path=path,
+                            progress=progress,
+                            num=None,
+                            actors=None
+                        )
+                        torrent.files.append(file_info)
             
             # 只有当种子包含文件时才添加到列表中
             if torrent.files or not files:

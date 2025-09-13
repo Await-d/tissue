@@ -18,6 +18,7 @@ from app.db.models.auto_download import AutoDownloadRule, AutoDownloadSubscripti
 from app.schema import subscribe as schema
 from app.utils.video_collector import VideoCollector
 from app.utils.async_logger import get_logger
+from app.service.download_filter import DownloadFilterService
 
 # 获取适合智能下载的日志记录器
 logger = get_logger()
@@ -38,6 +39,7 @@ class AutoDownloadService:
         """初始化自动下载服务"""
         self.db = db or next(get_db())
         self.download_service = DownloadService(db=self.db)
+        self.filter_service = DownloadFilterService(db=self.db)
     
     def _generate_resource_hash(self, video: Dict[str, Any]) -> str:
         """
@@ -432,7 +434,7 @@ class AutoDownloadService:
         """自动下载定时任务"""
         try:
             logger.info("开始执行自动下载任务...")
-            service = AutoDownloadService()
+            service = AutoDownloadService(db=SessionFactory())
             result = service.execute_rules()
             
             # 处理待下载的订阅
@@ -519,6 +521,22 @@ class AutoDownloadService:
                 subscription.error_message = error_msg
                 self.db.commit()
                 return False
+            
+            # 下载前检查过滤规则
+            magnet_url = getattr(suitable_download, 'magnet', None) or getattr(suitable_download, 'url', None)
+            if magnet_url:
+                logger.info(f"检查自动下载磁力链接过滤规则: {subscription.num}")
+                filter_result = self.filter_service.apply_filter_to_magnet(magnet_url)
+                
+                if not filter_result['should_download']:
+                    error_msg = f"视频 {subscription.num} 不符合过滤条件: {filter_result['filter_reason']}"
+                    logger.warning(error_msg)
+                    subscription.status = DownloadStatus.FAILED
+                    subscription.error_message = error_msg
+                    self.db.commit()
+                    return False
+                
+                logger.info(f"视频 {subscription.num} 通过过滤检查: {filter_result['filter_reason']}")
             
             # 调用现有的下载服务
             subscribe_service = SubscribeService(db=self.db)
