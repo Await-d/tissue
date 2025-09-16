@@ -1,0 +1,320 @@
+name: PR Lint and Format Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.vue'
+      - '**.json'
+      - '**.cjs'
+      - '**.mjs'
+      - '.prettierrc'
+      - '.eslintrc.cjs'
+      - 'package.json'
+      - 'frontend/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    name: Check Code Quality
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          # 安装前端目录的依赖（如果存在）
+          if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm ci --prefer-offline --no-audit
+            cd ..
+          fi
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/*.js
+            **/*.jsx
+            **/*.ts
+            **/*.tsx
+            **/*.vue
+            **/*.cjs
+            **/*.mjs
+            **/*.json
+          files_ignore: |
+            node_modules/**
+            dist/**
+            build/**
+            coverage/**
+            .git/**
+            logs/**
+            temp/**
+            tmp/**
+
+      - name: Check Prettier formatting
+        if: steps.changed-files.outputs.any_changed == 'true'
+        id: prettier-check
+        run: |
+          echo "🔍 Checking Prettier formatting for changed files..."
+          echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+
+          # 初始化标志
+          PRETTIER_FAILED=false
+          PRETTIER_OUTPUT=""
+
+          # 检查每个改变的文件
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [ -f "$file" ]; then
+              echo "Checking: $file"
+
+              # 根据文件位置选择正确的 prettier 配置
+              if [[ "$file" == frontend/* ]]; then
+                # 前端文件：进入前端目录运行 prettier
+                cd frontend
+                RELATIVE_FILE="${file#frontend/}"
+                if ! npx prettier --check "$RELATIVE_FILE" 2>&1; then
+                  PRETTIER_FAILED=true
+                  DIFF=$(npx prettier "$RELATIVE_FILE" | diff -u "$RELATIVE_FILE" - || true)
+                  if [ -n "$DIFF" ]; then
+                    PRETTIER_OUTPUT="${PRETTIER_OUTPUT}❌ File needs formatting: $file\n"
+                    PRETTIER_OUTPUT="${PRETTIER_OUTPUT}\`\`\`diff\n${DIFF}\n\`\`\`\n\n"
+                  fi
+                else
+                  echo "✅ $file is properly formatted"
+                fi
+                cd ..
+              else
+                # 后端文件：使用根目录的 prettier
+                if ! npx prettier --check "$file" 2>&1; then
+                  PRETTIER_FAILED=true
+                  DIFF=$(npx prettier "$file" | diff -u "$file" - || true)
+                  if [ -n "$DIFF" ]; then
+                    PRETTIER_OUTPUT="${PRETTIER_OUTPUT}❌ File needs formatting: $file\n"
+                    PRETTIER_OUTPUT="${PRETTIER_OUTPUT}\`\`\`diff\n${DIFF}\n\`\`\`\n\n"
+                  fi
+                else
+                  echo "✅ $file is properly formatted"
+                fi
+              fi
+            fi
+          done
+
+          # 输出结果
+          if [ "$PRETTIER_FAILED" = true ]; then
+            echo "prettier_failed=true" >> $GITHUB_OUTPUT
+            echo -e "$PRETTIER_OUTPUT" > prettier-report.md
+            echo "❌ Some files are not properly formatted."
+            echo "Please run: npm run format (backend) or cd frontend && npm run format (frontend)"
+            exit 1
+          else
+            echo "prettier_failed=false" >> $GITHUB_OUTPUT
+            echo "✅ All files are properly formatted"
+          fi
+
+      - name: Run ESLint
+        if: steps.changed-files.outputs.any_changed == 'true'
+        id: eslint-check
+        run: |
+          echo "🔍 Running ESLint on changed files..."
+
+          # 分离前端和后端文件
+          BACKEND_FILES=""
+          FRONTEND_FILES=""
+
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [[ "$file" =~ \.(js|jsx|ts|tsx|vue|cjs|mjs)$ ]] && [ -f "$file" ]; then
+              if [[ "$file" == frontend/* ]]; then
+                FRONTEND_FILES="$FRONTEND_FILES ${file#frontend/}"
+              else
+                BACKEND_FILES="$BACKEND_FILES $file"
+              fi
+            fi
+          done
+
+          ESLINT_FAILED=false
+          ESLINT_OUTPUT=""
+
+          # 检查后端文件
+          if [ -n "$BACKEND_FILES" ]; then
+            echo "Linting backend files: $BACKEND_FILES"
+            set +e
+            BACKEND_OUTPUT=$(npx eslint $BACKEND_FILES --format stylish 2>&1)
+            BACKEND_EXIT_CODE=$?
+            set -e
+
+            if [ $BACKEND_EXIT_CODE -ne 0 ]; then
+              ESLINT_FAILED=true
+              ESLINT_OUTPUT="${ESLINT_OUTPUT}### Backend ESLint Issues\n\`\`\`\n${BACKEND_OUTPUT}\n\`\`\`\n\n"
+            fi
+          fi
+
+          # 检查前端文件
+          if [ -n "$FRONTEND_FILES" ]; then
+            echo "Linting frontend files: $FRONTEND_FILES"
+            cd frontend
+            set +e
+            FRONTEND_OUTPUT=$(npx eslint $FRONTEND_FILES --format stylish 2>&1)
+            FRONTEND_EXIT_CODE=$?
+            set -e
+            cd ..
+
+            if [ $FRONTEND_EXIT_CODE -ne 0 ]; then
+              ESLINT_FAILED=true
+              ESLINT_OUTPUT="${ESLINT_OUTPUT}### Frontend ESLint Issues\n\`\`\`\n${FRONTEND_OUTPUT}\n\`\`\`\n\n"
+            fi
+          fi
+
+          # 输出结果
+          if [ "$ESLINT_FAILED" = true ]; then
+            echo "eslint_failed=true" >> $GITHUB_OUTPUT
+            echo "❌ ESLint found issues"
+
+            # 创建错误报告
+            echo "## ESLint Report" > eslint-report.md
+            echo "$ESLINT_OUTPUT" >> eslint-report.md
+            echo "" >> eslint-report.md
+            echo "Please fix these issues by running:" >> eslint-report.md
+            echo '```bash' >> eslint-report.md
+            echo "# Backend: npm run lint" >> eslint-report.md
+            echo "# Frontend: cd frontend && npm run lint" >> eslint-report.md
+            echo '```' >> eslint-report.md
+
+            exit 1
+          else
+            echo "eslint_failed=false" >> $GITHUB_OUTPUT
+            echo "✅ ESLint check passed"
+          fi
+
+      - name: Debug PR Context
+        if: failure()
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "Repo: ${{ github.repository }}"
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+
+      - name: Comment PR with results
+        if: failure()
+        continue-on-error: true  # 即使评论失败也继续
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let comment = '## 🚨 Code Quality Check Failed\n\n';
+
+            // 读取 Prettier 报告
+            if (fs.existsSync('prettier-report.md')) {
+              const prettierReport = fs.readFileSync('prettier-report.md', 'utf8');
+              comment += '### Prettier Formatting Issues\n\n';
+              comment += prettierReport;
+              comment += '\n**Fix command:**\n```bash\nnpm run format\n```\n\n';
+            }
+
+            // 读取 ESLint 报告
+            if (fs.existsSync('eslint-report.md')) {
+              const eslintReport = fs.readFileSync('eslint-report.md', 'utf8');
+              comment += '### ESLint Issues\n\n';
+              comment += eslintReport;
+            }
+
+            comment += '\n---\n';
+            comment += '💡 **提示**: 在本地运行以下命令来自动修复大部分问题:\n';
+            comment += '```bash\n';
+            comment += '# 后端代码\n';
+            comment += 'npm run format    # 修复后端 Prettier 格式问题\n';
+            comment += 'npm run lint      # 修复后端 ESLint 问题\n';
+            comment += '\n';
+            comment += '# 前端代码\n';
+            comment += 'cd frontend\n';
+            comment += 'npm run format    # 修复前端 Prettier 格式问题\n';
+            comment += 'npm run lint      # 修复前端 ESLint 问题\n';
+            comment += '```\n';
+
+            // 查找是否已有机器人评论
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Code Quality Check Failed')
+            );
+
+            if (botComment) {
+              // 更新现有评论
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // 创建新评论
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Success comment
+        if: success() && steps.changed-files.outputs.any_changed == 'true'
+        continue-on-error: true  # 即使评论失败也继续
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            // 查找是否已有失败的评论
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Code Quality Check Failed')
+            );
+
+            if (botComment) {
+              // 如果之前有失败评论，更新为成功
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: '## ✅ Code Quality Check Passed\n\nAll files are properly formatted and pass linting checks!'
+              });
+            }
