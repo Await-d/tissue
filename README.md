@@ -8,9 +8,9 @@
 # Tissue-Plus ✨
 
 ![GitHub License](https://img.shields.io/github/license/Await-d/tissue)
-![Docker Image Version](https://img.shields.io/docker/v/chris2s/tissue-plus/latest)
-![Docker Image Size](https://img.shields.io/docker/image-size/chris2s/tissue-plus/latest)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Await-d/tissue/build.yml)
+![Docker Image Version](https://img.shields.io/docker/v/await2719/tissue/latest)
+![Docker Image Size](https://img.shields.io/docker/image-size/await2719/tissue/latest)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Await-d/tissue/auto-release-pipeline.yml)
 
 **Tissue-Plus：您的智能教材管家，让学习资料整理从未如此轻松高效！** 📚🚀
 
@@ -51,21 +51,77 @@
 
 最简单快捷的部署方式，三分钟拥有您的专属教材管家！
 
-[前往Docker Hub获取最新镜像](https://hub.docker.com/r/chris2s/tissue-plus)
+### 获取镜像
 
-或直接运行以下命令 (请根据您的实际环境修改路径和端口):
+**官方镜像地址**：[Docker Hub - await2719/tissue](https://hub.docker.com/r/await2719/tissue)
 
-```shell
+```bash
+# 拉取最新版本
+docker pull await2719/tissue:latest
+
+# 或拉取指定版本（推荐）
+docker pull await2719/tissue:v0.1.3
+```
+
+### Docker Run 方式部署
+
+直接运行以下命令 (请根据您的实际环境修改路径和端口):
+
+```bash
 docker run \
   -d \
-  --name=tissue-plus \
+  --name=tissue \
+  --restart=unless-stopped \
   -e TZ="Asia/Shanghai" \
-  -p '9193:9193' \
-  -v '/path/for/config':'/app/config'       # 配置文件存储路径
-  -v '/path/for/video':'/data/video'         # 您的媒体库（影片存放处）
-  -v '/path/for/file':'/data/file'           # 待处理文件监控路径 (可选)
-  -v '/path/for/downloads':'/downloads'     # qBittorrent下载路径映射
-  'chris2s/tissue-plus:latest'
+  -p 9193:9193 \
+  -v /path/to/config:/app/config \
+  -v /path/to/video:/data/video \
+  -v /path/to/downloads:/downloads \
+  await2719/tissue:latest
+```
+
+### Docker Compose 方式部署（推荐）
+
+创建 `docker-compose.yml` 文件：
+
+```yaml
+version: '3.8'
+
+services:
+  tissue:
+    image: await2719/tissue:latest
+    container_name: tissue
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+      - PUID=1000      # 可选：运行用户ID
+      - PGID=1000      # 可选：运行组ID
+    ports:
+      - "9193:9193"
+    volumes:
+      - ./config:/app/config                    # 配置文件存储
+      - /path/to/your/video:/data/video         # 媒体库路径
+      - /path/to/qb/downloads:/downloads        # qBittorrent下载路径
+      # - /path/to/pending:/data/file           # 可选：待处理文件路径
+    networks:
+      - tissue-network
+
+networks:
+  tissue-network:
+    driver: bridge
+```
+
+启动服务：
+
+```bash
+# 启动
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f tissue
+
+# 停止
+docker-compose down
 ```
 
 ### Docker 环境变量 (可选)
@@ -90,15 +146,176 @@ docker run \
 | `/your/pending/files`  | `/data/file`   | **文件监控路径 (可选)**：未来规划功能，用于自动处理新文件。当前可用于非qBittorrent下载器的场景，将其他下载工具的完成目录映射于此，配合手动导入或未来功能使用。                                                                  |
 | `/your/qb/downloads`   | `/downloads`   | **qBittorrent下载路径**：**至关重要！** 请确保此路径与您qBittorrent中设置的"默认保存路径"或分类保存路径的**根目录**一致。如果qBittorrent内的路径与系统实际路径不符（例如Docker内的QB），请在Tissue-Plus设置页面正确配置"下载器路径映射"。 |
 
-### 默认登录凭据
+## 🎯 使用指南
 
-* **用户名**：`admin`
-* **默认密码**：`password` (首次登录后强烈建议修改！)
+### 首次启动
+
+1. **访问 Web 界面**：浏览器打开 `http://your-server-ip:9193`
+2. **默认登录凭据**：
+   - 用户名：`admin`
+   - 密码：`password`
+   - ⚠️ 首次登录后请立即修改密码！
+
+### 基础配置
+
+#### 1. qBittorrent 连接配置
+
+进入 **设置 → 下载器设置**：
+
+```
+qBittorrent 地址: http://your-qb-host:8080
+用户名: your-qb-username
+密码: your-qb-password
+```
+
+#### 2. 路径映射配置
+
+确保以下路径配置正确：
+
+| 配置项 | 说明 | 示例 |
+|--------|------|------|
+| 媒体库路径 | 刮削后文件的存放位置 | `/data/video` |
+| 下载完成路径 | qBittorrent 下载完成的路径 | `/downloads` |
+| 路径映射 | qB内路径到实际路径的映射 | `/downloads` → `/downloads` |
+
+#### 3. 刮削源配置
+
+支持多个数据源，可在设置中配置：
+- JavBus
+- JavDB
+- 其他自定义源
+
+### 演员订阅功能
+
+1. **添加订阅**：
+   - 进入 **演员管理** 页面
+   - 点击 **添加订阅**
+   - 输入演员名称或代码
+   - 设置筛选条件（高清、字幕、无码等）
+
+2. **管理订阅**：
+   - 暂停/恢复订阅
+   - 修改筛选条件
+   - 查看订阅状态和历史
+
+3. **自动下载**：
+   - 系统定时检查新作品
+   - 符合条件的资源自动下载
+   - 下载完成后自动刮削
 
 ### 关于文件转移
 
 * Tissue-Plus支持**复制**和**移动**两种方式将刮削整理好的文件放入媒体库。
 * **注意**：当使用"移动"模式时，如果您的Docker路径映射横跨了不同的宿主机挂载点（即使它们在同一物理磁盘上），Docker的行为可能类似于跨磁盘移动，导致无法实现"秒传"效果。为了最佳性能，建议将源路径和目标路径设置在同一个宿主机挂载卷内，或者将它们的共同父目录映射到容器中。
+
+## 🔧 故障排除
+
+### 常见问题
+
+#### 1. 无法连接到 qBittorrent
+
+**症状**：设置页面显示连接失败
+
+**解决方案**：
+```bash
+# 检查 qBittorrent 是否运行
+docker ps | grep qbittorrent
+
+# 检查网络连通性
+docker exec tissue ping qbittorrent-container
+
+# 确认 qBittorrent Web UI 设置
+# 进入 qBittorrent 设置 → Web UI → 允许远程连接
+```
+
+#### 2. 路径映射问题
+
+**症状**：下载的文件找不到或刮削失败
+
+**解决方案**：
+1. 确保 Docker 容器路径映射正确
+2. 检查文件权限（PUID/PGID 设置）
+3. 验证 qBittorrent 内部路径与实际路径一致
+
+#### 3. 刮削失败
+
+**症状**：无法获取元数据或封面
+
+**解决方案**：
+1. 检查网络连接（科学上网）
+2. 更换刮削源站点
+3. 检查防火墙设置
+
+### 日志查看
+
+```bash
+# 查看容器日志
+docker logs tissue
+
+# 实时查看日志
+docker logs -f tissue
+
+# Docker Compose 方式
+docker-compose logs -f tissue
+```
+
+### 性能优化
+
+#### 1. 内存优化
+
+```yaml
+# docker-compose.yml 中添加内存限制
+services:
+  tissue:
+    # ... 其他配置
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+```
+
+#### 2. 存储优化
+
+- 使用 SSD 存储提升刮削速度
+- 合理设置缓存大小
+- 定期清理无用数据
+
+## 🔄 版本更新
+
+### 自动更新（推荐）
+
+使用 Watchtower 自动更新：
+
+```yaml
+version: '3.8'
+services:
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=86400  # 24小时检查一次
+    command: tissue  # 只监控 tissue 容器
+```
+
+### 手动更新
+
+```bash
+# Docker Run 方式
+docker stop tissue
+docker rm tissue
+docker pull await2719/tissue:latest
+# 重新运行容器...
+
+# Docker Compose 方式
+docker-compose pull
+docker-compose up -d
+```
 
 ## ✨ 前端日志展示
 
@@ -121,3 +338,69 @@ docker run \
 <img width="1685" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/e5707b21-2737-4fb6-839e-a213318eddf3">
 <img width="1685" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/4597df98-87bf-40a6-805f-37dc0b5e02ad">
 <img width="1682" alt="image" src="https://github.com/chris-2s/tissue/assets/159798260/ac11e3c0-7631-40cb-bef6-7074fe3bbc2f">
+
+## 🚀 技术架构
+
+### 前后端分离设计
+
+- **后端**：Python FastAPI + SQLAlchemy
+- **前端**：React + TypeScript + Vite + Ant Design
+- **数据库**：SQLite（轻量化部署）
+- **容器化**：Docker 多阶段构建，支持多架构
+
+### CI/CD 自动化
+
+- **GitHub Actions**：自动构建和发布
+- **多架构支持**：AMD64 + ARM64
+- **版本管理**：自动标签和更新日志
+- **代码质量**：ESLint + Prettier 检查
+
+## 🤝 贡献指南
+
+欢迎贡献代码！请遵循以下流程：
+
+1. Fork 本仓库
+2. 创建特性分支：`git checkout -b feature/amazing-feature`
+3. 提交更改：`git commit -m 'Add amazing feature'`
+4. 推送分支：`git push origin feature/amazing-feature`
+5. 创建 Pull Request
+
+### 开发环境搭建
+
+```bash
+# 克隆仓库
+git clone https://github.com/Await-d/tissue.git
+cd tissue
+
+# 后端开发
+pip install -r requirements.txt
+python startup_check.py
+
+# 前端开发
+cd frontend
+npm install
+npm run dev
+```
+
+## 📄 许可证
+
+本项目基于 [LICENSE](LICENSE.txt) 许可证开源。
+
+## ⭐ 项目状态
+
+- ✅ **稳定运行**：已在多个生产环境稳定运行
+- 🔄 **持续更新**：定期发布新功能和修复
+- 📈 **活跃维护**：快速响应 Issues 和 PR
+- 🌏 **多语言支持**：计划支持更多语言
+
+---
+
+<p align="center">
+  <a href="https://github.com/Await-d/tissue">⭐ 如果这个项目对您有帮助，请给个 Star！</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Await-d/tissue/issues">🐛 报告问题</a> |
+  <a href="https://github.com/Await-d/tissue/discussions">💬 讨论交流</a> |
+  <a href="https://hub.docker.com/r/await2719/tissue">🐳 Docker Hub</a>
+</p>
