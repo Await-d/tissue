@@ -14,6 +14,10 @@ class SettingApp(BaseModel):
     video_size_minimum: int = 100
     video_format: str = ".mp4,.mkv,.mov"
 
+    # 并发刮削配置
+    concurrent_scraping: bool = True
+    max_concurrent_spiders: int = 4
+
 
 class SettingFile(BaseModel):
     path: str = "/data/file"

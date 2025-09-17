@@ -86,11 +86,16 @@ def get_video_info(number: str):
     return meta
 
 
+def get_spiders():
+    """获取所有可用的爬虫实例"""
+    return [JavbusSpider(), JavdbSpider(), Jav321Spider(), DmmSpider()]
+
+
 def get_video(number: str):
     spiders = [JavbusSpider(), JavdbSpider()]
     metas = []
     logger.info(f"开始刮削番号《{number}》")
-    
+
     for spider in spiders:
         try:
             if spider.downloadable:

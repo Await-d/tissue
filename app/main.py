@@ -16,7 +16,7 @@ from fastapi import FastAPI
 
 from app import middleware, db, exception
 from app.scheduler import scheduler
-from app.api import api_router, actor_subscribe
+from app.api import api_router, actor_subscribe, performance, site_management
 from app.utils.version_manager import version_manager
 from app.utils.logger import logger
 from version import APP_VERSION
@@ -56,6 +56,14 @@ def on_startup():
             tags=["actor-subscribe"],
         )
         logger.info("actor-subscribe路由注册成功")
+
+        # 注册性能监控路由
+        app.include_router(performance.router, prefix="/api")
+        logger.info("性能监控路由注册成功")
+
+        # 注册站点管理路由
+        app.include_router(site_management.router, prefix="/api/site-management")
+        logger.info("站点管理路由注册成功")
         
         # 打印路由注册后的信息
         auto_download_routes = [r for r in app.routes if '/api/auto-download/' in getattr(r, 'path', '')]

@@ -14,6 +14,7 @@ from app.schema import VideoList, VideoDetail, Setting, VideoNotify
 from app.schema.video import VideoActor
 from app.service.base import BaseService
 from app.utils import nfo, spider, num_parser, cache, notify
+from app.service.spider import get_video_info_with_config
 from app.utils.image import save_images
 from app.utils.logger import logger
 
@@ -146,7 +147,8 @@ class VideoService(BaseService):
         return num_parser.parse(path)
 
     def scrape_video(self, num: str):
-        video = spider.get_video_info(num)
+        # 使用新的并发刮削服务（带配置开关）
+        video = get_video_info_with_config(num)
         if not video:
             raise BizException("未找到该番号")
 

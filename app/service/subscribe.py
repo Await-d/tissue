@@ -122,7 +122,9 @@ class SubscribeService(BaseService):
         
         logger.info(f"视频 {video.num} 通过过滤检查: {filter_result['filter_reason']}")
         
-        response = qbittorent.add_magnet(link.magnet, link.savepath, category=category)
+        # 确保使用正确的下载路径
+        download_path = link.savepath if link.savepath else setting.download.download_path
+        response = qbittorent.add_magnet(link.magnet, download_path, category=category)
         if response.status_code != 200:
             raise BizException("下载创建失败")
         logger.info(f"下载创建成功")

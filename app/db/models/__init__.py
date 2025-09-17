@@ -5,3 +5,5 @@ from .subscribe import *
 from .torrent import *
 from .auto_download import *
 from .download_filter import *
+from .site_management import *
+from .search import *
