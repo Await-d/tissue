@@ -27,7 +27,7 @@ COPY ./frontend /app/frontend/
 
 # 构建前端（使用pnpm与GitHub Actions保持一致）
 WORKDIR /app/frontend
-RUN pnpm install --frozen-lockfile && CI=false pnpm run build
+RUN pnpm install --frozen-lockfile && pnpm run build
 
 # 复制剩余文件
 COPY . /app/
