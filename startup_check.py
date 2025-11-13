@@ -21,7 +21,7 @@ class StartupChecker:
         self.db_path = db_path
         self.issues_found = []
         self.fixes_applied = []
-        
+
     def check_database_connection(self) -> bool:
         """检查数据库连接"""
         try:
@@ -33,6 +33,56 @@ class StartupChecker:
         except Exception as e:
             logger.error(f"❌ 数据库连接失败: {e}")
             self.issues_found.append(f"数据库连接失败: {e}")
+            return False
+
+    def check_database_schema(self) -> bool:
+        """检查数据库Schema完整性"""
+        try:
+            logger.info("🔍 检查数据库Schema...")
+
+            # 运行schema检查工具
+            result = subprocess.run(
+                [sys.executable, "db_schema_checker.py", "--check"],
+                capture_output=True,
+                text=True,
+                cwd="."
+            )
+
+            if result.returncode == 0:
+                logger.info("✅ 数据库Schema完整")
+                return True
+            else:
+                logger.warning("⚠️ 数据库Schema存在问题")
+                self.issues_found.append("数据库Schema存在缺失字段")
+                return False
+
+        except Exception as e:
+            logger.warning(f"⚠️ Schema检查跳过: {e}")
+            return True  # 不阻塞启动
+
+    def auto_fix_schema(self) -> bool:
+        """自动修复数据库Schema"""
+        try:
+            logger.info("🔧 开始自动修复数据库Schema...")
+
+            # 运行schema修复工具
+            result = subprocess.run(
+                [sys.executable, "db_schema_checker.py", "--fix"],
+                capture_output=True,
+                text=True,
+                cwd="."
+            )
+
+            if result.returncode == 0:
+                logger.info("✅ 数据库Schema修复成功")
+                self.fixes_applied.append("数据库Schema修复成功")
+                return True
+            else:
+                logger.error(f"❌ 数据库Schema修复失败")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ 自动修复Schema失败: {e}")
             return False
     
     def check_migration_status(self) -> bool:
@@ -166,26 +216,34 @@ class StartupChecker:
     def run_all_checks(self) -> Dict[str, Any]:
         """运行所有检查"""
         logger.info("🚀 开始启动检查...")
-        
+
         results = {
             "database_connection": self.check_database_connection(),
             "migration_status": self.check_migration_status(),
+            "database_schema": self.check_database_schema(),  # 新增schema检查
             "enum_values": self.check_enum_values(),
             "required_columns": self.check_required_columns(),
             "issues_found": self.issues_found,
             "fixes_applied": self.fixes_applied
         }
-        
+
         # 如果发现问题，尝试自动修复
         if self.issues_found:
             logger.info("🔧 发现问题，尝试自动修复...")
+
+            # 先尝试修复schema
+            if "数据库Schema存在缺失字段" in self.issues_found:
+                if self.auto_fix_schema():
+                    results["database_schema"] = True
+
+            # 再尝试修复迁移
             if self.auto_fix_migrations():
                 # 重新检查修复后的状态
                 logger.info("🔄 重新检查修复后的状态...")
                 results["migration_status"] = self.check_migration_status()
                 results["enum_values"] = self.check_enum_values()
                 results["required_columns"] = self.check_required_columns()
-        
+
         return results
     
     def generate_report(self, results: Dict[str, Any]) -> str:
