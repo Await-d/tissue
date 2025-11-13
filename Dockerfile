@@ -1,5 +1,7 @@
 FROM python:3.11.8-slim
 LABEL authors="Tissue-Plus Team"
+LABEL maintainer="await2719"
+LABEL description="Tissue-Plus: Your intelligent JAV library manager"
 
 ENV LANG="C.UTF-8" \
     TZ="Asia/Shanghai" \
