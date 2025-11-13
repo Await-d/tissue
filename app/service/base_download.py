@@ -31,7 +31,8 @@ class BaseDownloadService:
         """
         for attempt in range(max_attempts):
             try:
-                files = qbittorent.get_torrent_files(torrent_hash)
+                files_response = qbittorent.get_torrent_files(torrent_hash)
+                files = files_response.json() if hasattr(files_response, 'json') else files_response
                 if files and len(files) > 0:
                     logger.info(f"种子 {torrent_hash} 元数据已就绪，找到 {len(files)} 个文件")
                     return True

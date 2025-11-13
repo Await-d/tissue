@@ -155,10 +155,15 @@ class QBittorent:
         self, category: Optional[str] = None, include_failed=True, include_success=True
     ):
         host = self._get_host_with_scheme()
-        result = self.session.get(
+        response = self.session.get(
             urljoin(host, "/api/v2/torrents/info"),
             params={"category": category},
-        ).json()
+        )
+        
+        if response.status_code != 200:
+            return response
+            
+        result = response.json()
 
         if not include_failed:
             result = list(filter(lambda item: "整理失败" not in item["tags"], result))
@@ -166,7 +171,9 @@ class QBittorent:
         if not include_success:
             result = list(filter(lambda item: "整理成功" not in item["tags"], result))
 
-        return result
+        # 将过滤后的结果设置回response对象（作为自定义属性）
+        response.filtered_data = result
+        return response
 
     @auth
     def get_torrent_files(self, torrent_hash: str):
@@ -176,7 +183,7 @@ class QBittorent:
             params={
                 "hash": torrent_hash,
             },
-        ).json()
+        )
 
     @auth
     def add_torrent_tags(self, torrent_hash: str, tags: List[str]):
@@ -232,7 +239,7 @@ class QBittorent:
     @auth
     def get_trans_info(self):
         host = self._get_host_with_scheme()
-        return self.session.get(urljoin(host, "/api/v2/transfer/info")).json()
+        return self.session.get(urljoin(host, "/api/v2/transfer/info"))
 
     @auth
     def add_magnet(self, magnet: str, savepath: Optional[str] = None, category: Optional[str] = None, paused: bool = False):
@@ -352,7 +359,7 @@ class QBittorent:
             for i, torrent in enumerate(torrents[:3]):
                 logger.info(f"  种子{i+1}: 名称={torrent.get('name', 'N/A')}, 状态={torrent.get('state', 'N/A')}, 进度={torrent.get('progress', 0):.2%}, 标签={torrent.get('tags', 'N/A')}")
         
-        return torrents  # 返回种子列表，而不是response对象
+        return response  # 返回response对象，而不是种子列表
     
     def extract_hash_from_magnet(self, magnet: str) -> Optional[str]:
         """从磁力链接中提取hash值

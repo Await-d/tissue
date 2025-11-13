@@ -120,7 +120,8 @@ class DownloadFilterService(BaseService):
                 torrent_hash = magnet_info["hash"]
                 
                 # 从qBittorrent获取文件列表
-                qb_files = self.qb.get_torrent_files(torrent_hash)
+                qb_files_response = self.qb.get_torrent_files(torrent_hash)
+                qb_files = qb_files_response.json() if hasattr(qb_files_response, 'json') else qb_files_response
                 if not qb_files:
                     result["filter_reason"] = "无法获取种子文件列表"
                     return result
@@ -178,7 +179,8 @@ class DownloadFilterService(BaseService):
                 return result
             
             # 从qBittorrent获取文件列表
-            qb_files = self.qb.get_torrent_files(torrent_hash)
+            qb_files_response = self.qb.get_torrent_files(torrent_hash)
+            qb_files = qb_files_response.json() if hasattr(qb_files_response, 'json') else qb_files_response
             if not qb_files:
                 result["message"] = "无法获取种子文件列表"
                 return result

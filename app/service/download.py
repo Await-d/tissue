@@ -95,7 +95,8 @@ class DownloadService(BaseService):
         for info in infos:
             torrent = Torrent(hash=info['hash'], name=info['name'], size=utils.convert_size(info['total_size']),
                               path=info['save_path'], tags=list(map(lambda i: i.strip(), info['tags'].split(','))))
-            files = self.qb.get_torrent_files(info['hash'])
+            files_response = self.qb.get_torrent_files(info['hash'])
+            files = files_response.json() if hasattr(files_response, 'json') else files_response
             
             # 检查是否有任何文件
             if not files:

@@ -366,10 +366,16 @@ export function Search() {
                         <Col span={24} lg={8} md={12}>
                             <Card>
                                 {!detailMatch && (
-                                    <div className={'flex'}>
+                                    <div style={{
+                                        marginBottom: '16px',
+                                        padding: '12px',
+                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                        borderRadius: '8px'
+                                    }}>
                                         <Input.Search
-                                            placeholder={'请输入番号'}
+                                            placeholder={'请输入番号搜索...'}
                                             enterButton
+                                            size="large"
                                             value={searchInput}
                                             allowClear
                                             onChange={e => setSearchInput(e.target.value)}
@@ -423,10 +429,24 @@ export function Search() {
                                             </>
                                         ) : (
                                             loading ? (
-                                                <Skeleton active />
+                                                <div style={{ padding: '20px 0' }}>
+                                                    <Skeleton.Image active style={{ width: '100%', height: '300px', marginBottom: '16px' }} />
+                                                    <Skeleton active paragraph={{ rows: 6 }} />
+                                                </div>
                                             ) : (
                                                 <div className={'py-11'}>
-                                                    <Empty />
+                                                    <Empty
+                                                        description={
+                                                            <div>
+                                                                <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+                                                                    {searchInput ? '没有找到相关视频' : '请输入番号进行搜索'}
+                                                                </div>
+                                                                <div style={{ fontSize: '14px', color: '#999' }}>
+                                                                    {searchInput ? '请检查番号是否正确或尝试其他关键词' : '例如: ABC-123 或 XYZ-456'}
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    />
                                                 </div>
                                             )
                                         )
@@ -475,6 +495,12 @@ export function Search() {
                                         <Tag
                                             color={filter.isHd ? 'red' : 'default'}
                                             className={'cursor-pointer'}
+                                            style={{
+                                                transition: 'all 0.3s',
+                                                fontSize: '14px',
+                                                padding: '4px 12px',
+                                                fontWeight: filter.isHd ? 600 : 400
+                                            }}
                                             onClick={() => setFilter({ ...filter, isHd: !filter.isHd })}
                                         >
                                             高清
@@ -482,6 +508,12 @@ export function Search() {
                                         <Tag
                                             color={filter.isZh ? 'blue' : 'default'}
                                             className={'cursor-pointer'}
+                                            style={{
+                                                transition: 'all 0.3s',
+                                                fontSize: '14px',
+                                                padding: '4px 12px',
+                                                fontWeight: filter.isZh ? 600 : 400
+                                            }}
                                             onClick={() => setFilter({ ...filter, isZh: !filter.isZh })}
                                         >
                                             中文
@@ -489,6 +521,12 @@ export function Search() {
                                         <Tag
                                             color={filter.isUncensored ? 'green' : 'default'}
                                             className={'cursor-pointer'}
+                                            style={{
+                                                transition: 'all 0.3s',
+                                                fontSize: '14px',
+                                                padding: '4px 12px',
+                                                fontWeight: filter.isUncensored ? 600 : 400
+                                            }}
                                             onClick={() => setFilter({
                                                 ...filter,
                                                 isUncensored: !filter.isUncensored
@@ -499,7 +537,14 @@ export function Search() {
                                     </Space>
                                 }>
                                 {showAdvancedFilters && (
-                                    <Card size="small" style={{ marginBottom: 16 }}>
+                                    <Card
+                                        size="small"
+                                        style={{
+                                            marginBottom: 16,
+                                            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                                            border: '1px solid #d9d9d9'
+                                        }}
+                                    >
                                         <Row gutter={[16, 8]}>
                                             <Col span={12}>
                                                 <div style={{ marginBottom: 8 }}>文件大小范围 (MB)</div>
@@ -572,7 +617,26 @@ export function Search() {
                                 <Await promise={loaderData}>
                                     {(video: any, loading) => {
                                         if (!video?.downloads) {
-                                            return loading ? <Skeleton active /> : <Empty description="没有找到下载资源" />;
+                                            return loading ? (
+                                                <div style={{ padding: '20px' }}>
+                                                    {[...Array(5)].map((_, index) => (
+                                                        <div key={index} style={{ marginBottom: '16px' }}>
+                                                            <Skeleton active paragraph={{ rows: 2 }} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <Empty
+                                                    description={
+                                                        <div>
+                                                            <div style={{ fontSize: '16px', marginBottom: '8px' }}>暂无下载资源</div>
+                                                            <div style={{ fontSize: '14px', color: '#999' }}>
+                                                                该视频暂时没有可用的下载资源，请稍后再试
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                />
+                                            );
                                         }
 
                                         // 基础过滤
@@ -627,13 +691,29 @@ export function Search() {
                                         return downloads ? (
                                             <>
                                                 {filteredCount !== totalCount && (
-                                                    <div style={{ marginBottom: 16, padding: '8px 12px', background: '#f0f2f5', borderRadius: 4 }}>
+                                                    <div style={{
+                                                        marginBottom: 16,
+                                                        padding: '12px 16px',
+                                                        background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                                                        borderRadius: 8,
+                                                        border: '1px solid #90caf9'
+                                                    }}>
                                                         <Space>
-                                                            <Badge count={filteredCount} style={{ backgroundColor: '#1890ff' }} />
-                                                            <span>筛选结果：{filteredCount} / {totalCount} 个资源</span>
+                                                            <Badge
+                                                                count={filteredCount}
+                                                                style={{
+                                                                    backgroundColor: '#1890ff',
+                                                                    boxShadow: '0 2px 4px rgba(24,144,255,0.3)'
+                                                                }}
+                                                            />
+                                                            <span style={{ fontWeight: 500 }}>
+                                                                筛选结果：{filteredCount} / {totalCount} 个资源
+                                                            </span>
                                                             {showAdvancedFilters && (
-                                                                <Button 
-                                                                    size="small" 
+                                                                <Button
+                                                                    size="small"
+                                                                    type="primary"
+                                                                    ghost
                                                                     onClick={() => {
                                                                         setFilter({ isHd: false, isZh: false, isUncensored: false });
                                                                         setAdvancedFilters({
@@ -656,63 +736,102 @@ export function Search() {
                                                 <List
                                                 dataSource={downloads}
                                                 renderItem={(item: any) => (
-                                                    <List.Item
-                                                        actions={[
-                                                            <Tooltip title={'发送到下载器'}>
-                                                                <Button
-                                                                    type={'primary'}
-                                                                    icon={<CloudDownloadOutlined />}
-                                                                    shape={'circle'}
-                                                                    loading={loadingDownloadId === video.num}
-                                                                    onClick={() => {
-                                                                        setLoadingDownloadId(video.num);
-                                                                        onDownload(video, item);
-                                                                    }}
-                                                                />
-                                                            </Tooltip>,
-                                                            <Tooltip title={'复制磁力链接'}>
-                                                                <Button
-                                                                    type={'primary'}
-                                                                    icon={<CopyOutlined />}
-                                                                    shape={'circle'}
-                                                                    onClick={() => onCopyClick(item)}
-                                                                />
-                                                            </Tooltip>
-                                                        ]}>
-                                                        <List.Item.Meta
-                                                            title={item.name}
-                                                            description={(
-                                                                <Space
-                                                                    direction={responsive.lg ? 'horizontal' : 'vertical'}
-                                                                    size={responsive.lg ? 0 : 'small'}>
-                                                                    <div>
-                                                                        <a href={item.url}>
-                                                                            <Tag>{item.website}</Tag>
-                                                                        </a>
-                                                                        <Tag>{item.size}</Tag>
-                                                                    </div>
-                                                                    <div>
-                                                                        {item.is_hd &&
-                                                                            <Tag color={'red'} bordered={false}>高清</Tag>}
-                                                                        {item.is_zh &&
-                                                                            <Tag color={'blue'} bordered={false}>中文</Tag>}
-                                                                        {item.is_uncensored &&
-                                                                            <Tag color={'green'} bordered={false}>无码</Tag>}
-                                                                    </div>
-                                                                    <div>{item.publish_date}</div>
-                                                                </Space>
-                                                            )}
-                                                        />
-                                                    </List.Item>
+                                                    <div
+                                                        style={{
+                                                            marginBottom: '12px',
+                                                            padding: '12px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #f0f0f0',
+                                                            transition: 'all 0.3s',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                                                            e.currentTarget.style.borderColor = '#1890ff';
+                                                            e.currentTarget.style.transform = 'translateX(4px)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.boxShadow = 'none';
+                                                            e.currentTarget.style.borderColor = '#f0f0f0';
+                                                            e.currentTarget.style.transform = 'translateX(0)';
+                                                        }}
+                                                    >
+                                                        <List.Item
+                                                            style={{ border: 'none', padding: 0 }}
+                                                            actions={[
+                                                                <Tooltip title={'发送到下载器'}>
+                                                                    <Button
+                                                                        type={'primary'}
+                                                                        icon={<CloudDownloadOutlined />}
+                                                                        shape={'circle'}
+                                                                        size="large"
+                                                                        loading={loadingDownloadId === video.num}
+                                                                        onClick={() => {
+                                                                            setLoadingDownloadId(video.num);
+                                                                            onDownload(video, item);
+                                                                        }}
+                                                                    />
+                                                                </Tooltip>,
+                                                                <Tooltip title={'复制磁力链接'}>
+                                                                    <Button
+                                                                        type={'default'}
+                                                                        icon={<CopyOutlined />}
+                                                                        shape={'circle'}
+                                                                        size="large"
+                                                                        onClick={() => onCopyClick(item)}
+                                                                    />
+                                                                </Tooltip>
+                                                            ]}>
+                                                            <List.Item.Meta
+                                                                title={<span style={{ fontSize: '15px', fontWeight: 500 }}>{item.name}</span>}
+                                                                description={(
+                                                                    <Space
+                                                                        direction={responsive.lg ? 'horizontal' : 'vertical'}
+                                                                        size={responsive.lg ? 0 : 'small'}>
+                                                                        <div>
+                                                                            <a href={item.url}>
+                                                                                <Tag color="blue">{item.website}</Tag>
+                                                                            </a>
+                                                                            <Tag color="purple">{item.size}</Tag>
+                                                                        </div>
+                                                                        <div>
+                                                                            {item.is_hd &&
+                                                                                <Tag color={'red'} bordered={false}>高清</Tag>}
+                                                                            {item.is_zh &&
+                                                                                <Tag color={'blue'} bordered={false}>中文</Tag>}
+                                                                            {item.is_uncensored &&
+                                                                                <Tag color={'green'} bordered={false}>无码</Tag>}
+                                                                        </div>
+                                                                        <div><Tag color="default">{item.publish_date}</Tag></div>
+                                                                    </Space>
+                                                                )}
+                                                            />
+                                                        </List.Item>
+                                                    </div>
                                                 )}
                                                 />
                                             </>
                                         ) : (
                                             loading ? (
-                                                <Skeleton active />
+                                                <div style={{ padding: '20px' }}>
+                                                    {[...Array(3)].map((_, index) => (
+                                                        <div key={index} style={{ marginBottom: '16px' }}>
+                                                            <Skeleton active paragraph={{ rows: 2 }} />
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             ) : (
                                                 <div className={'py-8'}>
-                                                    <Empty />
+                                                    <Empty
+                                                        description={
+                                                            <div>
+                                                                <div style={{ fontSize: '16px', marginBottom: '8px' }}>暂无下载资源</div>
+                                                                <div style={{ fontSize: '14px', color: '#999' }}>
+                                                                    该视频可能还没有可用的下载资源
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    />
                                                 </div>
                                             )
                                         )
