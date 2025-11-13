@@ -55,10 +55,14 @@ class JavbusSpider(Spider):
                 if response.url.rstrip('/') == self.host.rstrip('/'):
                     raise SpiderException(f'番号 {num} 不存在（重定向到首页）')
                 raise SpiderException('未找到番号或页面结构已变化')
-                
+
+            # 确保title_element不为空
+            if not title_element:
+                raise SpiderException('未找到标题元素，页面结构可能已变化')
+
             meta = VideoDetail()
             meta.num = num
-            
+
             title = title_element[0].text
             meta.title = title
 
@@ -160,12 +164,18 @@ class JavbusSpider(Spider):
         params = {'lang': 'zh', 'floor': random.Random().randint(100, 1000)}
 
         gid = re.search(r'var gid = (\w+);', response)
+        if not gid:
+            raise SpiderException('未找到gid参数')
         params['gid'] = gid.group(1)
 
         uc = re.search(r'var uc = (\w+);', response)
+        if not uc:
+            raise SpiderException('未找到uc参数')
         params['uc'] = uc.group(1)
 
         img = re.search(r'var img = \'(.+)\';', response)
+        if not img:
+            raise SpiderException('未找到img参数')
         params['img'] = img.group(1)
 
         response = self.session.get(urljoin(self.host, '/ajax/uncledatoolsbyajax.php'), params=params,
@@ -195,11 +205,19 @@ class JavbusSpider(Spider):
                 if tag.text == '字幕':
                     download.is_zh = True
 
-            size_element = item.xpath("./td[2]/a")[0]
-            download.size = size_element.text.strip()
+            size_element = item.xpath("./td[2]/a")
+            if not size_element:
+                continue
+            download.size = size_element[0].text.strip()
 
-            publish_date_element = item.xpath("./td[3]/a")[0]
-            download.publish_date = datetime.strptime(publish_date_element.text.strip(), "%Y-%m-%d").date()
+            publish_date_element = item.xpath("./td[3]/a")
+            if not publish_date_element:
+                continue
+            try:
+                download.publish_date = datetime.strptime(publish_date_element[0].text.strip(), "%Y-%m-%d").date()
+            except ValueError:
+                # 如果日期格式不正确，跳过这个下载项
+                continue
 
             result.append(download)
         return result
