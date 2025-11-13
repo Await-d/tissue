@@ -922,3 +922,4 @@ env/
 .DS_Store
 Thumbs.db
 nohup.out
+.playwright-mcp/
