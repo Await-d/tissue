@@ -30,6 +30,13 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
             form.setFieldsValue({
                 ...subscription,
                 from_date: subscription.from_date ? dayjs(subscription.from_date) : null,
+                // 确保数字类型字段被正确转换
+                min_rating: subscription.min_rating !== null && subscription.min_rating !== undefined
+                    ? Number(subscription.min_rating)
+                    : 0.0,
+                min_comments: subscription.min_comments !== null && subscription.min_comments !== undefined
+                    ? Number(subscription.min_comments)
+                    : 0,
             });
         }
     }, [subscription, open, form]);

@@ -54,8 +54,8 @@ class ActorSubscribeService(BaseService):
                     'is_zh': row.is_zh,
                     'is_uncensored': row.is_uncensored,
                     'is_paused': row.is_paused,
-                    'min_rating': getattr(row, 'min_rating', 0.0),
-                    'min_comments': getattr(row, 'min_comments', 0),
+                    'min_rating': float(getattr(row, 'min_rating', 0.0)) if getattr(row, 'min_rating', None) is not None else 0.0,
+                    'min_comments': int(getattr(row, 'min_comments', 0)) if getattr(row, 'min_comments', None) is not None else 0,
                     'download_count': row.download_count,
                     'subscribed_works_count': 0  # 默认值，将在下面计算
                 }
