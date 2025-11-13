@@ -49,7 +49,7 @@ export const auth = createModel<RootModel>()({
         },
         async logout() {
             Cookies.remove("userToken")
-            dispatch.app.setPin(null)  // 使用统一的pin清除方法
+            dispatch.app.setPin('')
             dispatch.auth.setToken(undefined)
             await router.invalidate()
         },
