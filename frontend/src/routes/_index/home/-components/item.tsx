@@ -100,10 +100,24 @@ function JavDBItem(props: { item: any }) {
     function render() {
         const videoId = `${item.num}-${Math.random().toString(36).substring(2, 7)}`;
         return (
-            // 为整个卡片添加阻止冒泡的处理
+            // 为整个卡片添加阻止冒泡的处理，优化视觉效果
             <div
-                className="overflow-hidden rounded-lg transition-shadow hover:shadow-lg hover:border-0"
-                style={{ background: token.colorBorderBg, border: `1px solid ${token.colorBorderSecondary}` }}
+                className="overflow-hidden rounded-lg transition-all duration-300"
+                style={{
+                    background: token.colorBorderBg,
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                    cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)';
+                    e.currentTarget.style.borderColor = token.colorPrimary;
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = token.colorBorderSecondary;
+                }}
             >
                 <div style={{ position: 'relative' }}>
                     <VideoCover src={item.cover} />
@@ -130,16 +144,48 @@ function JavDBItem(props: { item: any }) {
                     </div>
                 </div>
                 <div className={'p-3'}>
-                    <div className={'text-nowrap overflow-y-scroll'}
-                        style={{ scrollbarWidth: 'none', fontSize: token.fontSizeHeading5, fontWeight: token.fontWeightStrong }}>
-                        {item.num} {item.title || ''}
+                    {/* 优化标题显示：使用多行+省略，最多显示2行 */}
+                    <Tooltip title={`${item.num} ${item.title || ''}`}>
+                        <div
+                            style={{
+                                fontSize: token.fontSizeHeading5,
+                                fontWeight: token.fontWeightStrong,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                lineHeight: '1.4',
+                                minHeight: '2.8em',
+                                marginBottom: '8px'
+                            }}>
+                            {item.num} {item.title || ''}
+                        </div>
+                    </Tooltip>
+                    {/* 优化评分显示：更清晰的视觉层次 */}
+                    <div className={'flex items-center justify-between my-2'}>
+                        <Space size={4} align="center">
+                            <Rate disabled allowHalf value={item.rank || 0} style={{ fontSize: '14px' }}></Rate>
+                            <span style={{
+                                fontSize: token.fontSize,
+                                fontWeight: 600,
+                                color: token.colorPrimary
+                            }}>
+                                {item.rank?.toFixed(2) || '0.00'}
+                            </span>
+                        </Space>
                     </div>
-                    <div className={'flex items-center my-2'}>
-                        <Rate disabled allowHalf value={item.rank || 0}></Rate>
-                        <div className={'mx-1'}>{item.rank || 0}分</div>
-                        <div>由{item.rank_count || 0}人评价</div>
+                    {/* 评价人数和发布日期 */}
+                    <div style={{
+                        fontSize: token.fontSizeSM,
+                        color: token.colorTextSecondary,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <span>{item.rank_count || 0}人评价</span>
+                        <span>{item.publish_date || ''}</span>
                     </div>
-                    <div>{item.publish_date || ''}</div>
                 </div>
 
                 {/* 添加下载列表模态框 */}

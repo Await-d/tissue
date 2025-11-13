@@ -115,7 +115,23 @@ function JavDB() {
                 return navigate({ search: values as any })
             }} fields={filterFields} />
             <Await promise={data} fallback={(
-                <Skeleton active />
+                <Row className={'mt-2'} gutter={[12, 12]}>
+                    {[...Array(8)].map((_, index) => (
+                        <Col key={index} span={24} md={12} lg={6}>
+                            <div style={{
+                                background: '#fff',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                border: '1px solid #f0f0f0'
+                            }}>
+                                <Skeleton.Image active style={{ width: '100%', height: '200px' }} />
+                                <div style={{ padding: '12px' }}>
+                                    <Skeleton active paragraph={{ rows: 3 }} />
+                                </div>
+                            </div>
+                        </Col>
+                    ))}
+                </Row>
             )}>
                 {(data = []) => {
                     // 先按评分过滤，再排序
@@ -134,7 +150,17 @@ function JavDB() {
                             ))}
                         </Row>
                     ) : (
-                        <Empty className={'mt-10'} />
+                        <Empty
+                            className={'mt-10'}
+                            description={
+                                <div>
+                                    <div style={{ fontSize: '16px', marginBottom: '8px' }}>没有找到符合条件的视频</div>
+                                    <div style={{ fontSize: '14px', color: '#999' }}>
+                                        {filter.rank > 0 ? '请尝试降低评分要求或调整其他筛选条件' : '请调整筛选条件重试'}
+                                    </div>
+                                </div>
+                            }
+                        />
                     )
                 }}
             </Await>
