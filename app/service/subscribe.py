@@ -101,13 +101,18 @@ class SubscribeService(BaseService):
                     logger.error(f"{item.name} 不匹配无码，已跳过")
                     return False
 
-                if subscribe.include_keyword and not re.search(subscribe.include_keyword, item.name, re.IGNORECASE):
-                    logger.error(f"{item.name} 不匹配包含关键字，已跳过")
-                    return False
+                try:
+                    if subscribe.include_keyword and not re.search(subscribe.include_keyword, item.name, re.IGNORECASE):
+                        logger.error(f"{item.name} 不匹配包含关键字，已跳过")
+                        return False
 
-                if subscribe.exclude_keyword and re.search(subscribe.exclude_keyword, item.name, re.IGNORECASE):
-                    logger.error(f"{item.name} 匹配排除关键字，已跳过")
-                    return False
+                    if subscribe.exclude_keyword and re.search(subscribe.exclude_keyword, item.name, re.IGNORECASE):
+                        logger.error(f"{item.name} 匹配排除关键字，已跳过")
+                        return False
+                except re.error as e:
+                    logger.error(f"正则表达式错误: {e}，跳过关键字过滤")
+                    # 正则表达式无效时，继续处理不过滤
+                    pass
 
                 return True
 
@@ -127,6 +132,7 @@ class SubscribeService(BaseService):
                     subscribe.update(self.db, {'status': 2})
                     self.db.commit()
                 except Exception as e:
+                    self.db.rollback()
                     logger.error("下载任务创建失败")
                     traceback.print_exc()
                     continue

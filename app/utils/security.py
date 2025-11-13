@@ -33,7 +33,7 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(subject: Union[str, Any]) -> str:
-    expire = datetime.now() + timedelta(days=365)
+    expire = datetime.now() + timedelta(days=30)
     payload = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(payload, secret_key, algorithm=algorithm)
     return encoded_jwt
