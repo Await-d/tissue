@@ -21,6 +21,7 @@ def get_basic(video: str, include_actor: bool = False):
         tree = ET.parse(path)
         root = tree.getroot()
         title = root.find('title')
+        num = root.find('num')
         cover = root.find('cover')
         extra = root.find('extra')
         is_zh = (extra.get('is_zh') == '1') if extra is not None else False
@@ -37,8 +38,15 @@ def get_basic(video: str, include_actor: bool = False):
                     video_actor.thumb = thumb_element.text
                 video_actors.append(video_actor)
 
-        nfo = VideoList(path=video, title=title.text, cover=cover.text, is_zh=is_zh, is_uncensored=is_uncensored,
-                        actors=video_actors)
+        nfo = VideoList(
+            path=video, 
+            title=title.text if title is not None else None,
+            num=num.text if num is not None else None,
+            cover=cover.text if cover is not None else None,
+            is_zh=is_zh, 
+            is_uncensored=is_uncensored,
+            actors=video_actors
+        )
         return nfo
     except Exception as e:
         logger.error(f'{video} NFO文件读取失败')
