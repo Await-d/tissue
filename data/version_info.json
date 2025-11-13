@@ -1,8 +1,8 @@
 {
-  "version": "v0.1.3",
-  "updated_at": "2025-07-12T15:30:00.000000",
+  "version": "v0.1.10",
+  "updated_at": "2025-11-13T22:42:07.269863",
   "migration_success": true,
-  "notes": "新增智能下载过滤功能 - 支持媒体文件模式和字幕控制",
+  "notes": "自动升级到版本 v0.1.10",
   "previous_versions": [
     {
       "version": "v0.1.2",
@@ -13,6 +13,11 @@
     {
       "version": "v0.1.1",
       "updated_at": "2025-07-10T09:07:12.009685",
+      "migration_success": true
+    },
+    {
+      "version": "v0.1.3",
+      "updated_at": "2025-07-12T15:30:00.000000",
       "migration_success": true
     }
   ]

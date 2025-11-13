@@ -410,26 +410,6 @@ class ActorSubscribeService(BaseService):
         from app.service.base_download import BaseDownloadService
         
         try:
-            # 检查种子是否已存在于qBittorrent中
-            if qbittorent.is_magnet_exists(resource.magnet):
-                logger.info(f"种子已存在于qBittorrent中，跳过下载，直接记录: {video_detail.num}")
-                # 虽然不添加下载任务，但仍然记录为已下载
-                download = ActorSubscribeDownload(
-                    actor_subscribe_id=subscription['id'],
-                    num=video_detail.num,
-                    title=video_detail.title,
-                    cover=video_detail.cover,
-                    magnet=resource.magnet,
-                    size=resource.size,
-                    download_time=datetime.now(),
-                    is_hd=resource.is_hd,
-                    is_zh=resource.is_zh,
-                    is_uncensored=resource.is_uncensored
-                )
-                download.add(self.db)
-                self.db.flush()
-                return
-                
             # 使用基础下载服务进行下载（包含过滤规则）
             base_download_service = BaseDownloadService(self.db)
             download_result = base_download_service.download_with_filter(

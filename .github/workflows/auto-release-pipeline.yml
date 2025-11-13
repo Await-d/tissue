@@ -184,6 +184,10 @@ jobs:
         # 复制构建产物到临时目录
         cp -r frontend/dist/* "$TEMP_DIR/"
 
+        # 清理工作区中的生成文件，避免阻塞分支切换
+        git restore frontend/src/routeTree.gen.ts 2>/dev/null || true
+        git clean -fd frontend/src/ 2>/dev/null || true
+
         # 检查 web-dist 分支是否存在
         if git ls-remote --heads origin web-dist | grep -q web-dist; then
           echo "Checking out existing web-dist branch"

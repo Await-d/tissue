@@ -923,3 +923,6 @@ env/
 Thumbs.db
 nohup.out
 .playwright-mcp/
+
+# TanStack Router generated files
+frontend/src/routeTree.gen.ts
