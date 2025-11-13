@@ -9,12 +9,14 @@ ENV LANG="C.UTF-8" \
     PGID=0 \
     UMASK=000
 
-# 安装Node.js和前端构建所需的工具（使用18.19版本与原版一致）
+# 安装Node.js、pnpm和前端构建所需的工具（使用18.19版本与原版一致）
 RUN apt-get update -y \
     && apt-get -y install nginx locales gosu curl \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
-    && npm --version
+    && npm --version \
+    && npm install -g pnpm@latest \
+    && pnpm --version
 
 # 复制Nginx配置
 COPY ./nginx/app.conf /etc/nginx/sites-available/default
@@ -23,9 +25,9 @@ RUN rm -f /etc/nginx/sites-enabled/default && ln -s /etc/nginx/sites-available/d
 # 首先只复制前端部分，提高缓存利用率
 COPY ./frontend /app/frontend/
 
-# 构建前端（与GitHub Actions保持一致）
+# 构建前端（使用pnpm与GitHub Actions保持一致）
 WORKDIR /app/frontend
-RUN npm install && CI=false npm run build
+RUN pnpm install --frozen-lockfile && CI=false pnpm run build
 
 # 复制剩余文件
 COPY . /app/
