@@ -1,1 +1,0 @@
-import{aK as t}from"./index-D7_jgbed.js";async function r(){return(await t.request({url:"/setting/"})).data.data}function o(e,s){return t.request({url:"/setting/",method:"post",params:{section:e},data:s})}function a(){return t.request({url:"/setting/test-qbittorrent",method:"get"})}export{r as g,o as s,a as t};
