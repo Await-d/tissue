@@ -4,7 +4,7 @@ import logging
 import re
 from datetime import datetime
 from random import randint
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from lxml import etree
 from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem, VideoPreview
 from app.schema.home import JavDBRanking
@@ -19,6 +19,103 @@ class JavdbSpider(Spider):
     name = 'JavDB'
     downloadable = True
     avatar_host = 'https://c0.jdbstatic.com/avatars/'
+
+    # 候选镜像域名列表（可扩展/与站点管理配置配合使用）
+    mirror_hosts = [
+        "https://javdb.com",
+        "https://javdb36.com",
+        "https://javdb37.com",
+        "https://javdb47.com",
+    ]
+
+    def __init__(self):
+        # 初���化基础会话配置
+        super().__init__()
+        # 动态选择可用域名（被封或不可达时自动切换）
+        try:
+            self._select_best_host()
+        except Exception as e:
+            logger.warning(f"选择JavDB可用域名失败，使用默认 {self.host}: {e}")
+
+    def _cookie_domain(self) -> str:
+        netloc = urlparse(self.host).netloc
+        return f".{netloc}"
+
+    def _set_age_cookies(self):
+        """为当前host设置18+与语言Cookie"""
+        try:
+            dom = self._cookie_domain()
+            self.session.cookies.set('over18', '1', domain=dom)
+            self.session.cookies.set('locale', 'zh', domain=dom)
+        except Exception as e:
+            logger.debug(f"设置年龄验证Cookie失败: {e}")
+
+    def _select_best_host(self):
+        """尝试镜像域名，选择可用的host"""
+        # 去重并保持顺序：优先使用内置镜像列表，再包含当前默认host
+        candidates = list(dict.fromkeys(self.mirror_hosts + [self.host]))
+        test_paths = ["/videos", "/rankings/movies?p=weekly&t=censored", "/"]
+        headers = {
+            "User-Agent": self.session.headers.get("User-Agent", ""),
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        }
+
+        for base in candidates:
+            for path in test_paths:
+                try:
+                    resp = self.session.get(urljoin(base, path), headers=headers)
+                    # 状态码为200即认为可用（避免误把防火墙/挑战页当作封禁）
+                    if resp.status_code == 200:
+                        self.host = base
+                        # 同步更新Referer，避免部分页面校验失败
+                        self.session.headers["Referer"] = self.host
+                        self._set_age_cookies()
+                        logger.info(f"JavDB可用域名: {self.host}")
+                        return
+                except Exception:
+                    continue
+
+        # 若都不可用，仍设置基于现有host的cookie
+        logger.warning("未能自动确认JavDB可用域名，将继续使用默认host")
+        self._set_age_cookies()
+
+    def _rebuild_url_for_current_host(self, absolute_or_relative_url: str) -> str:
+        try:
+            parsed = urlparse(absolute_or_relative_url)
+            if not parsed.scheme:
+                return urljoin(self.host, absolute_or_relative_url)
+            current = urlparse(self.host)
+            if parsed.netloc != current.netloc:
+                path_with_query = parsed.path
+                if parsed.query:
+                    path_with_query += f"?{parsed.query}"
+                return urljoin(self.host, path_with_query)
+            return absolute_or_relative_url
+        except Exception:
+            return urljoin(self.host, absolute_or_relative_url)
+
+    def _is_banned_response(self, resp) -> bool:
+        try:
+            if resp.status_code in (401, 403, 429, 503):
+                return True
+            content_lower = resp.content.lower() if isinstance(resp.content, (bytes, bytearray)) else b""
+            markers = [b"banned your access", b"access denied", b"captcha", b"forbidden", b"just a moment"]
+            return any(m in content_lower for m in markers)
+        except Exception:
+            return False
+
+    def _get(self, url: str, headers=None):
+        target = self._rebuild_url_for_current_host(url)
+        resp = self.session.get(target, headers=headers) if headers else self.session.get(target)
+        if self._is_banned_response(resp):
+            logger.warning("检测到被封禁/风控，尝试切换镜像域名后重试")
+            try:
+                self._select_best_host()
+            except Exception:
+                pass
+            target = self._rebuild_url_for_current_host(url)
+            resp = self.session.get(target, headers=headers) if headers else self.session.get(target)
+        return resp
 
     def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
@@ -41,7 +138,7 @@ class JavdbSpider(Spider):
         meta = VideoDetail()
         meta.num = num
 
-        response = self.session.get(url)
+        response = self._get(url)
         html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
 
         title_element = html.xpath("//strong[@class='current-title']")
@@ -127,14 +224,42 @@ class JavdbSpider(Spider):
 
     def search(self, num: str):
         url = urljoin(self.host, f"/search?q={num}&f=all")
-        response = self.session.get(url)
+        response = self._get(url)
 
         html = etree.HTML(response.content)
         matched_elements = html.xpath(fr"//div[@class='video-title']/strong")
+        # 记录搜索结果用于调试
+        logger.debug(f"搜索 {num} 找到 {len(matched_elements)} 个结果")
+        
+        # 精确匹配
         for matched_element in matched_elements:
-            if matched_element.text.lower() == num.lower():
+            element_text = matched_element.text
+            if element_text and element_text.strip().lower() == num.lower():
                 code = matched_element.xpath('./../..')[0].get('href')
+                logger.info(f"找到精确匹配的番号: {element_text} -> {code}")
                 return urljoin(self.host, code)
+        
+        # 如果精确匹配失败，尝试模糊匹配（去掉横杠等）
+        num_normalized = num.lower().replace('-', '').replace('_', '')
+        for matched_element in matched_elements:
+            element_text = matched_element.text
+            if element_text:
+                element_normalized = element_text.strip().lower().replace('-', '').replace('_', '')
+                if element_normalized == num_normalized:
+                    code = matched_element.xpath('./../..')[0].get('href')
+                    logger.info(f"找到模糊匹配的番号: {element_text} -> {code}")
+                    return urljoin(self.host, code)
+        
+        # 记录前几个搜索结果用于调试
+        if matched_elements:
+            logger.debug(f"搜索结果前5个番号:")
+            for i, elem in enumerate(matched_elements[:5]):
+                if elem.text:
+                    logger.debug(f"  {i+1}. {elem.text}")
+        else:
+            logger.warning(f"搜索 {num} 未找到任何结果")
+        
+        return None
 
     def get_previews(self, html: etree.HTML):
         result = []
@@ -176,7 +301,7 @@ class JavdbSpider(Spider):
                 "Referer": self.host
             }
             
-            response = self.session.get(url, headers=headers)
+            response = self._get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             videos = []
@@ -254,7 +379,7 @@ class JavdbSpider(Spider):
                 "Referer": self.host
             }
             
-            response = self.session.get(url, headers=headers)
+            response = self._get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             videos = []
@@ -349,7 +474,7 @@ class JavdbSpider(Spider):
                 "Referer": self.host
             }
             
-            response = self.session.get(url, headers=headers)
+            response = self._get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             comments_elements = html.xpath("//a[contains(@href,'/reviews?')]/text()")
@@ -401,7 +526,7 @@ class JavdbSpider(Spider):
 
     def get_ranking(self, video_type: str, cycle: str):
         url = urljoin(self.host, f'/rankings/movies?p={cycle}&t={video_type}')
-        response = self.session.get(url)
+        response = self._get(url)
         html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
 
         result = []
@@ -458,11 +583,10 @@ class JavdbSpider(Spider):
                 "Referer": self.host
             }
             
-            # 设置年龄验证Cookie绕过成人内容确认
-            self.session.cookies.set('over18', '1', domain='.javdb.com')
-            self.session.cookies.set('locale', 'zh', domain='.javdb.com')
+            # 设置年龄验证Cookie绕过成人内容确认（根据当前host动态设置）
+            self._set_age_cookies()
             
-            response = self.session.get(url, headers=headers)
+            response = self._get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             # 保存页面HTML用于调试
@@ -621,7 +745,7 @@ class JavdbSpider(Spider):
     def get_actors(self):
         """获取JavDB网站上的热门演员列表"""
         url = urljoin(self.host, '/actors')
-        response = self.session.get(url)
+        response = self._get(url)
         html_content = response.content
         
         # 保存HTML用于调试
@@ -711,7 +835,7 @@ class JavdbSpider(Spider):
     def search_actor(self, actor_name: str):
         """搜索JavDB网站上的演员"""
         url = urljoin(self.host, f'/search?q={actor_name}&f=actor')
-        response = self.session.get(url)
+        response = self._get(url)
         html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
         
         result = []
@@ -814,7 +938,7 @@ class JavdbSpider(Spider):
         
         try:
             # 访问演员页面
-            response = self.session.get(actor_url)
+            response = self._get(actor_url)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
             result = []

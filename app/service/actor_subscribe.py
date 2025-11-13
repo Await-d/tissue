@@ -60,13 +60,8 @@ class ActorSubscribeService(BaseService):
                     'subscribed_works_count': 0  # 默认值，将在下面计算
                 }
                 
-                # 计算订阅作品总数（符合订阅条件的作品数量）
-                try:
-                    subscribed_works_count = self._calculate_subscribed_works_count(subscription_dict)
-                    subscription_dict['subscribed_works_count'] = subscribed_works_count
-                except Exception as e:
-                    logger.error(f"计算演员 {subscription_dict['actor_name']} 的订阅作品数量失败: {e}")
-                    subscription_dict['subscribed_works_count'] = 0
+                # 使用缓存的订阅作品总数
+                subscription_dict['subscribed_works_count'] = getattr(row, 'subscribed_works_count', 0) or 0
                 
                 subscriptions.append(subscription_dict)
             
@@ -280,23 +275,16 @@ class ActorSubscribeService(BaseService):
                     # 检查是否是新作品（发布日期晚于订阅起始日期）
                     if video.get("publish_date"):
                         try:
-                            # 处理不同格式的日期
-                            if isinstance(video["publish_date"], str):
-                                video_date = datetime.strptime(video["publish_date"], "%Y-%m-%d").date()
-                            else:
-                                # 如果已经是日期对象
-                                video_date = video["publish_date"]
+                            from app.utils.data_converter import DataConverter
+                            video_date = DataConverter.to_date(video["publish_date"])
+                            from_date = DataConverter.to_date(subscription['from_date'])
                             
-                            # 确保订阅起始日期也是date对象
-                            from_date = subscription['from_date']
-                            if isinstance(from_date, str):
-                                from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
-                            elif hasattr(from_date, 'date'):
-                                from_date = from_date.date()
-                                
-                            if video_date < from_date:
+                            if video_date and from_date and video_date < from_date:
                                 logger.info(f"  跳过: 发布日期 {video_date} 早于订阅起始日期 {from_date}")
                                 continue
+                        except Exception as e:
+                            logger.error(f"解析日期失败: {e}")
+                            continue
                         except Exception as e:
                             logger.error(f"解析日期失败: {e}")
                             continue
@@ -307,35 +295,19 @@ class ActorSubscribeService(BaseService):
                         continue
                     
                     # 检查评分筛选条件
+                    from app.utils.data_converter import DataConverter
+                    
                     if subscription.get('min_rating', 0.0) > 0.0:
-                        video_rating = video.get('rating', 0.0)
-                        # 确保 video_rating 不为 None
-                        if video_rating is None:
-                            video_rating = 0.0
-                        elif isinstance(video_rating, str):
-                            try:
-                                video_rating = float(video_rating)
-                            except (ValueError, TypeError):
-                                video_rating = 0.0
-                        elif not isinstance(video_rating, (int, float)):
-                            video_rating = 0.0
+                        video_rating = DataConverter.normalize_rating(video.get('rating'))
                         if video_rating < subscription['min_rating']:
                             logger.info(f"  跳过: 评分 {video_rating} 低于要求的 {subscription['min_rating']}")
                             continue
                     
                     # 检查评论数筛选条件
                     if subscription.get('min_comments', 0) > 0:
-                        video_comments = video.get('comments_count', 0)
-                        # 确保 video_comments 不为 None
-                        if video_comments is None:
-                            video_comments = 0
-                        elif isinstance(video_comments, str):
-                            try:
-                                video_comments = int(video_comments)
-                            except (ValueError, TypeError):
-                                video_comments = 0
-                        elif not isinstance(video_comments, (int, float)):
-                            video_comments = 0
+                        video_comments = DataConverter.normalize_comments_count(
+                            video.get('comments_count', video.get('comments'))
+                        )
                         if video_comments < subscription['min_comments']:
                             logger.info(f"  跳过: 评论数 {video_comments} 低于要求的 {subscription['min_comments']}")
                             continue
@@ -435,6 +407,8 @@ class ActorSubscribeService(BaseService):
     
     def download_actor_video(self, subscription, video_detail, resource):
         """下载演员视频并记录"""
+        from app.service.base_download import BaseDownloadService
+        
         try:
             # 检查种子是否已存在于qBittorrent中
             if qbittorent.is_magnet_exists(resource.magnet):
@@ -456,10 +430,22 @@ class ActorSubscribeService(BaseService):
                 self.db.flush()
                 return
                 
-            # 添加下载任务
-            response = qbittorent.add_magnet(resource.magnet, resource.savepath)
-            if response.status_code != 200:
-                raise BizException("下载创建失败")
+            # 使用基础下载服务进行下载（包含过滤规则）
+            base_download_service = BaseDownloadService(self.db)
+            download_result = base_download_service.download_with_filter(
+                magnet=resource.magnet,
+                savepath=resource.savepath,
+                category=None,  # 演员订阅可以使用默认分类
+                skip_filter=False  # 启用过滤规则
+            )
+            
+            if not download_result['success']:
+                error_msg = download_result['message']
+                logger.warning(f"演员订阅下载被拒绝: {video_detail.num} - {error_msg}")
+                raise BizException(f"下载失败: {error_msg}")
+            
+            logger.info(f"演员订阅下载成功: {video_detail.num} - {download_result['message']}")
+            logger.info(f"过滤结果: 保留 {download_result['filtered_files']}/{download_result['total_files']} 个文件")
             
             # 记录下载
             download = ActorSubscribeDownload(
@@ -504,6 +490,90 @@ class ActorSubscribeService(BaseService):
         with SessionFactory() as db:
             service = ActorSubscribeService(db)
             service.do_actor_subscribe()
+            db.commit()
+
+    def update_works_count_for_subscription(self, subscription_id: int) -> bool:
+        """
+        更新单个订阅的作品数量（异步调用）
+        
+        Args:
+            subscription_id: 订阅ID
+            
+        Returns:
+            bool: 更新是否成功
+        """
+        try:
+            from app.utils.data_converter import DataConverter
+            
+            subscription = ActorSubscribe.get(self.db, subscription_id)
+            if not subscription:
+                logger.warning(f"订阅 {subscription_id} 不存在")
+                return False
+            
+            logger.info(f"开始更新演员 {subscription.actor_name} 的作品数量")
+            
+            # 获取演员的作品列表
+            actor_videos = spider.get_web_actor_videos(subscription.actor_name, "javdb")
+            if not actor_videos:
+                logger.warning(f"无法获取演员 {subscription.actor_name} 的作品列表")
+                return False
+            
+            # 获取订阅起始日期
+            from_date = DataConverter.to_date(subscription.from_date)
+            if not from_date:
+                logger.warning(f"无法解析订阅起始日期: {subscription.from_date}")
+                return False
+            
+            # 筛选出符合订阅条件的作品
+            qualified_videos = []
+            for video in actor_videos:
+                video_date = DataConverter.to_date(video.get("publish_date"))
+                if video_date and video_date >= from_date:
+                    qualified_videos.append(video)
+            
+            # 更新缓存
+            subscription.subscribed_works_count = len(qualified_videos)
+            subscription.works_count_updated_at = datetime.now()
+            self.db.commit()
+            
+            logger.info(f"演员 {subscription.actor_name} 的作品数量已更新: {len(qualified_videos)}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"更新演员 {subscription_id} 作品数量失败: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+            return False
+    
+    def update_all_works_counts(self):
+        """更新所有订阅的作品数量（定时任务调用）"""
+        try:
+            subscriptions = self.db.query(ActorSubscribe).all()
+            logger.info(f"开始更新 {len(subscriptions)} 个演员订阅的作品数量")
+            
+            success_count = 0
+            for subscription in subscriptions:
+                try:
+                    if self.update_works_count_for_subscription(subscription.id):
+                        success_count += 1
+                    # 添加延迟避免请求过于频繁
+                    import time
+                    time.sleep(randint(5, 10))
+                except Exception as e:
+                    logger.error(f"更新订阅 {subscription.id} 失败: {e}")
+                    continue
+            
+            logger.info(f"作品数量更新完成: 成功 {success_count}/{len(subscriptions)}")
+            
+        except Exception as e:
+            logger.error(f"批量更新作品数量失败: {e}")
+    
+    @classmethod
+    def job_update_works_counts(cls):
+        """更新作品数量的定时任务"""
+        with SessionFactory() as db:
+            service = ActorSubscribeService(db)
+            service.update_all_works_counts()
             db.commit()
 
     def _calculate_subscribed_works_count(self, subscription: dict) -> int:

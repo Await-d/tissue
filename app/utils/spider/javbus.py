@@ -35,10 +35,26 @@ class JavbusSpider(Spider):
                 
             html = etree.HTML(response.text)
             
-            # 检查是否是有效的页面
+            # 检查是否是有效的番号页面
+            # 方法1: 检查是否有番号标题
             title_element = html.xpath("//h3")
-            if not title_element:
-                raise SpiderException('未找到番号')
+            
+            # 方法2: 检查页面title，如果包含404或者找不到，说明是无效页面
+            page_title = html.xpath("//title/text()")
+            if page_title:
+                title_lower = page_title[0].lower()
+                if '404' in title_lower or 'not found' in title_lower or '找不到' in title_lower:
+                    raise SpiderException(f'番号 {num} 不存在')
+            
+            # 方法3: 检查是否有作品信息容器
+            info_container = html.xpath("//div[@class='container']")
+            
+            # 如果三个关键元素都找不到，说明页面无效
+            if not title_element and not info_container:
+                # 尝试检查是否重定向到首页
+                if response.url.rstrip('/') == self.host.rstrip('/'):
+                    raise SpiderException(f'番号 {num} 不存在（重定向到首页）')
+                raise SpiderException('未找到番号或页面结构已变化')
                 
             meta = VideoDetail()
             meta.num = num

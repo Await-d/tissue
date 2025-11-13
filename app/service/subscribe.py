@@ -106,31 +106,35 @@ class SubscribeService(BaseService):
                     continue
 
     def download_video(self, video: schema.SubscribeCreate, link: schema.VideoDownload):
+        from app.service.base_download import BaseDownloadService
+        
         # 获取下载设置中的分类
         from app.schema.setting import Setting
         setting = Setting()
         category = setting.download.category if setting.download.category else None
         
-        # 下载前检查过滤规则
-        logger.info(f"检查磁力链接过滤规则: {video.num}")
-        filter_result = self.filter_service.apply_filter_to_magnet(link.magnet)
-        
-        if not filter_result['should_download']:
-            warning_msg = f"视频 {video.num} 不符合过滤条件: {filter_result['filter_reason']}"
-            logger.warning(warning_msg)
-            raise BizException(f"下载被过滤规则拒绝: {filter_result['filter_reason']}")
-        
-        logger.info(f"视频 {video.num} 通过过滤检查: {filter_result['filter_reason']}")
-        
         # 确保使用正确的下载路径
         download_path = link.savepath if link.savepath else setting.download.download_path
-        response = qbittorent.add_magnet(link.magnet, download_path, category=category)
-        if response.status_code != 200:
-            raise BizException("下载创建失败")
-        logger.info(f"下载创建成功")
         
-        # 检查是否成功获取到hash值
-        torrent_hash = getattr(response, 'hash', None)
+        # 使用基础下载服务进行下载（包含过滤规则）
+        base_download_service = BaseDownloadService(self.db)
+        download_result = base_download_service.download_with_filter(
+            magnet=link.magnet,
+            savepath=download_path,
+            category=category,
+            skip_filter=False  # 启用过滤规则
+        )
+        
+        if not download_result['success']:
+            error_msg = download_result['message']
+            logger.warning(f"视频 {video.num} 下载被拒绝: {error_msg}")
+            raise BizException(f"下载失败: {error_msg}")
+        
+        logger.info(f"视频 {video.num} 下载成功: {download_result['message']}")
+        logger.info(f"过滤结果: 保留 {download_result['filtered_files']}/{download_result['total_files']} 个文件")
+        
+        # 记录种子信息到数据库
+        torrent_hash = download_result['torrent_hash']
         if torrent_hash:
             torrent = Torrent()
             torrent.hash = torrent_hash
@@ -139,21 +143,12 @@ class SubscribeService(BaseService):
             torrent.is_hd = getattr(link, 'is_hd', False)
             torrent.is_uncensored = link.is_uncensored
             self.db.add(torrent)
-            
-            # 添加种子后立即应用过滤规则
-            try:
-                logger.info(f"对新添加的种子应用过滤规则: {torrent_hash}")
-                filter_apply_result = self.filter_service.filter_torrent_files(torrent_hash)
-                if filter_apply_result['success']:
-                    logger.info(f"过滤规则应用成功: {filter_apply_result['message']}")
-                else:
-                    logger.warning(f"过滤规则应用失败: {filter_apply_result['message']}")
-            except Exception as e:
-                logger.error(f"应用过滤规则时出错: {str(e)}")
+            self.db.flush()
 
         # 检查是否属于演员订阅，如果是则记录到演员订阅下载表
         self._check_and_record_actor_subscribe_download(video, link)
 
+        # 发送订阅通知
         subscribe_notify = schema.SubscribeNotify.model_validate(video)
         subscribe_notify = subscribe_notify.model_copy(update=link.model_dump())
         notify.send_subscribe(subscribe_notify)

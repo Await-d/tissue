@@ -84,6 +84,16 @@ class Scheduler:
             id='actor_subscribe',
             replace_existing=True,
         )
+        
+        # 添加演员作品数量更新任务（每天早上6点执行）
+        self.scheduler.add_job(
+            ActorSubscribeService.job_update_works_counts,
+            'cron',
+            hour='6',
+            minute='0',
+            id='actor_works_count_update',
+            replace_existing=True,
+        )
 
     def list(self):
         return self.scheduler.get_jobs()

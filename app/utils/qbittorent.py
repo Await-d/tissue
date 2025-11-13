@@ -212,6 +212,15 @@ class QBittorent:
         )
 
     @auth
+    def resume_torrent(self, torrent_hash: str):
+        """恢复/开始种子下载"""
+        host = self._get_host_with_scheme()
+        return self.session.post(
+            urljoin(host, "/api/v2/torrents/resume"),
+            data={"hashes": torrent_hash},
+        )
+
+    @auth
     def stop_torrent(self, torrent_hash: str):
         """停止种子（停止做种）"""
         host = self._get_host_with_scheme()
@@ -226,10 +235,14 @@ class QBittorent:
         return self.session.get(urljoin(host, "/api/v2/transfer/info")).json()
 
     @auth
-    def add_magnet(self, magnet: str, savepath: Optional[str] = None, category: Optional[str] = None):
+    def add_magnet(self, magnet: str, savepath: Optional[str] = None, category: Optional[str] = None, paused: bool = False):
         host = self._get_host_with_scheme()
         nonce = "".join(random.sample("abcdefghijklmnopqrstuvwxyz", 5))
         data = {"urls": magnet, "tags": nonce}
+        
+        # 设置是否暂停
+        if paused:
+            data["paused"] = "true"
 
         if savepath:
             data["savepath"] = savepath
@@ -339,7 +352,7 @@ class QBittorent:
             for i, torrent in enumerate(torrents[:3]):
                 logger.info(f"  种子{i+1}: 名称={torrent.get('name', 'N/A')}, 状态={torrent.get('state', 'N/A')}, 进度={torrent.get('progress', 0):.2%}, 标签={torrent.get('tags', 'N/A')}")
         
-        return response
+        return torrents  # 返回种子列表，而不是response对象
     
     def extract_hash_from_magnet(self, magnet: str) -> Optional[str]:
         """从磁力链接中提取hash值

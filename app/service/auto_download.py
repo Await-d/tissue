@@ -522,23 +522,7 @@ class AutoDownloadService:
                 self.db.commit()
                 return False
             
-            # 下载前检查过滤规则
-            magnet_url = getattr(suitable_download, 'magnet', None) or getattr(suitable_download, 'url', None)
-            if magnet_url:
-                logger.info(f"检查自动下载磁力链接过滤规则: {subscription.num}")
-                filter_result = self.filter_service.apply_filter_to_magnet(magnet_url)
-                
-                if not filter_result['should_download']:
-                    error_msg = f"视频 {subscription.num} 不符合过滤条件: {filter_result['filter_reason']}"
-                    logger.warning(error_msg)
-                    subscription.status = DownloadStatus.FAILED
-                    subscription.error_message = error_msg
-                    self.db.commit()
-                    return False
-                
-                logger.info(f"视频 {subscription.num} 通过过滤检查: {filter_result['filter_reason']}")
-            
-            # 调用现有的下载服务
+            # 调用现有的下载服务（过滤规则已集成在下载服务中）
             subscribe_service = SubscribeService(db=self.db)
             subscribe_data = schema.SubscribeCreate(
                 num=subscription.num,

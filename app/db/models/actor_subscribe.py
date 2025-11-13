@@ -25,6 +25,8 @@ class ActorSubscribe(Base):
     is_paused = Column(Boolean, nullable=False, default=False)  # 是否暂停订阅
     min_rating = Column(DECIMAL(3, 1), nullable=True, default=0.0, comment="最低评分要求")
     min_comments = Column(Integer, nullable=True, default=0, comment="最低评论数要求")
+    subscribed_works_count = Column(Integer, nullable=True, default=0, comment="订阅作品总数（缓存）")
+    works_count_updated_at = Column(DateTime, nullable=True, comment="作品数量更新时间")
 
 
 class ActorSubscribeDownload(Base):
