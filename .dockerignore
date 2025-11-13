@@ -1,5 +1,48 @@
+# Git 相关
 .git
 .github
+.gitignore
+
+# 操作系统文件
 .DS_Store
+Thumbs.db
+
+# Python 虚拟环境和缓存
 .venv
+venv
+env
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+*.egg-info
+
+# 前端依赖和构建
+frontend/node_modules
+frontend/dist
+frontend/.tanstack
+frontend/.vite
+
+# 配置和数据
 config
+data/*.db
+data/*.json
+
+# IDE 和编辑器
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# 文档
+*.md
+!README.md
+
+# 其他
+.serena
+.dockerignore
+Dockerfile.optimized
+docker-compose.yml

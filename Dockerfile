@@ -16,7 +16,9 @@ RUN apt-get update -y \
     && apt-get install -y nodejs \
     && npm --version \
     && npm install -g pnpm@latest \
-    && pnpm --version
+    && pnpm --version \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # 复制Nginx配置
 COPY ./nginx/app.conf /etc/nginx/sites-available/default
@@ -37,7 +39,8 @@ COPY . /app/
 WORKDIR /app
 RUN mkdir -p /app/dist \
     && cp -r /app/frontend/dist/* /app/dist/ \
-    && pip install -r requirements.txt \
+    && rm -rf /app/frontend/node_modules \
+    && pip install --no-cache-dir -r requirements.txt \
     && chown -R www-data /app/dist \
     && locale-gen zh_CN.UTF-8 \
     && groupadd -r tissue-plus -g 911 \
