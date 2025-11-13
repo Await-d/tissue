@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.engine.reflection import Inspector
 
 
 # revision identifiers, used by Alembic.
@@ -19,8 +20,27 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('subscribe', sa.Column('update_time', sa.DateTime(), nullable=True))
+    # 获取数据库连接和检查器
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+
+    # 检查表是否存在
+    if 'subscribe' in inspector.get_table_names():
+        # 获取现有列
+        existing_columns = [col['name'] for col in inspector.get_columns('subscribe')]
+
+        # 只在列不存在时添加
+        if 'update_time' not in existing_columns:
+            op.add_column('subscribe', sa.Column('update_time', sa.DateTime(), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column('subscribe', 'update_time')
+    # 获取数据库连接和检查器
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+
+    # 检查表和列是否存在
+    if 'subscribe' in inspector.get_table_names():
+        existing_columns = [col['name'] for col in inspector.get_columns('subscribe')]
+        if 'update_time' in existing_columns:
+            op.drop_column('subscribe', 'update_time')
