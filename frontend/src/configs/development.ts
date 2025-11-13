@@ -8,7 +8,7 @@
 import { ConfigProperties } from "./index";
 
 const config: ConfigProperties = {
-    BASE_API: "http://localhost:8000/api",
+    BASE_API: "http://localhost:9193/api",
 }
 
 export default config
