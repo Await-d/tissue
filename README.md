@@ -8,8 +8,8 @@
 # Tissue-Plus ✨
 
 ![GitHub License](https://img.shields.io/github/license/Await-d/tissue)
-![Docker Image Version](https://img.shields.io/docker/v/await2719/tissue/latest)
-![Docker Image Size](https://img.shields.io/docker/image-size/await2719/tissue/latest)
+![Docker Image Version](https://img.shields.io/docker/v/await2719/tissue-plus/latest)
+![Docker Image Size](https://img.shields.io/docker/image-size/await2719/tissue-plus/latest)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Await-d/tissue/auto-release-pipeline.yml)
 
 **Tissue-Plus：您的智能教材管家，让学习资料整理从未如此轻松高效！** 📚🚀
@@ -26,6 +26,8 @@
 * **🖼️ 精美海报生成**：让您的媒体库焕然一新！自动下载高清海报，影片信息一目了然。
 * **👤 演员订阅系统**：再也不会错过老师的新作品！一键订阅您关注的演员，新教材发布自动提醒并下载。
   * **智能筛选**：支持按高清、中文字幕、无码等偏好筛选资源。
+  * **关键字过滤** ⭐：支持包含/排除关键字，精准控制订阅内容（如只下载单体作品、排除VR等）。
+  * **订阅历史** ⭐：查看已完成的订阅记录，支持快速重新订阅。
   * **状态管理**：轻松暂停或恢复演员订阅，灵活控制下载。
   * **资源清理**：取消订阅时可选择是否一并删除已下载的视频和种子文件。
 * **🔗 qBittorrent 深度集成**：无缝对接qBittorrent下载器，实现从订阅到下载的全自动化流程。
@@ -36,6 +38,8 @@
   * **大小智能过滤**：设置文件大小范围，避免下载超大或过小文件。
   * **样本文件识别**：自动跳过sample、preview等样本文件。
   * **实时测试**：输入磁力链接即可预览过滤效果。
+* **🔍 搜索历史功能** ⭐：自动保存最近10次番号搜索记录，快速重复查询，提升使用效率。
+* **🔒 安全性增强** ⭐：Token有效期优化（30天）、正则表达式注入防护、数据库事务回滚保护。
 * **🐳 Docker一键部署**：极简部署流程，三分钟即可拥有您的专属教材管家。
 * **🛡️ SSL连接优化**：内置重试与容错机制，确保网络请求稳定可靠。
 * **🔔 实时通知系统**：支持Telegram、Webhook等多种通知方式，新资源入库、下载完成即时掌握。
@@ -53,14 +57,14 @@
 
 ### 获取镜像
 
-**官方镜像地址**：[Docker Hub - await2719/tissue](https://hub.docker.com/r/await2719/tissue)
+**官方镜像地址**：[Docker Hub - await2719/tissue-plus](https://hub.docker.com/r/await2719/tissue-plus)
 
 ```bash
 # 拉取最新版本
-docker pull await2719/tissue:latest
+docker pull await2719/tissue-plus:latest
 
 # 或拉取指定版本（推荐）
-docker pull await2719/tissue:v0.1.3
+docker pull await2719/tissue-plus:v0.1.4
 ```
 
 ### Docker Run 方式部署
@@ -70,14 +74,14 @@ docker pull await2719/tissue:v0.1.3
 ```bash
 docker run \
   -d \
-  --name=tissue \
+  --name=tissue-plus \
   --restart=unless-stopped \
   -e TZ="Asia/Shanghai" \
   -p 9193:9193 \
   -v /path/to/config:/app/config \
   -v /path/to/video:/data/video \
   -v /path/to/downloads:/downloads \
-  await2719/tissue:latest
+  await2719/tissue-plus:latest
 ```
 
 ### Docker Compose 方式部署（推荐）
@@ -88,9 +92,9 @@ docker run \
 version: '3.8'
 
 services:
-  tissue:
-    image: await2719/tissue:latest
-    container_name: tissue
+  tissue-plus:
+    image: await2719/tissue-plus:latest
+    container_name: tissue-plus
     restart: unless-stopped
     environment:
       - TZ=Asia/Shanghai
@@ -118,7 +122,7 @@ networks:
 docker-compose up -d
 
 # 查看日志
-docker-compose logs -f tissue
+docker-compose logs -f tissue-plus
 
 # 停止
 docker-compose down
@@ -192,16 +196,27 @@ qBittorrent 地址: http://your-qb-host:8080
    - 点击 **添加订阅**
    - 输入演员名称或代码
    - 设置筛选条件（高清、字幕、无码等）
+   - **关键字过滤** ⭐：
+     - **包含关键字**：只下载标题包含指定关键字的影片（如"单体"）
+     - **排除关键字**：排除标题包含指定关键字的影片（如"VR|精选"，用`|`分隔多个）
+     - 支持正则表达式，实现复杂过滤规则
 
 2. **管理订阅**：
    - 暂停/恢复订阅
-   - 修改筛选条件
+   - 修改筛选条件和关键字过滤
    - 查看订阅状态和历史
+   - **订阅历史** ⭐：查看已完成的订阅，一键重新订阅
 
 3. **自动下载**：
    - 系统定时检查新作品
    - 符合条件的资源自动下载
    - 下载完成后自动刮削
+
+### 番号搜索功能 ⭐
+
+- **自动记录历史**：最近10次搜索自动保存
+- **快速重复查询**：点击历史记录即可快速搜索
+- **搜索优化**：记住上次搜索的番号，刷新页面自动恢复
 
 ### 关于文件转移
 
@@ -222,7 +237,7 @@ qBittorrent 地址: http://your-qb-host:8080
 docker ps | grep qbittorrent
 
 # 检查网络连通性
-docker exec tissue ping qbittorrent-container
+docker exec tissue-plus ping qbittorrent-container
 
 # 确认 qBittorrent Web UI 设置
 # 进入 qBittorrent 设置 → Web UI → 允许远程连接
@@ -250,13 +265,13 @@ docker exec tissue ping qbittorrent-container
 
 ```bash
 # 查看容器日志
-docker logs tissue
+docker logs tissue-plus
 
 # 实时查看日志
-docker logs -f tissue
+docker logs -f tissue-plus
 
 # Docker Compose 方式
-docker-compose logs -f tissue
+docker-compose logs -f tissue-plus
 ```
 
 ### 性能优化
@@ -266,7 +281,7 @@ docker-compose logs -f tissue
 ```yaml
 # docker-compose.yml 中添加内存限制
 services:
-  tissue:
+  tissue-plus:
     # ... 其他配置
     deploy:
       resources:
@@ -300,16 +315,16 @@ services:
     environment:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_POLL_INTERVAL=86400  # 24小时检查一次
-    command: tissue  # 只监控 tissue 容器
+    command: tissue-plus  # 只监控 tissue-plus 容器
 ```
 
 ### 手动更新
 
 ```bash
 # Docker Run 方式
-docker stop tissue
-docker rm tissue
-docker pull await2719/tissue:latest
+docker stop tissue-plus
+docker rm tissue-plus
+docker pull await2719/tissue-plus:latest
 # 重新运行容器...
 
 # Docker Compose 方式
@@ -402,5 +417,5 @@ npm run dev
 <p align="center">
   <a href="https://github.com/Await-d/tissue/issues">🐛 报告问题</a> |
   <a href="https://github.com/Await-d/tissue/discussions">💬 讨论交流</a> |
-  <a href="https://hub.docker.com/r/await2719/tissue">🐳 Docker Hub</a>
+  <a href="https://hub.docker.com/r/await2719/tissue-plus">🐳 Docker Hub</a>
 </p>
