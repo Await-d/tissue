@@ -3,7 +3,7 @@ name: Auto Release Pipeline
 on:
   push:
     branches:
-      - main
+      - master
 
 permissions:
   contents: write
@@ -208,7 +208,7 @@ jobs:
         git push origin web-dist --force
 
         # 切换回主分支
-        git checkout main
+        git checkout master
 
         # 清理临时目录
         rm -rf "$TEMP_DIR"
@@ -244,7 +244,7 @@ jobs:
       run: |
         NEW_TAG="${{ steps.next_version.outputs.new_tag }}"
         git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
-        git push origin HEAD:main "$NEW_TAG"
+        git push origin HEAD:master "$NEW_TAG"
 
     - name: Create GitHub Release
       if: steps.check.outputs.needs_bump == 'true'
@@ -256,8 +256,8 @@ jobs:
           ## 🐳 Docker 镜像
 
           ```bash
-          docker pull ${{ secrets.DOCKERHUB_USERNAME || 'await2719' }}/tissue:${{ steps.next_version.outputs.new_tag }}
-          docker pull ${{ secrets.DOCKERHUB_USERNAME || 'await2719' }}/tissue:latest
+          docker pull ${{ secrets.DOCKERHUB_USERNAME || 'await2719' }}/tissue-plus:${{ steps.next_version.outputs.new_tag }}
+          docker pull ${{ secrets.DOCKERHUB_USERNAME || 'await2719' }}/tissue-plus:latest
           ```
 
           ## 📦 主要更新
@@ -396,9 +396,9 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/tissue:${{ steps.next_version.outputs.new_tag }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/tissue:latest
-          ${{ secrets.DOCKERHUB_USERNAME }}/tissue:${{ steps.next_version.outputs.new_version }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/tissue-plus:${{ steps.next_version.outputs.new_tag }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/tissue-plus:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/tissue-plus:${{ steps.next_version.outputs.new_version }}
         labels: |
           org.opencontainers.image.version=${{ steps.next_version.outputs.new_version }}
           org.opencontainers.image.revision=${{ github.sha }}
@@ -430,13 +430,13 @@ jobs:
         MESSAGE+="${CHANGELOG_TRUNCATED}"$'\n'$'\n'
         MESSAGE+="🐳 *Docker 部署:*"$'\n'
         MESSAGE+="\`\`\`bash"$'\n'
-        MESSAGE+="docker pull await2719/tissue:${TAG}"$'\n'
-        MESSAGE+="docker pull await2719/tissue:latest"$'\n'
+        MESSAGE+="docker pull await2719/tissue-plus:${TAG}"$'\n'
+        MESSAGE+="docker pull await2719/tissue-plus:latest"$'\n'
         MESSAGE+="\`\`\`"$'\n'$'\n'
         MESSAGE+="🔗 *相关链接:*"$'\n'
         MESSAGE+="• [GitHub Release](https://github.com/${REPO}/releases/tag/${TAG})"$'\n'
         MESSAGE+="• [完整更新日志](https://github.com/${REPO}/releases)"$'\n'
-        MESSAGE+="• [Docker Hub](https://hub.docker.com/r/await2719/tissue)"$'\n'$'\n'
+        MESSAGE+="• [Docker Hub](https://hub.docker.com/r/await2719/tissue-plus)"$'\n'$'\n'
         MESSAGE+="#Tissue #Update #v${VERSION//./_}"
 
         # 使用 jq 构建 JSON 并发送
