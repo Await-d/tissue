@@ -15,6 +15,11 @@ class SubscribeCreate(BaseModel):
     is_hd: bool = False
     is_zh: bool = False
     is_uncensored: bool = False
+    status: int = 1
+    include_keyword: Optional[str] = None
+    exclude_keyword: Optional[str] = None
+
+    update_time: Optional[datetime] = None
 
 
 class SubscribeUpdate(SubscribeCreate):
