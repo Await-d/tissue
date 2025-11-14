@@ -123,15 +123,27 @@ class QBittorent:
                 response = func(self, *args, **kwargs)
                 if response.status_code == 403:
                     logger.info("登录信息失效，将尝试重新登录...")
-                    raise Exception()
+                    raise Exception("需要重新登录")
                 logger.debug(f"qBittorrent方法 {func.__name__} 执行成功")
                 return response
             except Exception as e:
                 logger.info(f"qBittorrent方法 {func.__name__} 执行失败，尝试重新登录: {str(e)}")
-                self.login()
-                response = func(self, *args, **kwargs)
-                logger.debug(f"重新登录后，qBittorrent方法 {func.__name__} 执行成功")
-                return response
+                try:
+                    self.login()
+                    logger.info("重新登录成功，重试原请求...")
+                    response = func(self, *args, **kwargs)
+
+                    # 检查重试后的响应
+                    if response.status_code == 403:
+                        logger.error("重新登录后仍然返回403，可能是权限配置问题")
+                        return response
+
+                    logger.debug(f"重新登录后，qBittorrent方法 {func.__name__} 执行成功")
+                    return response
+                except Exception as login_error:
+                    logger.error(f"重新登录失败: {str(login_error)}")
+                    # 返回原始错误响应
+                    raise
 
         return wrapper
 
