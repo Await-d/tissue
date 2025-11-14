@@ -14,6 +14,7 @@ from app.service.subscribe import SubscribeService
 from app.utils.logger import logger
 from app.service.actor_subscribe import ActorSubscribeService
 from app.service.auto_download import AutoDownloadService
+from app.service.video_cache import VideoCacheService
 
 
 class Job(BaseModel):
@@ -55,6 +56,10 @@ class Scheduler:
                                       name='停止已完成种子做种',
                                       job=DownloadService.job_stop_seeding_completed,
                                       interval=10, jitter=2 * 60),
+        'refresh_video_cache': Job(key='refresh_video_cache',
+                                   name='刷新视频数据缓存',
+                                   job=VideoCacheService.job_refresh_video_cache,
+                                   interval=120, jitter=30 * 60),  # 每2小时执行，抖动30分钟
     }
 
     def __init__(self):
@@ -67,6 +72,7 @@ class Scheduler:
         self.add('subscribe_meta_update')
         self.add('clean_cache')
         self.add('auto_download')
+        self.add('refresh_video_cache')  # 启动视频缓存刷新任务
 
         setting = Setting()
         if setting.download.trans_auto:

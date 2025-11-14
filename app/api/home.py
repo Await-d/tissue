@@ -3,18 +3,52 @@ from pathlib import Path
 
 import tailer
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from fastapi.responses import StreamingResponse
 from app.utils import spider
 from app.dependencies.security import verify_token
+from app.db import get_db
+from app.service.video_cache import VideoCacheService
 
 router = APIRouter()
 
 
 @router.get('/ranking')
-def get_rankings(source: str, video_type: str, cycle: str):
+def get_rankings(source: str, video_type: str, cycle: str, db: Session = Depends(get_db)):
+    """
+    获取排行榜数据（优先从缓存读取，缓存不存在时实时爬取）
+
+    Args:
+        source: 数据源（JavDB, JavBus等）
+        video_type: 视频类型（censored, uncensored）
+        cycle: 周期（daily, weekly, monthly）
+        db: 数据库会话
+    """
+    # 优先从缓存获取
+    try:
+        cache_service = VideoCacheService(db)
+        cached_videos = cache_service.get_ranking_videos(
+            source=source,
+            video_type=video_type,
+            cycle=cycle,
+            limit=100
+        )
+
+        # 如果缓存有数据，直接返回
+        if cached_videos:
+            return cached_videos
+    except Exception as e:
+        # 缓存查询失败，记录日志并降级到实时爬取
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"从缓存获取排行榜失败: {e}，降级到实时爬取")
+
+    # 缓存没有数据或查询失败，降级到实时爬取
     if source == 'JavDB':
         return spider.JavdbSpider().get_ranking(video_type, cycle)
+
+    return []
 
 
 @router.get('/ranking/detail')

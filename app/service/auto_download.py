@@ -19,6 +19,7 @@ from app.schema import subscribe as schema
 from app.utils.video_collector import VideoCollector
 from app.utils.async_logger import get_logger
 from app.service.download_filter import DownloadFilterService
+from app.service.video_cache import VideoCacheService
 
 # 获取适合智能下载的日志记录器
 logger = get_logger()
@@ -120,10 +121,10 @@ class AutoDownloadService:
         logger.info(f"找到 {len(rules)} 个规则需要执行")
         processed_count = 0
         new_subscriptions = 0
-        
-        # 创建视频收集器（只创建一次，多个规则共享同一个收集器及其缓存）
-        collector = VideoCollector()
-        
+
+        # 使用视频缓存服务替代 VideoCollector，从数据库读取预抓取的数据
+        cache_service = VideoCacheService(self.db)
+
         for rule in rules:
             try:
                 logger.info(f"===== 执行规则 [{rule.name}] ID:{rule.id} =====" )
@@ -131,7 +132,7 @@ class AutoDownloadService:
                 logger.info(f"规则参数类型: min_rating={type(rule.min_rating)}, min_comments={type(rule.min_comments)}")
                 logger.info(f"规则参数值: min_rating={rule.min_rating}, min_comments={rule.min_comments}")
                 logger.info(f"规则条件: 高清={rule.is_hd}, 中文字幕={rule.is_zh}, 无码={rule.is_uncensored}")
-                
+
                 # 计算时间范围
                 if not force:
                     if rule.time_range_type == TimeRangeType.DAY:
@@ -144,15 +145,16 @@ class AutoDownloadService:
                         time_range_days = 7  # 默认一周
                 else:
                     time_range_days = 365  # 强制执行时扩大范围
-                
-                # 获取视频，所有规则共享同一个收集器的缓存
-                videos = collector.get_videos_by_criteria(
+
+                # 从缓存数据库查询视频（无需实时爬取，使用预抓取的数据）
+                videos = cache_service.query_videos(
                     min_rating=rule.min_rating,
                     min_comments=rule.min_comments,
                     is_hd=rule.is_hd,
                     is_zh=rule.is_zh,
                     is_uncensored=rule.is_uncensored,
                     days=time_range_days,
+                    limit=200,  # 限制返回数量以提高性能
                     required_actor_id=getattr(rule, 'actor_id', None),
                     required_tags=getattr(rule, 'tags', '').split(',') if getattr(rule, 'tags', '') and getattr(rule, 'tags', '').strip() else None,
                     exclude_tags=getattr(rule, 'exclude_tags', '').split(',') if getattr(rule, 'exclude_tags', '') and getattr(rule, 'exclude_tags', '').strip() else None
@@ -209,10 +211,10 @@ class AutoDownloadService:
         """获取候选视频"""
         try:
             logger.info(f"获取候选视频 - 规则: {rule.name}")
-            
-            # 创建视频收集器实例
-            collector = VideoCollector()
-            
+
+            # 使用视频缓存服务替代 VideoCollector
+            cache_service = VideoCacheService(self.db)
+
             # 计算时间范围
             if not force:
                 if rule.time_range_type == TimeRangeType.DAY:
@@ -225,15 +227,16 @@ class AutoDownloadService:
                     time_range_days = 7  # 默认一周
             else:
                 time_range_days = 365  # 强制执行时扩大范围
-            
-            # 使用视频收集器获取符合条件的视频
-            videos = collector.get_videos_by_criteria(
+
+            # 从缓存数据库查询视频
+            videos = cache_service.query_videos(
                 min_rating=float(rule.min_rating) if rule.min_rating else None,
                 min_comments=rule.min_comments if rule.min_comments else None,
                 is_hd=rule.is_hd,
                 is_zh=rule.is_zh,
                 is_uncensored=rule.is_uncensored,
-                days=time_range_days
+                days=time_range_days,
+                limit=200
             )
             
             logger.info(f"获取到 {len(videos)} 个候选视频")
@@ -356,7 +359,7 @@ class AutoDownloadService:
             logger.info(f"检查 {len(downloading_subscriptions)} 个下载中的智能订阅状态")
             
             # 获取qBittorrent中的所有种子
-            from app.utils import qbittorent
+            from app.utils.qbittorent import qbittorent
             try:
                 response = qbittorent.get_all_torrents()
                 if hasattr(response, 'json'):
