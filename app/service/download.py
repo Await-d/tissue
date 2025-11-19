@@ -394,3 +394,135 @@ class DownloadService(BaseService):
             logger.error(f"执行停止做种检查任务时出错: {str(e)}")
             import traceback
             logger.error(f"详细错误信息: {traceback.format_exc()}")
+
+    def get_torrent_files(self, torrent_hash: str):
+        """
+        获取种子的文件列表
+        
+        Args:
+            torrent_hash: 种子哈希
+            
+        Returns:
+            list: 文件列表，每个文件包含 name, path, size, progress, priority
+        """
+        try:
+            files_response = self.qb.get_torrent_files(torrent_hash)
+            files = files_response.json() if hasattr(files_response, 'json') else files_response
+            
+            if not files:
+                return []
+            
+            result = []
+            for index, file in enumerate(files):
+                file_info = {
+                    'index': index,
+                    'name': file['name'].split('/')[-1],
+                    'path': file['name'],
+                    'size': file['size'],
+                    'size_formatted': utils.convert_size(file['size']),
+                    'progress': file.get('progress', 0),
+                    'priority': file.get('priority', 1),
+                    'is_seed': file.get('is_seed', False)
+                }
+                result.append(file_info)
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"获取种子文件列表失败: {e}")
+            raise
+
+    def set_files_priority(self, torrent_hash: str, file_indices: list, priority: int):
+        """
+        设置文件下载优先级
+        
+        Args:
+            torrent_hash: 种子哈希
+            file_indices: 文件索引列表
+            priority: 优先级 (0=不下载, 1=正常, 6=高, 7=最高)
+            
+        Returns:
+            dict: 操作结果
+        """
+        try:
+            # 验证优先级值
+            valid_priorities = [0, 1, 6, 7]
+            if priority not in valid_priorities:
+                raise ValueError(f"无效的优先级值: {priority}，有效值为: {valid_priorities}")
+            
+            # 调用 qBittorrent API 设置优先级
+            result = self.qb.set_files_priority_bulk(torrent_hash, file_indices, priority)
+            
+            priority_names = {0: '不下载', 1: '正常', 6: '高', 7: '最高'}
+            logger.info(f"已设置种子 {torrent_hash} 的 {len(file_indices)} 个文件优先级为: {priority_names.get(priority, priority)}")
+            
+            return {
+                'success': True,
+                'updated_files': len(file_indices),
+                'priority': priority,
+                'priority_name': priority_names.get(priority, str(priority))
+            }
+            
+        except Exception as e:
+            logger.error(f"设置文件优先级失败: {e}")
+            raise
+
+    def apply_filter_to_torrent(self, torrent_hash: str):
+        """
+        对指定种子应用全局过滤规则
+        
+        Args:
+            torrent_hash: 种子哈希
+            
+        Returns:
+            dict: 过滤结果
+        """
+        try:
+            filter_result = self.filter_service.filter_torrent_files(torrent_hash)
+            return filter_result
+        except Exception as e:
+            logger.error(f"应用过滤规则失败: {e}")
+            raise
+
+    def pause_torrent(self, torrent_hash: str):
+        """
+        暂停种子下载
+        
+        Args:
+            torrent_hash: 种子哈希
+        """
+        try:
+            self.qb.pause_torrent(torrent_hash)
+            logger.info(f"已暂停种子: {torrent_hash}")
+        except Exception as e:
+            logger.error(f"暂停种子失败: {e}")
+            raise
+
+    def resume_torrent(self, torrent_hash: str):
+        """
+        恢复种子下载
+        
+        Args:
+            torrent_hash: 种子哈希
+        """
+        try:
+            self.qb.resume_torrent(torrent_hash)
+            logger.info(f"已恢复种子: {torrent_hash}")
+        except Exception as e:
+            logger.error(f"恢复种子失败: {e}")
+            raise
+
+    def delete_torrent(self, torrent_hash: str, delete_files: bool = False):
+        """
+        删除种子
+        
+        Args:
+            torrent_hash: 种子哈希
+            delete_files: 是否同时删除文件
+        """
+        try:
+            self.qb.delete_torrent(torrent_hash, delete_files=delete_files)
+            logger.info(f"已删除种子: {torrent_hash}" + ("（包含文件）" if delete_files else ""))
+        except Exception as e:
+            logger.error(f"删除种子失败: {e}")
+            raise

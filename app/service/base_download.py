@@ -3,6 +3,7 @@
 封装通用的带过滤规则的下载逻辑
 """
 import time
+import threading
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 
@@ -18,14 +19,14 @@ class BaseDownloadService:
         self.db = db
         self.filter_service = DownloadFilterService(db)
     
-    def _check_metadata_ready(self, torrent_hash: str, max_attempts: int = 10) -> bool:
+    def _check_metadata_ready(self, torrent_hash: str, max_attempts: int = 30) -> bool:
         """
         检查种子元数据是否就绪
-        
+
         Args:
             torrent_hash: 种子哈希
-            max_attempts: 最大尝试次数
-            
+            max_attempts: 最大尝试次数（默认30次，最多等待50秒）
+
         Returns:
             bool: 元数据就绪返回True
         """
@@ -38,11 +39,13 @@ class BaseDownloadService:
                     return True
             except Exception as e:
                 logger.debug(f"检查元数据第 {attempt+1} 次: {e}")
-            
+
             if attempt < max_attempts - 1:
-                time.sleep(1)
-        
-        logger.warning(f"种子 {torrent_hash} 元数据未就绪，已等待 {max_attempts} 秒")
+                # 渐进式等待：前10次1秒，之后2秒
+                wait_time = 1 if attempt < 10 else 2
+                time.sleep(wait_time)
+
+        logger.warning(f"种子 {torrent_hash} 元数据未就绪，已等待约 {10 + (max_attempts-10)*2} 秒")
         return False
     
     def download_with_filter(self, 
@@ -144,11 +147,17 @@ class BaseDownloadService:
             # 4. 等待元数据加载
             logger.info(f"等待种子元数据加载: {torrent_hash}")
             if not self._check_metadata_ready(torrent_hash):
-                # 元数据未就绪，但不删除种子，让它继续下载
-                logger.warning(f"种子 {torrent_hash} 元数据加载超时，跳过过滤检查")
+                # 元数据未就绪，使用延迟过滤机制
+                logger.warning(f"种子 {torrent_hash} 元数据加载超时，启动延迟过滤任务")
+
+                # 启动后台线程进行延迟过滤
+                self._schedule_delayed_filter(torrent_hash)
+
+                # 先恢复下载，过滤会在后台完成
                 qbittorent.resume_torrent(torrent_hash)
+
                 result['success'] = True
-                result['message'] = '种子已添加，但元数据加载超时，跳过过滤检查'
+                result['message'] = '种子已添加，元数据加载中，正在后台应用过滤规则'
                 return result
             
             # 5. 应用过滤规则
@@ -194,3 +203,63 @@ class BaseDownloadService:
             qbittorent.resume_torrent(torrent_hash)
         except Exception as e:
             logger.debug(f"恢复种子下载失败（可能已在下载中）: {e}")
+
+    def _schedule_delayed_filter(self, torrent_hash: str, max_retries: int = 6):
+        """
+        延迟应用过滤规则（用于元数据加载慢的情况）
+
+        Args:
+            torrent_hash: 种子哈希
+            max_retries: 最大重试次数（默认6次，共60秒）
+        """
+        def delayed_filter():
+            logger.info(f"延迟过滤任务启动: {torrent_hash}")
+
+            for retry in range(max_retries):
+                time.sleep(10)  # 每10秒重试一次
+
+                try:
+                    # 再次检查元数据
+                    files_response = qbittorent.get_torrent_files(torrent_hash)
+                    files = files_response.json() if hasattr(files_response, 'json') else files_response
+
+                    if files and len(files) > 0:
+                        logger.info(f"延迟过滤：种子 {torrent_hash} 元数据已就绪，开始应用过滤")
+
+                        # 暂停下载
+                        try:
+                            qbittorent.pause_torrent(torrent_hash)
+                            time.sleep(1)
+                        except Exception as e:
+                            logger.warning(f"暂停种子失败: {e}")
+
+                        # 应用过滤
+                        filter_result = self.filter_service.filter_torrent_files(torrent_hash)
+
+                        if filter_result['success']:
+                            logger.info(f"延迟过滤成功: {filter_result['message']}")
+                            # 恢复下载
+                            try:
+                                qbittorent.resume_torrent(torrent_hash)
+                            except Exception as e:
+                                logger.error(f"恢复下载失败: {e}")
+                        else:
+                            logger.error(f"延迟过滤失败: {filter_result['message']}")
+                            # 如果过滤失败，删除种子
+                            try:
+                                qbittorent.delete_torrent(torrent_hash, delete_files=True)
+                                logger.info(f"延迟过滤失败，已删除种子: {torrent_hash}")
+                            except Exception as e:
+                                logger.error(f"删除种子失败: {e}")
+
+                        return  # 成功应用过滤，退出
+
+                except Exception as e:
+                    logger.error(f"延迟过滤重试 {retry+1} 失败: {e}")
+
+            logger.error(f"延迟过滤最终失败，种子 {torrent_hash} 将继续下载所有文件")
+
+        # 在后台线程中执行
+        thread = threading.Thread(target=delayed_filter, daemon=True)
+        thread.start()
+        logger.info(f"延迟过滤线程已启动: {torrent_hash}")
