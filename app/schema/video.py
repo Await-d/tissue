@@ -112,3 +112,20 @@ class VideoNotify(VideoDetail):
     torrent_hash: Optional[str] = None
     size: Optional[str] = None
     message: Optional[str] = None
+
+
+class WebActor(BaseModel):
+    """网页演员信息"""
+    name: Optional[str] = None
+    thumb: Optional[str] = None
+    url: Optional[str] = None
+
+
+class WebVideo(BaseModel):
+    """网页视频信息"""
+    num: Optional[str] = None
+    title: Optional[str] = None
+    cover: Optional[str] = None
+    url: Optional[str] = None
+    date: Optional[str] = None
+    tags: Optional[List[str]] = []
