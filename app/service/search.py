@@ -21,8 +21,8 @@ from app.utils.logger import logger
 from app.utils.cache import cached, get_cache_json, cache_json, clean_cache_json
 from app.utils.search_cache import SearchCacheManager, get_search_cache_manager
 from app.utils.search_suggestions import SearchSuggestionService, get_search_suggestion_service
-from app.utils.spider.javdb import JavdbSpider
-from app.utils.spider.javbus import JavbusSpider
+from app.utils.spider.javdb import JavDBSpider
+from app.utils.spider.javbus import JavBusSpider
 
 
 def get_search_service(db: Session = Depends(get_db)):
@@ -212,9 +212,9 @@ class SearchService(BaseService):
         try:
             # 选择爬虫
             if source == "javdb":
-                spider = JavdbSpider()
+                spider = JavDBSpider()
             elif source == "javbus":
-                spider = JavbusSpider()
+                spider = JavBusSpider()
             else:
                 return None
 
