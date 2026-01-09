@@ -132,15 +132,25 @@ class JavDBSpider(Spider):
 
         videos = html.xpath("//div[contains(@class,'preview-images')]/a[@class='preview-video-container']")
         for video in videos:
-            thumb = video.xpath('./img')[0]
-            video = html.xpath(f"//video[@id='{video.get('href')[1:]}']/source")
-            if video:
-                preview = VideoPreviewItem(type='video', thumb=thumb.get('src'), url=video[0].get('src'))
+            href = video.get('href')
+            # 跳过指向登录页面的链接（未登录用户）
+            if not href or href == '/login' or not href.startswith('#'):
+                continue
+            thumb_elements = video.xpath('./img')
+            if not thumb_elements:
+                continue
+            thumb = thumb_elements[0]
+            video_sources = html.xpath(f"//video[@id='{href[1:]}']/source")
+            if video_sources:
+                preview = VideoPreviewItem(type='video', thumb=thumb.get('src'), url=video_sources[0].get('src'))
                 result.append(preview)
 
         images = html.xpath("//div[contains(@class,'preview-images')]/a[@class='tile-item']")
         for image in images:
-            thumb = image.xpath('./img')[0]
+            thumb_elements = image.xpath('./img')
+            if not thumb_elements:
+                continue
+            thumb = thumb_elements[0]
             preview = VideoPreviewItem(type='image', thumb=thumb.get('src'), url=image.get('href'))
             result.append(preview)
 
