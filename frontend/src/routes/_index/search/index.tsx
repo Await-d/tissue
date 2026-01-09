@@ -40,7 +40,7 @@ import {
     createFileRoute,
     useSearch,
     useLoaderData,
-    useRouter, useMatch
+    useRouter, useMatch, useNavigate
 } from "@tanstack/react-router";
 import Await from "../../../components/Await";
 import {useDispatch} from "react-redux";
@@ -108,6 +108,7 @@ export const Route = createFileRoute('/_index/search/')({
 export function Search() {
 
     const router = useRouter()
+    const navigate = useNavigate()
 
     const detailMatch = useMatch({from: '/_index/home/detail', shouldThrow: false})
     const routeId = detailMatch ? '/_index/home/detail' : '/_index/search/'
@@ -173,7 +174,25 @@ export function Search() {
                 key: 'actors',
                 label: '演员',
                 span: 24,
-                children: video.actors,
+                children: (
+                    <Space wrap>
+                        {video.actors.split(', ').filter((name: string) => name).map((actorName: string) => (
+                            <Tag
+                                key={actorName}
+                                color="purple"
+                                style={{cursor: 'pointer'}}
+                                onClick={() => {
+                                    navigate({
+                                        to: '/actor',
+                                        search: {actorName}
+                                    });
+                                }}
+                            >
+                                {actorName}
+                            </Tag>
+                        ))}
+                    </Space>
+                ),
             },
             {
                 key: 'num',
@@ -232,7 +251,18 @@ export function Search() {
                 children: (
                     <div className={'leading-7'}>
                         {video.tags.map((i: any) => (
-                            <Tag key={i}>{i}</Tag>
+                            <Tag
+                                key={i}
+                                style={{cursor: 'pointer', marginBottom: 4}}
+                                onClick={() => {
+                                    navigate({
+                                        to: '/video',
+                                        search: {tag: i}
+                                    });
+                                }}
+                            >
+                                {i}
+                            </Tag>
                         ))}
                     </div>
                 ),
@@ -241,7 +271,20 @@ export function Search() {
                 key: 'series',
                 label: '系列',
                 span: 16,
-                children: video.series,
+                children: video.series ? (
+                    <Tag
+                        color="blue"
+                        style={{cursor: 'pointer'}}
+                        onClick={() => {
+                            navigate({
+                                to: '/video',
+                                search: {series: video.series}
+                            });
+                        }}
+                    >
+                        {video.series}
+                    </Tag>
+                ) : null,
             },
             {
                 key: 'runtime',

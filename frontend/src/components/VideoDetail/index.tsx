@@ -31,14 +31,17 @@ import {
     FieldTimeOutlined,
     GlobalOutlined,
     CheckCircleOutlined,
+    DownloadOutlined,
 } from "@ant-design/icons";
 import * as api from "../../apis/video.ts";
 import React, {useEffect, useState} from "react";
 import {useRequest} from "ahooks";
+import {useNavigate} from "@tanstack/react-router";
 import Styles from "./index.module.css";
 import Websites from "../Websites";
 import VideoActors from "../VideoActors";
 import VideoCoverEditor from "../VideoCover/editor.tsx";
+import FavoriteButton from "../FavoriteButton";
 
 const {Text, Title} = Typography;
 
@@ -53,11 +56,14 @@ function VideoDetail(props: Props) {
     const [form] = Form.useForm();
     const [hasError, setHasError] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const navigate = useNavigate();
+    const [videoNum, setVideoNum] = useState<string>("");
 
     const {run: onLoad, loading} = useRequest(loadVideoDetail, {
         manual: true,
         onSuccess: (response) => {
             form.setFieldsValue(response);
+            setVideoNum(response.num || "");
             setHasError(false);
             setErrorMessage("");
         },
@@ -154,6 +160,35 @@ function VideoDetail(props: Props) {
 
     const renderFooter = () => {
         const buttons = [];
+
+        // Add favorite and download buttons
+        if (videoNum) {
+            buttons.push(
+                <FavoriteButton
+                    key="favorite"
+                    videoNum={videoNum}
+                    videoTitle={form.getFieldValue("title")}
+                    videoCover={form.getFieldValue("cover")}
+                />
+            );
+            buttons.push(
+                <Tooltip key="download-tooltip" title="搜索下载资源">
+                    <Button
+                        key="download"
+                        icon={<DownloadOutlined />}
+                        onClick={() => {
+                            navigate({
+                                to: "/search",
+                                search: { num: videoNum }
+                            });
+                        }}
+                    >
+                        下载
+                    </Button>
+                </Tooltip>
+            );
+            buttons.push(<Divider key="divider-actions" type="vertical" />);
+        }
 
         if (mode === "video") {
             buttons.push(
@@ -376,7 +411,30 @@ function VideoDetail(props: Props) {
                                         </Col>
                                         <Col span={24} sm={12}>
                                             <Form.Item name="series" label="系列">
-                                                <Input placeholder="系列名称" />
+                                                <Input
+                                                    placeholder="系列名称"
+                                                    suffix={
+                                                        form.getFieldValue('series') && (
+                                                            <Tooltip title="跳转到该系列">
+                                                                <Button
+                                                                    type="link"
+                                                                    size="small"
+                                                                    onClick={() => {
+                                                                        const series = form.getFieldValue('series');
+                                                                        if (series) {
+                                                                            navigate({
+                                                                                to: '/video',
+                                                                                search: {series}
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    查看
+                                                                </Button>
+                                                            </Tooltip>
+                                                        )
+                                                    }
+                                                />
                                             </Form.Item>
                                         </Col>
                                         <Col span={24} sm={12}>
@@ -420,6 +478,25 @@ function VideoDetail(props: Props) {
                                                     mode="tags"
                                                     placeholder="输入或选择标签"
                                                     tokenSeparators={[","]}
+                                                    tagRender={(props) => {
+                                                        const {label, closable, onClose} = props;
+                                                        return (
+                                                            <Tag
+                                                                closable={closable}
+                                                                onClose={onClose}
+                                                                style={{cursor: 'pointer'}}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    navigate({
+                                                                        to: '/video',
+                                                                        search: {tag: label as string}
+                                                                    });
+                                                                }}
+                                                            >
+                                                                {label}
+                                                            </Tag>
+                                                        );
+                                                    }}
                                                 />
                                             </Form.Item>
                                         </Col>

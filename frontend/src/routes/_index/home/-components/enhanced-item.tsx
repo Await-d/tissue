@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Badge, Rate, Space, theme, Tooltip, Button } from "antd";
 import VideoCover from "../../../../components/VideoCover";
-import { SearchOutlined, HeartOutlined, HeartFilled } from "@ant-design/icons";
+import { SearchOutlined, HeartOutlined, HeartFilled, DownloadOutlined } from "@ant-design/icons";
 import { useRouter } from "@tanstack/react-router";
+import FavoriteButton from "../../../../components/FavoriteButton";
 
 const { useToken } = theme;
 
@@ -11,6 +12,7 @@ interface VideoItemProps {
     showRank?: boolean;
     rank?: number;
     onFavorite?: (item: any) => void;
+    onDownload?: (item: any) => void;
 }
 
 /**
@@ -19,6 +21,7 @@ interface VideoItemProps {
  * - Hover scale effect
  * - Video tags (HD/Chinese/Uncensored)
  * - Quick favorite button
+ * - Quick download button
  * - Ranking display
  *
  * @example
@@ -27,19 +30,18 @@ interface VideoItemProps {
  *   showRank={true}
  *   rank={1}
  *   onFavorite={(item) => console.log('Favorited:', item)}
+ *   onDownload={(item) => console.log('Download:', item)}
  * />
  */
 function EnhancedVideoItem(props: VideoItemProps) {
     const { token } = useToken();
-    const { item, showRank = false, rank, onFavorite } = props;
+    const { item, showRank = false, rank, onFavorite, onDownload } = props;
     const { navigate } = useRouter();
-    const [isFavorited, setIsFavorited] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
-    const handleFavorite = (event: React.MouseEvent) => {
+    const handleDownload = (event: React.MouseEvent) => {
         event.stopPropagation();
-        setIsFavorited(!isFavorited);
-        onFavorite?.(item);
+        onDownload?.(item);
     };
 
     const renderTags = () => {
@@ -143,21 +145,39 @@ function EnhancedVideoItem(props: VideoItemProps) {
                 {renderRankBadge()}
                 <VideoCover src={item.cover} />
 
-                {/* Favorite button overlay */}
+                {/* Action buttons overlay */}
                 <div
-                    className="absolute top-2 right-2 z-10 transition-opacity duration-300"
+                    className="absolute top-2 right-2 z-10 transition-opacity duration-300 flex gap-2"
                     style={{ opacity: isHovered ? 1 : 0 }}
                 >
-                    <Button
-                        type="primary"
+                    <FavoriteButton
+                        videoNum={item.num}
+                        videoTitle={item.title}
+                        videoCover={item.cover}
                         shape="circle"
-                        icon={isFavorited ? <HeartFilled /> : <HeartOutlined />}
-                        onClick={handleFavorite}
+                        type="primary"
                         style={{
-                            backgroundColor: isFavorited ? "#ff4d4f" : "rgba(0,0,0,0.5)",
+                            backgroundColor: "rgba(0,0,0,0.5)",
                             borderColor: "transparent"
                         }}
+                        onFavoriteChange={(isFavorited) => {
+                            if (isFavorited) {
+                                onFavorite?.(item);
+                            }
+                        }}
                     />
+                    {onDownload && (
+                        <Button
+                            type="primary"
+                            shape="circle"
+                            icon={<DownloadOutlined />}
+                            onClick={handleDownload}
+                            style={{
+                                backgroundColor: "rgba(0,0,0,0.5)",
+                                borderColor: "transparent"
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 

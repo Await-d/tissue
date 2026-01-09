@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.api import auth, user, setting, video, common, file, download, history, schedule, home, subscribe, site, auto_download, version, download_filter, site_management, search, actor_subscribe
+from app.api import auth, user, setting, video, common, file, download, history, schedule, home, subscribe, site, auto_download, version, download_filter, site_management, search, actor_subscribe, favorite
 from app.dependencies.security import verify_token
 
 api_router = APIRouter()
@@ -24,3 +24,4 @@ api_router.include_router(download_filter.router, prefix='/download-filter', dep
 api_router.include_router(site_management.router, prefix='/site-management', dependencies=[Depends(verify_token)])
 api_router.include_router(search.router, prefix='/search', dependencies=[Depends(verify_token)])
 api_router.include_router(actor_subscribe.router, prefix='/actor-subscribe', dependencies=[Depends(verify_token)])
+api_router.include_router(favorite.router, prefix='/favorite', dependencies=[Depends(verify_token)])

@@ -13,7 +13,10 @@ import {
     Statistic,
     Button,
     Dropdown,
-    Badge
+    Badge,
+    Checkbox,
+    Modal,
+    message
 } from "antd";
 import VideoCover from "../../../components/VideoCover";
 import React, {useMemo, useState} from "react";
@@ -31,11 +34,18 @@ import {
     VideoCameraOutlined,
     MessageOutlined,
     SafetyOutlined,
-    HighlightOutlined
+    HighlightOutlined,
+    CheckSquareOutlined,
+    DownloadOutlined
 } from "@ant-design/icons";
 import VideoFilterModal, {FilterParams} from "./-components/filter.tsx";
 import {createFileRoute, Link, useRouter} from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
+import BatchOperations from "../../../components/BatchOperations";
+import TagEditModal from "../../../components/BatchOperations/TagEditModal";
+import { useBatchSelection } from "../../../hooks/useBatchSelection";
+import FavoriteButton from "../../../components/FavoriteButton";
+import { batchAddFavorites } from "../../../apis/favorite";
 
 export const Route = createFileRoute('/_index/video/')({
     component: Video,
@@ -56,6 +66,11 @@ function Video() {
     }>({})
     const [sortBy, setSortBy] = useState<SortType>('time')
     const {navigate} = useRouter()
+    
+    // Batch selection state
+    const [batchMode, setBatchMode] = useState(false)
+    const [tagModalOpen, setTagModalOpen] = useState(false)
+    const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null)
 
     const actors = useMemo(() => {
         const actors: any[] = []
@@ -72,6 +87,22 @@ function Video() {
         })
         return actors
     }, [data])
+
+    // Batch selection hook
+    const {
+        selectedIds,
+        selectedItems,
+        isSelected,
+        toggleSelection,
+        toggleAll,
+        selectRange,
+        clearSelection,
+        isAllSelected,
+        selectedCount
+    } = useBatchSelection<any>({
+        items: data,
+        getItemId: (video) => video.path
+    })
 
     // Statistics calculation
     const statistics = useMemo(() => {
@@ -146,6 +177,66 @@ function Video() {
                 // TODO: Implement favorite functionality
                 console.log('Favorite video:', video.path)
                 break
+        }
+    }
+
+    // Batch operations handlers
+    const handleCardClick = (e: React.MouseEvent, video: any, index: number) => {
+        if (!batchMode) {
+            setSelected(video.path)
+            return
+        }
+
+        // Shift key for range selection
+        if (e.shiftKey && lastSelectedIndex !== null) {
+            const startIndex = Math.min(lastSelectedIndex, index)
+            const endIndex = Math.max(lastSelectedIndex, index)
+            for (let i = startIndex; i <= endIndex; i++) {
+                const videoId = videos[i].path
+                if (!isSelected(videoId)) {
+                    toggleSelection(videoId)
+                }
+            }
+        } else {
+            toggleSelection(video.path)
+        }
+        setLastSelectedIndex(index)
+    }
+
+    const handleBatchDelete = () => {
+        message.info('批量删除功能开发中')
+    }
+
+    const handleBatchEditTags = () => {
+        setTagModalOpen(true)
+    }
+
+    const handleTagsUpdate = (tags: string[]) => {
+        message.info('批量标签更新功能开发中')
+        setTagModalOpen(false)
+        clearSelection()
+    }
+
+    const handleBatchFavorite = async () => {
+        try {
+            const videoNums = selectedItems.map(item => item.num)
+            await batchAddFavorites(videoNums)
+            message.success(`已收藏 ${selectedCount} 个视频`)
+            clearSelection()
+        } catch (error) {
+            message.error('收藏失败')
+        }
+    }
+
+    const handleBatchDownload = () => {
+        message.info('批量下载功能开发中')
+        clearSelection()
+    }
+
+    const toggleBatchMode = () => {
+        setBatchMode(!batchMode)
+        if (batchMode) {
+            clearSelection()
         }
     }
 
@@ -371,6 +462,14 @@ function Video() {
                                                                 key={actor.name}
                                                                 color="purple"
                                                                 bordered={false}
+                                                                style={{cursor: 'pointer'}}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate({
+                                                                        to: '/actor',
+                                                                        search: {actorName: actor.name}
+                                                                    });
+                                                                }}
                                                             >
                                                                 {actor.name}
                                                             </Tag>
@@ -393,12 +492,25 @@ function Video() {
                                                         onClick={(e) => handleCardAction(e, 'edit', video)}
                                                     />
                                                 </Tooltip>
-                                                <Tooltip title="收藏">
+                                                <FavoriteButton
+                                                    videoNum={video.num}
+                                                    videoTitle={video.title}
+                                                    videoCover={video.cover}
+                                                    type="text"
+                                                    size="small"
+                                                />
+                                                <Tooltip title="下载">
                                                     <Button
                                                         type="text"
                                                         size="small"
-                                                        icon={<StarOutlined />}
-                                                        onClick={(e) => handleCardAction(e, 'favorite', video)}
+                                                        icon={<DownloadOutlined />}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            navigate({
+                                                                to: '/search',
+                                                                search: {num: video.num}
+                                                            })
+                                                        }}
                                                     />
                                                 </Tooltip>
                                                 <Tooltip title="搜索">

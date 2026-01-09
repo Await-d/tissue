@@ -111,6 +111,15 @@ function JavDB() {
         });
     };
 
+    // Handle download click
+    const handleDownload = (item: any) => {
+        // Navigate to search page to show download options
+        navigate({
+            to: "/search",
+            search: { num: item.num }
+        });
+    };
+
     return (
         <div className="pb-6">
             {/* Filter Section */}
@@ -226,6 +235,7 @@ function JavDB() {
                                                 showRank={index < 10}
                                                 rank={index + 1}
                                                 onFavorite={handleFavorite}
+                                                onDownload={handleDownload}
                                             />
                                         </Col>
                                     ))}
