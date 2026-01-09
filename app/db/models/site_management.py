@@ -30,9 +30,9 @@ class SiteType(str, Enum):
     MIRROR = "mirror"          # 镜像站点
 
 
-class Site(Base):
-    """站点基础信息表"""
-    __tablename__ = 'sites'
+class ManagedSite(Base):
+    """站点基础信息表（站点管理功能）"""
+    __tablename__ = 'managed_sites'
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False, comment="站点名称")
@@ -72,9 +72,9 @@ class Site(Base):
     tags = Column(JSON, default=list, comment="站点标签")
 
     # 关联关系
-    statistics = relationship("SiteStatistics", back_populates="site", uselist=False, cascade="all, delete-orphan")
-    health_checks = relationship("SiteHealthCheck", back_populates="site", cascade="all, delete-orphan")
-    error_logs = relationship("SiteErrorLog", back_populates="site", cascade="all, delete-orphan")
+    statistics = relationship("SiteStatistics", back_populates="managed_site", uselist=False, cascade="all, delete-orphan")
+    health_checks = relationship("SiteHealthCheck", back_populates="managed_site", cascade="all, delete-orphan")
+    error_logs = relationship("SiteErrorLog", back_populates="managed_site", cascade="all, delete-orphan")
 
     @hybrid_property
     def current_url(self) -> str:
@@ -105,7 +105,7 @@ class SiteStatistics(Base):
     __tablename__ = 'site_statistics'
 
     id = Column(Integer, primary_key=True, index=True)
-    site_id = Column(Integer, ForeignKey('sites.id'), nullable=False)
+    site_id = Column(Integer, ForeignKey('managed_sites.id'), nullable=False)
 
     # 请求统计
     total_requests = Column(Integer, default=0, comment="总请求数")
@@ -133,7 +133,7 @@ class SiteStatistics(Base):
     last_reset = Column(DateTime, default=datetime.utcnow, comment="上次重置时间")
 
     # 关联关系
-    site = relationship("Site", back_populates="statistics")
+    managed_site = relationship("ManagedSite", back_populates="statistics")
 
     @hybrid_property
     def success_rate(self) -> float:
@@ -155,7 +155,7 @@ class SiteHealthCheck(Base):
     __tablename__ = 'site_health_checks'
 
     id = Column(Integer, primary_key=True, index=True)
-    site_id = Column(Integer, ForeignKey('sites.id'), nullable=False)
+    site_id = Column(Integer, ForeignKey('managed_sites.id'), nullable=False)
 
     # 检查结果
     is_healthy = Column(Boolean, default=True, comment="是否健康")
@@ -172,7 +172,7 @@ class SiteHealthCheck(Base):
     next_check = Column(DateTime, comment="下次检查时间")
 
     # 关联关系
-    site = relationship("Site", back_populates="health_checks")
+    managed_site = relationship("ManagedSite", back_populates="health_checks")
 
 
 class SiteErrorLog(Base):
@@ -180,7 +180,7 @@ class SiteErrorLog(Base):
     __tablename__ = 'site_error_logs'
 
     id = Column(Integer, primary_key=True, index=True)
-    site_id = Column(Integer, ForeignKey('sites.id'), nullable=False)
+    site_id = Column(Integer, ForeignKey('managed_sites.id'), nullable=False)
 
     # 错误信息
     error_type = Column(String(100), comment="错误类型")
@@ -210,7 +210,7 @@ class SiteErrorLog(Base):
     resolved_at = Column(DateTime, comment="解决时间")
 
     # 关联关系
-    site = relationship("Site", back_populates="error_logs")
+    managed_site = relationship("ManagedSite", back_populates="error_logs")
 
 
 class SiteFailoverRule(Base):

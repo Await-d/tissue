@@ -8,3 +8,8 @@ from .schedule import *
 from .subscribe import *
 from .site import *
 from .auto_download import *
+from . import actor_subscribe
+from . import search
+from . import site_management
+from . import home
+from . import favorite

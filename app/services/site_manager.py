@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 
 from app.db.models.site_management import (
-    Site, SiteStatistics, SiteHealthCheck, SiteErrorLog,
+    ManagedSite, SiteStatistics, SiteHealthCheck, SiteErrorLog,
     SiteStatus, SiteType, SiteFailoverRule, SiteLoadBalancer
 )
 from app.utils.logger import logger
@@ -27,7 +27,7 @@ class SiteManager:
         operation: str = "scraping",
         site_type: Optional[SiteType] = None,
         required_features: Optional[List[str]] = None
-    ) -> List[Site]:
+    ) -> List[ManagedSite]:
         """
         获取可用站点列表
 
@@ -39,31 +39,31 @@ class SiteManager:
         Returns:
             按优先级排序的可用站点列表
         """
-        query = self.db.query(Site).filter(
-            Site.is_enabled == True,
+        query = self.db.query(ManagedSite).filter(
+            ManagedSite.is_enabled == True,
             Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
         )
 
         # 按站点类型过滤
         if site_type:
-            query = query.filter(Site.site_type == site_type)
+            query = query.filter(ManagedSite.site_type == site_type)
 
         # 按功能需求过滤
         if required_features:
             for feature in required_features:
                 if feature == "download":
-                    query = query.filter(Site.supports_download == True)
+                    query = query.filter(ManagedSite.supports_download == True)
                 elif feature == "preview":
-                    query = query.filter(Site.supports_preview == True)
+                    query = query.filter(ManagedSite.supports_preview == True)
                 elif feature == "search":
-                    query = query.filter(Site.supports_search == True)
+                    query = query.filter(ManagedSite.supports_search == True)
                 elif feature == "actor_info":
-                    query = query.filter(Site.supports_actor_info == True)
+                    query = query.filter(ManagedSite.supports_actor_info == True)
                 elif feature == "ranking":
-                    query = query.filter(Site.supports_ranking == True)
+                    query = query.filter(ManagedSite.supports_ranking == True)
 
         # 按优先级排序
-        sites = query.order_by(Site.priority.asc()).all()
+        sites = query.order_by(ManagedSite.priority.asc()).all()
 
         logger.info(f"找到 {len(sites)} 个可用站点用于操作: {operation}")
         return sites
@@ -73,7 +73,7 @@ class SiteManager:
         operation: str = "scraping",
         required_features: Optional[List[str]] = None,
         exclude_sites: Optional[List[int]] = None
-    ) -> Optional[Site]:
+    ) -> Optional[ManagedSite]:
         """
         选择最佳站点
 
@@ -97,7 +97,7 @@ class SiteManager:
         # 使用加权选择算法
         return self._weighted_selection(sites)
 
-    def _weighted_selection(self, sites: List[Site]) -> Site:
+    def _weighted_selection(self, sites: List[ManagedSite]) -> ManagedSite:
         """
         基于权重和性能统计的站点选择
 
@@ -149,7 +149,7 @@ class SiteManager:
         # 备用方案：返回第一个站点
         return weighted_sites[0][0]
 
-    def get_fallback_sites(self, failed_site_id: int, operation: str) -> List[Site]:
+    def get_fallback_sites(self, failed_site_id: int, operation: str) -> List[ManagedSite]:
         """
         获取故障转移站点列表
 
@@ -172,19 +172,19 @@ class SiteManager:
 
         if fallback_site_ids:
             # 根据规则获取备用站点
-            fallback_sites = self.db.query(Site).filter(
-                Site.id.in_(fallback_site_ids),
-                Site.id != failed_site_id,
-                Site.is_enabled == True,
+            fallback_sites = self.db.query(ManagedSite).filter(
+                ManagedSite.id.in_(fallback_site_ids),
+                ManagedSite.id != failed_site_id,
+                ManagedSite.is_enabled == True,
                 Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
-            ).order_by(Site.priority.asc()).all()
+            ).order_by(ManagedSite.priority.asc()).all()
         else:
             # 默认故障转移：获取所有其他可用站点
-            fallback_sites = self.db.query(Site).filter(
-                Site.id != failed_site_id,
-                Site.is_enabled == True,
+            fallback_sites = self.db.query(ManagedSite).filter(
+                ManagedSite.id != failed_site_id,
+                ManagedSite.is_enabled == True,
                 Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
-            ).order_by(Site.priority.asc()).all()
+            ).order_by(ManagedSite.priority.asc()).all()
 
         logger.info(f"为失败站点 {failed_site_id} 找到 {len(fallback_sites)} 个备用站点")
         return fallback_sites
@@ -267,7 +267,7 @@ class SiteManager:
         Args:
             site_id: 站点ID
         """
-        site = self.db.query(Site).filter(Site.id == site_id).first()
+        site = self.db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
         if not site:
             return
 
@@ -338,7 +338,7 @@ class SiteManager:
         self.db.add(error_log)
         self.db.commit()
 
-    def get_load_balanced_site(self, balancer_id: int) -> Optional[Site]:
+    def get_load_balanced_site(self, balancer_id: int) -> Optional[ManagedSite]:
         """
         从负载均衡器获取站点
 
@@ -357,9 +357,9 @@ class SiteManager:
             return None
 
         # 获取活跃站点
-        active_sites = self.db.query(Site).filter(
-            Site.id.in_(balancer.site_ids),
-            Site.is_enabled == True,
+        active_sites = self.db.query(ManagedSite).filter(
+            ManagedSite.id.in_(balancer.site_ids),
+            ManagedSite.is_enabled == True,
             Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
         ).all()
 
@@ -377,7 +377,7 @@ class SiteManager:
             # 默认使用轮询
             return self._round_robin_selection(balancer, active_sites)
 
-    def _round_robin_selection(self, balancer: SiteLoadBalancer, sites: List[Site]) -> Site:
+    def _round_robin_selection(self, balancer: SiteLoadBalancer, sites: List[ManagedSite]) -> ManagedSite:
         """轮询选择算法"""
         if balancer.id not in self._load_balancer_state:
             self._load_balancer_state[balancer.id] = 0
@@ -395,7 +395,7 @@ class SiteManager:
 
         return selected_site
 
-    def _weighted_load_balance(self, balancer: SiteLoadBalancer, sites: List[Site]) -> Site:
+    def _weighted_load_balance(self, balancer: SiteLoadBalancer, sites: List[ManagedSite]) -> ManagedSite:
         """加权负载均衡"""
         weighted_sites = []
 
@@ -419,7 +419,7 @@ class SiteManager:
 
         return weighted_sites[0][0]
 
-    def _least_connections_selection(self, sites: List[Site]) -> Site:
+    def _least_connections_selection(self, sites: List[ManagedSite]) -> ManagedSite:
         """最少连接数选择算法"""
         # 简化实现：选择最近请求数最少的站点
         site_requests = []
@@ -440,7 +440,7 @@ class SiteManager:
         Returns:
             站点ID到健康状态的映射
         """
-        sites = self.db.query(Site).filter(Site.is_enabled == True).all()
+        sites = self.db.query(ManagedSite).filter(ManagedSite.is_enabled == True).all()
 
         health_results = {}
         tasks = []
@@ -460,7 +460,7 @@ class SiteManager:
 
         return health_results
 
-    async def _health_check_site(self, site: Site) -> bool:
+    async def _health_check_site(self, site: ManagedSite) -> bool:
         """
         执行单个站点的健康检查
 

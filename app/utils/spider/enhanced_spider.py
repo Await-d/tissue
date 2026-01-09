@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 
 from app.schema import VideoDetail
-from app.db.models.site_management import Site, SiteStatus
+from app.db.models.site_management import ManagedSite, SiteStatus
 from app.services.site_manager import SiteManager
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
@@ -56,7 +56,7 @@ class EnhancedSpiderManager:
         self.site_manager = SiteManager(db)
         self._spider_instances: Dict[int, Spider] = {}
 
-    def get_spider_instance(self, site: Site) -> Spider:
+    def get_spider_instance(self, site: ManagedSite) -> Spider:
         """
         获取或创建爬虫实例
 
@@ -411,7 +411,7 @@ class EnhancedSpiderManager:
 
         spider_health = {}
         for site_id, is_healthy in health_results.items():
-            site = self.db.query(Site).filter(Site.id == site_id).first()
+            site = self.db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
             if site:
                 spider_health[site.name] = {
                     'site_id': site_id,

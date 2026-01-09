@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db.models.site_management import (
-    Site, SiteStatistics, SiteHealthCheck, SiteErrorLog,
+    ManagedSite, SiteStatistics, SiteHealthCheck, SiteErrorLog,
     SiteFailoverRule, SiteLoadBalancer, SiteStatus, SiteType
 )
 from app.schema.site_management import (
@@ -35,14 +35,14 @@ async def list_sites(
     db: Session = Depends(get_db)
 ):
     """获取站点列表"""
-    query = db.query(Site)
+    query = db.query(ManagedSite)
 
     if status:
-        query = query.filter(Site.status == status)
+        query = query.filter(ManagedSite.status == status)
     if site_type:
-        query = query.filter(Site.site_type == site_type)
+        query = query.filter(ManagedSite.site_type == site_type)
     if enabled_only:
-        query = query.filter(Site.is_enabled == True)
+        query = query.filter(ManagedSite.is_enabled == True)
 
     total = query.count()
     sites = query.offset(skip).limit(limit).all()
@@ -62,7 +62,7 @@ async def create_site(
 ):
     """创建新站点"""
     # 检查站点名称是否已存在
-    existing = db.query(Site).filter(Site.name == site_data.name).first()
+    existing = db.query(ManagedSite).filter(ManagedSite.name == site_data.name).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -90,7 +90,7 @@ async def get_site(
     db: Session = Depends(get_db)
 ):
     """获取站点详情"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -106,7 +106,7 @@ async def update_site(
     db: Session = Depends(get_db)
 ):
     """更新站点配置"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -131,7 +131,7 @@ async def delete_site(
     db: Session = Depends(get_db)
 ):
     """删除站点"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -152,7 +152,7 @@ async def enable_site(
     db: Session = Depends(get_db)
 ):
     """启用站点"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -174,7 +174,7 @@ async def disable_site(
     db: Session = Depends(get_db)
 ):
     """禁用站点"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -206,7 +206,7 @@ async def perform_health_check(
     db: Session = Depends(get_db)
 ):
     """执行站点健康检查"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -246,7 +246,7 @@ async def get_site_statistics(
     db: Session = Depends(get_db)
 ):
     """获取站点统计信息"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -270,7 +270,7 @@ async def reset_site_statistics(
     db: Session = Depends(get_db)
 ):
     """重置站点统计信息"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -313,7 +313,7 @@ async def get_site_errors(
     db: Session = Depends(get_db)
 ):
     """获取站点错误日志"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -421,7 +421,7 @@ async def test_site(
     db: Session = Depends(get_db)
 ):
     """测试站点功能"""
-    site = db.query(Site).filter(Site.id == site_id).first()
+    site = db.query(ManagedSite).filter(ManagedSite.id == site_id).first()
     if not site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -449,9 +449,9 @@ async def batch_health_check(
 ):
     """批量健康检查"""
     if site_ids:
-        sites = db.query(Site).filter(Site.id.in_(site_ids)).all()
+        sites = db.query(ManagedSite).filter(ManagedSite.id.in_(site_ids)).all()
     else:
-        sites = db.query(Site).filter(Site.is_enabled == True).all()
+        sites = db.query(ManagedSite).filter(ManagedSite.is_enabled == True).all()
 
     from app.services.site_health_checker import SiteHealthChecker
 
@@ -493,10 +493,10 @@ async def get_dashboard_overview(
 ):
     """获取站点管理仪表板概览"""
     # 站点总数和状态分布
-    total_sites = db.query(Site).count()
-    active_sites = db.query(Site).filter(Site.status == SiteStatus.ACTIVE).count()
-    disabled_sites = db.query(Site).filter(Site.status == SiteStatus.DISABLED).count()
-    degraded_sites = db.query(Site).filter(Site.status == SiteStatus.DEGRADED).count()
+    total_sites = db.query(ManagedSite).count()
+    active_sites = db.query(ManagedSite).filter(ManagedSite.status == SiteStatus.ACTIVE).count()
+    disabled_sites = db.query(ManagedSite).filter(ManagedSite.status == SiteStatus.DISABLED).count()
+    degraded_sites = db.query(ManagedSite).filter(ManagedSite.status == SiteStatus.DEGRADED).count()
 
     # 错误统计
     total_errors = db.query(SiteErrorLog).count()

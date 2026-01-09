@@ -4,12 +4,14 @@ Date: 2026-01-09
 Description: 收藏功能业务逻辑
 """
 from typing import List, Optional
+from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
+from app.db import get_db
 from app.db.models.favorite import Favorite
 from app.schema.favorite import FavoriteCreate, FavoriteResponse, FavoriteListResponse
-from app.service.base import BaseService, get_service
+from app.service.base import BaseService
 from app.exception import BizException
 
 
@@ -183,6 +185,6 @@ class FavoriteService(BaseService):
         }
 
 
-def get_favorite_service(db: Session = None):
+def get_favorite_service(db: Session = Depends(get_db)):
     """获取收藏服务实例"""
-    return get_service(FavoriteService)(db)
+    return FavoriteService(db)
