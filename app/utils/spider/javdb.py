@@ -503,7 +503,23 @@ class JavDBSpider(Spider):
 
     def get_ranking(self, video_type: str, cycle: str):
         url = urljoin(self.host, f'/rankings/movies?p={cycle}&t={video_type}')
-        response = self.session.get(url)
+
+        # 添加重试机制处理网络不稳定问题
+        max_retries = 3
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                response = self.session.get(url, timeout=30)
+                break
+            except Exception as e:
+                last_error = e
+                logger.warning(f"获取排行榜失败 (尝试 {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 * (attempt + 1))  # 递增延迟
+        else:
+            logger.error(f"获取排行榜失败，已重试 {max_retries} 次: {last_error}")
+            raise SpiderException(f"获取排行榜失败: {last_error}")
+
         html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
 
         result = []
