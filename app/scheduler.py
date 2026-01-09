@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime
 from typing import Callable
 
@@ -8,9 +10,11 @@ from pydantic import BaseModel
 from app.schema import Setting
 from app.service.download import DownloadService
 from app.service.job import clean_cache
-from app.service.site import SiteService
 from app.service.subscribe import SubscribeService
 from app.utils.logger import logger
+from app.service.actor_subscribe import ActorSubscribeService
+from app.service.auto_download import AutoDownloadService
+from app.service.video_cache import VideoCacheService
 
 
 class Job(BaseModel):
@@ -20,7 +24,6 @@ class Job(BaseModel):
     interval: int
     running: int = 0
     jitter: int = 0
-    immediate: bool = False
 
 
 class Scheduler:
@@ -45,10 +48,18 @@ class Scheduler:
                            name='清理缓存',
                            job=clean_cache,
                            interval=7 * 24 * 60),
-        'refresh_available_sites': Job(key='refresh_available_sites',
-                                       name='刷新可用站点',
-                                       job=SiteService.job_testing_sites,
-                                       interval=1 * 24 * 60, jitter=2 * 60 * 60, immediate=True),
+        'auto_download': Job(key='auto_download',
+                            name='智能自动下载',
+                            job=AutoDownloadService.job_auto_download,
+                            interval=60, jitter=10 * 60),
+        'stop_seeding_completed': Job(key='stop_seeding_completed',
+                                      name='停止已完成种子做种',
+                                      job=DownloadService.job_stop_seeding_completed,
+                                      interval=10, jitter=2 * 60),
+        'refresh_video_cache': Job(key='refresh_video_cache',
+                                   name='刷新视频数据缓存',
+                                   job=VideoCacheService.job_refresh_video_cache,
+                                   interval=120, jitter=30 * 60),  # 每2小时执行，抖动30分钟
     }
 
     def __init__(self):
@@ -60,13 +71,35 @@ class Scheduler:
         self.add('subscribe')
         self.add('subscribe_meta_update')
         self.add('clean_cache')
-        self.add('refresh_available_sites')
+        self.add('auto_download')
+        self.add('refresh_video_cache')  # 启动视频缓存刷新任务
 
         setting = Setting()
         if setting.download.trans_auto:
             self.add('scrape_download')
         if setting.download.delete_auto:
             self.add('delete_complete_download')
+        if setting.download.stop_seeding:
+            self.add('stop_seeding_completed')
+
+        self.scheduler.add_job(
+            ActorSubscribeService.job_actor_subscribe,
+            'cron',
+            hour='2',
+            minute='30',
+            id='actor_subscribe',
+            replace_existing=True,
+        )
+        
+        # 添加演员作品数量更新任务（每天早上6点执行）
+        self.scheduler.add_job(
+            ActorSubscribeService.job_update_works_counts,
+            'cron',
+            hour='6',
+            minute='0',
+            id='actor_works_count_update',
+            replace_existing=True,
+        )
 
     def list(self):
         return self.scheduler.get_jobs()
@@ -74,17 +107,12 @@ class Scheduler:
     def add(self, key: str):
         job = self.jobs.get(key)
         logger.info(f"启动任务，{job.name}")
-
-        job_kwargs = {}
-        if job.immediate:
-            job_kwargs['next_run_time'] = datetime.now()
-
         self.scheduler.add_job(self.do_job,
                                trigger=IntervalTrigger(minutes=job.interval, jitter=job.jitter),
                                id=job.key,
                                name=job.name,
                                args=[job.key],
-                               replace_existing=True, **job_kwargs)
+                               replace_existing=True)
 
     def remove(self, key: str):
         job = self.scheduler.get_job(key)

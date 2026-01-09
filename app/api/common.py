@@ -1,3 +1,10 @@
+'''
+Author: Await
+Date: 2025-05-24 17:05:38
+LastEditors: Await
+LastEditTime: 2025-05-27 16:16:27
+Description: 请填写简介
+'''
 import hashlib
 import re
 
@@ -8,7 +15,7 @@ from fastapi import APIRouter, Response, Request
 from fastapi.responses import StreamingResponse
 
 from app.schema.r import R
-from app.service.spider import SpiderService
+from app.utils import spider
 from version import APP_VERSION
 
 router = APIRouter()
@@ -16,63 +23,99 @@ router = APIRouter()
 
 @router.get("/cover")
 def proxy_video_cover(url: str):
-    cover = SpiderService.get_video_cover(url)
-    if cover:
-        headers = {
-            'Cache-Control': 'public, max-age=31536000',
-            'ETag': hashlib.md5(url.encode()).hexdigest(),
-        }
-    else:
-        headers = {
-            'Cache-Control': 'no-cache',
-        }
+    cover = spider.get_video_cover(url)
+    headers = {
+        'Cache-Control': 'public, max-age=31536000',
+        'ETag': hashlib.md5(url.encode()).hexdigest(),
+    }
     return Response(content=cover, media_type="image", headers=headers)
-
-
-async def advanced_stream_generator(url: str, headers: dict):
-    async with httpx.AsyncClient() as client:
-        async with client.stream("GET", url, headers=headers, timeout=None) as response:
-            response.raise_for_status()
-            yield {
-                "status_code": response.status_code,
-                "headers": dict(response.headers)
-            }
-            async for chunk in response.aiter_bytes():
-                yield chunk
 
 
 @router.get("/trailer")
 async def proxy_video_trailer(url: str, request: Request):
+    from urllib.parse import urlparse
+    from fastapi import HTTPException
+    
     headers = {
         "Range": request.headers.get("Range", ""),
-        "User-Agent": request.headers.get("User-Agent")
+        "User-Agent": request.headers.get("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"),
+        "Accept": "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "Referer": "https://javdb.com/"
     }
+    
+    # 为 javdb 相关请求设置必要的 cookies
+    cookies = {}
+    parsed_url = urlparse(url)
+    if 'javdb' in parsed_url.netloc:
+        cookies = {
+            "over18": "1",
+            "locale": "zh"
+        }
 
-    if url.startswith("//"):
-        url = 'http:' + url
+    async with httpx.AsyncClient(follow_redirects=False, timeout=30.0) as client:
+        if url.startswith("//"):
+            url = 'https:' + url
+        
+        try:
+            response = await client.get(url, headers=headers, cookies=cookies)
+            
+            # 处理重定向到登录页面的情况
+            if response.status_code in (301, 302, 303, 307, 308):
+                redirect_location = response.headers.get("location", "")
+                if "login" in redirect_location.lower() or "sign_in" in redirect_location.lower():
+                    raise HTTPException(
+                        status_code=403,
+                        detail="访问视频预览需要认证，请检查 JavDB 配置或稍后重试"
+                    )
+                # 对于其他重定向，跟随一次
+                if redirect_location:
+                    if not redirect_location.startswith('http'):
+                        redirect_location = f"{parsed_url.scheme}://{parsed_url.netloc}{redirect_location}"
+                    response = await client.get(redirect_location, headers=headers, cookies=cookies)
+            
+            response.raise_for_status()
 
-    generator = advanced_stream_generator(url, headers)
-    try:
-        metadata = await generator.__anext__()
-        status_code = metadata["status_code"]
-        response_headers = metadata["headers"]
-    except StopAsyncIteration:
-        return Response(status_code=204)
+            async def video_stream():
+                async for chunk in response.aiter_bytes(1024 * 1024):
+                    yield chunk
 
-    return StreamingResponse(
-        generator,
-        status_code=status_code,
-        headers=response_headers
-    )
+            return StreamingResponse(
+                video_stream(),
+                status_code=response.status_code,
+                headers=dict(response.headers)
+            )
+        except httpx.HTTPStatusError as e:
+            # 记录错误详情
+            raise HTTPException(
+                status_code=e.response.status_code if e.response else 500,
+                detail=f"无法获取视频预览: {str(e)}"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"视频代理错误: {str(e)}"
+            )
 
 
 @router.get("/version")
 @cached(cache=TTLCache(maxsize=1, ttl=3600))
 def get_versions():
     current = APP_VERSION[1:]
+    latest = current  # 默认值为当前版本
 
-    response = requests.get("https://raw.githubusercontent.com/chris-2s/tissue/refs/heads/main/version.py", timeout=10)
-    latest = re.match(r"APP_VERSION = 'v(.+?)'", response.text).group(1)
+    try:
+        response = requests.get("https://raw.githubusercontent.com/Await-d/tissue/master/version.py", timeout=10)
+        if response.status_code == 200:
+            # 使用更灵活的正则表达式匹配
+            match = re.search(r"APP_VERSION\s*=\s*['\"]v?(.+?)['\"]", response.text)
+            if match:
+                latest = match.group(1)
+            else:
+                print("未能从响应中匹配到版本号")
+    except Exception as e:
+        # 捕获所有异常，包括网络错误、超时等
+        print(f"获取最新版本失败: {e}")
 
     return R.ok({
         "current": current,

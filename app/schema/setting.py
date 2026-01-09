@@ -6,35 +6,41 @@ from pydantic import BaseModel
 
 
 class SettingApp(BaseModel):
-    user_agent: str = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
+    user_agent: str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
     timeout: int = 60
 
-    video_path: str = '/data/media'
+    video_path: str = "/data/media"
 
     video_size_minimum: int = 100
-    video_format: str = '.mp4,.mkv,.mov'
+    video_format: str = ".mp4,.mkv,.mov"
+
+    # 并发刮削配置
+    concurrent_scraping: bool = True
+    max_concurrent_spiders: int = 4
 
 
 class SettingFile(BaseModel):
-    path: str = '/data/file'
-    trans_mode: str = 'copy'
+    path: str = "/data/file"
+    trans_mode: str = "copy"
 
 
 class SettingDownload(BaseModel):
     host: Optional[str] = None
     username: Optional[str] = None
     password: Optional[str] = None
-    trans_mode: str = 'copy'
-    download_path: str = '/downloads'
-    mapping_path: str = '/downloads'
+    trans_mode: str = "copy"
+    download_path: str = "/downloads"
+    mapping_path: str = "/downloads"
+    savepath: Optional[str] = None
     trans_auto: bool = False
     delete_auto: bool = False
-    category: Optional[str] = ''
-    tracker_subscribe: Optional[str] = ''
+    category: Optional[str] = ""
+    tracker_subscribe: Optional[str] = ""
+    stop_seeding: bool = True
 
 
 class SettingNotify(BaseModel):
-    type: str = 'telegram'
+    type: str = "telegram"
 
     webhook_url: Optional[str] = None
 
@@ -42,7 +48,7 @@ class SettingNotify(BaseModel):
     telegram_chat_id: Optional[str] = None
 
 
-config_path = Path(f'{Path(__file__).cwd()}/config/app.conf')
+config_path = Path(f"{Path(__file__).cwd()}/config/app.conf")
 
 
 class Setting(BaseModel):
@@ -71,5 +77,5 @@ class Setting(BaseModel):
         parser = ConfigParser()
         parser.read(config_path)
         parser[section] = setting
-        with open(config_path, 'w') as file:
+        with open(config_path, "w") as file:
             parser.write(file)

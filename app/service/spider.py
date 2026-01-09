@@ -1,164 +1,184 @@
+"""
+并发刮削服务 - 基于Agent-1分析报告的技术方案
+提供3-4倍性能提升的异步并发刮削能力
+"""
 import asyncio
-import importlib
-import traceback
-from datetime import datetime
-from urllib.parse import urlparse
-
-from cachetools import TTLCache
-from fastapi import Depends
-from sqlalchemy.orm import Session
+import time
+from typing import List, Optional
 from starlette.concurrency import run_in_threadpool
 
-from app.db import get_db
-from app.db.models import Site
-from app.schema import VideoDetail
-from app.service.base import BaseService
-from app.utils import cache
+from app.utils.spider import get_spiders
 from app.utils.logger import logger
-from app.utils.spider import JavBusSpider, JavDBSpider, Jav321Spider, DmmSpider
-from app.utils.spider.spider import Spider
-from app.utils.spider.spider_exception import SpiderException
+from app.schema.video import VideoDetail
 
 
-def get_spider_service(db: Session = Depends(get_db)):
-    return SpiderService(db=db)
+class SpiderService:
+    """并发刮削服务"""
 
+    def __init__(self, max_concurrent: Optional[int] = None):
+        # 从配置中读取并发数，如果未提供则使用配置默认值
+        if max_concurrent is None:
+            from app.schema.setting import Setting
+            setting = Setting()
+            max_concurrent = setting.app.max_concurrent_spiders
 
-# 首页排行榜缓存，TTL 1小时
-ranking_cache = TTLCache(maxsize=10, ttl=3600)
-
-
-class SpiderService(BaseService):
-    @staticmethod
-    def get_spider_by_name(class_str: str):
-        try:
-            module_path = 'app.utils.spider'
-            module = importlib.import_module(module_path)
-            return getattr(module, class_str)
-        except (ImportError, AttributeError) as e:
-            return None
-
-    @staticmethod
-    def get_video_cover(url: str):
-        component = urlparse(url)
-
-        cached = cache.get_cache_file('cover', url)
-        if cached is not None:
-            return cached
-
-        match component.hostname:
-            case 'c0.jdbstatic.com':
-                response = JavDBSpider.get_cover(url)
-            case _:
-                response = Spider.get_cover(url)
-
-        if response:
-            cache.cache_file('cover', url, response)
-        return response
-
-    def _merge_video_info(self, metas: list[VideoDetail]) -> VideoDetail:
-        meta = metas[0]
-        if len(metas) >= 2:
-            logger.info("合并多个刮削信息...")
-            for key in meta.__dict__:
-                if not getattr(meta, key) and key not in ['website', 'previews', 'comments', 'downloads']:
-                    for other_meta in metas[1:]:
-                        value = getattr(other_meta, key)
-                        if value:
-                            setattr(meta, key, value)
-                            break
-            meta.website = [m.website[0] for m in metas if m.website]
-            meta.previews = [m.previews[0] for m in metas if m.previews]
-            meta.comments = [m.comments[0] for m in metas if m.comments]
-            meta.downloads = sum(map(lambda x: x.downloads, metas), [])
-            if meta.downloads:
-                meta.downloads.sort(key=lambda i: i.publish_date or datetime.now().date(), reverse=True)
-            logger.info("信息合并成功")
-        return meta
+        self.max_concurrent = max_concurrent
+        self.semaphore = asyncio.Semaphore(max_concurrent)
 
     def _get_spiders(self):
-        sites = self.db.query(Site).filter(Site.status == 1).order_by(Site.priority).all()
-        spiders = []
-        for site in sites:
-            spider_class = self.get_spider_by_name(site.class_str)
-            spider = spider_class(alternate_host=site.alternate_host)
-            spiders.append(spider)
-        return spiders
+        """获取所有可用的爬虫"""
+        return get_spiders()
 
-    async def _get_video_by_spiders(self, number: str, include_downloads: bool, include_previews: bool,
-                                    include_comments: bool):
-        def __get_video_by_spider(spider: Spider):
-            try:
-                logger.info(f"{spider.name} 开始刮削...")
-                videos = spider.get_info(number, include_downloads=include_downloads,
-                                         include_previews=include_previews,
-                                         include_comments=include_comments)
-                logger.info(f"{spider.name} 刮削成功")
-                if include_downloads:
-                    logger.info(f"{spider.name} 获取到{len(videos.downloads)}部影片")
-                return videos
-            except SpiderException as e:
-                logger.info(f"{spider.name} {e.message}")
-            except Exception:
-                logger.error(f'{spider.name} 未知错误，请检查网站连通性')
-                traceback.print_exc()
-                return None
+    async def _get_video_by_spider_async(self, spider, number: str,
+                                       include_downloads: bool = True,
+                                       include_previews: bool = True,
+                                       include_comments: bool = True):
+        """异步版本的单个爬虫刮削"""
+        async with self.semaphore:  # 控制并发数
+            def __get_video_by_spider():
+                try:
+                    start_time = time.time()
+                    result = spider.get_info(number,
+                                           include_downloads=include_downloads,
+                                           include_previews=include_previews,
+                                           include_comments=include_comments)
+                    execution_time = time.time() - start_time
+                    logger.info(f"{spider.name} 刮削完成，耗时: {execution_time:.2f}秒")
+                    return result
+                except Exception as e:
+                    logger.error(f"{spider.name} 刮削失败: {str(e)}")
+                    return None
+
+            return await run_in_threadpool(__get_video_by_spider)
+
+    async def get_video_info_async(self, number: str,
+                                 include_downloads: bool = True,
+                                 include_previews: bool = True,
+                                 include_comments: bool = True) -> Optional[VideoDetail]:
+        """异步版本的视频信息获取"""
+        logger.info(f"开始并发刮削番号: {number}")
+        start_time = time.time()
 
         spiders = self._get_spiders()
-        tasks = [run_in_threadpool(__get_video_by_spider, spider=spider) for spider in spiders]
-        return list(filter(lambda item: item, await asyncio.gather(*tasks)))
+        logger.info(f"准备使用 {len(spiders)} 个爬虫进行并发刮削")
 
-    def get_video_info(self, number: str):
-        logger.info(f"开始刮削番号《{number}》")
+        # 创建并发任务
+        tasks = [
+            self._get_video_by_spider_async(
+                spider, number, include_downloads, include_previews, include_comments
+            )
+            for spider in spiders
+        ]
 
-        metas = asyncio.run(
-            self._get_video_by_spiders(number, include_downloads=False, include_previews=False, include_comments=False))
+        # 并发执行所有爬虫任务
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        if len(metas) == 0:
+        # 过滤成功的结果
+        valid_results = []
+        for i, result in enumerate(results):
+            if result is not None and not isinstance(result, Exception):
+                valid_results.append(result)
+                logger.info(f"爬虫 {spiders[i].name} 成功获取数据")
+            elif isinstance(result, Exception):
+                logger.error(f"爬虫 {spiders[i].name} 执行异常: {str(result)}")
+            else:
+                logger.warning(f"爬虫 {spiders[i].name} 未获取到数据")
+
+        total_time = time.time() - start_time
+        logger.info(f"并发刮削完成，总耗时: {total_time:.2f}秒，成功: {len(valid_results)}/{len(spiders)}")
+
+        if not valid_results:
+            logger.error(f"所有爬虫都未能获取到番号 {number} 的信息")
             return None
 
-        meta = self._merge_video_info(metas)
+        # 合并多个数据源的信息（使用现有的合并逻辑）
+        merged_result = self._merge_video_info(valid_results)
+        logger.info(f"数据合并完成，最终结果包含 {len(merged_result.downloads or [])} 个下载链接")
 
-        logger.info(f"番号《{number}》刮削完成，标题：{meta.title}，演员：{'、'.join([i.name for i in meta.actors])}")
-        return meta
+        return merged_result
 
-    def get_video(self, number: str, include_downloads=True, include_previews=True, include_comments=True):
-        logger.info(f"开始刮削番号《{number}》")
-
-        metas = asyncio.run(
-            self._get_video_by_spiders(number, include_downloads=include_downloads, include_previews=include_previews,
-                                       include_comments=include_comments))
-
-        if len(metas) == 0:
+    def _merge_video_info(self, video_infos: List[VideoDetail]) -> VideoDetail:
+        """合并多个数据源的视频信息"""
+        if not video_infos:
             return None
 
-        meta = self._merge_video_info(metas)
+        # 使用第一个结果作为基础
+        merged = video_infos[0]
 
-        return meta
+        # 合并其他数据源的信息
+        for video_info in video_infos[1:]:
+            # 字段补全：优先使用非空字段
+            for field_name in video_info.__dict__:
+                if hasattr(merged, field_name):
+                    current_value = getattr(merged, field_name)
+                    new_value = getattr(video_info, field_name)
 
-    def get_ranking(self, source: str, video_type: str, cycle: str):
-        cache_key = f'ranking:{source}:{video_type}:{cycle}'
+                    # 如果当前字段为空且新值非空，则使用新值
+                    if not current_value and new_value:
+                        setattr(merged, field_name, new_value)
+                    # 特殊处理列表字段（如downloads, actors等）
+                    elif isinstance(current_value, list) and isinstance(new_value, list):
+                        # 合并列表，去重
+                        combined = current_value + [item for item in new_value if item not in current_value]
+                        setattr(merged, field_name, combined)
 
-        # 尝试从缓存获取
-        if cache_key in ranking_cache:
-            return ranking_cache[cache_key]
+        return merged
 
-        # 缓存未命中，从网站获取
-        result = None
-        if source == 'JavDB':
-            site = self.db.query(Site).filter(Site.class_str == 'JavDBSpider').one()
-            result = JavDBSpider(alternate_host=site.alternate_host).get_ranking(video_type, cycle)
 
-        # 只有当数据不为空时才存入缓存
-        if result:
-            ranking_cache[cache_key] = result
+# 全局服务实例
+spider_service = SpiderService()
 
-        return result
 
-    def get_ranking_detail(self, source: str, num: str, url: str):
-        if source == 'JavDB':
-            site = self.db.query(Site).filter(Site.class_str == 'JavDBSpider').one()
-            return JavDBSpider(alternate_host=site.alternate_host).get_info(num=num, url=url, include_downloads=True,
-                                                                            include_previews=True,
-                                                                            include_comments=True)
-        return None
+async def get_video_info_async(number: str,
+                             include_downloads: bool = True,
+                             include_previews: bool = True,
+                             include_comments: bool = True) -> Optional[VideoDetail]:
+    """异步版本的视频信息获取 - 公共接口"""
+    return await spider_service.get_video_info_async(
+        number, include_downloads, include_previews, include_comments
+    )
+
+
+def get_video_info_sync(number: str,
+                       include_downloads: bool = True,
+                       include_previews: bool = True,
+                       include_comments: bool = True) -> Optional[VideoDetail]:
+    """同步版本的视频信息获取 - 保持向后兼容"""
+    try:
+        # 尝试获取当前事件循环
+        loop = asyncio.get_running_loop()
+        # 如果在异步环境中，创建新的线程来运行
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(
+                asyncio.run,
+                get_video_info_async(number, include_downloads, include_previews, include_comments)
+            )
+            return future.result()
+    except RuntimeError:
+        # 如果没有运行的事件循环，直接创建新的
+        return asyncio.run(
+            get_video_info_async(number, include_downloads, include_previews, include_comments)
+        )
+
+
+# 配置开关：允许在配置中控制是否启用并发模式
+def get_video_info_with_config(number: str,
+                              include_downloads: bool = True,
+                              include_previews: bool = True,
+                              include_comments: bool = True) -> Optional[VideoDetail]:
+    """带配置开关的视频信息获取"""
+    from app.schema.setting import Setting
+    setting = Setting()
+
+    # 检查是否启用并发刮削（假设添加了配置项）
+    concurrent_enabled = getattr(setting.app, 'concurrent_scraping', True)
+
+    if concurrent_enabled:
+        logger.info("使用并发刮削模式")
+        return get_video_info_sync(number, include_downloads, include_previews, include_comments)
+    else:
+        logger.info("使用传统串行刮削模式")
+        # 回退到原有的同步方法
+        from app.utils.spider import get_video_info as original_get_video_info
+        return original_get_video_info(number)

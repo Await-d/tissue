@@ -1,3 +1,10 @@
+'''
+Author: Await
+Date: 2025-05-24 17:05:38
+LastEditors: Await
+LastEditTime: 2025-05-26 01:21:44
+Description: 请填写简介
+'''
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -5,6 +12,7 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.db.models.base import Base
+from app.db.models.actor_subscribe import ActorSubscribe, ActorSubscribeDownload
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

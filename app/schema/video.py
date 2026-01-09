@@ -1,12 +1,19 @@
-from datetime import date
-from typing import Optional, List
+from datetime import date, datetime
+from typing import Optional, List, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class VideoActor(BaseModel):
     name: Optional[str] = None
     thumb: Optional[str] = None
+
+
+class WebActor(BaseModel):
+    """网站演员模型"""
+    name: str
+    thumb: Optional[str] = None
+    url: Optional[str] = None
 
 
 class VideoList(BaseModel):
@@ -21,16 +28,29 @@ class VideoList(BaseModel):
 
 
 class VideoDownload(BaseModel):
-    is_hd: bool = False
-    is_zh: bool = False
-    is_uncensored: bool = False
-
-    name: Optional[str] = None
     website: Optional[str] = None
     url: Optional[str] = None
-    size: Optional[str] = None
+    name: Optional[str] = None
     magnet: Optional[str] = None
+    size: Optional[str] = None
+    savepath: Optional[str] = None
+    is_uncensored: bool = False
+    is_zh: bool = False
+    is_hd: bool = False
     publish_date: Optional[date] = None
+
+
+class WebVideo(BaseModel):
+    """网站视频搜索结果模型"""
+    title: str
+    cover: Optional[str] = None
+    num: str
+    url: str
+    publish_date: Optional[date] = None
+    rank: Optional[float] = None
+    is_zh: bool = False
+    is_uncensored: bool = False
+    actors: List[WebActor] = []
 
 
 class VideoPreviewItem(BaseModel):
@@ -44,20 +64,6 @@ class VideoPreview(BaseModel):
     items: List[VideoPreviewItem] = []
 
 
-class VideoCommentItem(BaseModel):
-    id: str
-    name: Optional[str] = None
-    score: Optional[float] = None
-    publish_date: Optional[date] = None
-    content: Optional[str] = None
-    likes: Optional[int] = None
-
-
-class VideoComment(BaseModel):
-    website: Optional[str] = None
-    items: List[VideoCommentItem] = []
-
-
 class VideoDetail(BaseModel):
     # 标题
     title: Optional[str] = None
@@ -65,6 +71,8 @@ class VideoDetail(BaseModel):
     num: Optional[str] = None
     # 评分
     rating: Optional[str] = None
+    # 评论数
+    comments_count: Optional[int] = None
     # 发行时间
     premiered: Optional[str] = None
     # 大纲
@@ -101,8 +109,6 @@ class VideoDetail(BaseModel):
     downloads: Optional[List[VideoDownload]] = []
     # 预览列表
     previews: Optional[List[VideoPreview]] = []
-    # 评论
-    comments: Optional[List[VideoComment]] = []
 
 
 class VideoNotify(VideoDetail):
