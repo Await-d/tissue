@@ -265,6 +265,21 @@ jobs:
         else
           echo "✅ 当前tag数量（$TOTAL_COUNT）未超过限制（$TAGS_TO_KEEP），无需清理"
         fi
+    # 准备 dist 目录用于 Docker 构建
+    - name: Prepare dist directory for Docker build
+      run: |
+        echo "Preparing dist directory..."
+        # 重新构建前端（因为之前切换分支时被清理了）
+        cd frontend
+        pnpm install --frozen-lockfile
+        pnpm run build
+        cd ..
+        # 复制到根目录的 dist
+        mkdir -p dist
+        cp -r frontend/dist/* dist/
+        echo "dist directory prepared successfully"
+        ls -la dist/
+
     # Docker构建步骤
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
