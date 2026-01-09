@@ -15,6 +15,7 @@ from app.exception import BizException
 from app.schema import Setting
 from app.service.base import BaseService
 from app.service.spider import SpiderService
+from app.service.download_filter import DownloadFilterService
 from app.utils import notify
 from app.utils.logger import logger
 from app.utils.qbittorent import qbittorent
@@ -128,17 +129,69 @@ class SubscribeService(BaseService):
         if response.status_code != 200:
             raise BizException('下载创建失败')
         logger.info(f"下载创建成功")
-        if response.hash:
+
+        torrent_hash = response.hash
+        if torrent_hash:
             torrent = Torrent()
-            torrent.hash = response.hash
+            torrent.hash = torrent_hash
             torrent.num = video.num
             torrent.is_zh = link.is_zh
             torrent.is_uncensored = link.is_uncensored
             self.db.add(torrent)
 
+            # 应用全局下载过滤规则
+            self._apply_download_filter(torrent_hash)
+
         subscribe_notify = schema.SubscribeNotify.model_validate(video)
         subscribe_notify = subscribe_notify.model_copy(update=link.model_dump())
         notify.send_subscribe(subscribe_notify)
+
+    def _apply_download_filter(self, torrent_hash: str, max_retries: int = 10, retry_interval: float = 2.0):
+        """
+        应用全局下载过滤规则到新添加的种子
+
+        Args:
+            torrent_hash: 种子哈希
+            max_retries: 最大重试次数（等待元数据获取）
+            retry_interval: 重试间隔（秒）
+        """
+        try:
+            filter_service = DownloadFilterService(self.db)
+
+            # 检查是否有激活的过滤设置
+            filter_settings = filter_service.get_filter_settings()
+            if not filter_settings:
+                logger.info("未找到激活的下载过滤设置，跳过过滤")
+                return
+
+            # 等待种子元数据获取完成
+            for attempt in range(max_retries):
+                try:
+                    files_response = qbittorent.get_torrent_files(torrent_hash)
+                    files = files_response.json() if hasattr(files_response, 'json') else files_response
+
+                    if files and len(files) > 0:
+                        # 元数据已获取，应用过滤规则
+                        logger.info(f"种子 {torrent_hash} 元数据获取成功，共 {len(files)} 个文件，开始应用过滤规则")
+                        filter_result = filter_service.filter_torrent_files(torrent_hash)
+
+                        if filter_result['success']:
+                            logger.info(f"种子 {torrent_hash} 过滤完成: {filter_result['message']}")
+                        else:
+                            logger.warning(f"种子 {torrent_hash} 过滤失败: {filter_result.get('message', 'Unknown error')}")
+                        return
+
+                except Exception as e:
+                    logger.debug(f"等待种子元数据 (尝试 {attempt + 1}/{max_retries}): {e}")
+
+                # 等待后重试
+                if attempt < max_retries - 1:
+                    time.sleep(retry_interval)
+
+            logger.warning(f"种子 {torrent_hash} 元数据获取超时，跳过过滤")
+
+        except Exception as e:
+            logger.error(f"应用下载过滤规则失败: {e}")
 
     def do_subscribe_meta_update(self):
         subscribes = self.get_subscribes()
