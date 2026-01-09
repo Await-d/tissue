@@ -245,16 +245,39 @@ class JavDBSpider(Spider):
 
         videos = html.xpath("//div[contains(@class,'preview-images')]/a[@class='preview-video-container']")
         for video in videos:
-            thumb = video.xpath('./img')[0]
-            video = html.xpath(f"//video[@id='{video.get('href')[1:]}']/source")[0]
-            preview = VideoPreviewItem(type='video', thumb=thumb.get('src'), url=video.get('src'))
-            result.append(preview)
+            try:
+                thumb_elements = video.xpath('./img')
+                if not thumb_elements:
+                    continue
+                thumb = thumb_elements[0]
+
+                video_href = video.get('href')
+                if not video_href:
+                    continue
+
+                video_id = video_href[1:] if video_href.startswith('#') else video_href
+                video_source = html.xpath(f"//video[@id='{video_id}']/source")
+                if not video_source:
+                    continue
+
+                preview = VideoPreviewItem(type='video', thumb=thumb.get('src'), url=video_source[0].get('src'))
+                result.append(preview)
+            except Exception as e:
+                logger.debug(f"解析视频预览失败: {e}")
+                continue
 
         images = html.xpath("//div[contains(@class,'preview-images')]/a[@class='tile-item']")
         for image in images:
-            thumb = image.xpath('./img')[0]
-            preview = VideoPreviewItem(type='image', thumb=thumb.get('src'), url=image.get('href'))
-            result.append(preview)
+            try:
+                thumb_elements = image.xpath('./img')
+                if not thumb_elements:
+                    continue
+                thumb = thumb_elements[0]
+                preview = VideoPreviewItem(type='image', thumb=thumb.get('src'), url=image.get('href'))
+                result.append(preview)
+            except Exception as e:
+                logger.debug(f"解析图片预览失败: {e}")
+                continue
 
         return [VideoPreview(website=self.name, items=result)]
 
