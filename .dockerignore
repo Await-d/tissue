@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Git 相关
 .git
 .github
@@ -20,9 +19,8 @@ __pycache__
 .coverage
 *.egg-info
 
-# 前端依赖和构建
+# 前端依赖（但保留 dist）
 frontend/node_modules
-frontend/dist
 frontend/.tanstack
 frontend/.vite
 
@@ -44,14 +42,5 @@ data/*.json
 
 # 其他
 .serena
-.dockerignore
 Dockerfile.optimized
 docker-compose.yml
-=======
-.git
-.github
-.DS_Store
-.venv
-config
-frontend
->>>>>>> upstream/main
