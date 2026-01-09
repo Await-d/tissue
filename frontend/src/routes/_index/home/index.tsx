@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_index/home/")({
     component: JavDB,
     beforeLoad: ({ search }) => {
         if (Object.keys(search).length === 0)
-            throw redirect({ search: { video_type: "censored", cycle: "daily", rank: 0 } as any });
+            throw redirect({ search: { video_type: "censored", cycle: "daily", rank: 0, sort_by: "rank", sort_order: "desc" } as any });
     },
     loaderDeps: ({ search }) => ({ ...search, rank: 0 }),
     loader: async ({ deps }) => ({
@@ -53,6 +53,35 @@ function JavDB() {
     const { token } = useToken();
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
+    // 排序函数
+    const sortVideos = (videos: any[], sortBy: string, sortOrder: string) => {
+        return [...videos].sort((a, b) => {
+            let aValue, bValue;
+
+            switch (sortBy) {
+                case 'rank_count':
+                    aValue = a.rank_count || 0;
+                    bValue = b.rank_count || 0;
+                    break;
+                case 'publish_date':
+                    aValue = new Date(a.publish_date || '1970-01-01').getTime();
+                    bValue = new Date(b.publish_date || '1970-01-01').getTime();
+                    break;
+                case 'rank':
+                default:
+                    aValue = a.rank || 0;
+                    bValue = b.rank || 0;
+                    break;
+            }
+
+            if (sortOrder === 'asc') {
+                return aValue - bValue;
+            } else {
+                return bValue - aValue;
+            }
+        });
+    };
+
     // Filter configuration
     const filterFields: FilterField[] = [
         {
@@ -66,7 +95,7 @@ function JavDB() {
                     ]}
                 />
             ),
-            span: { lg: 8, md: 12, xs: 24 }
+            span: { lg: 6, md: 12, xs: 24 }
         },
         {
             dataIndex: "cycle",
@@ -80,13 +109,40 @@ function JavDB() {
                     ]}
                 />
             ),
-            span: { lg: 8, md: 12, xs: 24 }
+            span: { lg: 6, md: 12, xs: 24 }
+        },
+        {
+            dataIndex: "sort_by",
+            label: "排序",
+            component: (
+                <Selector
+                    items={[
+                        { name: "评分", value: "rank" },
+                        { name: "评论数", value: "rank_count" },
+                        { name: "发布日期", value: "publish_date" }
+                    ]}
+                />
+            ),
+            span: { lg: 6, md: 12, xs: 24 }
+        },
+        {
+            dataIndex: "sort_order",
+            label: "顺序",
+            component: (
+                <Selector
+                    items={[
+                        { name: "降序", value: "desc" },
+                        { name: "升序", value: "asc" }
+                    ]}
+                />
+            ),
+            span: { lg: 6, md: 12, xs: 24 }
         },
         {
             dataIndex: "rank",
             label: "评分",
             component: <Slider step={0.1} min={0} max={5} />,
-            span: { lg: 8, md: 24, xs: 24 }
+            span: { lg: 24, md: 24, xs: 24 }
         }
     ];
 
@@ -165,10 +221,11 @@ function JavDB() {
                 }
             >
                 {(data = []) => {
-                    // Memoized filtered videos for performance
+                    // Memoized filtered and sorted videos for performance
                     const filteredVideos = useMemo(() => {
-                        return data.filter((item: any) => item.rank >= filter.rank);
-                    }, [data, filter.rank]);
+                        const filtered = data.filter((item: any) => item.rank >= filter.rank);
+                        return sortVideos(filtered, filter.sort_by || 'rank', filter.sort_order || 'desc');
+                    }, [data, filter.rank, filter.sort_by, filter.sort_order]);
 
                     // Calculate statistics
                     const statistics = useMemo(() => {
