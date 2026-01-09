@@ -32,7 +32,7 @@ class SiteType(str, Enum):
 
 class ManagedSite(Base):
     """站点基础信息表（站点管理功能）"""
-    __tablename__ = 'managed_sites'
+    __tablename__ = 'sites'
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False, comment="站点名称")
@@ -105,7 +105,7 @@ class SiteStatistics(Base):
     __tablename__ = 'site_statistics'
 
     id = Column(Integer, primary_key=True, index=True)
-    site_id = Column(Integer, ForeignKey('managed_sites.id'), nullable=False)
+    site_id = Column(Integer, ForeignKey('sites.id'), nullable=False)
 
     # 请求统计
     total_requests = Column(Integer, default=0, comment="总请求数")
@@ -155,7 +155,7 @@ class SiteHealthCheck(Base):
     __tablename__ = 'site_health_checks'
 
     id = Column(Integer, primary_key=True, index=True)
-    site_id = Column(Integer, ForeignKey('managed_sites.id'), nullable=False)
+    site_id = Column(Integer, ForeignKey('sites.id'), nullable=False)
 
     # 检查结果
     is_healthy = Column(Boolean, default=True, comment="是否健康")
@@ -180,7 +180,7 @@ class SiteErrorLog(Base):
     __tablename__ = 'site_error_logs'
 
     id = Column(Integer, primary_key=True, index=True)
-    site_id = Column(Integer, ForeignKey('managed_sites.id'), nullable=False)
+    site_id = Column(Integer, ForeignKey('sites.id'), nullable=False)
 
     # 错误信息
     error_type = Column(String(100), comment="错误类型")

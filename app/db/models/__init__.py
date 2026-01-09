@@ -6,3 +6,8 @@ from .torrent import *
 from .site import *
 from .favorite import *
 from .search import *
+from .actor_subscribe import *
+from .auto_download import *
+from .download_filter import *
+from .site_management import *
+from .video_cache import *
