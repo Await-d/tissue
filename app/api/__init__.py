@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.api import auth, user, setting, video, common, file, download, history, schedule, home, subscribe, site
+from app.api import auth, user, setting, video, common, file, download, history, schedule, home, subscribe, site, auto_download, version, download_filter, site_management, search, actor_subscribe
 from app.dependencies.security import verify_token
 
 api_router = APIRouter()
@@ -18,3 +18,9 @@ api_router.include_router(schedule.router, prefix='/schedule', dependencies=[Dep
 api_router.include_router(home.router, prefix='/home', dependencies=[Depends(verify_token)])
 api_router.include_router(subscribe.router, prefix='/subscribe', dependencies=[Depends(verify_token)])
 api_router.include_router(site.router, prefix='/site', dependencies=[Depends(verify_token)])
+api_router.include_router(auto_download.router, prefix='/auto-download', dependencies=[Depends(verify_token)])
+api_router.include_router(version.router, prefix='/version', dependencies=[Depends(verify_token)])
+api_router.include_router(download_filter.router, prefix='/download-filter', dependencies=[Depends(verify_token)])
+api_router.include_router(site_management.router, prefix='/site-management', dependencies=[Depends(verify_token)])
+api_router.include_router(search.router, prefix='/search', dependencies=[Depends(verify_token)])
+api_router.include_router(actor_subscribe.router, prefix='/actor-subscribe', dependencies=[Depends(verify_token)])

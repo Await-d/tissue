@@ -12,6 +12,8 @@ import {
     UserOutlined,
     VideoCameraOutlined,
     GlobalOutlined,
+    StarOutlined,
+    HeartOutlined,
 } from "@ant-design/icons";
 import {createRouter} from "@tanstack/react-router";
 import {routeTree} from "./routeTree.gen.ts";
@@ -78,6 +80,21 @@ export default [
                 title: '搜索',
                 path: '/search',
                 icon: (<SearchOutlined/>),
+            },
+            {
+                title: '演员',
+                path: '/actor',
+                icon: (<UserOutlined/>),
+            },
+            {
+                title: '演员订阅',
+                path: '/actor-subscribe',
+                icon: (<StarOutlined/>),
+            },
+            {
+                title: '智能下载',
+                path: '/auto-download',
+                icon: (<HeartOutlined/>),
             },
             {
                 title: '站点',
