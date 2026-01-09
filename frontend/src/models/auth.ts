@@ -43,6 +43,7 @@ export const auth = createModel<RootModel>()({
                 Cookies.set('userToken', token, params.remember ? {expires: 365} : {})
                 dispatch.auth.setToken(token)
                 await router.invalidate()
+                await router.navigate({ to: '/home' })
             } finally {
                 dispatch.auth.setLogging(false)
             }
