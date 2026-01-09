@@ -122,7 +122,7 @@ class JavDBSpider(Spider):
             resp = self.session.get(target, headers=headers) if headers else self.session.get(target)
         return resp
 
-    def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
+    def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False, include_comments=False):
 
         searched = False
 
