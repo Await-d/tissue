@@ -285,7 +285,6 @@ function JavDB() {
                                             sm={12}
                                             md={12}
                                             lg={6}
-                                            onClick={() => handleVideoClick(item)}
                                         >
                                             <EnhancedVideoItem
                                                 item={item}
@@ -293,6 +292,7 @@ function JavDB() {
                                                 rank={index + 1}
                                                 onFavorite={handleFavorite}
                                                 onDownload={handleDownload}
+                                                onClick={() => handleVideoClick(item)}
                                             />
                                         </Col>
                                     ))}

@@ -13,6 +13,7 @@ interface VideoItemProps {
     rank?: number;
     onFavorite?: (item: any) => void;
     onDownload?: (item: any) => void;
+    onClick?: () => void;
 }
 
 /**
@@ -35,9 +36,14 @@ interface VideoItemProps {
  */
 function EnhancedVideoItem(props: VideoItemProps) {
     const { token } = useToken();
-    const { item, showRank = false, rank, onFavorite, onDownload } = props;
+    const { item, showRank = false, rank, onFavorite, onDownload, onClick } = props;
     const { navigate } = useRouter();
     const [isHovered, setIsHovered] = useState(false);
+
+    const handleCardClick = (event: React.MouseEvent) => {
+        // 只有点击卡片本身时才触发，按钮点击会被 stopPropagation 阻止
+        onClick?.();
+    };
 
     const handleDownload = (event: React.MouseEvent) => {
         event.stopPropagation();
@@ -140,6 +146,7 @@ function EnhancedVideoItem(props: VideoItemProps) {
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            onClick={handleCardClick}
         >
             <div className="relative">
                 {renderRankBadge()}
