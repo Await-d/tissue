@@ -205,12 +205,16 @@ function Download() {
     const handleBatchDelete = () => {
         Modal.confirm({
             title: '批量删除',
-            content: `确认删除 ${selectedHashes.length} 个下载？`,
+            content: `确认删除 ${selectedHashes.length} 个下载？（不会删除已下载的文件）`,
             okType: 'danger',
-            onOk: () => {
-                message.info('批量删除功能待实现');
+            onOk: async () => {
+                for (const hash of selectedHashes) {
+                    await api.deleteTorrent(hash, false);
+                }
+                message.success(`已删除 ${selectedHashes.length} 个下载`);
                 setSelectedHashes([]);
                 setBatchMode(false);
+                refresh();
             }
         });
     };
