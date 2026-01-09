@@ -34,10 +34,11 @@ class QBittorent:
         def wrapper(self, *args, **kwargs):
             try:
                 response = func(self, *args, **kwargs)
-                if response.status_code == 403:
-                    logger.info("登录信息失效，将尝试重新登登录...")
+                if response is not None and response.status_code == 403:
+                    logger.info("登录信息失效，将尝试重新登录...")
                     raise Exception()
-            except:
+            except requests.exceptions.RequestException:
+                logger.error(f"qbittorent - 重新登录失败: {traceback.format_exc()}")
                 self.login()
                 response = func(self, *args, **kwargs)
             return response
