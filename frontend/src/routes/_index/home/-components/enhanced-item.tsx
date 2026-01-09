@@ -148,14 +148,19 @@ function EnhancedVideoItem(props: VideoItemProps) {
             onMouseLeave={() => setIsHovered(false)}
             onClick={handleCardClick}
         >
-            <div className="relative">
+            <div className="relative" style={{ position: 'relative' }}>
                 {renderRankBadge()}
                 <VideoCover src={item.cover} />
 
-                {/* Action buttons overlay */}
+                {/* Action buttons overlay - 放在VideoCover内部确保正确定位 */}
                 <div
-                    className="absolute top-2 right-2 z-10 transition-opacity duration-300 flex gap-2"
-                    style={{ opacity: isHovered ? 1 : 0 }}
+                    className="absolute top-2 right-2 flex gap-2"
+                    style={{
+                        zIndex: 20,
+                        opacity: isHovered ? 1 : 0,
+                        transition: 'opacity 0.3s',
+                        pointerEvents: isHovered ? 'auto' : 'none'
+                    }}
                 >
                     <FavoriteButton
                         videoNum={item.num}
