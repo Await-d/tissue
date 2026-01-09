@@ -28,14 +28,19 @@ class JavDBSpider(Spider):
         "https://javdb47.com",
     ]
 
-    def __init__(self):
+    def __init__(self, alternate_host: str | None = None):
         # 初始化基础会话配置
-        super().__init__()
-        # 动态选择可用域名（被封或不可达时自动切换）
-        try:
-            self._select_best_host()
-        except Exception as e:
-            logger.warning(f"选择JavDB可用域名失败，使用默认 {self.host}: {e}")
+        super().__init__(alternate_host=alternate_host)
+        # 如果指定了alternate_host，直接使用
+        if alternate_host:
+            self.host = alternate_host
+            self._set_age_cookies()
+        else:
+            # 动态选择可用域名（被封或不可达时自动切换）
+            try:
+                self._select_best_host()
+            except Exception as e:
+                logger.warning(f"选择JavDB可用域名失败，使用默认 {self.host}: {e}")
 
     def _cookie_domain(self) -> str:
         netloc = urlparse(self.host).netloc
