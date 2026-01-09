@@ -121,6 +121,10 @@ class QBittorent:
             try:
                 logger.debug(f"执行qBittorrent方法: {func.__name__}")
                 response = func(self, *args, **kwargs)
+                # 检查响应是否为 None
+                if response is None:
+                    logger.warning(f"qBittorrent方法 {func.__name__} 返回了 None")
+                    return response
                 if response.status_code == 403:
                     logger.info("登录信息失效，将尝试重新登录...")
                     raise Exception("需要重新登录")
@@ -132,6 +136,11 @@ class QBittorent:
                     self.login()
                     logger.info("重新登录成功，重试原请求...")
                     response = func(self, *args, **kwargs)
+
+                    # 检查响应是否为 None
+                    if response is None:
+                        logger.warning(f"重新登录后，qBittorrent方法 {func.__name__} 仍返回 None")
+                        return response
 
                     # 检查重试后的响应
                     if response.status_code == 403:
@@ -200,7 +209,7 @@ class QBittorent:
     @auth
     def add_torrent_tags(self, torrent_hash: str, tags: List[str]):
         host = self._get_host_with_scheme()
-        self.session.post(
+        return self.session.post(
             urljoin(host, "/api/v2/torrents/addTags"),
             data={"hashes": torrent_hash, "tags": ",".join(tags)},
         )
@@ -208,7 +217,7 @@ class QBittorent:
     @auth
     def remove_torrent_tags(self, torrent_hash: str, tags: List[str]):
         host = self._get_host_with_scheme()
-        self.session.post(
+        return self.session.post(
             urljoin(host, "/api/v2/torrents/removeTags"),
             data={"hashes": torrent_hash, "tags": ",".join(tags)},
         )
