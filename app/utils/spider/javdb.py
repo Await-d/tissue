@@ -4,7 +4,7 @@ import logging
 import re
 from datetime import datetime
 from random import randint
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from lxml import etree
 from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem, VideoPreview
 from app.schema.home import JavDBRanking
@@ -19,6 +19,103 @@ class JavDBSpider(Spider):
     name = 'JavDB'
     downloadable = True
     avatar_host = 'https://c0.jdbstatic.com/avatars/'
+
+    # 候选镜像域名列表（可扩展/与站点管理配置配合使用）
+    mirror_hosts = [
+        "https://javdb.com",
+        "https://javdb36.com",
+        "https://javdb37.com",
+        "https://javdb47.com",
+    ]
+
+    def __init__(self):
+        # 初始化基础会话配置
+        super().__init__()
+        # 动态选择可用域名（被封或不可达时自动切换）
+        try:
+            self._select_best_host()
+        except Exception as e:
+            logger.warning(f"选择JavDB可用域名失败，使用默认 {self.host}: {e}")
+
+    def _cookie_domain(self) -> str:
+        netloc = urlparse(self.host).netloc
+        return f".{netloc}"
+
+    def _set_age_cookies(self):
+        """为当前host设置18+与语言Cookie"""
+        try:
+            dom = self._cookie_domain()
+            self.session.cookies.set('over18', '1', domain=dom)
+            self.session.cookies.set('locale', 'zh', domain=dom)
+        except Exception as e:
+            logger.debug(f"设置年龄验证Cookie失败: {e}")
+
+    def _select_best_host(self):
+        """尝试镜像域名，选择可用的host"""
+        # 去重并保持顺序：优先使用内置镜像列表，再包含当前默认host
+        candidates = list(dict.fromkeys(self.mirror_hosts + [self.host]))
+        test_paths = ["/videos", "/rankings/movies?p=weekly&t=censored", "/"]
+        headers = {
+            "User-Agent": self.session.headers.get("User-Agent", ""),
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        }
+
+        for base in candidates:
+            for path in test_paths:
+                try:
+                    resp = self.session.get(urljoin(base, path), headers=headers)
+                    # 状态码为200即认为可用（避免误把防火墙/挑战页当作封禁）
+                    if resp.status_code == 200:
+                        self.host = base
+                        # 同步更新Referer，避免部分页面校验失败
+                        self.session.headers["Referer"] = self.host
+                        self._set_age_cookies()
+                        logger.info(f"JavDB可用域名: {self.host}")
+                        return
+                except Exception:
+                    continue
+
+        # 若都不可用，仍设置基于现有host的cookie
+        logger.warning("未能自动确认JavDB可用域名，将继续使用默认host")
+        self._set_age_cookies()
+
+    def _rebuild_url_for_current_host(self, absolute_or_relative_url: str) -> str:
+        try:
+            parsed = urlparse(absolute_or_relative_url)
+            if not parsed.scheme:
+                return urljoin(self.host, absolute_or_relative_url)
+            current = urlparse(self.host)
+            if parsed.netloc != current.netloc:
+                path_with_query = parsed.path
+                if parsed.query:
+                    path_with_query += f"?{parsed.query}"
+                return urljoin(self.host, path_with_query)
+            return absolute_or_relative_url
+        except Exception:
+            return urljoin(self.host, absolute_or_relative_url)
+
+    def _is_banned_response(self, resp) -> bool:
+        try:
+            if resp.status_code in (401, 403, 429, 503):
+                return True
+            content_lower = resp.content.lower() if isinstance(resp.content, (bytes, bytearray)) else b""
+            markers = [b"banned your access", b"access denied", b"captcha", b"forbidden", b"just a moment"]
+            return any(m in content_lower for m in markers)
+        except Exception:
+            return False
+
+    def _get(self, url: str, headers=None):
+        target = self._rebuild_url_for_current_host(url)
+        resp = self.session.get(target, headers=headers) if headers else self.session.get(target)
+        if self._is_banned_response(resp):
+            logger.warning("检测到被封禁/风控，尝试切换镜像域名后重试")
+            try:
+                self._select_best_host()
+            except Exception:
+                pass
+            target = self._rebuild_url_for_current_host(url)
+            resp = self.session.get(target, headers=headers) if headers else self.session.get(target)
+        return resp
 
     def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
