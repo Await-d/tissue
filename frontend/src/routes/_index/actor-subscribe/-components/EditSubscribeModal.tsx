@@ -52,13 +52,22 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
         try {
             const values = await form.validateFields();
             const formData = {
-                ...values,
                 id: subscription.id,
+                actor_name: subscription.actor_name,
+                actor_url: subscription.actor_url,
+                actor_thumb: subscription.actor_thumb,
                 from_date: values.from_date ? values.from_date.format('YYYY-MM-DD') : null,
+                is_hd: values.is_hd ?? false,
+                is_zh: values.is_zh ?? false,
+                is_uncensored: values.is_uncensored ?? false,
+                is_paused: values.is_paused ?? false,
+                min_rating: values.min_rating ?? 0.0,
+                min_comments: values.min_comments ?? 0,
             };
 
             await updateSubscription(formData);
         } catch (error) {
+            console.error('保存失败:', error);
             message.error('保存失败');
         }
     };
