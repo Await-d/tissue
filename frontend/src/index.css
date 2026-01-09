@@ -1,33 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer theme, base, antd, components, utilities;
+
+@import 'tailwindcss';
+
+@custom-variant hover (&:hover);
 
 html {
-    height: 100%;
-    /* 支持刘海屏等设备 */
     height: calc(100% + env(safe-area-inset-top));
-    /* 防止iOS橡皮筋效果 */
-    overscroll-behavior: none;
 }
 
 body {
     margin: 0;
-    height: 100%;
-    /* 防止移动端滚动时出现弹性效果 */
-    position: fixed;
-    width: 100%;
-    overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-}
-
-#root {
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
 }
 
 .ant-message-top {

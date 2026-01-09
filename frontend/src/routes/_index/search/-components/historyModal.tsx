@@ -1,15 +1,14 @@
-import { List, Modal, ModalProps } from "antd";
-import React, { useEffect, useState } from "react";
+import {List, Modal, ModalProps} from "antd";
+import React, {useEffect, useState} from "react";
 import VideoCover from "../../../../components/VideoCover";
 
 interface Props extends ModalProps {
-    onClick?: (history: any) => void;
-    onSelect?: (num: string) => void;
+    onClick: (history: any) => void
 }
 
 function HistoryModal(props: Props) {
 
-    const { onClick, onSelect, ...otherProps } = props
+    const {onClick, ...otherProps} = props
     const [histories, setHistories] = useState<any[]>([])
 
     useEffect(() => {
@@ -18,15 +17,6 @@ function HistoryModal(props: Props) {
         }
     }, [props.open])
 
-    const handleItemClick = (item: any) => {
-        if (onClick) {
-            onClick(item);
-        }
-        if (onSelect) {
-            onSelect(item.num);
-        }
-    };
-
     return (
         <Modal {...otherProps} footer={null} title={'历史记录'}>
             <List
@@ -34,12 +24,14 @@ function HistoryModal(props: Props) {
                 dataSource={histories}
                 renderItem={(item: any) => (
                     <List.Item className={'cursor-pointer'}
-                        extra={(
-                            <div className={'w-24 m-1'}>
-                                <VideoCover src={item.cover} />
-                            </div>
-                        )}
-                        onClick={() => handleItemClick(item)}>
+                               extra={(
+                                   <div className={'w-24 m-1'}>
+                                       <VideoCover src={item.cover}/>
+                                   </div>
+                               )}
+                               onClick={() => {
+                                   onClick(item)
+                               }}>
                         <List.Item.Meta
                             title={item.title}
                             description={item.actors}

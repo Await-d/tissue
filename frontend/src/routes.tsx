@@ -11,13 +11,10 @@ import {
     SettingOutlined,
     UserOutlined,
     VideoCameraOutlined,
-    StarOutlined,
-    HeartOutlined,
-    ClockCircleOutlined,
-    FileOutlined
+    GlobalOutlined,
 } from "@ant-design/icons";
-import { createRouter } from "@tanstack/react-router";
-import { routeTree } from "./routeTree.gen.ts";
+import {createRouter} from "@tanstack/react-router";
+import {routeTree} from "./routeTree.gen.ts";
 
 export const router = createRouter({
     routeTree,
@@ -34,12 +31,12 @@ export default [
     {
         title: '首页',
         path: '/home',
-        icon: (<HomeOutlined />),
+        icon: (<HomeOutlined/>),
     },
     {
         title: '菜单',
         path: '/menu',
-        icon: (<MenuOutlined />),
+        icon: (<MenuOutlined/>),
         hidden: true,
     },
     {
@@ -49,22 +46,22 @@ export default [
             {
                 title: '影片',
                 path: '/video',
-                icon: (<VideoCameraOutlined />),
+                icon: (<VideoCameraOutlined/>),
             },
             {
                 title: '文件',
                 path: '/file',
-                icon: (<FolderOpenOutlined />),
+                icon: (<FolderOpenOutlined/>),
             },
             {
                 title: '下载',
                 path: '/download',
-                icon: (<CloudDownloadOutlined />),
+                icon: (<CloudDownloadOutlined/>),
             },
             {
                 title: '历史',
                 path: '/history',
-                icon: (<HistoryOutlined />),
+                icon: (<HistoryOutlined/>),
             },
         ]
     },
@@ -75,27 +72,17 @@ export default [
             {
                 title: '订阅',
                 path: '/subscribe',
-                icon: (<CarryOutOutlined />),
+                icon: (<CarryOutOutlined/>),
             },
             {
                 title: '搜索',
                 path: '/search',
-                icon: (<SearchOutlined />),
+                icon: (<SearchOutlined/>),
             },
             {
-                title: '演员',
-                path: '/actor',
-                icon: (<UserOutlined />),
-            },
-            {
-                title: '演员订阅',
-                path: '/actor-subscribe',
-                icon: (<StarOutlined />),
-            },
-            {
-                title: '智能下载',
-                path: '/auto-download',
-                icon: (<HeartOutlined />),
+                title: '站点',
+                path: '/site',
+                icon: (<GlobalOutlined />),
             },
         ]
     },
@@ -106,25 +93,25 @@ export default [
             {
                 title: '用户',
                 path: '/user',
-                icon: (<UserOutlined />),
+                icon: (<UserOutlined/>),
                 group: '系统'
             },
             {
                 title: '设置',
                 path: '/setting',
-                icon: (<SettingOutlined />),
+                icon: (<SettingOutlined/>),
                 group: '系统'
             },
             {
                 title: '任务',
                 path: '/schedule',
-                icon: (<ScheduleOutlined />),
+                icon: (<ScheduleOutlined/>),
                 group: '系统'
             },
             {
                 title: '关于',
                 path: '/about',
-                icon: (<InfoCircleOutlined />),
+                icon: (<InfoCircleOutlined/>),
                 group: '系统'
             },
         ]

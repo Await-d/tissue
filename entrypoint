@@ -1,23 +1,11 @@
 #!/bin/bash
 
-groupmod -o -g ${PGID} tissue-plus
-usermod -o -u ${PUID} tissue-plus
+groupmod -o -g ${PGID} tissue
+usermod -o -u ${PUID} tissue
 
-chown -R tissue-plus:tissue-plus /app
+chown -R tissue:tissue /app
 
 umask ${UMASK}
 
-nginx -g "daemon off;" &
-
-# 运行启动检查和修复脚本
-echo "🚀 正在进行启动检查和修复..."
-if python startup_check.py; then
-    echo "✅ 启动检查完成，所有检查通过"
-else
-    echo "⚠️ 启动检查发现问题，已尝试自动修复"
-    echo "📋 详细报告请查看 startup_check_report.txt"
-fi
-
-# 启动应用
-echo "🌟 启动应用服务..."
-gosu tissue-plus:tissue-plus uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level warning
+nginx
+gosu tissue:tissue alembic upgrade head && gosu tissue:tissue uvicorn app.main:app --log-level warning

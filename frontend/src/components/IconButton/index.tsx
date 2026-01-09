@@ -1,23 +1,20 @@
-import { ComponentProps, forwardRef } from "react";
-import Styles from "./index.module.css";
-import { useSelector } from "react-redux";
-import { RootState } from "../../models";
+import {ComponentProps, ReactNode} from "react";
+import {theme} from "antd";
 
+function IconButton(props: ComponentProps<any>) {
 
-const IconButton = forwardRef<HTMLSpanElement, ComponentProps<any>>((props, ref) => {
-
-    const { children, ...otherProps } = props
-    const currentTheme = useSelector((state: RootState) => state.app?.themeMode)
-
+    const {children, badge, ...otherProps} = props
+    const {token} = theme.useToken()
 
     return (
-        <span ref={ref} {...otherProps}>
-            <span
-                className={[Styles.container, currentTheme === 'dark' ? Styles.triggerDark : Styles.triggerLight].join(" ")}>
+        <span {...otherProps}>
+            <span style={{'--hover-bg': token.colorBgTextHover} as any}
+                  className={'relative flex justify-center items-center p-2 rounded-3xl cursor-pointer ' +
+                      'hover:bg-[var(--hover-bg)]'}>
                 {children}
             </span>
         </span>
     )
-})
+}
 
 export default IconButton

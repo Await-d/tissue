@@ -41,9 +41,9 @@ class LoggerManager:
         self.logger.addHandler(console_handler)
 
         file_handler = RotatingFileHandler(filename=log_path,
-                                           mode='a',  # 改为追加模式，避免覆盖
-                                           maxBytes=10 * 1024 * 1024,  # 增大文件大小
-                                           backupCount=5,  # 增加备份数量
+                                           mode='w',
+                                           maxBytes=5 * 1024 * 1024,
+                                           backupCount=3,
                                            encoding='utf-8')
         file_handler.setLevel(logging.INFO)
         console_formatter = CustomFormatter(f"【%(levelname)s】%(asctime)s - %(message)s")

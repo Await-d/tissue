@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Form, FormInstance, ModalProps } from "antd";
+import {useState} from "react";
+import {Form, FormInstance, ModalProps} from "antd";
 
 interface Params {
     service: ((...args: any[]) => Promise<any>)
@@ -15,26 +15,26 @@ export function useFormModal(params: Params) {
 
     const [open, setModalOpen] = useState(false)
     const [values, setValues] = useState<any>({})
-    const [formInstance] = Form.useForm()
+    const [form] = Form.useForm()
     const [confirmLoading, setConfirmLoading] = useState(false)
 
     function setOpen(isOpen: boolean, records?: any) {
         setValues(records)
-        formInstance.setFieldsValue(records)
+        form.setFieldsValue(records)
         setModalOpen(isOpen)
     }
 
     async function onOk() {
         try {
             setConfirmLoading(true)
-            const formData = await formInstance.validateFields()
-            const data = { ...values, ...formData }
+            const formData = await form.validateFields()
+            const data = {...values, ...formData}
 
             const service = params.service(data)
             const response = await service
             params.onOk(response.data)
             setValues({})
-            formInstance.resetFields()
+            form.resetFields()
         } catch (e) {
 
         } finally {
@@ -45,7 +45,7 @@ export function useFormModal(params: Params) {
     function onCancel() {
         setModalOpen(false)
         setValues({})
-        formInstance.resetFields()
+        form.resetFields()
     }
 
     return {
@@ -53,10 +53,10 @@ export function useFormModal(params: Params) {
             open,
             onOk,
             onCancel,
+            form,
             confirmLoading,
-            initValues: values,
+            initValues: values
         },
-        form: formInstance,
         open,
         setOpen,
     }

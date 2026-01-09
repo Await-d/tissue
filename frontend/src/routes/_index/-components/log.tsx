@@ -3,7 +3,7 @@ import {useSelector} from "react-redux";
 import {RootState} from "../../../models";
 import configs from "../../../configs";
 import {fetchEventSource} from "@microsoft/fetch-event-source";
-import {Table, Tag, Alert, Spin} from "antd";
+import {Table, Tag} from "antd";
 import {ColumnsType} from "antd/lib/table";
 
 interface Message {
@@ -24,15 +24,10 @@ function Log() {
 
     const {userToken} = useSelector((state: RootState) => state.auth)
     const [messages, setMessages] = useState<Message[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
     const container = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         const ctrl = new AbortController();
-        setLoading(true);
-        setError(null);
-        
         fetchEventSource(`${configs.BASE_API}/home/log`, {
             method: 'GET',
             headers: {
@@ -40,15 +35,7 @@ function Log() {
             },
             signal: ctrl.signal,
             openWhenHidden: true,
-            async onopen(response) {
-                console.log('日志连接已打开', response.status);
-                setLoading(false);
-                if (response.status !== 200) {
-                    setError(`连接失败: HTTP ${response.status}`);
-                }
-            },
             onmessage(msg) {
-                console.log('收到日志消息:', msg.data);
                 if (msg.data) {
                     const matched = msg.data.match(/【(.+)】(.+) - (.+) - (.+)/)
                     if (matched) {
@@ -59,25 +46,14 @@ function Log() {
                             module: matched[3],
                             content: matched[4],
                         }, ...data])
-                    } else {
-                        console.warn('日志格式不匹配:', msg.data);
                     }
                 }
             },
-            onerror(err) {
-                console.error('日志连接错误:', err);
-                setError('连接日志服务失败，请检查网络连接');
-                setLoading(false);
-            },
-            onclose() {
-                console.log('日志连接已关闭');
-                setLoading(false);
-            }
         });
         return () => {
             ctrl.abort()
         }
-    }, [userToken])
+    }, [])
 
     useEffect(() => {
         container.current?.scrollTo({
@@ -106,35 +82,10 @@ function Log() {
         }
     ]
 
-    if (error) {
-        return (
-            <Alert 
-                message="日志加载失败" 
-                description={error} 
-                type="error" 
-                showIcon 
-                style={{ margin: '20px 0' }}
-            />
-        );
-    }
-
     return (
         <div ref={container} style={{height: '80vh', overflowY: 'auto'}}>
-            {loading && (
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <Spin size="large" />
-                    <div style={{ marginTop: '10px' }}>正在连接日志服务...</div>
-                </div>
-            )}
-            <Table 
-                rowKey={'index'} 
-                showHeader={false} 
-                columns={columns} 
-                dataSource={messages} 
-                pagination={false}
-                scroll={{x: 'max-content'}}
-                loading={loading}
-            />
+            <Table rowKey={'index'} showHeader={false} columns={columns} dataSource={messages} pagination={false}
+                   scroll={{x: 'max-content'}}/>
         </div>
     )
 }

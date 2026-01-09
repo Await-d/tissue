@@ -28,16 +28,8 @@ class DmmSpider(Spider):
             "query": "query ContentPageData($id:ID!,$isLoggedIn:Boolean!,$isAmateur:Boolean!,$isAnime:Boolean!,$isAv:Boolean!,$isCinema:Boolean!,$isSP:Boolean!){ppvContent(id:$id){...ContentData}reviewSummary(contentId:$id){...ReviewSummary}...basketCountFragment}fragment ContentData on PPVContent{id floor title isExclusiveDelivery releaseStatus description notices isNoIndex isAllowForeign announcements{body}featureArticles{link{url text}}packageImage{largeUrl mediumUrl}sampleImages{number imageUrl largeImageUrl}products{...ProductData}mostPopularContentImage{...on ContentSampleImage{largeImageUrl imageUrl}...on PackageImage{largeUrl mediumUrl}}priceSummary{lowestSalePrice lowestPrice campaign{title id endAt}}weeklyRanking:ranking(term:Weekly)monthlyRanking:ranking(term:Monthly)wishlistCount sample2DMovie{fileID highestMovieUrl}sampleVRMovie{highestMovieUrl}...AmateurAdditionalContentData @include(if:$isAmateur)...AnimeAdditionalContentData @include(if:$isAnime)...AvAdditionalContentData @include(if:$isAv)...CinemaAdditionalContentData @include(if:$isCinema)}fragment ProductData on PPVProduct{id priority deliveryUnit{id priority streamMaxQualityGroup downloadMaxQualityGroup}priceInclusiveTax sale{priceInclusiveTax}expireDays utilization @include(if:$isLoggedIn){isTVODRentalPlayable status}licenseType shopName availableCoupon{name expirationPolicy{...on ProductCouponExpirationAt{expirationAt}...on ProductCouponExpirationDay{expirationDays}}expirationAt discountedPrice minPayment destinationUrl}}fragment AmateurAdditionalContentData on PPVContent{deliveryStartDate duration amateurActress{id name imageUrl age waist bust bustCup height hip relatedContents{id title}}maker{id name}label{id name}genres{id name}makerContentId playableInfo{...PlayableInfo}}fragment PlayableInfo on PlayableInfo{playableDevices{deviceDeliveryUnits{id deviceDeliveryQualities{isDownloadable isStreamable}}device name priority}deviceGroups{id devices{deviceDeliveryUnits{deviceDeliveryQualities{isStreamable isDownloadable}}}}vrViewingType}fragment AnimeAdditionalContentData on PPVContent{deliveryStartDate duration series{id name}maker{id name}label{id name}genres{id name}makerContentId playableInfo{...PlayableInfo}}fragment AvAdditionalContentData on PPVContent{deliveryStartDate makerReleasedAt duration actresses{id name nameRuby imageUrl isBookmarked @include(if:$isLoggedIn)}histrions{id name}directors{id name}series{id name}maker{id name}label{id name}genres{id name}contentType relatedWords makerContentId playableInfo{...PlayableInfo}}fragment CinemaAdditionalContentData on PPVContent{deliveryStartDate duration actresses{id name nameRuby imageUrl}histrions{id name}directors{id name}authors{id name}series{id name}maker{id name}label{id name}genres{id name}makerContentId playableInfo{...PlayableInfo}}fragment ReviewSummary on ReviewSummary{average total withCommentTotal distributions{total withCommentTotal rating}}fragment basketCountFragment on Query{basketCount:legacyBasket @include(if:$isSP){total}}"
         }).json()
 
-        # 验证API响应格式
-        data = response.get("data")
-        if not data:
-            raise SpiderException('DMM API返回数据格式错误')
-
-        content = data.get("ppvContent")
-        if not content:
-            raise SpiderException('未找到番号')
-
-        review = data.get("reviewSummary")
+        content = response.get("data").get("ppvContent")
+        review = response.get("data").get("reviewSummary")
 
         meta.num = content.get("makerContentId")
         meta.title = content["title"]

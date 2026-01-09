@@ -6,5 +6,4 @@ from .download import *
 from .setting import *
 from .schedule import *
 from .subscribe import *
-from .actor_subscribe import *
-from .auto_download import *
+from .site import *

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Git 相关
 .git
 .github
@@ -46,3 +47,11 @@ data/*.json
 .dockerignore
 Dockerfile.optimized
 docker-compose.yml
+=======
+.git
+.github
+.DS_Store
+.venv
+config
+frontend
+>>>>>>> upstream/main

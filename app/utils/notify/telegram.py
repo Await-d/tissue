@@ -2,7 +2,6 @@ import os
 import requests
 
 from app.schema import VideoNotify, SubscribeNotify
-from app.schema.actor_subscribe import ActorSubscribeNotify
 from app.utils import cache
 from app.utils.notify.base import Base
 
@@ -53,27 +52,6 @@ class Telegram(Base):
         _, ext_name = os.path.splitext(subscribe.cover)
         self.send(content, picture=picture, picture_name=f'cover{ext_name}')
 
-    def send_actor_subscribe(self, actor_subscribe: ActorSubscribeNotify):
-        tags = []
-        if actor_subscribe.is_hd: tags.append('高清')
-        if actor_subscribe.is_zh: tags.append('中文')
-        if actor_subscribe.is_uncensored: tags.append('无码')
-
-        content = f'''
-<b>演员订阅: <tg-spoiler>{actor_subscribe.actor_name}</tg-spoiler>新作品</b>
-番号：<tg-spoiler>{actor_subscribe.num}</tg-spoiler>
-标题：<tg-spoiler>{actor_subscribe.title or '未知'}</tg-spoiler>
-大小：{actor_subscribe.size or '未知'}
-标签：<tg-spoiler>{', '.join(tags)}</tg-spoiler>
-        '''
-        picture = cache.get_cache_file('cover', actor_subscribe.cover) if actor_subscribe.cover else None
-        picture_name = None
-        if picture and actor_subscribe.cover:
-            _, ext_name = os.path.splitext(actor_subscribe.cover)
-            picture_name = f'cover{ext_name}'
-        
-        self.send(content, picture=picture, picture_name=picture_name)
-
     def send(self, content: str, picture: bytes = None, picture_name: str = None):
         token = self.setting.telegram_token
         chat_id = self.setting.telegram_chat_id
@@ -87,11 +65,11 @@ class Telegram(Base):
                 'has_spoiler': True
             }, files={
                 'photo': (picture_name, picture)
-            })
+            }, timeout=10)
         else:
             url = f'https://api.telegram.org/bot{token}/sendMessage'
             requests.post(url=url, data={
                 'chat_id': chat_id,
                 'parse_mode': 'HTML',
                 'text': content,
-            })
+            }, timeout=10)

@@ -7,15 +7,13 @@ def tags(fan_art: Image, is_zh, is_uncensored):
 
     index = 0
     if is_zh:
-        with Image.open("./app/utils/image/ch.png") as img:
-            tag = img.convert('RGBA')
-            thumb = add_badges(thumb, tag, index)
+        tag = Image.open("./app/utils/image/ch.png").convert('RGBA')
+        thumb = add_badges(thumb, tag, index)
         index += 1
 
     if is_uncensored:
-        with Image.open("./app/utils/image/uncensored.png") as img:
-            tag = img.convert('RGBA')
-            thumb = add_badges(thumb, tag, index)
+        tag = Image.open("./app/utils/image/uncensored.png").convert('RGBA')
+        thumb = add_badges(thumb, tag, index)
         index += 1
 
     if thumb.mode != mode:

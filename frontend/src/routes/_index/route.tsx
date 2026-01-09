@@ -1,5 +1,4 @@
 import {Layout, theme, Drawer, ConfigProvider, FloatButton} from "antd";
-import ProgressFloatButton from "../../components/ProgressFloatButton";
 import React, {useEffect, useState} from "react";
 import {useResponsive} from "ahooks";
 import Styles from "./router.module.css";
@@ -11,7 +10,6 @@ import PinView, {PinMode} from "../../components/PinView";
 import {createFileRoute, Outlet, redirect} from "@tanstack/react-router";
 import {useDispatch, useSelector} from "react-redux";
 import {Dispatch, RootState} from "../../models";
-import pinView from "../../components/PinView";
 
 const {useToken} = theme
 
@@ -69,7 +67,7 @@ function RouteLayout() {
                     }
                 }
             }}>
-                <Layout style={{height: '100vh'}}>
+                <Layout style={{height: '100%'}}>
                     {responsive.lg ? (
                         <Layout.Sider
                             style={{background: token.colorBgLayout, borderRightColor: token.colorBorderSecondary}}
@@ -87,7 +85,7 @@ function RouteLayout() {
                             </Drawer>
                         )
                     )}
-                    <Layout style={{position: 'relative', height: '100%'}}>
+                    <Layout style={{position: 'relative'}}>
                         <div className={Styles.header} style={{
                             background: token.colorBgContainer + '99',
                             borderBlockEndColor: token.colorBorderSecondary
@@ -99,6 +97,7 @@ function RouteLayout() {
                         </div>
                         <Layout.Content
                             style={{
+                                overflowY: "auto",
                                 paddingBottom: (!responsive.md) ? ('calc(50px + env(safe-area-inset-bottom, 0))') : 0
                             }}
                             className={Styles.content}>
@@ -107,7 +106,6 @@ function RouteLayout() {
                                 <FloatButton.Group className={'index-float-button-group'}>
                                     <FloatButton.BackTop/>
                                 </FloatButton.Group>
-                                <ProgressFloatButton />
                             </div>
                         </Layout.Content>
                     </Layout>

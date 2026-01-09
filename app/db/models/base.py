@@ -1,9 +1,5 @@
 from datetime import datetime
-from typing import Any
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
+from typing import Self, Any
 
 from sqlalchemy import Column, Integer, DateTime, inspect, event
 from sqlalchemy.orm import Session, as_declarative
@@ -46,15 +42,13 @@ class Base:
 
 @event.listens_for(Base, 'before_insert', propagate=True)
 def before_insert(mapper, connection, target: Base):
-    g_obj = g()
-    if hasattr(g_obj, 'current_user_id') and g_obj.current_user_id is not None:
-        target.create_by = g_obj.current_user_id
+    if hasattr(g(), 'current_user_id'):
+        target.create_by = g().current_user_id
     target.create_time = datetime.now()
 
 
 @event.listens_for(Base, 'before_update', propagate=True)
 def before_update(mapper, connection, target: Base):
-    g_obj = g()
-    if hasattr(g_obj, 'current_user_id') and g_obj.current_user_id is not None:
-        target.update_by = g_obj.current_user_id
+    if hasattr(g(), 'current_user_id'):
+        target.update_by = g().current_user_id
     target.update_time = datetime.now()

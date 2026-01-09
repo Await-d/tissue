@@ -1,5 +1,4 @@
-import { Divider, Dropdown, Modal, Space, theme } from "antd";
-import type { MenuProps } from 'antd';
+import {Divider, Dropdown, Modal, Space, theme} from "antd";
 
 import {
     ArrowLeftOutlined,
@@ -11,19 +10,19 @@ import {
     MenuOutlined,
     UserOutlined
 } from "@ant-design/icons";
-import { useDispatch, useSelector } from "react-redux";
-import { Dispatch, RootState } from "../../../models";
-import { themes } from "../../../utils/constants";
-import React, { useRef, useState } from "react";
+import {useDispatch, useSelector} from "react-redux";
+import {Dispatch, RootState} from "../../../models";
+import {themes} from "../../../utils/constants";
+import React, {useState} from "react";
 import IconButton from "../../../components/IconButton";
 import Log from "./log";
-import Logo from "../../../assets/logo.svg";
-import { useResponsive } from "ahooks";
-import PinView, { PinMode } from "../../../components/PinView";
-import { Link, useRouter } from "@tanstack/react-router";
+import Logo from "../../../assets/logo.png";
+import {useResponsive} from "ahooks";
+import PinView, {PinMode} from "../../../components/PinView";
+import {Link, useRouter} from "@tanstack/react-router";
 
 
-const { useToken } = theme
+const {useToken} = theme
 
 interface Props {
     collapsible: boolean
@@ -33,18 +32,14 @@ interface Props {
 function Header(props: Props) {
 
     const responsive = useResponsive()
-    const { history } = useRouter()
-    const menuIconRef = useRef(null)
-    const eyeIconRef = useRef(null)
-    const themeIconRef = useRef(null)
-    const userIconRef = useRef(null)
-    const backIconRef = useRef(null)
+    const {history} = useRouter()
 
-    const { token } = useToken()
+    const {token} = useToken()
     const isGoodBoy = useSelector((state: RootState) => state.app.goodBoy)
     const canBack = useSelector((state: RootState) => state.app?.canBack)
+    const pin = useSelector((state: RootState) => state.app?.pin)
     const appDispatch = useDispatch<Dispatch>().app
-    const { userInfo } = useSelector((state: RootState) => state.auth)
+    const {userInfo} = useSelector((state: RootState) => state.auth)
     const authDispatch = useDispatch<Dispatch>().auth
     const [logOpen, setLogOpen] = useState(false)
     const [pinVisible, setPinVisible] = useState(false)
@@ -56,7 +51,7 @@ function Header(props: Props) {
         appDispatch.setGoodBoy(!isGoodBoy)
     }
 
-    const themeItems: MenuProps['items'] = themes.map(i => ({
+    const themeItems = themes.map(i => ({
         key: i.name,
         label: i.title,
         icon: <i.icon></i.icon>
@@ -66,21 +61,21 @@ function Header(props: Props) {
         appDispatch.setThemeMode(event.key)
     }
 
-    const userItems: MenuProps['items'] = [
+    const userItems = [
         ...[!responsive.lg && {
             key: 'pin',
             label: '设置PIN',
-            icon: <LockOutlined />
+            icon: <LockOutlined/>
         }],
         {
             key: 'log',
             label: '日志',
-            icon: <CodeOutlined />
+            icon: <CodeOutlined/>
         },
         {
             key: 'logout',
             label: '退出登录',
-            icon: <LogoutOutlined />
+            icon: <LogoutOutlined/>
         }
     ] as any
 
@@ -106,10 +101,10 @@ function Header(props: Props) {
                 boxShadow: token.boxShadowSecondary,
             }}>
                 <div className={'w-36 py-2.5 px-4'}>
-                    <div className={'text-base'} style={{ color: token.colorText }}>{userInfo.name}</div>
-                    <div className={'text-xs'} style={{ color: token.colorTextSecondary }}>{userInfo.username}</div>
+                    <div className={'text-base'} style={{color: token.colorText}}>{userInfo.name}</div>
+                    <div className={'text-xs'} style={{color: token.colorTextSecondary}}>{userInfo.username}</div>
                 </div>
-                <Divider style={{ margin: 0 }} type={'horizontal'} />
+                <Divider style={{margin: 0}} type={'horizontal'}/>
                 {menu}
             </div>
         )
@@ -120,53 +115,54 @@ function Header(props: Props) {
         <div className={`h-full flex items-center`}>
             <div className={'cursor-pointer flex items-center'} onClick={() => props.onCollapse?.()}>
                 {props.collapsible && (
-                    <IconButton ref={menuIconRef}>
-                        <MenuOutlined style={{ color: token.colorText, fontSize: token.sizeMD }} />
+                    <IconButton>
+                        <MenuOutlined style={{color: token.colorText, fontSize: token.sizeMD}}/>
                     </IconButton>
                 )}
                 {!props.collapsible && (
                     (canBack && !responsive.lg) ? (
-                        <IconButton ref={backIconRef} onClick={() => history.go(-1)}>
-                            <ArrowLeftOutlined style={{ fontSize: token.sizeLG }} />
+                        <IconButton onClick={() => history.go(-1)}>
+                            <ArrowLeftOutlined style={{fontSize: token.sizeLG}}/>
                         </IconButton>
                     ) : (
                         <Link to={'/'}
-                            className={'flex items-center'}>
-                            <img className={responsive.lg ? 'ml-4 mr-4 h-12' : 'mr-1 h-10'} src={Logo} alt="" />
+                              className={'flex items-center'}>
+                            <img className={responsive.lg ? 'ml-4 mr-4 h-12' : 'mr-1 h-10'} src={Logo} alt=""/>
                         </Link>
                     )
                 )}
             </div>
             <div className={'flex-1 flex flex-row-reverse items-center'}>
                 <Space>
-                    <IconButton ref={eyeIconRef} onClick={() => onGoodBoyChange()}>
-                        {isGoodBoy ? (<EyeInvisibleOutlined style={{ fontSize: token.sizeLG }} />) : (
-                            <EyeOutlined style={{ fontSize: token.sizeLG }} />)}
+                    <IconButton onClick={() => onGoodBoyChange()}>
+                        {isGoodBoy ? (<EyeInvisibleOutlined style={{fontSize: token.sizeLG}}/>) : (
+                            <EyeOutlined style={{fontSize: token.sizeLG}}/>)}
                     </IconButton>
-                    <Dropdown menu={{ items: themeItems, onClick: onThemeClick }} arrow placement="bottomRight">
-                        <IconButton ref={themeIconRef}>
-                            <CurrentTheme.icon style={{ fontSize: token.sizeLG }} />
+                    <Dropdown arrow menu={{items: themeItems, onClick: onThemeClick}}>
+                        <IconButton>
+                            <CurrentTheme.icon style={{fontSize: token.sizeLG}}/>
                         </IconButton>
                     </Dropdown>
-                    <Dropdown menu={{ items: userItems, onClick: onUserClick }} arrow placement="bottomRight" dropdownRender={renderDropdown}>
-                        <IconButton ref={userIconRef}>
-                            <UserOutlined style={{ fontSize: token.sizeLG }} />
+                    <Dropdown arrow menu={{items: userItems, onClick: onUserClick}} dropdownRender={renderDropdown}>
+                        <IconButton>
+                            <UserOutlined
+                                style={{fontSize: token.sizeLG, color: pin ? token.colorPrimary : undefined}}/>
                         </IconButton>
                     </Dropdown>
                 </Space>
             </div>
             <Modal title={'日志'}
-                open={logOpen}
-                onCancel={() => setLogOpen(false)}
-                footer={null}
-                destroyOnClose
-                width={1000}
-                centered
+                   open={logOpen}
+                   onCancel={() => setLogOpen(false)}
+                   footer={null}
+                   destroyOnClose
+                   width={1000}
+                   centered
             >
-                <Log />
+                <Log/>
             </Modal>
             {pinVisible && (
-                <PinView pin={null} onClose={() => setPinVisible(false)} mode={PinMode.setting} />
+                <PinView pin={pin} onClose={() => setPinVisible(false)} mode={PinMode.setting}/>
             )}
         </div>
     )
