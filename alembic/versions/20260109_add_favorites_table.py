@@ -27,6 +27,11 @@ def upgrade() -> None:
         sa.Column('video_title', sa.String(length=500), nullable=True),
         sa.Column('video_cover', sa.String(length=500), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
+        # Base 类的基础字段
+        sa.Column('create_by', sa.Integer(), nullable=True),
+        sa.Column('create_time', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('update_by', sa.Integer(), nullable=True),
+        sa.Column('update_time', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('user_id', 'video_num', name='uix_user_video')
