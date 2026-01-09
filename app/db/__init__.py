@@ -26,13 +26,28 @@ SessionFactory = sessionmaker(bind=engine, autocommit=False)
 
 # Dependency
 def get_db():
-    db = SessionFactory()
-    g().db = db
-    try:
-        yield db
-    finally:
-        delattr(g(), 'db')
-        db.close()
+    # 检查g()中是否已经有数据库会话
+    if hasattr(g(), 'db'):
+        # 如果已经有会话，直接返回它
+        yield g().db
+    else:
+        # 如果没有会话，创建一个新的
+        db = SessionFactory()
+        g().db = db
+        try:
+            yield db
+        finally:
+            # 只有当没有活跃的事务时才关闭会话
+            if not hasattr(g(), 'transaction_started') or not g().transaction_started:
+                try:
+                    if hasattr(g(), 'db'):
+                        delattr(g(), 'db')
+                    # 安全地关闭会话
+                    if db.is_active:
+                        db.close()
+                except Exception:
+                    # 忽略关闭时的错误
+                    pass
 
 
 def init() -> None:

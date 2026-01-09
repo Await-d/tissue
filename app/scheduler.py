@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime
 from typing import Callable
 
@@ -11,6 +13,9 @@ from app.service.job import clean_cache
 from app.service.site import SiteService
 from app.service.subscribe import SubscribeService
 from app.utils.logger import logger
+from app.service.actor_subscribe import ActorSubscribeService
+from app.service.auto_download import AutoDownloadService
+from app.service.video_cache import VideoCacheService
 
 
 class Job(BaseModel):
@@ -49,6 +54,18 @@ class Scheduler:
                                        name='刷新可用站点',
                                        job=SiteService.job_testing_sites,
                                        interval=1 * 24 * 60, jitter=2 * 60 * 60, immediate=True),
+        'auto_download': Job(key='auto_download',
+                            name='智能自动下载',
+                            job=AutoDownloadService.job_auto_download,
+                            interval=60, jitter=10 * 60),
+        'stop_seeding_completed': Job(key='stop_seeding_completed',
+                                      name='停止已完成种子做种',
+                                      job=DownloadService.job_stop_seeding_completed,
+                                      interval=10, jitter=2 * 60),
+        'refresh_video_cache': Job(key='refresh_video_cache',
+                                   name='刷新视频数据缓存',
+                                   job=VideoCacheService.job_refresh_video_cache,
+                                   interval=120, jitter=30 * 60),
     }
 
     def __init__(self):
@@ -61,12 +78,35 @@ class Scheduler:
         self.add('subscribe_meta_update')
         self.add('clean_cache')
         self.add('refresh_available_sites')
+        self.add('auto_download')
+        self.add('refresh_video_cache')
 
         setting = Setting()
         if setting.download.trans_auto:
             self.add('scrape_download')
         if setting.download.delete_auto:
             self.add('delete_complete_download')
+        if setting.download.stop_seeding:
+            self.add('stop_seeding_completed')
+
+        self.scheduler.add_job(
+            ActorSubscribeService.job_actor_subscribe,
+            'cron',
+            hour='2',
+            minute='30',
+            id='actor_subscribe',
+            replace_existing=True,
+        )
+
+        # 添加演员作品数量更新任务（每天早上6点执行）
+        self.scheduler.add_job(
+            ActorSubscribeService.job_update_works_counts,
+            'cron',
+            hour='6',
+            minute='0',
+            id='actor_works_count_update',
+            replace_existing=True,
+        )
 
     def list(self):
         return self.scheduler.get_jobs()
