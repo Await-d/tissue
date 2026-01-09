@@ -15,3 +15,13 @@ export function saveSetting(section: string, data: any) {
         data: data
     })
 }
+
+/**
+ * 测试qBittorrent下载器连接
+ */
+export function testQBittorrentConnection() {
+    return request.request({
+        url: '/setting/test-qbittorrent',
+        method: 'get'
+    })
+}

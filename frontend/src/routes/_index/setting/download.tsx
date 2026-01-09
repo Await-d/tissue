@@ -16,7 +16,8 @@ import {
     InfoCircleOutlined,
     ReloadOutlined,
     SaveOutlined,
-    ApiOutlined
+    ApiOutlined,
+    CheckCircleOutlined
 } from "@ant-design/icons";
 
 export const Route = createFileRoute('/_index/setting/download')({
@@ -41,6 +42,21 @@ function SettingDownload() {
             message.error(`保存失败: ${error.message}`)
         }
     })
+
+    // 测试qBittorrent连接
+    const {run: testConnection, loading: testing} = useRequest(api.testQBittorrentConnection, {
+        manual: true,
+        onSuccess: (res) => {
+            if (res.data.status) {
+                message.success(res.data.data.message);
+            } else {
+                message.error(res.data.message);
+            }
+        },
+        onError: (err) => {
+            message.error("测试连接失败：" + (err.message || "未知错误"));
+        }
+    });
 
     function onFinish(data: any) {
         run('download', data)
@@ -110,6 +126,28 @@ function SettingDownload() {
                                 <Input.Password autoComplete={'new-password'} placeholder="请输入密码" />
                             </Form.Item>
                         </div>
+
+                        <Form.Item
+                            label={
+                                <Space>
+                                    <CheckCircleOutlined />
+                                    <span>测试连接</span>
+                                </Space>
+                            }
+                        >
+                            <Space>
+                                <Button
+                                    type="default"
+                                    loading={testing}
+                                    onClick={() => testConnection()}
+                                >
+                                    测试连接
+                                </Button>
+                                <span className="text-gray-400 text-sm">
+                                    (保存设置后再测试连接)
+                                </span>
+                            </Space>
+                        </Form.Item>
                     </Card>
 
                     {/* 路径配置 */}
@@ -152,6 +190,22 @@ function SettingDownload() {
                             }}
                         >
                             <Input placeholder="例如: /mnt/downloads" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label={
+                                <Space>
+                                    <FolderOutlined />
+                                    <span>默认保存路径</span>
+                                </Space>
+                            }
+                            name={'savepath'}
+                            tooltip={{
+                                title: "设置qBittorrent默认保存路径，留空则使用qBittorrent默认设置",
+                                icon: <InfoCircleOutlined />
+                            }}
+                        >
+                            <Input placeholder="例如: /downloads/av" />
                         </Form.Item>
 
                         <Form.Item
