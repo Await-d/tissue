@@ -2,9 +2,7 @@ name: Tissue Builder
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
-    paths:
-      - version.py
+    branches: [ "master" ]
 
 jobs:
   build:
