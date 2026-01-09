@@ -19,7 +19,7 @@ import {
   getStatistics,
   triggerAutoDownload,
   type AutoDownloadStatistics
-} from '@/apis/autoDownload'
+} from '../../../apis/autoDownload'
 
 export const Route = createFileRoute('/_index/setting/auto-download')({
   component: AutoDownloadSettings

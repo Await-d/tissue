@@ -1,4 +1,4 @@
-import { request } from '@/utils/requests'
+import { request } from '../utils/requests'
 
 // 类型定义
 export interface FilterSettings {

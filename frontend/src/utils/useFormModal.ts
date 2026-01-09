@@ -59,5 +59,6 @@ export function useFormModal(params: Params) {
         },
         open,
         setOpen,
+        form,
     }
 }

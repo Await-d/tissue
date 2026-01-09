@@ -43,7 +43,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
 
     const { run: subscribe, loading } = useRequest(subscribeApi.subscribeActor, {
         manual: true,
-        onSuccess: (response) => {
+        onSuccess: (response: { data?: { is_update?: boolean } }) => {
             // 根据返回结果显示不同消息
             if (response && response.data && response.data.is_update) {
                 message.success(`已更新演员 ${actor.name} 的订阅设置`);

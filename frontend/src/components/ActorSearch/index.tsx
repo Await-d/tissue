@@ -31,7 +31,7 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
     const [selectedActor, setSelectedActor] = useState<Actor | null>(null);
 
     // 使用useRequest获取演员列表
-    const { data: actors = [], loading, refresh: refreshActors } = useRequest(() => api.getAllActors(true), {
+    const { data: actors = [], loading, refresh: refreshActors } = useRequest<Actor[], []>(() => api.getAllActors(true), {
         onError: (error) => {
             console.error('Failed to fetch actors:', error);
             message.error('获取演员列表失败');

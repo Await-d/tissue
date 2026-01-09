@@ -1,4 +1,4 @@
-import { request } from '@/utils/requests'
+import { request } from '../utils/requests'
 
 // 类型定义
 export interface AutoDownloadRule {
@@ -125,7 +125,7 @@ export const batchOperation = (data: {
 
 // 统计和管理API
 export const getStatistics = (): Promise<AutoDownloadStatistics> => {
-  return request.get('/auto-download/statistics').then(response => response.data)
+  return request.get('/auto-download/statistics').then((response: { data: AutoDownloadStatistics }) => response.data)
 }
 
 export const triggerAutoDownload = (data: {

@@ -34,7 +34,7 @@ import {
   triggerAutoDownload,
   type AutoDownloadRule,
   type AutoDownloadStatistics
-} from '@/apis/autoDownload'
+} from '../../../apis/autoDownload'
 
 const { Option } = Select
 const { useBreakpoint } = Grid

@@ -11,9 +11,17 @@ import { Card, Skeleton } from 'antd';
 import * as api from '../../../apis/video';
 import VideoDetail from '../../../components/VideoDetail';
 
+interface VideoData {
+    path?: string;
+    num?: string;
+    title?: string;
+    cover?: string;
+    [key: string]: any;
+}
+
 export const Route = createFileRoute('/_index/video/$num')({
     component: VideoDetailPage,
-    loader: async ({ params, context }) => {
+    loader: async ({ params }) => {
         // 从params中获取num，从URL查询参数中获取source和url
         const { num } = params;
         const urlParams = new URLSearchParams(window.location.search);
@@ -23,8 +31,8 @@ export const Route = createFileRoute('/_index/video/$num')({
         if (!source || !url) return null;
 
         try {
-            const data = await api.getVideoDetail(num, source, url);
-            return data;
+            const data = await api.getWebVideoDetail(num, source, url);
+            return data as VideoData;
         } catch (error) {
             console.error('加载视频详情失败:', error);
             return null;
@@ -35,7 +43,7 @@ export const Route = createFileRoute('/_index/video/$num')({
 function VideoDetailPage() {
     const navigate = useNavigate();
     const { num } = Route.useParams();
-    const data = Route.useLoaderData();
+    const data = Route.useLoaderData() as VideoData | null;
     const [open, setOpen] = React.useState(true);
 
     const handleClose = () => {

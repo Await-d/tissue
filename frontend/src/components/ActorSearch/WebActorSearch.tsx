@@ -11,7 +11,7 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import DownloadModal from "../../routes/_index/search/-components/downloadModal";
 import DownloadListModal from "../../routes/_index/search/-components/downloadListModal";
 import ActorSubscribeModal from '../../routes/_index/actor-subscribe/-components/ActorSubscribeModal';
-import LoadingComponent from '@/components/Loading';
+import LoadingComponent from '../Loading';
 
 // 本地存储的键名
 const STORAGE_KEY = 'web_actor_search_state';
@@ -119,7 +119,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     }, [searchValue, selectedActor, sourceType]);
 
     // 获取热门演员列表
-    const { data: actorsData = [], loading: loadingActors, refresh: refreshActors } = useRequest(
+    const { data: actorsData = [], loading: loadingActors, refresh: refreshActors } = useRequest<WebActor[], []>(
         () => api.getWebActors(sourceType),
         {
             refreshDeps: [sourceType],
@@ -139,7 +139,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     }, [actorsData]);
 
     // 搜索演员
-    const { run: searchActor, data: searchResultsData = [], loading: searching } = useRequest(
+    const { run: searchActor, data: searchResultsData = [], loading: searching } = useRequest<WebActor[], [string]>(
         (actorName: string) => api.searchWebActor(actorName, sourceType),
         {
             manual: true,
@@ -162,7 +162,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     }, [searchResultsData]);
 
     // 获取演员视频
-    const { run: fetchActorVideos, data: actorVideos = [], loading: loadingVideos } = useRequest(
+    const { run: fetchActorVideos, data: actorVideos = [], loading: loadingVideos } = useRequest<WebVideo[], [string]>(
         (actorName: string) => api.getWebActorVideos(actorName, sourceType),
         {
             manual: true,
@@ -170,7 +170,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 console.error('Failed to fetch actor videos:', error);
                 message.error('获取演员视频失败');
             },
-            onSuccess: (data) => {
+            onSuccess: (data: WebVideo[]) => {
                 console.log('获取到演员视频数据:', data);
                 if (data && data.length === 0) {
                     message.info('没有找到该演员的视频');
@@ -496,7 +496,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
 
         // 获取视频的详细信息（包括下载资源）
         api.getVideoDownloads(video.num, sourceType, video.url)
-            .then(detailData => {
+            .then((detailData: { downloads?: any[] }) => {
                 // 清除加载状态
                 setLoadingVideoId(null);
 
@@ -512,7 +512,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     // 不再设置selectedVideo和selectedDownload，避免显示空模态框
                 }
             })
-            .catch(error => {
+            .catch((error: Error) => {
                 // 清除加载状态
                 setLoadingVideoId(null);
 

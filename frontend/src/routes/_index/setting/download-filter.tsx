@@ -27,7 +27,7 @@ import {
 } from '@ant-design/icons'
 import { createFileRoute } from '@tanstack/react-router'
 import { useRequest } from 'ahooks'
-import * as api from '@/apis/downloadFilter'
+import * as api from '../../../apis/downloadFilter'
 
 export const Route = createFileRoute('/_index/setting/download-filter')({
   component: DownloadFilterSettings
@@ -42,36 +42,36 @@ function DownloadFilterSettings() {
   const [testResult, setTestResult] = useState<api.MagnetFilterResult | null>(null)
 
   // 获取当前设置
-  const { loading } = useRequest(api.getFilterSettings, {
-    onSuccess: (res) => {
+  const { loading } = useRequest<api.ApiResponse<api.FilterSettings>, []>(api.getFilterSettings, {
+    onSuccess: (res: api.ApiResponse<api.FilterSettings>) => {
       if (res.data) {
         form.setFieldsValue(res.data)
       }
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       console.error('获取过滤设置失败:', err)
     }
   })
 
   // 保存设置
-  const { run: saveSettings, loading: saving } = useRequest(api.saveFilterSettings, {
+  const { run: saveSettings, loading: saving } = useRequest<api.ApiResponse, [Omit<api.FilterSettings, 'id' | 'is_active' | 'created_at' | 'updated_at'>]>(api.saveFilterSettings, {
     manual: true,
-    onSuccess: (res) => {
+    onSuccess: (res: api.ApiResponse) => {
       if (res.success) {
         message.success('设置保存成功')
       } else {
         message.error(res.message || '保存失败')
       }
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       message.error('保存设置失败：' + (err.message || '未知错误'))
     }
   })
 
   // 重置为默认设置
-  const { run: resetSettings, loading: resetting } = useRequest(api.resetToDefaultSettings, {
+  const { run: resetSettings, loading: resetting } = useRequest<api.ApiResponse, []>(api.resetToDefaultSettings, {
     manual: true,
-    onSuccess: (res) => {
+    onSuccess: (res: api.ApiResponse) => {
       if (res.success) {
         message.success('设置已重置为默认值')
         // 重新获取设置
@@ -83,14 +83,14 @@ function DownloadFilterSettings() {
   })
 
   // 测试磁力链接
-  const { run: testMagnet, loading: testingMagnet } = useRequest(api.testMagnetFilter, {
+  const { run: testMagnet, loading: testingMagnet } = useRequest<api.ApiResponse<api.MagnetFilterResult>, [string]>(api.testMagnetFilter, {
     manual: true,
-    onSuccess: (res) => {
+    onSuccess: (res: api.ApiResponse<api.MagnetFilterResult>) => {
       if (res.data) {
         setTestResult(res.data)
       }
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       message.error('测试失败：' + (err.message || '未知错误'))
     }
   })
@@ -166,7 +166,7 @@ function DownloadFilterSettings() {
 
         {testResult.files.length > 0 && (
           <Card title="过滤后的文件" size="small">
-            {testResult.files.map((file, index) => (
+            {testResult.files.map((file: api.TorrentFileInfo, index: number) => (
               <div key={index} style={{ marginBottom: 8 }}>
                 <Text>{file.name}</Text>
                 <Tag color="blue" style={{ marginLeft: 8 }}>

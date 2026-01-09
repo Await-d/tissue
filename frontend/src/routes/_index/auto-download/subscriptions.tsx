@@ -24,7 +24,7 @@ import {
   getRules,
   type AutoDownloadSubscription,
   type AutoDownloadRule
-} from '@/apis/autoDownload'
+} from '../../../apis/autoDownload'
 
 const { Search } = Input
 const { Option } = Select

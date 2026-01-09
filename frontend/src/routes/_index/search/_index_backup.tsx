@@ -37,7 +37,7 @@ import HistoryModal from "./-components/historyModal.tsx";
 
 const cacheHistoryKey = 'search_video_histories'
 
-export const Route = createFileRoute('/_index/search/index_backup')({
+export const Route = createFileRoute('/_index/search/_index_backup')({
     component: Search,
     loaderDeps: ({ search }) => search as any,
     loader: ({ deps }) => {
@@ -253,10 +253,10 @@ export function Search() {
         }
     };
 
-    const handleHistorySelect = (num: string) => {
+    const handleHistorySelect = (history: { num: string }) => {
         setHistoryModalOpen(false)
         navigate({
-            search: { num } as any
+            search: { num: history.num } as any
         })
     };
 
@@ -494,7 +494,7 @@ export function Search() {
             <HistoryModal
                 open={historyModalOpen}
                 onCancel={() => setHistoryModalOpen(false)}
-                onSelect={handleHistorySelect}
+                onClick={handleHistorySelect}
             />
         </Row>
     )

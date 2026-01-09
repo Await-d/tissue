@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography, Checkbox } from 'antd';
-import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined, DatabaseOutlined } from '@ant-design/icons';
+import React, { useState, useMemo } from 'react';
+import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography, Checkbox, Input, Select, Segmented } from 'antd';
+import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined, DatabaseOutlined, CheckCircleOutlined, ClockCircleOutlined, BellOutlined, DownloadOutlined, SearchOutlined, FilterOutlined, AppstoreOutlined, UnorderedListOutlined, CheckSquareOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import * as api from '../../../apis/video';
 import * as subscribeApi from '../../../apis/subscribe';
@@ -8,9 +8,10 @@ import { useRequest } from 'ahooks';
 import { createPortal } from 'react-dom';
 import EditSubscribeModal from './-components/EditSubscribeModal';
 import AllDownloadsModal from './-components/AllDownloadsModal';
-import LoadingComponent from '@/components/Loading';
+import LoadingComponent from '../../../components/Loading';
 
 const { Title, Text } = Typography;
+const { Search } = Input;
 
 export const Route = createFileRoute('/_index/actor-subscribe/')({
     component: ActorSubscribe

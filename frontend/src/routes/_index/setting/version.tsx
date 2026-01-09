@@ -38,7 +38,7 @@ import {
   getVersionStatus,
   type VersionInfo,
   type VersionStatus
-} from '@/apis/version'
+} from '../../../apis/version'
 
 export const Route = createFileRoute('/_index/setting/version')({
   component: VersionManagement

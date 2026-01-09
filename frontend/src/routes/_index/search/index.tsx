@@ -1,25 +1,34 @@
 import {
     Button,
     Card,
+    Checkbox,
     Col,
     Descriptions,
     Empty,
     Input,
-    List,
     message,
-    Row, Segmented, Skeleton,
+    Row,
+    Segmented,
+    Skeleton,
     Space,
+    Table,
     Tag,
-    Tooltip
+    Tooltip,
+    Badge,
+    Dropdown,
+    MenuProps
 } from "antd";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useMemo} from "react";
 import {
     CarryOutOutlined,
     CloudDownloadOutlined,
     CopyOutlined,
     HistoryOutlined,
     RedoOutlined,
-    SearchOutlined
+    SearchOutlined,
+    ThunderboltOutlined,
+    DownloadOutlined,
+    StarFilled
 } from "@ant-design/icons";
 import * as api from "../../../apis/subscribe";
 import {useRequest, useResponsive} from "ahooks";
@@ -42,6 +51,34 @@ import HistoryModal from "./-components/historyModal.tsx";
 import Comment from "./-components/comment.tsx";
 
 const cacheHistoryKey = 'search_video_histories'
+const filterPreferenceKey = 'search_filter_preference'
+
+// Calculate quality score for a resource
+function calculateQualityScore(item: any): number {
+    let score = 0;
+
+    // HD quality adds 40 points
+    if (item.is_hd) score += 40;
+
+    // Chinese subtitle adds 30 points
+    if (item.is_zh) score += 30;
+
+    // Uncensored adds 20 points
+    if (item.is_uncensored) score += 20;
+
+    // Size scoring (prefer larger files, usually better quality)
+    const sizeMatch = item.size?.match(/(\d+\.?\d*)\s*(GB|MB)/i);
+    if (sizeMatch) {
+        const size = parseFloat(sizeMatch[1]);
+        const unit = sizeMatch[2].toUpperCase();
+        const sizeInGB = unit === 'GB' ? size : size / 1024;
+
+        // Add up to 10 points based on size (capped at 5GB)
+        score += Math.min(10, (sizeInGB / 5) * 10);
+    }
+
+    return score;
+}
 
 export const Route = createFileRoute('/_index/search/')({
     component: Search,
@@ -80,13 +117,30 @@ export function Search() {
     const appDispatch = useDispatch<Dispatch>().app
     const responsive = useResponsive()
     const [searchInput, setSearchInput] = useState(!detailMatch ? search?.num : null)
-    const [filter, setFilter] = useState({isHd: false, isZh: false, isUncensored: false})
+
+    // Load filter preference from localStorage
+    const savedFilter = useMemo(() => {
+        try {
+            const saved = localStorage.getItem(filterPreferenceKey);
+            return saved ? JSON.parse(saved) : {isHd: false, isZh: false, isUncensored: false};
+        } catch {
+            return {isHd: false, isZh: false, isUncensored: false};
+        }
+    }, []);
+
+    const [filter, setFilter] = useState(savedFilter)
     const [previewSelected, setPreviewSelected] = useState<string>()
     const [commentSelected, setCommentSelected] = useState<string>()
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
     const [selectedVideo, setSelectedVideo] = useState<any>()
     const [selectedDownload, setSelectedDownload] = useState<any>()
     const [historyModalOpen, setHistoryModalOpen] = useState(false)
+
+    // Save filter preference to localStorage
+    useEffect(() => {
+        localStorage.setItem(filterPreferenceKey, JSON.stringify(filter));
+    }, [filter]);
 
     useEffect(() => {
         appDispatch.setCanBack(!!detailMatch)
@@ -108,6 +162,7 @@ export function Search() {
         onSuccess: () => {
             setSelectedVideo(undefined)
             setSelectedDownload(undefined)
+            setSelectedRowKeys([])
             return message.success("下载任务创建成功")
         }
     })
@@ -216,10 +271,299 @@ export function Search() {
         return message.success("磁力链接已复制")
     }
 
+    // Quick download without confirmation
+    function onQuickDownload(video: any, item: any) {
+        onDownload(video, item);
+    }
+
+    // Smart download - automatically select best resource
+    function onSmartDownload(video: any, downloads: any[]) {
+        if (!downloads || downloads.length === 0) {
+            return message.warning("没有可用的资源");
+        }
+
+        // Calculate scores and find best resource
+        const scoredDownloads = downloads.map(item => ({
+            ...item,
+            score: calculateQualityScore(item)
+        }));
+
+        const bestResource = scoredDownloads.reduce((best, current) =>
+            current.score > best.score ? current : best
+        );
+
+        message.info(`智能选择最优资源: ${bestResource.name}`);
+        onDownload(video, bestResource);
+    }
+
+    // Batch download selected resources
+    function onBatchDownload(video: any, downloads: any[]) {
+        const selectedDownloads = downloads.filter((_, index) =>
+            selectedRowKeys.includes(index)
+        );
+
+        if (selectedDownloads.length === 0) {
+            return message.warning("请先选择要下载的资源");
+        }
+
+        // Download each selected resource
+        selectedDownloads.forEach(item => {
+            onDownload(video, item);
+        });
+
+        message.success(`已添加 ${selectedDownloads.length} 个下载任务`);
+    }
+
+    // Filter preset handlers
+    function applyFilterPreset(preset: 'all' | 'hd' | 'zh' | 'hd-zh' | 'uncensored') {
+        switch (preset) {
+            case 'all':
+                setFilter({isHd: false, isZh: false, isUncensored: false});
+                break;
+            case 'hd':
+                setFilter({isHd: true, isZh: false, isUncensored: false});
+                break;
+            case 'zh':
+                setFilter({isHd: false, isZh: true, isUncensored: false});
+                break;
+            case 'hd-zh':
+                setFilter({isHd: true, isZh: true, isUncensored: false});
+                break;
+            case 'uncensored':
+                setFilter({isHd: false, isZh: false, isUncensored: true});
+                break;
+        }
+    }
+
+    const filterPresetMenu: MenuProps = {
+        items: [
+            {key: 'all', label: '全部资源'},
+            {key: 'hd', label: '仅高清'},
+            {key: 'zh', label: '仅中文'},
+            {key: 'hd-zh', label: '高清中文'},
+            {key: 'uncensored', label: '仅无码'},
+        ],
+        onClick: ({key}) => applyFilterPreset(key as any)
+    };
+
+    // Render resource table for desktop
+    function renderResourceTable(video: any, downloads: any[]) {
+        const scoredDownloads = downloads.map((item, index) => ({
+            ...item,
+            key: index,
+            score: calculateQualityScore(item)
+        }));
+
+        const maxScore = Math.max(...scoredDownloads.map(d => d.score));
+
+        const columns = [
+            {
+                title: '资源名称',
+                dataIndex: 'name',
+                key: 'name',
+                ellipsis: true,
+                render: (text: string, record: any) => (
+                    <div className="flex items-center gap-2">
+                        {record.score === maxScore && maxScore > 0 && (
+                            <Tooltip title="推荐资源">
+                                <StarFilled className="text-yellow-500" />
+                            </Tooltip>
+                        )}
+                        <Tooltip title={text}>
+                            <span className="truncate">{text}</span>
+                        </Tooltip>
+                    </div>
+                ),
+            },
+            {
+                title: '大小',
+                dataIndex: 'size',
+                key: 'size',
+                width: 100,
+            },
+            {
+                title: '标签',
+                key: 'tags',
+                width: 180,
+                render: (_: any, record: any) => (
+                    <Space size={4}>
+                        {record.is_hd && <Tag color="red" bordered={false}>高清</Tag>}
+                        {record.is_zh && <Tag color="blue" bordered={false}>中文</Tag>}
+                        {record.is_uncensored && <Tag color="green" bordered={false}>无码</Tag>}
+                    </Space>
+                ),
+            },
+            {
+                title: '质量',
+                key: 'quality',
+                width: 80,
+                render: (_: any, record: any) => {
+                    const percentage = maxScore > 0 ? Math.round((record.score / maxScore) * 100) : 0;
+                    let color = 'default';
+                    if (percentage >= 80) color = 'success';
+                    else if (percentage >= 60) color = 'processing';
+                    else if (percentage >= 40) color = 'warning';
+
+                    return (
+                        <Tooltip title={`质量评分: ${record.score.toFixed(1)}`}>
+                            <Badge status={color as any} text={`${percentage}%`} />
+                        </Tooltip>
+                    );
+                },
+            },
+            {
+                title: '来源',
+                dataIndex: 'website',
+                key: 'website',
+                width: 100,
+                render: (text: string, record: any) => (
+                    <a href={record.url} target="_blank" rel="noopener noreferrer">
+                        <Tag>{text}</Tag>
+                    </a>
+                ),
+            },
+            {
+                title: '日期',
+                dataIndex: 'publish_date',
+                key: 'publish_date',
+                width: 110,
+            },
+            {
+                title: '操作',
+                key: 'action',
+                width: 120,
+                fixed: 'right' as const,
+                render: (_: any, record: any) => (
+                    <Space size="small">
+                        <Tooltip title="快速下载">
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<DownloadOutlined />}
+                                onClick={() => onQuickDownload(video, record)}
+                                loading={onDownloading}
+                            />
+                        </Tooltip>
+                        <Tooltip title="复制磁力">
+                            <Button
+                                size="small"
+                                icon={<CopyOutlined />}
+                                onClick={() => onCopyClick(record)}
+                            />
+                        </Tooltip>
+                    </Space>
+                ),
+            },
+        ];
+
+        const rowSelection = {
+            selectedRowKeys,
+            onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
+        };
+
+        return (
+            <Table
+                columns={columns}
+                dataSource={scoredDownloads}
+                rowSelection={rowSelection}
+                pagination={false}
+                size="small"
+                scroll={{x: 1000}}
+                rowClassName="hover:bg-gray-50 transition-colors cursor-pointer"
+            />
+        );
+    }
+
+    // Render resource cards for mobile
+    function renderResourceCards(video: any, downloads: any[]) {
+        const scoredDownloads = downloads.map((item, index) => ({
+            ...item,
+            key: index,
+            score: calculateQualityScore(item)
+        }));
+
+        const maxScore = Math.max(...scoredDownloads.map(d => d.score));
+
+        return (
+            <Space direction="vertical" size="middle" className="w-full">
+                {scoredDownloads.map((item) => {
+                    const percentage = maxScore > 0 ? Math.round((item.score / maxScore) * 100) : 0;
+                    const isRecommended = item.score === maxScore && maxScore > 0;
+
+                    return (
+                        <Card
+                            key={item.key}
+                            size="small"
+                            className="hover:shadow-md transition-shadow"
+                            style={{
+                                borderLeft: isRecommended ? '3px solid #faad14' : undefined
+                            }}
+                        >
+                            <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1 mr-2">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        {isRecommended && (
+                                            <StarFilled className="text-yellow-500 text-xs" />
+                                        )}
+                                        <span className="font-medium text-sm">{item.name}</span>
+                                    </div>
+                                    <Space size={4} wrap>
+                                        <Tag>{item.size}</Tag>
+                                        <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                            <Tag>{item.website}</Tag>
+                                        </a>
+                                        <Tag>{item.publish_date}</Tag>
+                                    </Space>
+                                </div>
+                                <Checkbox
+                                    checked={selectedRowKeys.includes(item.key)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setSelectedRowKeys([...selectedRowKeys, item.key]);
+                                        } else {
+                                            setSelectedRowKeys(selectedRowKeys.filter(k => k !== item.key));
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Space size={4}>
+                                    {item.is_hd && <Tag color="red" bordered={false}>高清</Tag>}
+                                    {item.is_zh && <Tag color="blue" bordered={false}>中文</Tag>}
+                                    {item.is_uncensored && <Tag color="green" bordered={false}>无码</Tag>}
+                                    <Badge
+                                        status={percentage >= 80 ? 'success' : percentage >= 60 ? 'processing' : 'warning'}
+                                        text={`${percentage}%`}
+                                    />
+                                </Space>
+                                <Space size="small">
+                                    <Button
+                                        type="primary"
+                                        size="small"
+                                        icon={<DownloadOutlined />}
+                                        onClick={() => onQuickDownload(video, item)}
+                                        loading={onDownloading}
+                                    >
+                                        下载
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        icon={<CopyOutlined />}
+                                        onClick={() => onCopyClick(item)}
+                                    />
+                                </Space>
+                            </div>
+                        </Card>
+                    );
+                })}
+            </Space>
+        );
+    }
+
     return (
         <Row gutter={[15, 15]}>
             <Col span={24} lg={8} md={12}>
-                <Card>
+                <Card className="shadow-sm">
                     {!detailMatch && (
                         <div className={'flex'}>
                             <Input.Search placeholder={'请输入番号'} enterButton
@@ -240,8 +584,14 @@ export function Search() {
                         {(video, loading) => (
                             video ? (
                                 <>
-                                    <div className={'my-4 rounded-lg overflow-hidden'}>
-                                        <VideoCover src={video.cover}/>
+                                    <div className={'my-4 rounded-xl overflow-hidden shadow-lg'}
+                                         style={{
+                                             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                             padding: '4px'
+                                         }}>
+                                        <div className="rounded-lg overflow-hidden">
+                                            <VideoCover src={video.cover}/>
+                                        </div>
                                     </div>
                                     <div className={'text-center'}>
                                         <Tooltip title={'添加订阅'}>
@@ -300,7 +650,7 @@ export function Search() {
                         if (video?.previews) {
                             const previews = video.previews.find((i: any) => i.website === previewSelected) || video.previews[0]
                             return (
-                                <Card title={'预览'} className={'mb-4'} extra={(
+                                <Card title={'预览'} className={'mb-4 shadow-sm'} extra={(
                                     <Segmented onChange={(value: string) => setPreviewSelected(value)}
                                                options={video.previews.map((i: any) => i.website)}/>
                                 )}>
@@ -312,67 +662,89 @@ export function Search() {
                         }
                     }}
                 </Await>
-                <Card title={'资源列表'} extra={
-                    <>
-                        <Tag color={filter.isHd ? 'red' : 'default'} className={'cursor-pointer'}
-                             onClick={() => setFilter({...filter, isHd: !filter.isHd})}>高清</Tag>
-                        <Tag color={filter.isZh ? 'blue' : 'default'} className={'cursor-pointer'}
-                             onClick={() => setFilter({...filter, isZh: !filter.isZh})}>中文</Tag>
-                        <Tag color={filter.isUncensored ? 'green' : 'default'} className={'cursor-pointer'}
-                             onClick={() => setFilter({
-                                 ...filter,
-                                 isUncensored: !filter.isUncensored
-                             })}>无码</Tag>
-                    </>
-                }>
+                <Card
+                    title={'资源列表'}
+                    className="shadow-sm"
+                    extra={
+                        <Space wrap>
+                            <Dropdown menu={filterPresetMenu} placement="bottomRight">
+                                <Button size="small">筛选预设</Button>
+                            </Dropdown>
+                            <Segmented
+                                options={[
+                                    {
+                                        label: '高清',
+                                        value: 'hd',
+                                    },
+                                    {
+                                        label: '中文',
+                                        value: 'zh',
+                                    },
+                                    {
+                                        label: '无码',
+                                        value: 'uncensored',
+                                    },
+                                ]}
+                                value={
+                                    filter.isHd ? 'hd' :
+                                    filter.isZh ? 'zh' :
+                                    filter.isUncensored ? 'uncensored' :
+                                    undefined
+                                }
+                                onChange={(value) => {
+                                    if (value === 'hd') {
+                                        setFilter({...filter, isHd: !filter.isHd});
+                                    } else if (value === 'zh') {
+                                        setFilter({...filter, isZh: !filter.isZh});
+                                    } else if (value === 'uncensored') {
+                                        setFilter({...filter, isUncensored: !filter.isUncensored});
+                                    }
+                                }}
+                            />
+                        </Space>
+                    }
+                >
                     <Await promise={loaderData}>
                         {(video: any, loading) => {
                             const downloads = video?.downloads?.filter((item: any) => (
-                                (!filter.isHd || item.is_hd) && (!filter.isZh || item.is_zh) && ((!filter.isUncensored || item.is_uncensored))
+                                (!filter.isHd || item.is_hd) &&
+                                (!filter.isZh || item.is_zh) &&
+                                (!filter.isUncensored || item.is_uncensored)
                             ))
+
                             return downloads ? (
-                                <List dataSource={downloads} renderItem={(item: any) => (
-                                    <List.Item actions={[
-                                        <Tooltip title={'发送到下载器'}>
-                                            <Button type={'primary'} icon={<CloudDownloadOutlined/>}
-                                                    shape={'circle'}
-                                                    onClick={() => {
-                                                        setSelectedVideo(video)
-                                                        setSelectedDownload(item)
-                                                    }}
-                                            />
-                                        </Tooltip>,
-                                        <Tooltip title={'复制磁力链接'}>
-                                            <Button type={'primary'} icon={<CopyOutlined/>} shape={'circle'}
-                                                    onClick={() => onCopyClick(item)}/>
-                                        </Tooltip>
-                                    ]}>
-                                        <List.Item.Meta title={item.name}
-                                                        description={(
-                                                            <Space
-                                                                direction={responsive.lg ? 'horizontal' : 'vertical'}
-                                                                size={responsive.lg ? 0 : 'small'}>
-                                                                <div>
-                                                                    <a href={item.url}><Tag>{item.website}</Tag></a>
-                                                                    <Tag>{item.size}</Tag>
-                                                                </div>
-                                                                <div>
-                                                                    {item.is_hd &&
-                                                                        <Tag color={'red'}
-                                                                             bordered={false}>高清</Tag>}
-                                                                    {item.is_zh &&
-                                                                        <Tag color={'blue'}
-                                                                             bordered={false}>中文</Tag>}
-                                                                    {item.is_uncensored &&
-                                                                        <Tag color={'green'}
-                                                                             bordered={false}>无码</Tag>}
-                                                                </div>
-                                                                <div>{item.publish_date}</div>
-                                                            </Space>
-                                                        )}
-                                        />
-                                    </List.Item>
-                                )}/>
+                                <>
+                                    <div className="mb-3 flex flex-wrap gap-2">
+                                        <Button
+                                            type="primary"
+                                            icon={<ThunderboltOutlined />}
+                                            onClick={() => onSmartDownload(video, downloads)}
+                                            loading={onDownloading}
+                                        >
+                                            智能下载
+                                        </Button>
+                                        <Button
+                                            icon={<CloudDownloadOutlined />}
+                                            onClick={() => onBatchDownload(video, downloads)}
+                                            disabled={selectedRowKeys.length === 0}
+                                            loading={onDownloading}
+                                        >
+                                            批量下载 {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+                                        </Button>
+                                        {selectedRowKeys.length > 0 && (
+                                            <Button
+                                                size="small"
+                                                onClick={() => setSelectedRowKeys([])}
+                                            >
+                                                取消选择
+                                            </Button>
+                                        )}
+                                    </div>
+                                    {responsive.md ?
+                                        renderResourceTable(video, downloads) :
+                                        renderResourceCards(video, downloads)
+                                    }
+                                </>
                             ) : (
                                 <div className={'py-8'}>
                                     {loading ? (
@@ -390,7 +762,7 @@ export function Search() {
                         if (video?.comments && video.comments.length > 0) {
                             const comments = video.comments.find((i: any) => i.website === commentSelected) || video.comments[0]
                             return (
-                                <Card title={'评论'} className={'mt-4'} extra={(
+                                <Card title={'评论'} className={'mt-4 shadow-sm'} extra={(
                                     <Segmented onChange={(value: string) => setCommentSelected(value)}
                                                options={video.comments.map((i: any) => i.website)}/>
                                 )}>
