@@ -1,8 +1,15 @@
+/*
+ * @Author: Await
+ * @Date: 2025-05-24 17:05:38
+ * @LastEditors: Await
+ * @LastEditTime: 2025-05-26 18:51:02
+ * @Description: 请填写简介
+ */
 import React from "react";
-import {Menu} from "antd";
+import { Menu } from "antd";
 import routes from "../../../routes";
-import Logo from "../../../assets/logo.png";
-import {Link, useMatches, useNavigate} from "@tanstack/react-router";
+import Logo from "../../../assets/logo.svg";
+import { Link, useMatches, useNavigate } from "@tanstack/react-router";
 
 interface Props {
     onSelect?: () => void
@@ -11,7 +18,7 @@ interface Props {
 
 function Sider(props: Props) {
 
-    const {showLogo = true} = props
+    const { showLogo = true } = props
     const matches = useMatches()
     const selected = matches.slice(2).map((item) => {
         return item.pathname.endsWith('/') ? item.pathname.slice(0, -1) : item.pathname
@@ -39,17 +46,17 @@ function Sider(props: Props) {
 
     return (
         <div>
-            <div className={'h-16 flex items-center'} style={{marginTop: 'env(safe-area-inset-top, 0)'}}>
+            <div className={'h-16 flex items-center'} style={{ marginTop: 'env(safe-area-inset-top, 0)' }}>
                 {showLogo && (
                     <Link to={'/'}>
-                        <img className={'ml-8 mr-4 h-12'} src={Logo} alt=""/>
+                        <img className={'ml-8 mr-4 h-12'} src={Logo} alt="" />
                     </Link>
                 )}
             </div>
             <Menu selectedKeys={selected} mode={'inline'} items={generateItems(routes)} onSelect={item => {
                 props.onSelect?.()
-                return navigate({to: item.key})
-            }}/>
+                return navigate({ to: item.key })
+            }} />
         </div>
     )
 }

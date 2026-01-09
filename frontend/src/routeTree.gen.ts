@@ -25,12 +25,22 @@ import { Route as IndexHomeIndexRouteImport } from './routes/_index/home/index'
 import { Route as IndexHistoryIndexRouteImport } from './routes/_index/history/index'
 import { Route as IndexFileIndexRouteImport } from './routes/_index/file/index'
 import { Route as IndexDownloadIndexRouteImport } from './routes/_index/download/index'
+import { Route as IndexAutoDownloadIndexRouteImport } from './routes/_index/auto-download/index'
+import { Route as IndexActorIndexRouteImport } from './routes/_index/actor/index'
+import { Route as IndexActorSubscribeIndexRouteImport } from './routes/_index/actor-subscribe/index'
 import { Route as IndexAboutIndexRouteImport } from './routes/_index/about/index'
+import { Route as IndexVideoNumRouteImport } from './routes/_index/video/$num'
+import { Route as IndexSettingVersionRouteImport } from './routes/_index/setting/version'
 import { Route as IndexSettingNotifyRouteImport } from './routes/_index/setting/notify'
 import { Route as IndexSettingFileRouteImport } from './routes/_index/setting/file'
+import { Route as IndexSettingDownloadFilterRouteImport } from './routes/_index/setting/download-filter'
 import { Route as IndexSettingDownloadRouteImport } from './routes/_index/setting/download'
+import { Route as IndexSettingAutoDownloadRouteImport } from './routes/_index/setting/auto-download'
 import { Route as IndexSettingAppRouteImport } from './routes/_index/setting/app'
+import { Route as IndexSearchIndex_backupRouteImport } from './routes/_index/search/index_backup'
 import { Route as IndexHomeDetailRouteImport } from './routes/_index/home/detail'
+import { Route as IndexAutoDownloadSubscriptionsRouteImport } from './routes/_index/auto-download/subscriptions'
+import { Route as IndexAutoDownloadRulesRouteImport } from './routes/_index/auto-download/rules'
 
 const IndexRouteRoute = IndexRouteRouteImport.update({
   id: '/_index',
@@ -111,10 +121,36 @@ const IndexDownloadIndexRoute = IndexDownloadIndexRouteImport.update({
   path: '/download/',
   getParentRoute: () => IndexRouteRoute,
 } as any)
+const IndexAutoDownloadIndexRoute = IndexAutoDownloadIndexRouteImport.update({
+  id: '/auto-download/',
+  path: '/auto-download/',
+  getParentRoute: () => IndexRouteRoute,
+} as any)
+const IndexActorIndexRoute = IndexActorIndexRouteImport.update({
+  id: '/actor/',
+  path: '/actor/',
+  getParentRoute: () => IndexRouteRoute,
+} as any)
+const IndexActorSubscribeIndexRoute =
+  IndexActorSubscribeIndexRouteImport.update({
+    id: '/actor-subscribe/',
+    path: '/actor-subscribe/',
+    getParentRoute: () => IndexRouteRoute,
+  } as any)
 const IndexAboutIndexRoute = IndexAboutIndexRouteImport.update({
   id: '/about/',
   path: '/about/',
   getParentRoute: () => IndexRouteRoute,
+} as any)
+const IndexVideoNumRoute = IndexVideoNumRouteImport.update({
+  id: '/video/$num',
+  path: '/video/$num',
+  getParentRoute: () => IndexRouteRoute,
+} as any)
+const IndexSettingVersionRoute = IndexSettingVersionRouteImport.update({
+  id: '/version',
+  path: '/version',
+  getParentRoute: () => IndexSettingRouteRoute,
 } as any)
 const IndexSettingNotifyRoute = IndexSettingNotifyRouteImport.update({
   id: '/notify',
@@ -126,19 +162,47 @@ const IndexSettingFileRoute = IndexSettingFileRouteImport.update({
   path: '/file',
   getParentRoute: () => IndexSettingRouteRoute,
 } as any)
+const IndexSettingDownloadFilterRoute =
+  IndexSettingDownloadFilterRouteImport.update({
+    id: '/download-filter',
+    path: '/download-filter',
+    getParentRoute: () => IndexSettingRouteRoute,
+  } as any)
 const IndexSettingDownloadRoute = IndexSettingDownloadRouteImport.update({
   id: '/download',
   path: '/download',
   getParentRoute: () => IndexSettingRouteRoute,
 } as any)
+const IndexSettingAutoDownloadRoute =
+  IndexSettingAutoDownloadRouteImport.update({
+    id: '/auto-download',
+    path: '/auto-download',
+    getParentRoute: () => IndexSettingRouteRoute,
+  } as any)
 const IndexSettingAppRoute = IndexSettingAppRouteImport.update({
   id: '/app',
   path: '/app',
   getParentRoute: () => IndexSettingRouteRoute,
 } as any)
+const IndexSearchIndex_backupRoute = IndexSearchIndex_backupRouteImport.update({
+  id: '/search/index_backup',
+  path: '/search/index_backup',
+  getParentRoute: () => IndexRouteRoute,
+} as any)
 const IndexHomeDetailRoute = IndexHomeDetailRouteImport.update({
   id: '/home/detail',
   path: '/home/detail',
+  getParentRoute: () => IndexRouteRoute,
+} as any)
+const IndexAutoDownloadSubscriptionsRoute =
+  IndexAutoDownloadSubscriptionsRouteImport.update({
+    id: '/auto-download/subscriptions',
+    path: '/auto-download/subscriptions',
+    getParentRoute: () => IndexRouteRoute,
+  } as any)
+const IndexAutoDownloadRulesRoute = IndexAutoDownloadRulesRouteImport.update({
+  id: '/auto-download/rules',
+  path: '/auto-download/rules',
   getParentRoute: () => IndexRouteRoute,
 } as any)
 
@@ -146,12 +210,22 @@ export interface FileRoutesByFullPath {
   '/setting': typeof IndexSettingRouteRouteWithChildren
   '/': typeof IndexIndexRoute
   '/login': typeof LoginIndexRoute
+  '/auto-download/rules': typeof IndexAutoDownloadRulesRoute
+  '/auto-download/subscriptions': typeof IndexAutoDownloadSubscriptionsRoute
   '/home/detail': typeof IndexHomeDetailRoute
+  '/search/index_backup': typeof IndexSearchIndex_backupRoute
   '/setting/app': typeof IndexSettingAppRoute
+  '/setting/auto-download': typeof IndexSettingAutoDownloadRoute
   '/setting/download': typeof IndexSettingDownloadRoute
+  '/setting/download-filter': typeof IndexSettingDownloadFilterRoute
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
+  '/setting/version': typeof IndexSettingVersionRoute
+  '/video/$num': typeof IndexVideoNumRoute
   '/about': typeof IndexAboutIndexRoute
+  '/actor-subscribe': typeof IndexActorSubscribeIndexRoute
+  '/actor': typeof IndexActorIndexRoute
+  '/auto-download': typeof IndexAutoDownloadIndexRoute
   '/download': typeof IndexDownloadIndexRoute
   '/file': typeof IndexFileIndexRoute
   '/history': typeof IndexHistoryIndexRoute
@@ -168,12 +242,22 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexIndexRoute
   '/login': typeof LoginIndexRoute
+  '/auto-download/rules': typeof IndexAutoDownloadRulesRoute
+  '/auto-download/subscriptions': typeof IndexAutoDownloadSubscriptionsRoute
   '/home/detail': typeof IndexHomeDetailRoute
+  '/search/index_backup': typeof IndexSearchIndex_backupRoute
   '/setting/app': typeof IndexSettingAppRoute
+  '/setting/auto-download': typeof IndexSettingAutoDownloadRoute
   '/setting/download': typeof IndexSettingDownloadRoute
+  '/setting/download-filter': typeof IndexSettingDownloadFilterRoute
   '/setting/file': typeof IndexSettingFileRoute
   '/setting/notify': typeof IndexSettingNotifyRoute
+  '/setting/version': typeof IndexSettingVersionRoute
+  '/video/$num': typeof IndexVideoNumRoute
   '/about': typeof IndexAboutIndexRoute
+  '/actor-subscribe': typeof IndexActorSubscribeIndexRoute
+  '/actor': typeof IndexActorIndexRoute
+  '/auto-download': typeof IndexAutoDownloadIndexRoute
   '/download': typeof IndexDownloadIndexRoute
   '/file': typeof IndexFileIndexRoute
   '/history': typeof IndexHistoryIndexRoute
@@ -193,12 +277,22 @@ export interface FileRoutesById {
   '/_index/setting': typeof IndexSettingRouteRouteWithChildren
   '/_index/': typeof IndexIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/_index/auto-download/rules': typeof IndexAutoDownloadRulesRoute
+  '/_index/auto-download/subscriptions': typeof IndexAutoDownloadSubscriptionsRoute
   '/_index/home/detail': typeof IndexHomeDetailRoute
+  '/_index/search/index_backup': typeof IndexSearchIndex_backupRoute
   '/_index/setting/app': typeof IndexSettingAppRoute
+  '/_index/setting/auto-download': typeof IndexSettingAutoDownloadRoute
   '/_index/setting/download': typeof IndexSettingDownloadRoute
+  '/_index/setting/download-filter': typeof IndexSettingDownloadFilterRoute
   '/_index/setting/file': typeof IndexSettingFileRoute
   '/_index/setting/notify': typeof IndexSettingNotifyRoute
+  '/_index/setting/version': typeof IndexSettingVersionRoute
+  '/_index/video/$num': typeof IndexVideoNumRoute
   '/_index/about/': typeof IndexAboutIndexRoute
+  '/_index/actor-subscribe/': typeof IndexActorSubscribeIndexRoute
+  '/_index/actor/': typeof IndexActorIndexRoute
+  '/_index/auto-download/': typeof IndexAutoDownloadIndexRoute
   '/_index/download/': typeof IndexDownloadIndexRoute
   '/_index/file/': typeof IndexFileIndexRoute
   '/_index/history/': typeof IndexHistoryIndexRoute
@@ -218,12 +312,22 @@ export interface FileRouteTypes {
     | '/setting'
     | '/'
     | '/login'
+    | '/auto-download/rules'
+    | '/auto-download/subscriptions'
     | '/home/detail'
+    | '/search/index_backup'
     | '/setting/app'
+    | '/setting/auto-download'
     | '/setting/download'
+    | '/setting/download-filter'
     | '/setting/file'
     | '/setting/notify'
+    | '/setting/version'
+    | '/video/$num'
     | '/about'
+    | '/actor-subscribe'
+    | '/actor'
+    | '/auto-download'
     | '/download'
     | '/file'
     | '/history'
@@ -240,12 +344,22 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/auto-download/rules'
+    | '/auto-download/subscriptions'
     | '/home/detail'
+    | '/search/index_backup'
     | '/setting/app'
+    | '/setting/auto-download'
     | '/setting/download'
+    | '/setting/download-filter'
     | '/setting/file'
     | '/setting/notify'
+    | '/setting/version'
+    | '/video/$num'
     | '/about'
+    | '/actor-subscribe'
+    | '/actor'
+    | '/auto-download'
     | '/download'
     | '/file'
     | '/history'
@@ -264,12 +378,22 @@ export interface FileRouteTypes {
     | '/_index/setting'
     | '/_index/'
     | '/login/'
+    | '/_index/auto-download/rules'
+    | '/_index/auto-download/subscriptions'
     | '/_index/home/detail'
+    | '/_index/search/index_backup'
     | '/_index/setting/app'
+    | '/_index/setting/auto-download'
     | '/_index/setting/download'
+    | '/_index/setting/download-filter'
     | '/_index/setting/file'
     | '/_index/setting/notify'
+    | '/_index/setting/version'
+    | '/_index/video/$num'
     | '/_index/about/'
+    | '/_index/actor-subscribe/'
+    | '/_index/actor/'
+    | '/_index/auto-download/'
     | '/_index/download/'
     | '/_index/file/'
     | '/_index/history/'
@@ -403,12 +527,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexDownloadIndexRouteImport
       parentRoute: typeof IndexRouteRoute
     }
+    '/_index/auto-download/': {
+      id: '/_index/auto-download/'
+      path: '/auto-download'
+      fullPath: '/auto-download'
+      preLoaderRoute: typeof IndexAutoDownloadIndexRouteImport
+      parentRoute: typeof IndexRouteRoute
+    }
+    '/_index/actor/': {
+      id: '/_index/actor/'
+      path: '/actor'
+      fullPath: '/actor'
+      preLoaderRoute: typeof IndexActorIndexRouteImport
+      parentRoute: typeof IndexRouteRoute
+    }
+    '/_index/actor-subscribe/': {
+      id: '/_index/actor-subscribe/'
+      path: '/actor-subscribe'
+      fullPath: '/actor-subscribe'
+      preLoaderRoute: typeof IndexActorSubscribeIndexRouteImport
+      parentRoute: typeof IndexRouteRoute
+    }
     '/_index/about/': {
       id: '/_index/about/'
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof IndexAboutIndexRouteImport
       parentRoute: typeof IndexRouteRoute
+    }
+    '/_index/video/$num': {
+      id: '/_index/video/$num'
+      path: '/video/$num'
+      fullPath: '/video/$num'
+      preLoaderRoute: typeof IndexVideoNumRouteImport
+      parentRoute: typeof IndexRouteRoute
+    }
+    '/_index/setting/version': {
+      id: '/_index/setting/version'
+      path: '/version'
+      fullPath: '/setting/version'
+      preLoaderRoute: typeof IndexSettingVersionRouteImport
+      parentRoute: typeof IndexSettingRouteRoute
     }
     '/_index/setting/notify': {
       id: '/_index/setting/notify'
@@ -424,11 +583,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexSettingFileRouteImport
       parentRoute: typeof IndexSettingRouteRoute
     }
+    '/_index/setting/download-filter': {
+      id: '/_index/setting/download-filter'
+      path: '/download-filter'
+      fullPath: '/setting/download-filter'
+      preLoaderRoute: typeof IndexSettingDownloadFilterRouteImport
+      parentRoute: typeof IndexSettingRouteRoute
+    }
     '/_index/setting/download': {
       id: '/_index/setting/download'
       path: '/download'
       fullPath: '/setting/download'
       preLoaderRoute: typeof IndexSettingDownloadRouteImport
+      parentRoute: typeof IndexSettingRouteRoute
+    }
+    '/_index/setting/auto-download': {
+      id: '/_index/setting/auto-download'
+      path: '/auto-download'
+      fullPath: '/setting/auto-download'
+      preLoaderRoute: typeof IndexSettingAutoDownloadRouteImport
       parentRoute: typeof IndexSettingRouteRoute
     }
     '/_index/setting/app': {
@@ -438,6 +611,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexSettingAppRouteImport
       parentRoute: typeof IndexSettingRouteRoute
     }
+    '/_index/search/index_backup': {
+      id: '/_index/search/index_backup'
+      path: '/search/index_backup'
+      fullPath: '/search/index_backup'
+      preLoaderRoute: typeof IndexSearchIndex_backupRouteImport
+      parentRoute: typeof IndexRouteRoute
+    }
     '/_index/home/detail': {
       id: '/_index/home/detail'
       path: '/home/detail'
@@ -445,22 +625,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexHomeDetailRouteImport
       parentRoute: typeof IndexRouteRoute
     }
+    '/_index/auto-download/subscriptions': {
+      id: '/_index/auto-download/subscriptions'
+      path: '/auto-download/subscriptions'
+      fullPath: '/auto-download/subscriptions'
+      preLoaderRoute: typeof IndexAutoDownloadSubscriptionsRouteImport
+      parentRoute: typeof IndexRouteRoute
+    }
+    '/_index/auto-download/rules': {
+      id: '/_index/auto-download/rules'
+      path: '/auto-download/rules'
+      fullPath: '/auto-download/rules'
+      preLoaderRoute: typeof IndexAutoDownloadRulesRouteImport
+      parentRoute: typeof IndexRouteRoute
+    }
   }
 }
 
 interface IndexSettingRouteRouteChildren {
   IndexSettingAppRoute: typeof IndexSettingAppRoute
+  IndexSettingAutoDownloadRoute: typeof IndexSettingAutoDownloadRoute
   IndexSettingDownloadRoute: typeof IndexSettingDownloadRoute
+  IndexSettingDownloadFilterRoute: typeof IndexSettingDownloadFilterRoute
   IndexSettingFileRoute: typeof IndexSettingFileRoute
   IndexSettingNotifyRoute: typeof IndexSettingNotifyRoute
+  IndexSettingVersionRoute: typeof IndexSettingVersionRoute
   IndexSettingIndexRoute: typeof IndexSettingIndexRoute
 }
 
 const IndexSettingRouteRouteChildren: IndexSettingRouteRouteChildren = {
   IndexSettingAppRoute: IndexSettingAppRoute,
+  IndexSettingAutoDownloadRoute: IndexSettingAutoDownloadRoute,
   IndexSettingDownloadRoute: IndexSettingDownloadRoute,
+  IndexSettingDownloadFilterRoute: IndexSettingDownloadFilterRoute,
   IndexSettingFileRoute: IndexSettingFileRoute,
   IndexSettingNotifyRoute: IndexSettingNotifyRoute,
+  IndexSettingVersionRoute: IndexSettingVersionRoute,
   IndexSettingIndexRoute: IndexSettingIndexRoute,
 }
 
@@ -470,8 +670,15 @@ const IndexSettingRouteRouteWithChildren =
 interface IndexRouteRouteChildren {
   IndexSettingRouteRoute: typeof IndexSettingRouteRouteWithChildren
   IndexIndexRoute: typeof IndexIndexRoute
+  IndexAutoDownloadRulesRoute: typeof IndexAutoDownloadRulesRoute
+  IndexAutoDownloadSubscriptionsRoute: typeof IndexAutoDownloadSubscriptionsRoute
   IndexHomeDetailRoute: typeof IndexHomeDetailRoute
+  IndexSearchIndex_backupRoute: typeof IndexSearchIndex_backupRoute
+  IndexVideoNumRoute: typeof IndexVideoNumRoute
   IndexAboutIndexRoute: typeof IndexAboutIndexRoute
+  IndexActorSubscribeIndexRoute: typeof IndexActorSubscribeIndexRoute
+  IndexActorIndexRoute: typeof IndexActorIndexRoute
+  IndexAutoDownloadIndexRoute: typeof IndexAutoDownloadIndexRoute
   IndexDownloadIndexRoute: typeof IndexDownloadIndexRoute
   IndexFileIndexRoute: typeof IndexFileIndexRoute
   IndexHistoryIndexRoute: typeof IndexHistoryIndexRoute
@@ -488,8 +695,15 @@ interface IndexRouteRouteChildren {
 const IndexRouteRouteChildren: IndexRouteRouteChildren = {
   IndexSettingRouteRoute: IndexSettingRouteRouteWithChildren,
   IndexIndexRoute: IndexIndexRoute,
+  IndexAutoDownloadRulesRoute: IndexAutoDownloadRulesRoute,
+  IndexAutoDownloadSubscriptionsRoute: IndexAutoDownloadSubscriptionsRoute,
   IndexHomeDetailRoute: IndexHomeDetailRoute,
+  IndexSearchIndex_backupRoute: IndexSearchIndex_backupRoute,
+  IndexVideoNumRoute: IndexVideoNumRoute,
   IndexAboutIndexRoute: IndexAboutIndexRoute,
+  IndexActorSubscribeIndexRoute: IndexActorSubscribeIndexRoute,
+  IndexActorIndexRoute: IndexActorIndexRoute,
+  IndexAutoDownloadIndexRoute: IndexAutoDownloadIndexRoute,
   IndexDownloadIndexRoute: IndexDownloadIndexRoute,
   IndexFileIndexRoute: IndexFileIndexRoute,
   IndexHistoryIndexRoute: IndexHistoryIndexRoute,

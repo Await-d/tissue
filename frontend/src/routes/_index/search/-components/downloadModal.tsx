@@ -1,5 +1,5 @@
-import {Modal, ModalProps, Tag} from "antd";
-import React, {useEffect, useState} from "react";
+import { Input, Modal, ModalProps, Tag } from "antd";
+import React, { useEffect, useState } from "react";
 
 interface Props extends ModalProps {
     download?: any
@@ -8,7 +8,7 @@ interface Props extends ModalProps {
 
 function DownloadModal(props: Props) {
 
-    const {download, onDownload, ...otherProps} = props;
+    const { download, onDownload, ...otherProps } = props;
     const [item, setItem] = useState<any>()
 
     useEffect(() => {
@@ -18,10 +18,10 @@ function DownloadModal(props: Props) {
     function renderDownloadTag(label: string, field: string, color: string) {
         return (
             <Tag className={'cursor-pointer'} color={item?.[field] ? color : 'default'}
-                 bordered={item?.[field]}
-                 onClick={() => {
-                     setItem({...item, [field]: !item[field]})
-                 }}
+                bordered={item?.[field]}
+                onClick={() => {
+                    setItem({ ...item, [field]: !item[field] })
+                }}
             >
                 {label}
             </Tag>
@@ -39,6 +39,14 @@ function DownloadModal(props: Props) {
                 {renderDownloadTag('高清', 'is_hd', 'red')}
                 {renderDownloadTag('中文', 'is_zh', 'blue')}
                 {renderDownloadTag('无码', 'is_uncensored', 'green')}
+            </div>
+            <div className={'mt-4'}>
+                <Input
+                    placeholder="请输入保存路径（留空则使用默认路径）"
+                    value={item?.savepath}
+                    onChange={(e) => setItem({ ...item, savepath: e.target.value })}
+                    addonBefore="保存路径"
+                />
             </div>
         </Modal>
     )

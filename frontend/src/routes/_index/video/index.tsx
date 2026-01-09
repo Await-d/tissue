@@ -1,12 +1,12 @@
 import {useRequest} from "ahooks";
 import * as api from "../../../apis/video";
-import {Card, Col, Empty, FloatButton, Row, Skeleton, Space, Tag, Tooltip} from "antd";
+import {Card, Col, Empty, FloatButton, Row, Skeleton, Space, Tag} from "antd";
 import VideoCover from "../../../components/VideoCover";
 import React, {useMemo, useState} from "react";
 import {createPortal} from "react-dom";
-import {FilterOutlined, RedoOutlined, SearchOutlined} from "@ant-design/icons";
+import {FilterOutlined, RedoOutlined} from "@ant-design/icons";
 import VideoFilterModal, {FilterParams} from "./-components/filter.tsx";
-import {createFileRoute, Link, useRouter} from "@tanstack/react-router";
+import {createFileRoute, Link} from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
 
 export const Route = createFileRoute('/_index/video/')({
@@ -19,7 +19,6 @@ function Video() {
     const [selected, setSelected] = useState<string | undefined>()
     const [filterOpen, setFilterOpen] = useState(false)
     const [filterParams, setFilterParams] = useState<FilterParams>({})
-    const {navigate} = useRouter()
 
     const actors = useMemo(() => {
         const actors: any[] = []
@@ -55,9 +54,16 @@ function Video() {
 
     if (loading) {
         return (
-            <Card>
-                <Skeleton active/>
-            </Card>
+            <Row gutter={[15, 15]}>
+                {[...Array(8)].map((_, index) => (
+                    <Col key={index} span={24} md={12} lg={6}>
+                        <Card>
+                            <Skeleton.Image active style={{ width: '100%', height: '200px', marginBottom: '12px' }} />
+                            <Skeleton active paragraph={{ rows: 2 }} />
+                        </Card>
+                    </Col>
+                ))}
+            </Row>
         )
     }
 
@@ -70,33 +76,50 @@ function Video() {
                               size={"small"}
                               cover={(<VideoCover src={video.cover}/>)}
                               onClick={() => setSelected(video.path)}
+                              style={{
+                                  transition: 'all 0.3s',
+                                  cursor: 'pointer'
+                              }}
+                              onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(-4px)';
+                                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)';
+                              }}
+                              onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'translateY(0)';
+                                  e.currentTarget.style.boxShadow = '';
+                              }}
                         >
-                            <Card.Meta title={video.title}
+                            <Card.Meta
+                                       title={
+                                           <div style={{
+                                               overflow: 'hidden',
+                                               textOverflow: 'ellipsis',
+                                               display: '-webkit-box',
+                                               WebkitLineClamp: 2,
+                                               WebkitBoxOrient: 'vertical',
+                                               lineHeight: '1.4',
+                                               minHeight: '2.8em',
+                                               fontSize: '14px',
+                                               fontWeight: 600
+                                           }}>
+                                               {video.title}
+                                           </div>
+                                       }
                                        description={(
-                                           <div className={'flex'}>
-                                               <div className={'flex-1 items-center overflow-x-scroll'}
-                                                    style={{scrollbarWidth: 'none'}}>
-                                                   <Space size={[0, 'small']} className={'flex-1'}>
-                                                       {video.is_zh && (
-                                                           <Tag color={'blue'} bordered={false}>中文</Tag>)}
-                                                       {video.is_uncensored && (
-                                                           <Tag color={'green'} bordered={false}>无码</Tag>)}
-                                                       {video.actors.map((actor: any) => (
-                                                           <Tag key={actor.name} color={'purple'}
-                                                                bordered={false}>{actor.name}</Tag>
-                                                       ))}
-                                                   </Space>
-                                               </div>
-                                               <Tooltip title={'搜索'}>
-                                                   <div className={'ml-1'} onClick={(event) => {
-                                                       return navigate({
-                                                           to: '/search',
-                                                           search: {num: video.num}
-                                                       })
-                                                   }}>
-                                                       <SearchOutlined/>
-                                                   </div>
-                                               </Tooltip>
+                                           <div style={{
+                                               display: 'flex',
+                                               flexWrap: 'wrap',
+                                               gap: '4px',
+                                               marginTop: '8px'
+                                           }}>
+                                               {video.is_zh && (<Tag color={'blue'} bordered={false}>中文</Tag>)}
+                                               {video.is_uncensored && (<Tag color={'green'} bordered={false}>无码</Tag>)}
+                                               {video.actors.slice(0, 3).map((actor: any) => (
+                                                   <Tag key={actor.name} color={'purple'} bordered={false}>{actor.name}</Tag>
+                                               ))}
+                                               {video.actors.length > 3 && (
+                                                   <Tag color={'default'} bordered={false}>+{video.actors.length - 3}</Tag>
+                                               )}
                                            </div>
                                        )}
                             />
@@ -107,7 +130,20 @@ function Video() {
                 <Col span={24}>
                     <Card title={'视频'}>
                         <Empty
-                            description={(<span>无视频，<Link to={'/setting'} hash={'video'}>配置视频</Link></span>)}/>
+                            description={
+                                <div>
+                                    <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+                                        {hasFilter ? '没有找到符合条件的视频' : '暂无视频'}
+                                    </div>
+                                    <div style={{ fontSize: '14px', color: '#999' }}>
+                                        {hasFilter
+                                            ? '请尝试调整筛选条件'
+                                            : (<span>请先 <Link to={'/setting'} hash={'video'} style={{ fontWeight: 500 }}>配置视频路径</Link> 以添加视频</span>)
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        />
                     </Card>
                 </Col>
             )}

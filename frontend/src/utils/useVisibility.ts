@@ -25,17 +25,17 @@ function useVisibility() {
 
     useEffect(() => {
 
-        window.addEventListener('pagehide', handleBackground)
-        window.addEventListener('pageshow', handleForeground)
+        window.addEventListener('blur', handleBackground)
+        window.addEventListener('focus', handleForeground)
 
         document.addEventListener("visibilitychange", handleVisibilityChange)
 
         return () => {
-            window.removeEventListener('pagehide', handleBackground)
-            window.removeEventListener('pageshow', handleForeground)
+            window.removeEventListener('blur', handleBackground)
+            window.removeEventListener('focus', handleForeground)
             document.removeEventListener("visibilitychange", handleVisibilityChange)
         }
-    }, [])
+    })
 
     return visible
 }
