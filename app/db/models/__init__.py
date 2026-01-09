@@ -5,3 +5,4 @@ from .subscribe import *
 from .torrent import *
 from .site import *
 from .favorite import *
+from .search import *
