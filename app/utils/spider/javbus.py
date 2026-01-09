@@ -19,7 +19,7 @@ class JavBusSpider(Spider):
     name = 'JavBus'
     downloadable = True
 
-    def __init__(self):
+    def __init__(self, alternate_host: str | None = None):
         # 不使用父类的自定义 Session，改用标准 requests.Session
         import requests as standard_requests
 
@@ -27,6 +27,10 @@ class JavBusSpider(Spider):
         from app.schema import Setting
         self.setting = Setting().app
         self.session = standard_requests.Session()
+
+        # 如果指定了alternate_host，使用它
+        if alternate_host:
+            self.host = alternate_host
 
         # 配置 session
         user_agent = getattr(self.setting, 'user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
