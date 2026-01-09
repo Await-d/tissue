@@ -11,6 +11,7 @@ from app.db import get_db
 from app.db.models import History
 from app.exception import BizException
 from app.schema import VideoList, VideoDetail, Setting, VideoNotify
+from app.schema.video import VideoActor
 from app.service.base import BaseService
 from app.service.spider import SpiderService
 from app.utils import nfo, spider, num_parser, cache, notify
@@ -189,3 +190,84 @@ class VideoService(BaseService):
                 image_path = os.path.join(exist_path, image)
                 if os.path.exists(image_path):
                     os.remove(image_path)
+
+    def get_video_by_num(self, num: str) -> Optional[VideoDetail]:
+        """通过番号获取视频详情
+
+        Args:
+            num: 视频番号
+
+        Returns:
+            VideoDetail: 视频详情，如果找不到则返回None
+        """
+        try:
+            # 首先尝试在NFO文件中查找
+            videos = self.get_videos()
+            for video in videos:
+                if video.num == num:
+                    return self.get_video(video.path)
+
+            # 如果在本地找不到，尝试从网络获取
+            try:
+                from app.service.home import HomeService
+                home_service = HomeService(self.db)
+                detail = home_service.get_ranking_detail(num=num)
+                if detail:
+                    return VideoDetail(**detail.dict())
+            except:
+                pass
+
+            return None
+        except Exception as e:
+            logger.error(f"通过番号获取视频详情失败: {e}")
+            return None
+
+    def search_videos_by_actor(self, actor_name: str) -> List[VideoList]:
+        """根据演员名称搜索视频列表"""
+        if not actor_name:
+            logger.info(f"搜索演员为空")
+            return []
+
+        logger.info(f"搜索演员：{actor_name}")
+        videos = self.get_videos()
+        logger.info(f"获取到视频数量：{len(videos)}")
+
+        actor_name = actor_name.lower()
+
+        result = []
+        for video in videos:
+            # 检查video.actors是否为None或空列表
+            if not video.actors:
+                continue
+
+            for actor in video.actors:
+                if actor.name and actor_name in actor.name.lower():
+                    result.append(video)
+                    logger.info(f"找到匹配视频：{video.title}, 演员：{actor.name}")
+                    break
+
+        logger.info(f"搜索结果数量：{len(result)}")
+        return result
+
+    def get_all_actors(self) -> List[VideoActor]:
+        """获取所有演员列表，用于搜索建议"""
+        videos = self.get_videos()
+        logger.info(f"获取到视频数量：{len(videos)}")
+
+        # 使用集合去重
+        actors_set = set()
+        actors = []
+
+        for video in videos:
+            # 检查video.actors是否为None或空列表
+            if not video.actors:
+                continue
+
+            for actor in video.actors:
+                if actor.name and actor.name not in actors_set:
+                    actors_set.add(actor.name)
+                    actors.append(actor)
+
+        result = sorted(actors, key=lambda x: x.name)
+        logger.info(f"获取到演员数量：{len(result)}")
+        return result
