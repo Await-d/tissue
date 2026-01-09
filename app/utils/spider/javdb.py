@@ -544,24 +544,74 @@ class JavdbSpider(Spider):
 
         videos = html.xpath('//div[contains(@class, "movie-list")]/div[@class="item"]/a')
         for video in videos:
-            ranking = JavDBRanking()
-            ranking.cover = video.xpath('./div[contains(@class, "cover")]/img')[0].get('src')
-            ranking.title = video.get('title')
-            ranking.num = video.xpath('./div[@class="video-title"]/strong')[0].text
-            ranking.publish_date = datetime.strptime(video.xpath('./div[@class="meta"]')[0].text.strip(),
-                                                     "%Y-%m-%d").date()
+            try:
+                ranking = JavDBRanking()
 
-            rank_str = video.xpath('./div[@class="score"]/span/text()')[0].strip()
-            rank_matched = re.match('(.+?)分, 由(.+?)人評價', rank_str)
-            ranking.rank = float(rank_matched.group(1))
-            ranking.rank_count = int(rank_matched.group(2))
+                # 封面图片
+                cover_imgs = video.xpath('./div[contains(@class, "cover")]/img')
+                if cover_imgs:
+                    ranking.cover = cover_imgs[0].get('src')
 
-            ranking.url = urljoin(self.host, video.get('href'))
+                # 标题
+                ranking.title = video.get('title')
 
-            tag_str = video.xpath('./div[contains(@class, "tags")]/span/text()')[0]
-            ranking.isZh = ('中字' in tag_str)
+                # 番号
+                num_elements = video.xpath('./div[@class="video-title"]/strong')
+                if num_elements:
+                    ranking.num = num_elements[0].text
 
-            result.append(ranking)
+                # 发布日期 - 支持两种格式: %Y-%m-%d 和 %m/%d/%Y
+                meta_elements = video.xpath('./div[@class="meta"]')
+                if meta_elements:
+                    date_str = meta_elements[0].text.strip()
+                    try:
+                        # 尝试新格式 MM/DD/YYYY
+                        ranking.publish_date = datetime.strptime(date_str, "%m/%d/%Y").date()
+                    except ValueError:
+                        try:
+                            # 尝试旧格式 YYYY-MM-DD
+                            ranking.publish_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                        except ValueError:
+                            ranking.publish_date = None
+
+                # 评分 - 支持两种格式
+                # 新格式: "4.55, by 754 users"
+                # 旧格式: "4.55分, 由754人評價"
+                score_elements = video.xpath('./div[@class="score"]/span[@class="value"]')
+                if not score_elements:
+                    score_elements = video.xpath('./div[@class="score"]/span')
+
+                if score_elements:
+                    # 获取所有文本内容
+                    rank_str = ''.join(score_elements[0].itertext()).strip()
+
+                    # 尝试新格式: "4.55, by 754 users"
+                    rank_matched = re.search(r'([\d.]+),?\s*by\s*([\d,]+)\s*users?', rank_str)
+                    if rank_matched:
+                        ranking.rank = float(rank_matched.group(1))
+                        ranking.rank_count = int(rank_matched.group(2).replace(',', ''))
+                    else:
+                        # 尝试旧格式: "4.55分, 由754人評價"
+                        rank_matched = re.match(r'(.+?)分,\s*由(.+?)人評價', rank_str)
+                        if rank_matched:
+                            ranking.rank = float(rank_matched.group(1))
+                            ranking.rank_count = int(rank_matched.group(2))
+
+                ranking.url = urljoin(self.host, video.get('href'))
+
+                # 标签 - 检查是否有中文字幕
+                tag_elements = video.xpath('./div[contains(@class, "tags")]/span/text()')
+                if tag_elements:
+                    tag_str = ' '.join(tag_elements)
+                    ranking.isZh = ('中字' in tag_str or 'CnSub' in tag_str)
+                else:
+                    ranking.isZh = False
+
+                result.append(ranking)
+            except Exception as e:
+                logger.warning(f"解析排行榜项目失败: {e}")
+                continue
+
         return result
 
     def get_ranking_with_details(self, video_type: str, cycle: str, max_pages: int = 1):
@@ -715,19 +765,26 @@ class JavdbSpider(Spider):
                 if score_element:
                     # 提取所有文本内容，包括嵌套元素的文本
                     score_text = ''.join(score_element[0].itertext()).strip()
-                    logger.info(f"原始评分文本: '{score_text}'")
-                    
-                    # 提取评分：格式如 "4.54分, 由346人評價"
-                    rating_match = re.search(r"(\d+\.\d+)分", score_text)
+                    logger.debug(f"原始评分文本: '{score_text}'")
+
+                    # 尝试新格式: "4.55, by 754 users"
+                    rating_match = re.search(r"([\d.]+),?\s*by\s*([\d,]+)\s*users?", score_text)
                     if rating_match:
                         rating = float(rating_match.group(1))
-                        logger.info(f"成功提取评分: {rating}")
-                    
-                    # 提取评论数：格式如 "由346人評價"
-                    comment_match = re.search(r"由(\d+)人評價", score_text)
-                    if comment_match:
-                        comments = int(comment_match.group(1))
-                        logger.info(f"成功提取评论数: {comments}")
+                        comments = int(rating_match.group(2).replace(',', ''))
+                        logger.debug(f"成功提取评分(新格式): {rating}, 评论数: {comments}")
+                    else:
+                        # 尝试旧格式: "4.54分, 由346人評價"
+                        rating_match = re.search(r"(\d+\.\d+)分", score_text)
+                        if rating_match:
+                            rating = float(rating_match.group(1))
+                            logger.debug(f"成功提取评分(旧格式): {rating}")
+
+                        # 提取评论数：格式如 "由346人評價"
+                        comment_match = re.search(r"由(\d+)人評價", score_text)
+                        if comment_match:
+                            comments = int(comment_match.group(1))
+                            logger.debug(f"成功提取评论数(旧格式): {comments}")
                 
                 video_info['rating'] = rating
                 video_info['comments'] = comments
@@ -740,7 +797,7 @@ class JavdbSpider(Spider):
                 video_info['website'] = self.name
                 
                 videos.append(video_info)
-                logger.info(f"✅ 成功解析视频: {num} - 评分: {rating} - 评论: {comments}")
+                logger.debug(f"✅ 成功解析视频: {num} - 评分: {rating} - 评论: {comments}")
                 
             except Exception as e:
                 logger.warning(f"解析{page_type}视频信息时出错: {str(e)}")
