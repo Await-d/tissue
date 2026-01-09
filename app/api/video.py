@@ -167,7 +167,7 @@ def _search_web_actor(actor_name: str, source: str = 'javdb'):
         return []
 
 
-@router.get('/web/search/actor')
+@router.get('/web/actor/search')
 def search_web_actor(actor_name: str, source: str = 'javdb', force: bool = False):
     """从网站搜索演员"""
     cache_key = f"search_{source.lower()}_{actor_name}"
