@@ -1,5 +1,6 @@
 import re
 import time
+import logging
 from datetime import datetime
 from random import randint
 from urllib.parse import urljoin
@@ -9,6 +10,8 @@ from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem,
 from app.schema.home import JavDBRanking
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
+
+logger = logging.getLogger('spider')
 
 
 class JavDBSpider(Spider):

@@ -41,7 +41,7 @@ class SiteManager:
         """
         query = self.db.query(ManagedSite).filter(
             ManagedSite.is_enabled == True,
-            Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
+            ManagedSite.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
         )
 
         # 按站点类型过滤
@@ -176,14 +176,14 @@ class SiteManager:
                 ManagedSite.id.in_(fallback_site_ids),
                 ManagedSite.id != failed_site_id,
                 ManagedSite.is_enabled == True,
-                Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
+                ManagedSite.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
             ).order_by(ManagedSite.priority.asc()).all()
         else:
             # 默认故障转移：获取所有其他可用站点
             fallback_sites = self.db.query(ManagedSite).filter(
                 ManagedSite.id != failed_site_id,
                 ManagedSite.is_enabled == True,
-                Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
+                ManagedSite.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
             ).order_by(ManagedSite.priority.asc()).all()
 
         logger.info(f"为失败站点 {failed_site_id} 找到 {len(fallback_sites)} 个备用站点")
@@ -304,7 +304,7 @@ class SiteManager:
             if should_trigger:
                 self._trigger_failover(site, rule)
 
-    def _trigger_failover(self, site: Site, rule: SiteFailoverRule):
+    def _trigger_failover(self, site: ManagedSite, rule: SiteFailoverRule):
         """
         触发站点故障转移
 
@@ -360,7 +360,7 @@ class SiteManager:
         active_sites = self.db.query(ManagedSite).filter(
             ManagedSite.id.in_(balancer.site_ids),
             ManagedSite.is_enabled == True,
-            Site.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
+            ManagedSite.status.in_([SiteStatus.ACTIVE, SiteStatus.DEGRADED])
         ).all()
 
         if not active_sites:
