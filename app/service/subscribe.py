@@ -1,5 +1,6 @@
 import re
 import time
+import threading
 import traceback
 from datetime import datetime
 from random import randint
@@ -139,16 +140,32 @@ class SubscribeService(BaseService):
             torrent.is_uncensored = link.is_uncensored
             self.db.add(torrent)
 
-            # 应用全局下载过滤规则
-            self._apply_download_filter(torrent_hash)
+            # 异步应用全局下载过滤规则（避免阻塞API响应）
+            self._apply_download_filter_async(torrent_hash)
 
         subscribe_notify = schema.SubscribeNotify.model_validate(video)
         subscribe_notify = subscribe_notify.model_copy(update=link.model_dump())
         notify.send_subscribe(subscribe_notify)
 
-    def _apply_download_filter(self, torrent_hash: str, max_retries: int = 10, retry_interval: float = 2.0):
+    def _apply_download_filter_async(self, torrent_hash: str):
         """
-        应用全局下载过滤规则到新添加的种子
+        异步应用下载过滤规则（在后台线程中执行）
+
+        Args:
+            torrent_hash: 种子哈希
+        """
+        thread = threading.Thread(
+            target=self._apply_download_filter_worker,
+            args=(torrent_hash,),
+            daemon=True
+        )
+        thread.start()
+        logger.info(f"已启动后台线程应用下载过滤规则: {torrent_hash}")
+
+    @staticmethod
+    def _apply_download_filter_worker(torrent_hash: str, max_retries: int = 15, retry_interval: float = 2.0):
+        """
+        下载过滤工作线程（静态方法，使用独立数据库会话）
 
         Args:
             torrent_hash: 种子哈希
@@ -156,39 +173,41 @@ class SubscribeService(BaseService):
             retry_interval: 重试间隔（秒）
         """
         try:
-            filter_service = DownloadFilterService(self.db)
+            # 使用独立的数据库会话
+            with SessionFactory() as db:
+                filter_service = DownloadFilterService(db)
 
-            # 检查是否有激活的过滤设置
-            filter_settings = filter_service.get_filter_settings()
-            if not filter_settings:
-                logger.info("未找到激活的下载过滤设置，跳过过滤")
-                return
+                # 检查是否有激活的过滤设置
+                filter_settings = filter_service.get_filter_settings()
+                if not filter_settings:
+                    logger.info("未找到激活的下载过滤设置，跳过过滤")
+                    return
 
-            # 等待种子元数据获取完成
-            for attempt in range(max_retries):
-                try:
-                    files_response = qbittorent.get_torrent_files(torrent_hash)
-                    files = files_response.json() if hasattr(files_response, 'json') else files_response
+                # 等待种子元数据获取完成
+                for attempt in range(max_retries):
+                    try:
+                        files_response = qbittorent.get_torrent_files(torrent_hash)
+                        files = files_response.json() if hasattr(files_response, 'json') else files_response
 
-                    if files and len(files) > 0:
-                        # 元数据已获取，应用过滤规则
-                        logger.info(f"种子 {torrent_hash} 元数据获取成功，共 {len(files)} 个文件，开始应用过滤规则")
-                        filter_result = filter_service.filter_torrent_files(torrent_hash)
+                        if files and len(files) > 0:
+                            # 元数据已获取，应用过滤规则
+                            logger.info(f"种子 {torrent_hash} 元数据获取成功，共 {len(files)} 个文件，开始应用过滤规则")
+                            filter_result = filter_service.filter_torrent_files(torrent_hash)
 
-                        if filter_result['success']:
-                            logger.info(f"种子 {torrent_hash} 过滤完成: {filter_result['message']}")
-                        else:
-                            logger.warning(f"种子 {torrent_hash} 过滤失败: {filter_result.get('message', 'Unknown error')}")
-                        return
+                            if filter_result['success']:
+                                logger.info(f"种子 {torrent_hash} 过滤完成: {filter_result['message']}")
+                            else:
+                                logger.warning(f"种子 {torrent_hash} 过滤失败: {filter_result.get('message', 'Unknown error')}")
+                            return
 
-                except Exception as e:
-                    logger.debug(f"等待种子元数据 (尝试 {attempt + 1}/{max_retries}): {e}")
+                    except Exception as e:
+                        logger.debug(f"等待种子元数据 (尝试 {attempt + 1}/{max_retries}): {e}")
 
-                # 等待后重试
-                if attempt < max_retries - 1:
-                    time.sleep(retry_interval)
+                    # 等待后重试
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_interval)
 
-            logger.warning(f"种子 {torrent_hash} 元数据获取超时，跳过过滤")
+                logger.warning(f"种子 {torrent_hash} 元数据获取超时（等待 {max_retries * retry_interval} 秒），跳过过滤")
 
         except Exception as e:
             logger.error(f"应用下载过滤规则失败: {e}")

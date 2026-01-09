@@ -165,6 +165,10 @@ export function Search() {
             setSelectedDownload(undefined)
             setSelectedRowKeys([])
             return message.success("下载任务创建成功")
+        },
+        onError: (error: any) => {
+            console.error("下载失败:", error)
+            message.error(error?.response?.data || error?.message || "下载失败，请重试")
         }
     })
 
