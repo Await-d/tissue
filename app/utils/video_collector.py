@@ -19,7 +19,7 @@ class VideoCollector:
     
     def __init__(self):
         self.spiders = [
-            spider.JavdbSpider(),
+            spider.JavDBSpider(),
             # 可以添加其他爬虫
         ]
         # 添加缓存存储
