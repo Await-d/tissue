@@ -1,3 +1,4 @@
+"""Tissue 应用主入口"""
 from fastapi import FastAPI
 
 from app import middleware, db, exception
