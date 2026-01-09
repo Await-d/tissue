@@ -7,12 +7,13 @@
  */
 import Filter, { FilterField } from "./-components/filter.tsx";
 import React from "react";
-import { Col, Empty, message, Row, Skeleton } from "antd";
+import { Col, Empty, message, Row, Skeleton, Button, Tooltip } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import JavDBItem from "./-components/item.tsx";
 import Selector from "../../../components/Selector";
 import Slider from "../../../components/Slider";
 import * as api from "../../../apis/home.ts";
-import { Await, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { Await, createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 
 export const Route = createFileRoute('/_index/home/')({
     component: JavDB,
@@ -22,16 +23,33 @@ export const Route = createFileRoute('/_index/home/')({
     },
     loaderDeps: ({ search }) => ({ ...search, rank: 0 }),
     loader: async ({ deps }) => ({
-        data: api.getRankings({ ...deps, source: 'JavDB' }).catch(() => {
+        data: api.getRankings({ ...deps, source: 'JavDB' }).catch((err) => {
+            console.error('获取排行榜数据失败:', err);
+            return [];
         })
     }),
-    staleTime: Infinity
+    staleTime: 5 * 60 * 1000  // 5分钟后数据过期，允许重新获取
 })
 
 function JavDB() {
     const { data } = Route.useLoaderData()
     const filter = Route.useSearch<any>()
     const navigate = useNavigate()
+    const router = useRouter()
+    const [refreshing, setRefreshing] = React.useState(false)
+
+    // 手动刷新数据
+    const handleRefresh = async () => {
+        setRefreshing(true)
+        try {
+            await router.invalidate()
+            message.success('刷新成功')
+        } catch (err) {
+            message.error('刷新失败')
+        } finally {
+            setRefreshing(false)
+        }
+    }
 
     const filterFields: FilterField[] = [
         {
@@ -111,9 +129,22 @@ function JavDB() {
 
     return (
         <div>
-            <Filter initialValues={filter} onChange={(values, field) => {
-                return navigate({ search: values as any })
-            }} fields={filterFields} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div style={{ flex: 1 }}>
+                    <Filter initialValues={filter} onChange={(values, field) => {
+                        return navigate({ search: values as any })
+                    }} fields={filterFields} />
+                </div>
+                <Tooltip title="刷新数据">
+                    <Button
+                        type="text"
+                        icon={<ReloadOutlined spin={refreshing} />}
+                        onClick={handleRefresh}
+                        loading={refreshing}
+                        style={{ marginLeft: '8px', marginTop: '4px' }}
+                    />
+                </Tooltip>
+            </div>
             <Await promise={data} fallback={(
                 <Row className={'mt-2'} gutter={[12, 12]}>
                     {[...Array(8)].map((_, index) => (
