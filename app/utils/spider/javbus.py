@@ -118,7 +118,7 @@ class JavBusSpider(Spider):
             # 如果出错，返回正常请求
             return self.session.get(url, allow_redirects=True)
 
-    def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
+    def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False, include_comments=False):
 
         if url is None:
             url = urljoin(self.host, num)
