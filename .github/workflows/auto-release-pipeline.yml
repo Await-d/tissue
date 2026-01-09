@@ -177,12 +177,17 @@ jobs:
     - name: Push Frontend Build to web-dist Branch
       if: steps.check.outputs.needs_bump == 'true'
       run: |
-        # 创建临时目录
+        # 创建临时目录保存构建产物
         TEMP_DIR=$(mktemp -d)
         echo "Using temp directory: $TEMP_DIR"
 
-        # 复制构建产物到临时目录
+        # 复制构建产物到临时目录（用于web-dist分支和Docker构建）
         cp -r frontend/dist/* "$TEMP_DIR/"
+
+        # 同时复制到项目根目录的dist文件夹（用于Docker构建）
+        mkdir -p dist
+        cp -r frontend/dist/* dist/
+        echo "Frontend build copied to ./dist for Docker build"
 
         # 清理工作区中的生成文件，避免阻塞分支切换
         git restore frontend/src/routeTree.gen.ts 2>/dev/null || true
@@ -233,6 +238,11 @@ jobs:
 
         # 切换回主分支
         git checkout master
+
+        # 从临时目录恢复dist文件夹（因为切换分支会丢失）
+        mkdir -p dist
+        cp -r "$TEMP_DIR"/* dist/
+        echo "Restored dist folder after branch switch"
 
         # 清理临时目录
         rm -rf "$TEMP_DIR"
