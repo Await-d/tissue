@@ -4,6 +4,7 @@ import traceback
 from datetime import datetime
 from urllib.parse import urlparse
 
+from cachetools import TTLCache
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -21,6 +22,10 @@ from app.utils.spider.spider_exception import SpiderException
 
 def get_spider_service(db: Session = Depends(get_db)):
     return SpiderService(db=db)
+
+
+# 首页排行榜缓存，TTL 1小时
+ranking_cache = TTLCache(maxsize=10, ttl=3600)
 
 
 class SpiderService(BaseService):
@@ -132,10 +137,23 @@ class SpiderService(BaseService):
         return meta
 
     def get_ranking(self, source: str, video_type: str, cycle: str):
+        cache_key = f'ranking:{source}:{video_type}:{cycle}'
+
+        # 尝试从缓存获取
+        if cache_key in ranking_cache:
+            return ranking_cache[cache_key]
+
+        # 缓存未命中，从网站获取
+        result = None
         if source == 'JavDB':
             site = self.db.query(Site).filter(Site.class_str == 'JavDBSpider').one()
-            return JavDBSpider(alternate_host=site.alternate_host).get_ranking(video_type, cycle)
-        return None
+            result = JavDBSpider(alternate_host=site.alternate_host).get_ranking(video_type, cycle)
+
+        # 只有当数据不为空时才存入缓存
+        if result:
+            ranking_cache[cache_key] = result
+
+        return result
 
     def get_ranking_detail(self, source: str, num: str, url: str):
         if source == 'JavDB':
