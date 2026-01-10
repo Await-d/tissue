@@ -10,27 +10,27 @@
 /* 暗色主题（默认） */
 :root, [data-theme='dark'] {
     /* === 核心色彩 === */
-    --color-bg-base: #0d0d0f;
-    --color-bg-elevated: #141416;
-    --color-bg-container: #1a1a1d;
-    --color-bg-spotlight: #222226;
+    --color-bg-base: var(--color-bg-base);
+    --color-bg-elevated: var(--color-bg-elevated);
+    --color-bg-container: var(--color-bg-container);
+    --color-bg-spotlight: var(--color-bg-spotlight);
 
     /* 金色强调 */
-    --color-gold-primary: #d4a852;
-    --color-gold-light: #e8c780;
-    --color-gold-dark: #b08d3e;
+    --color-gold-primary: var(--color-gold-primary);
+    --color-gold-light: var(--color-gold-light);
+    --color-gold-dark: var(--color-gold-dark);
     --color-gold-glow: rgba(212, 168, 82, 0.15);
 
     /* 文字色彩 */
-    --color-text-primary: #f0f0f2;
-    --color-text-secondary: #a0a0a8;
-    --color-text-tertiary: #6a6a72;
-    --color-text-gold: #d4a852;
+    --color-text-primary: var(--color-text-primary);
+    --color-text-secondary: var(--color-text-secondary);
+    --color-text-tertiary: var(--color-text-tertiary);
+    --color-text-gold: var(--color-gold-primary);
 
     /* 边框与分割 */
-    --color-border-primary: rgba(255, 255, 255, 0.08);
-    --color-border-secondary: rgba(255, 255, 255, 0.04);
-    --color-border-gold: rgba(212, 168, 82, 0.3);
+    --color-border-primary: var(--color-border-primary);
+    --color-border-secondary: var(--color-border-secondary);
+    --color-border-gold: var(--color-border-gold);
 
     /* 功能色 */
     --color-success: #52c41a;
@@ -59,7 +59,7 @@
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
     --shadow-gold: 0 0 20px rgba(212, 168, 82, 0.15);
-    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --shadow-inset: inset 0 1px 0 var(--color-border-secondary);
 
     /* === 动画 === */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -81,16 +81,16 @@
     --color-bg-spotlight: #fafafa;
 
     /* 金色强调 */
-    --color-gold-primary: #b08d3e;
+    --color-gold-primary: var(--color-gold-dark);
     --color-gold-light: #c9a654;
     --color-gold-dark: #8a6d2e;
     --color-gold-glow: rgba(176, 141, 62, 0.15);
 
     /* 文字色彩 */
-    --color-text-primary: #1a1a1d;
-    --color-text-secondary: #6a6a72;
-    --color-text-tertiary: #a0a0a8;
-    --color-text-gold: #b08d3e;
+    --color-text-primary: var(--color-bg-container);
+    --color-text-secondary: var(--color-text-tertiary);
+    --color-text-tertiary: var(--color-text-secondary);
+    --color-text-gold: var(--color-gold-dark);
 
     /* 边框与分割 */
     --color-border-primary: rgba(0, 0, 0, 0.12);
@@ -695,22 +695,22 @@ body {
 
 /* === Switch 组件金色主题 === */
 .custom-switch-gold .ant-switch-handle::before {
-    background-color: #0d0d0f;
+    background-color: var(--color-bg-base);
 }
 
 .custom-switch-gold.ant-switch-checked {
-    background-color: #d4a852;
+    background-color: var(--color-gold-primary);
 }
 
 .custom-switch-gold.ant-switch-checked:hover:not(.ant-switch-disabled) {
-    background-color: #e8c780;
+    background-color: var(--color-gold-light);
 }
 
 /* === Select 组件暗色主题 === */
 .custom-select-dark .ant-select-selector {
-    background-color: #141416 !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    color: #f0f0f2 !important;
+    background-color: var(--color-bg-elevated) !important;
+    border-color: var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
 }
 
 .custom-select-dark:hover .ant-select-selector {
@@ -718,28 +718,28 @@ body {
 }
 
 .custom-select-dark.ant-select-focused .ant-select-selector {
-    border-color: #d4a852 !important;
+    border-color: var(--color-gold-primary) !important;
     box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1) !important;
 }
 
 .custom-select-dark .ant-select-arrow {
-    color: #6a6a72;
+    color: var(--color-text-tertiary);
 }
 
 /* === 下拉菜单暗色主题 === */
 .ant-select-dropdown {
-    background-color: #1a1a1d !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background-color: var(--color-bg-container) !important;
+    border: 1px solid var(--color-border-primary) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
 }
 
 .ant-select-item {
-    color: #a0a0a8 !important;
+    color: var(--color-text-secondary) !important;
 }
 
 .ant-select-item-option-selected {
     background-color: rgba(212, 168, 82, 0.1) !important;
-    color: #d4a852 !important;
+    color: var(--color-gold-primary) !important;
 }
 
 .ant-select-item-option-active {
@@ -748,9 +748,9 @@ body {
 
 /* === InputNumber 暗色主题 === */
 .ant-input-number {
-    background-color: #141416;
-    border-color: rgba(255, 255, 255, 0.08);
-    color: #f0f0f2;
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border-primary);
+    color: var(--color-text-primary);
 }
 
 .ant-input-number:hover {
@@ -759,54 +759,54 @@ body {
 
 .ant-input-number:focus,
 .ant-input-number-focused {
-    border-color: #d4a852;
+    border-color: var(--color-gold-primary);
     box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1);
 }
 
 .ant-input-number-handler-wrap {
-    background-color: #1a1a1d;
-    border-left-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--color-bg-container);
+    border-left-color: var(--color-border-primary);
 }
 
 .ant-input-number-handler {
-    border-color: rgba(255, 255, 255, 0.08);
-    color: #6a6a72;
+    border-color: var(--color-border-primary);
+    color: var(--color-text-tertiary);
 }
 
 .ant-input-number-handler:hover {
-    color: #d4a852;
+    color: var(--color-gold-primary);
 }
 
 /* === Progress 金色主题 === */
 .custom-progress-gold .ant-progress-bg {
-    background: linear-gradient(90deg, #d4a852 0%, #e8c780 100%);
+    background: linear-gradient(90deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
 }
 
 /* === Form Item 标签样式 === */
 .ant-form-item-label > label {
-    color: #f0f0f2;
+    color: var(--color-text-primary);
     font-weight: 500;
 }
 
 .ant-form-item-label > label.ant-form-item-required::before {
-    color: #d4a852;
+    color: var(--color-gold-primary);
 }
 
 /* === Tooltip 暗色主题 === */
 .ant-tooltip-inner {
-    background-color: #222226;
-    color: #f0f0f2;
+    background-color: var(--color-bg-spotlight);
+    color: var(--color-text-primary);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .ant-tooltip-arrow-content {
-    background-color: #222226;
+    background-color: var(--color-bg-spotlight);
 }
 
 /* === Alert 暗色主题 === */
 .ant-alert {
-    background-color: #141416;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-primary);
 }
 
 .ant-alert-info {
@@ -819,7 +819,7 @@ body {
 }
 
 .ant-alert-info .ant-alert-description {
-    color: #a0a0a8;
+    color: var(--color-text-secondary);
 }
 
 .ant-alert-warning {
@@ -833,26 +833,26 @@ body {
 
 /* === Modal 暗色主题 === */
 .dark-modal .ant-modal-content {
-    background-color: #1a1a1d;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--color-bg-container);
+    border: 1px solid var(--color-border-primary);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 .dark-modal .ant-modal-header {
-    background-color: #141416;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border-primary);
 }
 
 .dark-modal .ant-modal-title {
-    color: #d4a852;
+    color: var(--color-gold-primary);
 }
 
 .dark-modal .ant-modal-close-x {
-    color: #6a6a72;
+    color: var(--color-text-tertiary);
 }
 
 .dark-modal .ant-modal-close-x:hover {
-    color: #f0f0f2;
+    color: var(--color-text-primary);
 }
 
 /* === Table 暗色主题 === */
@@ -861,13 +861,13 @@ body {
 }
 
 .version-history-table .ant-table-thead > tr > th {
-    background-color: #141416;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    color: #f0f0f2;
+    background-color: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
 }
 
 .version-history-table .ant-table-tbody > tr > td {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--color-border-primary);
     background-color: transparent;
 }
 
@@ -876,70 +876,70 @@ body {
 }
 
 .version-history-table .ant-pagination-item {
-    background-color: #141416;
-    border-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border-primary);
 }
 
 .version-history-table .ant-pagination-item a {
-    color: #a0a0a8;
+    color: var(--color-text-secondary);
 }
 
 .version-history-table .ant-pagination-item-active {
     background-color: rgba(212, 168, 82, 0.1);
-    border-color: #d4a852;
+    border-color: var(--color-gold-primary);
 }
 
 .version-history-table .ant-pagination-item-active a {
-    color: #d4a852;
+    color: var(--color-gold-primary);
 }
 
 /* === Descriptions 暗色主题 === */
 .version-descriptions .ant-descriptions-item-label {
-    color: #6a6a72;
+    color: var(--color-text-tertiary);
 }
 
 .version-descriptions .ant-descriptions-item-content {
-    color: #f0f0f2;
+    color: var(--color-text-primary);
 }
 
 .version-descriptions .ant-descriptions-row {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--color-border-primary);
 }
 
 /* === Popconfirm 暗色主题 === */
 .ant-popconfirm .ant-popover-inner {
-    background-color: #1a1a1d;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--color-bg-container);
+    border: 1px solid var(--color-border-primary);
 }
 
 .ant-popconfirm .ant-popover-message-title {
-    color: #f0f0f2;
+    color: var(--color-text-primary);
 }
 
 .ant-popconfirm .ant-popover-arrow-content {
-    background-color: #1a1a1d;
+    background-color: var(--color-bg-container);
 }
 
 .ant-popconfirm .ant-btn-default {
-    background-color: #222226;
-    border-color: rgba(255, 255, 255, 0.08);
-    color: #a0a0a8;
+    background-color: var(--color-bg-spotlight);
+    border-color: var(--color-border-primary);
+    color: var(--color-text-secondary);
 }
 
 .ant-popconfirm .ant-btn-default:hover {
     border-color: rgba(255, 255, 255, 0.2);
-    color: #f0f0f2;
+    color: var(--color-text-primary);
 }
 
 .ant-popconfirm .ant-btn-primary {
-    background-color: #d4a852;
-    border-color: #d4a852;
-    color: #0d0d0f;
+    background-color: var(--color-gold-primary);
+    border-color: var(--color-gold-primary);
+    color: var(--color-bg-base);
 }
 
 .ant-popconfirm .ant-btn-primary:hover {
-    background-color: #e8c780;
-    border-color: #e8c780;
+    background-color: var(--color-gold-light);
+    border-color: var(--color-gold-light);
 }
 
 /* === Skeleton 暗色主题 === */
@@ -947,9 +947,9 @@ body {
 .ant-skeleton-content .ant-skeleton-paragraph > li {
     background: linear-gradient(
         90deg,
-        rgba(255, 255, 255, 0.04) 25%,
-        rgba(255, 255, 255, 0.08) 37%,
-        rgba(255, 255, 255, 0.04) 63%
+        var(--color-border-secondary) 25%,
+        var(--color-border-primary) 37%,
+        var(--color-border-secondary) 63%
     );
     background-size: 400% 100%;
     animation: skeleton-loading 1.4s ease infinite;
@@ -984,11 +984,11 @@ body {
 
 /* === 设置页面通用样式优化 === */
 .ant-card-head {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--color-border-primary);
 }
 
 .ant-divider-horizontal {
-    border-top-color: rgba(255, 255, 255, 0.08);
+    border-top-color: var(--color-border-primary);
 }
 
 /* === Tag 暗色主题优化 === */

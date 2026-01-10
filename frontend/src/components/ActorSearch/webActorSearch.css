@@ -15,7 +15,7 @@
 
 .web-actor-source-group .ant-radio-button-wrapper {
   background: var(--color-bg-container);
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-border-primary);
   color: var(--color-text-secondary);
   height: 40px;
   line-height: 38px;
@@ -26,7 +26,7 @@
 
 .web-actor-source-group .ant-radio-button-wrapper:hover {
   color: var(--color-gold-primary);
-  border-color: rgba(212, 168, 82, 0.3);
+  border-color: var(--color-border-gold);
 }
 
 .web-actor-source-group .ant-radio-button-wrapper-checked {
@@ -34,7 +34,7 @@
   border-color: var(--color-gold-primary);
   color: var(--color-bg-base);
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.3);
+  box-shadow: 0 4px 12px var(--color-border-gold);
 }
 
 .web-actor-source-group .ant-radio-button-wrapper-checked::before {
@@ -44,7 +44,7 @@
 /* ========== 搜索框样式 ========== */
 .web-actor-search-input {
   background: var(--color-bg-elevated) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--color-border-primary) !important;
   border-radius: 10px !important;
   height: 48px !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -52,7 +52,7 @@
 
 .web-actor-search-input:hover {
   background: var(--color-bg-container) !important;
-  border-color: rgba(212, 168, 82, 0.3) !important;
+  border-color: var(--color-border-gold) !important;
 }
 
 .web-actor-search-input:focus,
@@ -127,7 +127,7 @@
   padding: 32px;
   background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-container) 100%);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
@@ -157,7 +157,7 @@
 }
 
 .web-actor-selected-card:hover {
-  border-color: rgba(212, 168, 82, 0.3);
+  border-color: var(--color-border-gold);
   box-shadow: 0 12px 48px rgba(212, 168, 82, 0.15);
   transform: translateY(-2px);
 }
@@ -170,7 +170,7 @@
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+  box-shadow: 0 4px 16px var(--color-border-gold);
 }
 
 .web-actor-avatar-wrapper::after {
@@ -235,7 +235,7 @@
   border-radius: 10px;
   font-size: 15px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+  box-shadow: 0 4px 16px var(--color-border-gold);
 }
 
 .web-actor-subscribe-btn:hover {
@@ -254,7 +254,7 @@
   padding: 16px;
   border-radius: 16px;
   background: var(--color-bg-container);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -298,7 +298,7 @@
 /* ========== 视频卡片样式 ========== */
 .web-actor-video-card {
   background: var(--color-bg-container) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--color-border-primary) !important;
   border-radius: 16px !important;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -322,7 +322,7 @@
 .web-actor-video-card:hover {
   transform: translateY(-8px);
   border-color: var(--color-gold-primary) !important;
-  box-shadow: 0 16px 48px rgba(212, 168, 82, 0.3) !important;
+  box-shadow: 0 16px 48px var(--color-border-gold) !important;
 }
 
 .web-actor-video-card:hover::after {
@@ -350,7 +350,7 @@
 
 .web-actor-video-card .ant-card-actions {
   background: var(--color-bg-elevated) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-top: 1px solid var(--color-border-primary) !important;
 }
 
 .web-actor-video-card .ant-card-actions > li {
@@ -383,7 +383,7 @@
 .web-actor-badge-zh {
   background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
   color: var(--color-bg-base);
-  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3);
+  box-shadow: 0 2px 8px var(--color-border-gold);
 }
 
 .web-actor-badge-uncensored {
@@ -395,7 +395,7 @@
 /* ========== 筛选区域 ========== */
 .web-actor-filter-card {
   background: var(--color-bg-container);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
@@ -413,7 +413,7 @@
   padding: 80px 24px;
   background: var(--color-bg-elevated);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
 }
 
 .web-actor-loading .ant-spin-dot-item {
@@ -425,7 +425,7 @@
   padding: 80px 24px;
   background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-container) 100%);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
 }
 
 .web-actor-empty .ant-empty-description {
@@ -470,12 +470,12 @@
   padding: 12px 24px;
   background: var(--color-bg-base);
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
   transition: all 0.3s ease;
 }
 
 .web-actor-stat-item:hover {
-  border-color: rgba(212, 168, 82, 0.3);
+  border-color: var(--color-border-gold);
   transform: translateY(-2px);
 }
 

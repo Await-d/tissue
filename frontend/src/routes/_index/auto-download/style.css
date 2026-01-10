@@ -15,11 +15,11 @@
 }
 
 .auto-download-card .ant-card-body {
-  background: #141416;
+  background: var(--color-bg-elevated);
 }
 
 .page-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-primary);
   padding-bottom: 16px;
 }
 
@@ -29,29 +29,29 @@
 }
 
 .dark-tabs .ant-tabs-nav::before {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .dark-tabs .ant-tabs-tab {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   transition: all 0.3s;
   padding: 12px 16px;
 }
 
 .dark-tabs .ant-tabs-tab:hover {
-  color: #e8c780;
+  color: var(--color-gold-light);
 }
 
 .dark-tabs .ant-tabs-tab-active {
-  color: #d4a852 !important;
+  color: var(--color-gold-primary) !important;
 }
 
 .dark-tabs .ant-tabs-tab-active .tab-label {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .dark-tabs .ant-tabs-ink-bar {
-  background: linear-gradient(90deg, #d4a852 0%, #e8c780 100%);
+  background: linear-gradient(90deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
   height: 3px;
 }
 

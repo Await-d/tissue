@@ -7,7 +7,7 @@
   padding: 12px;
   border-radius: 12px;
   background: var(--color-bg-container);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -27,7 +27,7 @@
 
 .web-actor-avatar-wrapper .ant-avatar {
   border: 3px solid var(--color-gold-primary) !important;
-  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.3);
+  box-shadow: 0 4px 12px var(--color-border-gold);
   transition: all 0.3s ease;
 }
 
@@ -39,7 +39,7 @@
 /* 暗色 AutoComplete 下拉菜单 */
 .dark-autocomplete .ant-select-dropdown {
   background: var(--color-bg-container) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--color-border-primary) !important;
 }
 
 .dark-autocomplete .ant-select-item {
@@ -58,7 +58,7 @@
 
 /* 暗色 Radio Group */
 .dark-radio-group .ant-radio-button-wrapper {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-border-primary);
 }
 
 .dark-radio-group .ant-radio-button-wrapper:hover {
@@ -68,7 +68,7 @@
 /* 输入框样式覆盖 */
 .ant-input {
   background: var(--color-bg-container) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--color-border-primary) !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -85,7 +85,7 @@
 /* Select 组件样式 */
 .ant-select-selector {
   background: var(--color-bg-container) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--color-border-primary) !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -126,7 +126,7 @@
 
 .ant-modal-header {
   background: var(--color-bg-base) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid var(--color-border-primary) !important;
 }
 
 .ant-modal-title {
@@ -138,18 +138,18 @@
 }
 
 .ant-modal-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-top: 1px solid var(--color-border-primary) !important;
 }
 
 /* 视频卡片样式 */
 .ant-card {
   background: var(--color-bg-container);
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-border-primary);
 }
 
 .ant-card-head {
   color: var(--color-text-primary);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: var(--color-border-primary);
 }
 
 .ant-card-body {
@@ -162,7 +162,7 @@
 }
 
 .ant-progress-inner {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--color-border-primary) !important;
 }
 
 /* Rate 评分星星样式 */
@@ -188,7 +188,7 @@
 
 .ant-collapse-item {
   background: var(--color-bg-container) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--color-border-primary) !important;
   border-radius: 8px !important;
   margin-bottom: 12px !important;
 }
@@ -200,7 +200,7 @@
 
 .ant-collapse-content {
   background: var(--color-bg-base) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-top: 1px solid var(--color-border-primary) !important;
 }
 
 .ant-collapse-content-box {
@@ -233,7 +233,7 @@ a:hover {
 /* Button 按钮通用样式 */
 .ant-btn-default {
   background: var(--color-bg-container) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--color-border-primary) !important;
   color: var(--color-text-secondary) !important;
 }
 
@@ -273,12 +273,12 @@ a:hover {
   background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%) !important;
   color: var(--color-bg-base) !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3) !important;
+  box-shadow: 0 2px 8px var(--color-border-gold) !important;
 }
 
 /* Divider 分割线样式 */
 .ant-divider {
-  border-top-color: rgba(255, 255, 255, 0.08) !important;
+  border-top-color: var(--color-border-primary) !important;
 }
 
 /* Tooltip 工具提示样式 */

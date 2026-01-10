@@ -5,8 +5,8 @@
 
 /* 加载状态卡片 */
 .subscribe-loading-card {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
@@ -18,44 +18,44 @@
 }
 
 .subscribe-search-bar .ant-input {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f0f0f2;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
   transition: all 0.3s ease;
 }
 
 .subscribe-search-bar .ant-input:hover {
-  border-color: #d4a852;
-  background: #222226;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-spotlight);
 }
 
 .subscribe-search-bar .ant-input:focus {
-  border-color: #d4a852;
-  background: #222226;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-spotlight);
   box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
 }
 
 .subscribe-search-bar .ant-input::placeholder {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 .subscribe-search-btn {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #d4a852;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-gold-primary);
   transition: all 0.3s ease;
 }
 
 .subscribe-search-btn:hover {
-  background: #d4a852;
-  border-color: #d4a852;
-  color: #0d0d0f;
+  background: var(--color-gold-primary);
+  border-color: var(--color-gold-primary);
+  color: var(--color-bg-base);
 }
 
 /* 订阅卡片 */
 .subscribe-card {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -64,42 +64,42 @@
 
 .subscribe-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px #d4a852;
-  border-color: #d4a852;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--color-gold-primary);
+  border-color: var(--color-gold-primary);
 }
 
 .subscribe-card .ant-card-body {
-  background: #1a1a1d;
+  background: var(--color-bg-container);
   padding: 12px;
 }
 
 .subscribe-card .ant-card-meta-title {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 500;
 }
 
 .subscribe-card .ant-card-meta-description {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .subscribe-card-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   transition: color 0.3s ease;
 }
 
 .subscribe-card:hover .subscribe-card-title {
-  color: #e8c780;
+  color: var(--color-gold-light);
 }
 
 /* 标签 */
 .subscribe-tag {
   background: rgba(212, 168, 82, 0.12);
-  border: 1px solid rgba(212, 168, 82, 0.3);
-  color: #e8c780;
+  border: 1px solid var(--color-border-gold);
+  color: var(--color-gold-light);
   border-radius: 4px;
   padding: 0 8px;
   font-size: 12px;
@@ -108,19 +108,19 @@
 
 .subscribe-tag:hover {
   background: rgba(212, 168, 82, 0.2);
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
 }
 
 .subscribe-tag-date {
   background: rgba(160, 160, 168, 0.12);
   border-color: rgba(160, 160, 168, 0.3);
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .subscribe-tag-hd {
   background: rgba(212, 168, 82, 0.12);
-  border-color: rgba(212, 168, 82, 0.3);
-  color: #e8c780;
+  border-color: var(--color-border-gold);
+  color: var(--color-gold-light);
 }
 
 .subscribe-tag-zh {
@@ -138,54 +138,54 @@
 /* 搜索图标 */
 .subscribe-search-icon {
   padding: 0 8px;
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.3s ease;
   border-radius: 4px;
 }
 
 .subscribe-search-icon:hover {
-  color: #d4a852;
+  color: var(--color-gold-primary);
   background: rgba(212, 168, 82, 0.12);
 }
 
 /* 空状态卡片 */
 .subscribe-empty-card {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .subscribe-empty {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
   padding: 40px 0;
 }
 
 .subscribe-empty .ant-empty-description {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 /* 悬浮按钮 */
 .subscribe-float-btn {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   transition: all 0.3s ease;
 }
 
 .subscribe-float-btn:hover {
-  background: #d4a852;
-  border-color: #d4a852;
-  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+  background: var(--color-gold-primary);
+  border-color: var(--color-gold-primary);
+  box-shadow: 0 4px 16px var(--color-border-gold);
 }
 
 .subscribe-float-btn .ant-float-btn-icon {
-  color: #d4a852;
+  color: var(--color-gold-primary);
   transition: color 0.3s ease;
 }
 
 .subscribe-float-btn:hover .ant-float-btn-icon {
-  color: #0d0d0f;
+  color: var(--color-bg-base);
 }
 
 /* 响应式调整 */

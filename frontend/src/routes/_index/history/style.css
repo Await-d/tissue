@@ -15,12 +15,12 @@
 }
 
 .dark-card .ant-card-head {
-  background: #141416;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .dark-card .ant-card-body {
-  background: #141416;
+  background: var(--color-bg-elevated);
   padding: 0;
 }
 
@@ -33,26 +33,26 @@
 }
 
 .dark-table .ant-table-thead > tr > th {
-  background: #1a1a1d;
-  color: #a0a0a8;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
   font-weight: 500;
   padding: 16px;
 }
 
 .dark-table-row {
-  background: #141416;
+  background: var(--color-bg-elevated);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark-table-row:hover {
-  background: #1a1a1d !important;
+  background: var(--color-bg-container) !important;
   box-shadow: 0 0 0 1px rgba(212, 168, 82, 0.1) inset;
 }
 
 .dark-table .ant-table-tbody > tr > td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #f0f0f2;
+  border-bottom: 1px solid var(--color-border-secondary);
+  color: var(--color-text-primary);
   padding: 16px;
 }
 
@@ -66,12 +66,12 @@
 }
 
 .dark-input:focus {
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
   box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1);
 }
 
 .dark-input::placeholder {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 /* 分页样式 */
@@ -80,21 +80,21 @@
 }
 
 .dark-table .ant-pagination-item {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
 }
 
 .dark-table .ant-pagination-item a {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .dark-table .ant-pagination-item-active {
   background: rgba(212, 168, 82, 0.1);
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
 }
 
 .dark-table .ant-pagination-item-active a {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .dark-table .ant-pagination-item:hover {
@@ -102,5 +102,5 @@
 }
 
 .dark-table .ant-pagination-item:hover a {
-  color: #e8c780;
+  color: var(--color-gold-light);
 }

@@ -3,14 +3,14 @@
  */
 
 .batch-download-modal .ant-modal-content {
-    background: #1a1a1d !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--color-bg-container) !important;
+    border: 1px solid var(--color-border-primary);
     border-radius: 16px;
 }
 
 .batch-download-modal .ant-modal-header {
     background: transparent !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--color-fill);
     padding: 20px 24px;
 }
 
@@ -19,17 +19,17 @@
 }
 
 .batch-download-modal .ant-modal-close {
-    color: #a0a0a8;
+    color: var(--color-text-secondary);
 }
 
 .batch-download-modal .ant-modal-close:hover {
-    color: #f0f0f2;
+    color: var(--color-text-primary);
 }
 
 /* 下载偏好设置 */
 .download-preferences {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--color-fill);
     border-radius: 12px;
     padding: 16px 20px;
     margin-bottom: 20px;
@@ -39,7 +39,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #f0f0f2;
+    color: var(--color-text-primary);
     font-size: 14px;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .preference-item .ant-switch-checked {
-    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+    background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
 }
 
 /* 进度区域 */
@@ -57,11 +57,11 @@
     padding: 16px;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--color-fill);
 }
 
 .download-progress .ant-progress-text {
-    color: #d4a852 !important;
+    color: var(--color-gold-primary) !important;
     font-weight: 600;
 }
 
@@ -70,7 +70,7 @@
     justify-content: center;
     gap: 24px;
     margin-top: 12px;
-    color: #a0a0a8;
+    color: var(--color-text-secondary);
     font-size: 13px;
 }
 
@@ -84,7 +84,7 @@
     max-height: 400px;
     overflow-y: auto;
     margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--color-fill);
     border-radius: 12px;
     background: rgba(0, 0, 0, 0.2);
 }
@@ -108,7 +108,7 @@
 
 .batch-video-list .ant-list-item {
     padding: 12px 16px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    border-bottom: 1px solid var(--color-border-secondary) !important;
     transition: all 0.3s ease;
 }
 
@@ -149,14 +149,14 @@
 }
 
 .video-num {
-    color: #d4a852;
+    color: var(--color-gold-primary);
     font-weight: 600;
     font-size: 14px;
     margin-bottom: 4px;
 }
 
 .video-title {
-    color: #a0a0a8;
+    color: var(--color-text-secondary);
     font-size: 13px;
     white-space: nowrap;
     overflow: hidden;
@@ -193,14 +193,14 @@
     justify-content: center;
     gap: 16px;
     padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid var(--color-fill);
 }
 
 .start-download-btn,
 .complete-btn {
-    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+    background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%) !important;
     border: none !important;
-    color: #0d0d0f !important;
+    color: var(--color-bg-base) !important;
     font-weight: 600 !important;
     height: 44px !important;
     padding: 0 32px !important;
@@ -211,18 +211,18 @@
 .start-download-btn:hover:not(:disabled),
 .complete-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+    box-shadow: 0 4px 16px var(--color-border-gold);
 }
 
 .start-download-btn:disabled {
-    background: #2a2a2e !important;
-    color: #6a6a72 !important;
+    background: var(--color-bg-spotlight) !important;
+    color: var(--color-text-tertiary) !important;
 }
 
 .pause-btn {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: var(--color-border-primary) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    color: #f0f0f2 !important;
+    color: var(--color-text-primary) !important;
     height: 44px !important;
     border-radius: 10px !important;
 }
@@ -238,7 +238,7 @@
 }
 
 .batch-download-modal .ant-empty-description {
-    color: #6a6a72;
+    color: var(--color-text-tertiary);
 }
 
 /* 移动端适配 */

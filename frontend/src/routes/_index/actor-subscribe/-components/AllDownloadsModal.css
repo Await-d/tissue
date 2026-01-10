@@ -1,40 +1,40 @@
 /* 全部下载弹窗 - 暗黑电影美学 */
 .all-downloads-modal .ant-modal-content {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .all-downloads-modal .ant-modal-header {
-  background: #1a1a1d;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .all-downloads-modal .ant-modal-body {
-  background: #1a1a1d;
+  background: var(--color-bg-container);
   max-height: 70vh;
   overflow-y: auto;
 }
 
 .all-downloads-modal .ant-modal-close {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   transition: color 0.3s ease;
 }
 
 .all-downloads-modal .ant-modal-close:hover {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 /* 标题 */
 .all-downloads-modal-title {
   display: flex;
   align-items: center;
-  color: #f0f0f2;
+  color: var(--color-text-primary);
 }
 
 .all-downloads-modal-icon {
   margin-right: 8px;
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 /* 筛选区域 */
@@ -47,36 +47,36 @@
 }
 
 .all-downloads-search .ant-input {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f0f0f2;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
   transition: all 0.3s ease;
 }
 
 .all-downloads-search .ant-input:hover {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
 }
 
 .all-downloads-search .ant-input:focus {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
   box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
 }
 
 .all-downloads-search .ant-input::placeholder {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 .all-downloads-search .ant-btn-primary {
-  background: #d4a852;
-  border-color: #d4a852;
-  color: #0d0d0f;
+  background: var(--color-gold-primary);
+  border-color: var(--color-gold-primary);
+  color: var(--color-bg-base);
 }
 
 .all-downloads-search .ant-btn-primary:hover {
-  background: #e8c780;
-  border-color: #e8c780;
+  background: var(--color-gold-light);
+  border-color: var(--color-gold-light);
 }
 
 /* 筛选标签 */
@@ -91,25 +91,25 @@
 }
 
 .all-downloads-select .ant-select-selector {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f0f0f2;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
   transition: all 0.3s ease;
 }
 
 .all-downloads-select:hover .ant-select-selector {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
 }
 
 .all-downloads-select.ant-select-focused .ant-select-selector {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
   box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
 }
 
 .all-downloads-select .ant-select-arrow {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .all-downloads-checkable-tags {
@@ -120,9 +120,9 @@
 }
 
 .all-downloads-tag {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #a0a0a8;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-secondary);
   padding: 0 8px;
   border-radius: 4px;
   transition: all 0.3s ease;
@@ -130,14 +130,14 @@
 }
 
 .all-downloads-tag:hover {
-  border-color: #d4a852;
-  color: #d4a852;
+  border-color: var(--color-gold-primary);
+  color: var(--color-gold-primary);
 }
 
 .all-downloads-tag.ant-tag-checkable-checked {
   background: rgba(212, 168, 82, 0.15);
-  border-color: #d4a852;
-  color: #d4a852;
+  border-color: var(--color-gold-primary);
+  color: var(--color-gold-primary);
 }
 
 /* 加载状态 */
@@ -148,32 +148,32 @@
 
 .all-downloads-loading-text {
   margin-top: 8px;
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 /* 列表 */
 .all-downloads-modal .ant-list-item {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 /* 卡片 */
 .all-downloads-card {
   width: 100%;
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .all-downloads-card:hover {
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
   box-shadow: 0 2px 8px rgba(212, 168, 82, 0.2);
   transform: translateY(-2px);
 }
 
 .all-downloads-card .ant-card-body {
-  background: #141416;
+  background: var(--color-bg-elevated);
   padding: 12px;
 }
 
@@ -191,36 +191,36 @@
 .all-downloads-placeholder {
   width: 100%;
   height: 80px;
-  background: #0d0d0f;
+  background: var(--color-bg-base);
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
 }
 
 .all-downloads-placeholder-icon {
   font-size: 24px;
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 /* 卡片元信息 */
 .all-downloads-card .ant-card-meta-title {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 500;
 }
 
 .all-downloads-card .ant-card-meta-description {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .all-downloads-card .ant-typography {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .all-downloads-card .ant-typography-secondary {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 /* 标签 */
@@ -281,11 +281,11 @@
 
 /* 空状态 */
 .all-downloads-modal .ant-empty {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 .all-downloads-modal .ant-empty-description {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 /* 滚动条 */
@@ -294,12 +294,12 @@
 }
 
 .all-downloads-modal .ant-modal-body::-webkit-scrollbar-track {
-  background: #0d0d0f;
+  background: var(--color-bg-base);
   border-radius: 4px;
 }
 
 .all-downloads-modal .ant-modal-body::-webkit-scrollbar-thumb {
-  background: rgba(212, 168, 82, 0.3);
+  background: var(--color-border-gold);
   border-radius: 4px;
   transition: background 0.3s ease;
 }

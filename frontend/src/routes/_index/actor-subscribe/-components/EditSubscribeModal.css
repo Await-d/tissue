@@ -1,38 +1,38 @@
 /* 编辑订阅弹窗 - 暗黑电影美学 */
 .edit-subscribe-modal .ant-modal-content {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
 }
 
 .edit-subscribe-modal .ant-modal-header {
-  background: #1a1a1d;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .edit-subscribe-modal .ant-modal-title {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   font-size: 16px;
   font-weight: 500;
 }
 
 .edit-subscribe-modal .ant-modal-close {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   transition: color 0.3s ease;
 }
 
 .edit-subscribe-modal .ant-modal-close:hover {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .edit-subscribe-modal .ant-modal-body {
-  background: #1a1a1d;
+  background: var(--color-bg-container);
 }
 
 .edit-subscribe-modal .ant-modal-footer {
-  background: #1a1a1d;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border-top: 1px solid var(--color-border-primary);
 }
 
 /* 演员信息 */
@@ -42,73 +42,73 @@
 }
 
 .edit-subscribe-modal-avatar {
-  background: linear-gradient(135deg, #d4a852 0%, #b08d3e 100%);
-  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.3);
+  background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%);
+  box-shadow: 0 4px 12px var(--color-border-gold);
 }
 
 .edit-subscribe-modal-actor-name {
   margin-top: 8px;
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   font-size: 18px;
   font-weight: 500;
 }
 
 /* 表单 */
 .edit-subscribe-modal-form .ant-form-item-label > label {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
 .edit-subscribe-modal-form .ant-form-item-extra {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
   font-size: 12px;
 }
 
 .edit-subscribe-modal-label-icon {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .edit-subscribe-modal-info-icon {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   transition: color 0.3s ease;
   cursor: help;
 }
 
 .edit-subscribe-modal-info-icon:hover {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 /* 日期选择器 */
 .edit-subscribe-modal-datepicker.ant-picker {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
   border-radius: 4px;
   transition: all 0.3s ease;
 }
 
 .edit-subscribe-modal-datepicker.ant-picker:hover {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
 }
 
 .edit-subscribe-modal-datepicker.ant-picker-focused {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
   box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
 }
 
 .edit-subscribe-modal-datepicker .ant-picker-input > input {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
 }
 
 .edit-subscribe-modal-datepicker .ant-picker-suffix {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 /* 开关 */
 .edit-subscribe-modal-switch.ant-switch {
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border-primary);
   transition: all 0.3s ease;
 }
 
@@ -117,59 +117,59 @@
 }
 
 .edit-subscribe-modal-switch.ant-switch-checked {
-  background: #d4a852;
-  border-color: #d4a852;
+  background: var(--color-gold-primary);
+  border-color: var(--color-gold-primary);
 }
 
 .edit-subscribe-modal-switch.ant-switch-checked:hover {
-  background: #e8c780;
+  background: var(--color-gold-light);
 }
 
 .edit-subscribe-modal-switch .ant-switch-handle::before {
-  background: #f0f0f2;
+  background: var(--color-text-primary);
 }
 
 /* 数字输入框 */
 .edit-subscribe-modal-input-number.ant-input-number {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
   border-radius: 4px;
   transition: all 0.3s ease;
 }
 
 .edit-subscribe-modal-input-number.ant-input-number:hover {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
 }
 
 .edit-subscribe-modal-input-number.ant-input-number-focused {
-  border-color: #d4a852;
-  background: #1a1a1d;
+  border-color: var(--color-gold-primary);
+  background: var(--color-bg-container);
   box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
 }
 
 .edit-subscribe-modal-input-number .ant-input-number-input {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
 }
 
 .edit-subscribe-modal-input-number .ant-input-number-handler-wrap {
-  background: #0d0d0f;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-base);
+  border-left: 1px solid var(--color-border-primary);
 }
 
 .edit-subscribe-modal-input-number .ant-input-number-handler {
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #a0a0a8;
+  border-color: var(--color-border-primary);
+  color: var(--color-text-secondary);
 }
 
 .edit-subscribe-modal-input-number .ant-input-number-handler:hover {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 /* 帮助文本 */
 .edit-subscribe-modal-help-text {
   margin-top: 16px;
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
   font-size: 13px;
   padding: 12px;
   background: rgba(212, 168, 82, 0.05);
@@ -180,41 +180,41 @@
 
 .edit-subscribe-modal-help-title {
   margin-bottom: 8px;
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 /* 按钮 */
 .edit-subscribe-modal-cancel-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #a0a0a8;
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-secondary);
   transition: all 0.3s ease;
 }
 
 .edit-subscribe-modal-cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-border-secondary);
   border-color: rgba(255, 255, 255, 0.12);
-  color: #f0f0f2;
+  color: var(--color-text-primary);
 }
 
 .edit-subscribe-modal-submit-btn {
-  background: #d4a852;
-  border: 1px solid #d4a852;
-  color: #0d0d0f;
+  background: var(--color-gold-primary);
+  border: 1px solid var(--color-gold-primary);
+  color: var(--color-bg-base);
   font-weight: 500;
   transition: all 0.3s ease;
 }
 
 .edit-subscribe-modal-submit-btn:hover {
-  background: #e8c780;
-  border-color: #e8c780;
-  color: #0d0d0f;
+  background: var(--color-gold-light);
+  border-color: var(--color-gold-light);
+  color: var(--color-bg-base);
   box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4);
 }
 
 .edit-subscribe-modal-submit-btn:disabled {
-  background: rgba(212, 168, 82, 0.3);
-  border-color: rgba(212, 168, 82, 0.3);
-  color: #6a6a72;
+  background: var(--color-border-gold);
+  border-color: var(--color-border-gold);
+  color: var(--color-text-tertiary);
 }

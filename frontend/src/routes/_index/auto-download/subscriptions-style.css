@@ -18,33 +18,33 @@
 .filter-card,
 .action-card,
 .table-card {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   border-radius: 6px;
 }
 
 .filter-card .ant-card-body,
 .action-card .ant-card-body,
 .table-card .ant-card-body {
-  background: #1a1a1d;
+  background: var(--color-bg-container);
 }
 
 /* 搜索按钮 */
 .search-btn {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #d4a852;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-gold-primary);
   transition: all 0.3s;
 }
 
 .search-btn:hover {
   border-color: rgba(212, 168, 82, 0.4) !important;
-  color: #e8c780 !important;
+  color: var(--color-gold-light) !important;
 }
 
 /* 主要按钮 */
 .primary-btn {
-  background: linear-gradient(135deg, #d4a852 0%, #b08d3e 100%);
+  background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%);
   border: none;
   color: #fff;
   box-shadow: 0 2px 8px rgba(212, 168, 82, 0.25);
@@ -52,7 +52,7 @@
 }
 
 .primary-btn:hover {
-  background: linear-gradient(135deg, #e8c780 0%, #d4a852 100%) !important;
+  background: linear-gradient(135deg, var(--color-gold-light) 0%, var(--color-gold-primary) 100%) !important;
   box-shadow: 0 4px 12px rgba(212, 168, 82, 0.35) !important;
   transform: translateY(-2px);
   color: #fff !important;
@@ -60,16 +60,16 @@
 
 /* 次要按钮 */
 .secondary-btn {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #d4a852;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-gold-primary);
   transition: all 0.3s;
 }
 
 .secondary-btn:hover {
   border-color: rgba(212, 168, 82, 0.4) !important;
-  color: #e8c780 !important;
-  background: #222226 !important;
+  color: var(--color-gold-light) !important;
+  background: var(--color-bg-spotlight) !important;
 }
 
 /* 危险按钮 */
@@ -93,9 +93,9 @@
 
 /* 输入框 */
 .dark-input {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f0f0f2;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
 }
 
 .dark-input:hover {
@@ -103,19 +103,19 @@
 }
 
 .dark-input:focus {
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
   box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1);
 }
 
 .dark-input::placeholder {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 /* Select */
 .dark-select .ant-select-selector {
-  background: #141416 !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  color: #f0f0f2 !important;
+  background: var(--color-bg-elevated) !important;
+  border: 1px solid var(--color-border-primary) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .dark-select:hover .ant-select-selector {
@@ -123,13 +123,13 @@
 }
 
 .dark-select .ant-select-arrow {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 /* DatePicker */
 .dark-date-picker .ant-picker {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
 }
 
 .dark-date-picker .ant-picker:hover {
@@ -137,11 +137,11 @@
 }
 
 .dark-date-picker input {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
 }
 
 .dark-date-picker .ant-picker-suffix {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 /* 表格样式 */
@@ -150,15 +150,15 @@
 }
 
 .subscriptions-table .ant-table-thead > tr > th {
-  background: #141416;
-  color: #a0a0a8;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
   font-weight: 500;
   padding: 12px;
 }
 
 .dark-table-row {
-  background: #1a1a1d;
+  background: var(--color-bg-container);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: slideIn 0.4s ease-out;
   animation-fill-mode: both;
@@ -179,28 +179,28 @@
 }
 
 .dark-table-row:hover {
-  background: #222226 !important;
+  background: var(--color-bg-spotlight) !important;
   box-shadow: 0 0 0 1px rgba(212, 168, 82, 0.1) inset;
 }
 
 .subscriptions-table .ant-table-tbody > tr > td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #f0f0f2;
+  border-bottom: 1px solid var(--color-border-secondary);
+  color: var(--color-text-primary);
   padding: 12px;
 }
 
 /* 选择框 */
 .subscriptions-table .ant-checkbox-wrapper {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .subscriptions-table .ant-checkbox-checked .ant-checkbox-inner {
-  background: linear-gradient(135deg, #d4a852 0%, #b08d3e 100%);
-  border-color: #d4a852;
+  background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%);
+  border-color: var(--color-gold-primary);
 }
 
 .subscriptions-table .ant-checkbox:hover .ant-checkbox-inner {
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
 }
 
 /* 状态指示点 */
@@ -212,7 +212,7 @@
 }
 
 .status-dot.completed {
-  background: #d4a852;
+  background: var(--color-gold-primary);
   box-shadow: 0 0 8px rgba(212, 168, 82, 0.6);
   animation: pulse 2s infinite;
 }
@@ -229,7 +229,7 @@
 }
 
 .status-dot.pending {
-  background: #6a6a72;
+  background: var(--color-text-tertiary);
   opacity: 0.6;
 }
 
@@ -250,27 +250,27 @@
 }
 
 .action-btn:hover {
-  color: #e8c780 !important;
+  color: var(--color-gold-light) !important;
   transform: translateY(-1px);
 }
 
 /* 分页 */
 .dark-pagination .ant-pagination-item {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
 }
 
 .dark-pagination .ant-pagination-item a {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 .dark-pagination .ant-pagination-item-active {
   background: rgba(212, 168, 82, 0.1);
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
 }
 
 .dark-pagination .ant-pagination-item-active a {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .dark-pagination .ant-pagination-item:hover {
@@ -278,15 +278,15 @@
 }
 
 .dark-pagination .ant-select-selector {
-  background: #141416 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  color: #a0a0a8 !important;
+  background: var(--color-bg-elevated) !important;
+  border-color: var(--color-border-primary) !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .dark-pagination .ant-pagination-options-quick-jumper input {
-  background: #141416;
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #f0f0f2;
+  background: var(--color-bg-elevated);
+  border-color: var(--color-border-primary);
+  color: var(--color-text-primary);
 }
 
 .dark-pagination .ant-pagination-options-quick-jumper input:hover {
@@ -294,12 +294,12 @@
 }
 
 .dark-pagination .ant-pagination-total-text {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
 }
 
 /* 加载状态 */
 .subscriptions-table .ant-spin-dot-item {
-  background: #d4a852;
+  background: var(--color-gold-primary);
 }
 
 /* 图片加载 */
@@ -308,5 +308,5 @@
 }
 
 .ant-image-mask-info {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
 }

@@ -15,14 +15,14 @@
 }
 
 .triggerDark:hover {
-    background: #222226;
+    background: var(--color-bg-spotlight);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(212, 168, 82, 0.15);
 }
 
 .triggerDark:active {
     transform: translateY(0);
-    background: #1a1a1d;
+    background: var(--color-bg-container);
 }
 
 .triggerLight:active {

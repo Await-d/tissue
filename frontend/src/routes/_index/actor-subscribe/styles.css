@@ -6,15 +6,15 @@
 
 /* 头部卡片 */
 .actor-subscribe-header-card {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   margin-bottom: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .actor-subscribe-title {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -22,49 +22,49 @@
 
 .actor-subscribe-icon {
   margin-right: 8px;
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .actor-subscribe-subtitle {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   font-size: 14px;
 }
 
 /* 按钮 */
 .actor-subscribe-primary-btn {
-  background: #d4a852;
-  border: 1px solid #d4a852;
-  color: #0d0d0f;
+  background: var(--color-gold-primary);
+  border: 1px solid var(--color-gold-primary);
+  color: var(--color-bg-base);
   font-weight: 500;
   transition: all 0.3s ease;
 }
 
 .actor-subscribe-primary-btn:hover {
-  background: #e8c780;
-  border-color: #e8c780;
-  color: #0d0d0f;
+  background: var(--color-gold-light);
+  border-color: var(--color-gold-light);
+  color: var(--color-bg-base);
   box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4);
   transform: translateY(-1px);
 }
 
 .actor-subscribe-action-btn {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f0f0f2;
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
   transition: all 0.3s ease;
 }
 
 .actor-subscribe-action-btn:hover {
-  background: #222226;
-  border-color: #d4a852;
-  color: #d4a852;
+  background: var(--color-bg-spotlight);
+  border-color: var(--color-gold-primary);
+  color: var(--color-gold-primary);
   transform: translateY(-1px);
 }
 
 /* 演员卡片 */
 .actor-subscribe-card {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -73,31 +73,31 @@
 
 .actor-subscribe-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px #d4a852;
-  border-color: #d4a852;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--color-gold-primary);
+  border-color: var(--color-gold-primary);
 }
 
 .actor-subscribe-card .ant-card-body {
-  background: #1a1a1d;
+  background: var(--color-bg-container);
 }
 
 .actor-subscribe-card .ant-card-actions {
-  background: #141416;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border-top: 1px solid var(--color-border-primary);
 }
 
 .actor-subscribe-card .ant-card-actions > li {
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid var(--color-border-primary);
 }
 
 .actor-subscribe-card .ant-card-actions > li > span {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .actor-subscribe-card .ant-card-actions > li > span:hover {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 /* 封面 */
@@ -107,7 +107,7 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  background: #0d0d0f;
+  background: var(--color-bg-base);
   position: relative;
   cursor: pointer;
 }
@@ -124,7 +124,7 @@
 }
 
 .actor-subscribe-avatar {
-  background: linear-gradient(135deg, #d4a852 0%, #b08d3e 100%);
+  background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%);
 }
 
 .actor-subscribe-name-overlay {
@@ -138,7 +138,7 @@
 }
 
 .actor-subscribe-name {
-  color: #f0f0f2 !important;
+  color: var(--color-text-primary) !important;
   margin: 0 !important;
   font-weight: 500;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -150,23 +150,23 @@
 }
 
 .actor-subscribe-statistic .ant-statistic-title {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   font-size: 12px;
 }
 
 .actor-subscribe-statistic .ant-statistic-content {
-  color: #d4a852;
+  color: var(--color-gold-primary);
   font-size: 14px;
   font-weight: 500;
 }
 
 .actor-subscribe-statistic .ant-statistic-content-suffix {
-  color: #a0a0a8;
+  color: var(--color-text-secondary);
   font-size: 12px;
 }
 
 .actor-subscribe-statistic .ant-statistic-content-prefix {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 /* 标签 */
@@ -190,8 +190,8 @@
 
 .actor-subscribe-tag-hd {
   background: rgba(212, 168, 82, 0.12);
-  border-color: rgba(212, 168, 82, 0.3);
-  color: #e8c780;
+  border-color: var(--color-border-gold);
+  color: var(--color-gold-light);
 }
 
 .actor-subscribe-tag-zh {
@@ -219,8 +219,8 @@
 
 /* 空状态 */
 .actor-subscribe-empty-card {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   border-radius: 8px;
   text-align: center;
   padding: 40px 0;
@@ -228,7 +228,7 @@
 }
 
 .actor-subscribe-empty-text {
-  color: #6a6a72;
+  color: var(--color-text-tertiary);
 }
 
 .actor-subscribe-empty-btn {
@@ -237,18 +237,18 @@
 
 /* 模态框 */
 .actor-subscribe-download-modal .ant-modal-content {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .actor-subscribe-download-modal .ant-modal-header {
-  background: #1a1a1d;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .actor-subscribe-download-modal .ant-modal-body {
-  background: #1a1a1d;
+  background: var(--color-bg-container);
   max-height: 70vh;
   overflow-y: auto;
 }
@@ -256,47 +256,47 @@
 .actor-subscribe-modal-title {
   display: flex;
   align-items: center;
-  color: #f0f0f2;
+  color: var(--color-text-primary);
 }
 
 .actor-subscribe-modal-icon {
   margin-right: 8px;
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .actor-subscribe-download-modal .ant-list-item {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .actor-subscribe-download-modal .ant-card {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
 }
 
 .actor-subscribe-download-modal .ant-card:hover {
-  border-color: #d4a852;
+  border-color: var(--color-gold-primary);
   box-shadow: 0 2px 8px rgba(212, 168, 82, 0.2);
 }
 
 /* 悬浮按钮 */
 .actor-subscribe-container .ant-float-btn {
-  background: #1a1a1d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border-primary);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .actor-subscribe-container .ant-float-btn:hover {
-  background: #d4a852;
-  border-color: #d4a852;
+  background: var(--color-gold-primary);
+  border-color: var(--color-gold-primary);
   box-shadow: 0 6px 20px rgba(212, 168, 82, 0.4);
 }
 
 .actor-subscribe-container .ant-float-btn .ant-float-btn-icon {
-  color: #d4a852;
+  color: var(--color-gold-primary);
 }
 
 .actor-subscribe-container .ant-float-btn:hover .ant-float-btn-icon {
-  color: #0d0d0f;
+  color: var(--color-bg-base);
 }
 
 /* 响应式调整 */

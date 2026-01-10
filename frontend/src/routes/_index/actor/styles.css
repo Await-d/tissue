@@ -3,14 +3,14 @@
 /* ========== 页面容器样式 ========== */
 .actor-page-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #0d0d0f 0%, #141416 50%, #0d0d0f 100%);
+  background: linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-elevated) 50%, var(--color-bg-base) 100%);
   padding: 24px;
 }
 
 /* ========== 演员卡片主容器 ========== */
 .actor-main-card {
-  background: #141416;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -19,13 +19,13 @@
 
 .actor-main-card:hover {
   box-shadow: 0 8px 32px rgba(212, 168, 82, 0.15);
-  border-color: rgba(212, 168, 82, 0.3);
+  border-color: var(--color-border-gold);
 }
 
 /* ========== 卡片头部样式 ========== */
 .actor-card-header {
-  background: linear-gradient(135deg, #0d0d0f 0%, #1a1a1d 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, var(--color-bg-base) 0%, var(--color-bg-container) 100%);
+  border-bottom: 1px solid var(--color-border-primary);
   padding: 20px 24px;
   display: flex;
   justify-content: space-between;
@@ -33,7 +33,7 @@
 }
 
 .actor-card-title {
-  color: #f0f0f2;
+  color: var(--color-text-primary);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -48,16 +48,16 @@
   display: inline-block;
   width: 4px;
   height: 20px;
-  background: linear-gradient(180deg, #d4a852 0%, #e8c780 100%);
+  background: linear-gradient(180deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
   border-radius: 2px;
   box-shadow: 0 2px 8px rgba(212, 168, 82, 0.4);
 }
 
 /* ========== 搜索按钮样式 ========== */
 .actor-search-button {
-  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
   border: none;
-  color: #0d0d0f;
+  color: var(--color-bg-base);
   font-weight: 600;
   height: 40px;
   padding: 0 24px;
@@ -73,7 +73,7 @@
 .actor-search-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(212, 168, 82, 0.4);
-  background: linear-gradient(135deg, #e8c780 0%, #d4a852 100%);
+  background: linear-gradient(135deg, var(--color-gold-light) 0%, var(--color-gold-primary) 100%);
 }
 
 .actor-search-button:active {
@@ -83,7 +83,7 @@
 /* ========== 卡片内容区域 ========== */
 .actor-card-body {
   padding: 0;
-  background: #141416;
+  background: var(--color-bg-elevated);
 }
 
 /* ========== Web演员搜索容器 ========== */

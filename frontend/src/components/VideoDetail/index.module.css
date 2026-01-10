@@ -41,10 +41,10 @@
     position: relative;
     border-radius: 14px;
     overflow: hidden;
-    background: linear-gradient(135deg, #1a1a1d 0%, #141416 100%);
+    background: linear-gradient(135deg, var(--color-bg-container) 0%, var(--color-bg-elevated) 100%);
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.08);
+        0 0 0 1px var(--color-border-primary);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -53,7 +53,7 @@
     box-shadow:
         0 12px 40px rgba(0, 0, 0, 0.6),
         0 0 30px rgba(212, 168, 82, 0.15),
-        0 0 0 1px rgba(212, 168, 82, 0.3);
+        0 0 0 1px var(--color-border-gold);
 }
 
 /* 底部渐变遮罩 */
@@ -89,7 +89,7 @@
 .infoCard {
     background: rgba(26, 26, 29, 0.8);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--color-border-primary);
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 16px;
@@ -107,7 +107,7 @@
 
 /* 表单项标签样式 */
 .form :global(.ant-form-item-label > label) {
-    color: #a0a0a8 !important;
+    color: var(--color-text-secondary) !important;
     font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.3px;
@@ -119,8 +119,8 @@
 .form :global(.ant-input-number),
 .form :global(.ant-picker) {
     background: rgba(13, 13, 15, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    color: #f0f0f2 !important;
+    border: 1px solid var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
     border-radius: 6px !important;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
@@ -128,7 +128,7 @@
 .form :global(.ant-input:hover),
 .form :global(.ant-input-number:hover),
 .form :global(.ant-picker:hover) {
-    border-color: rgba(212, 168, 82, 0.3) !important;
+    border-color: var(--color-border-gold) !important;
     background: rgba(20, 20, 22, 0.8) !important;
 }
 
@@ -136,48 +136,48 @@
 .form :global(.ant-input-focused),
 .form :global(.ant-input-number-focused),
 .form :global(.ant-picker-focused) {
-    border-color: #d4a852 !important;
+    border-color: var(--color-gold-primary) !important;
     background: rgba(20, 20, 22, 0.9) !important;
     box-shadow: 0 0 0 3px rgba(212, 168, 82, 0.15) !important;
 }
 
 .form :global(.ant-input::placeholder) {
-    color: #6a6a72 !important;
+    color: var(--color-text-tertiary) !important;
 }
 
 /* 文本域样式 */
 .form :global(.ant-input-textarea textarea) {
     background: rgba(13, 13, 15, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    color: #f0f0f2 !important;
+    border: 1px solid var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
     border-radius: 6px !important;
 }
 
 .form :global(.ant-input-textarea textarea:hover) {
-    border-color: rgba(212, 168, 82, 0.3) !important;
+    border-color: var(--color-border-gold) !important;
 }
 
 .form :global(.ant-input-textarea-focused textarea) {
-    border-color: #d4a852 !important;
+    border-color: var(--color-gold-primary) !important;
     box-shadow: 0 0 0 3px rgba(212, 168, 82, 0.15) !important;
 }
 
 /* 标签选择器样式 */
 .form :global(.ant-select-selector) {
     background: rgba(13, 13, 15, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid var(--color-border-primary) !important;
     border-radius: 6px !important;
 }
 
 .form :global(.ant-select-focused .ant-select-selector) {
-    border-color: #d4a852 !important;
+    border-color: var(--color-gold-primary) !important;
     box-shadow: 0 0 0 3px rgba(212, 168, 82, 0.15) !important;
 }
 
 /* 金色标签样式 */
 .form :global(.ant-select-selection-item) {
-    background: linear-gradient(135deg, #b08d3e 0%, #d4a852 100%) !important;
-    color: #0d0d0f !important;
+    background: linear-gradient(135deg, var(--color-gold-dark) 0%, var(--color-gold-primary) 100%) !important;
+    color: var(--color-bg-base) !important;
     border: 1px solid rgba(212, 168, 82, 0.5) !important;
     border-radius: 4px !important;
     font-weight: 500;
@@ -186,7 +186,7 @@
 }
 
 .form :global(.ant-select-selection-item:hover) {
-    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+    background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%) !important;
     box-shadow: 0 0 12px rgba(212, 168, 82, 0.4);
     transform: translateY(-1px);
 }
@@ -197,17 +197,17 @@
 
 /* Checkbox 样式 */
 .form :global(.ant-checkbox-wrapper) {
-    color: #f0f0f2 !important;
+    color: var(--color-text-primary) !important;
 }
 
 .form :global(.ant-checkbox-inner) {
     background: rgba(13, 13, 15, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid var(--color-border-primary) !important;
 }
 
 .form :global(.ant-checkbox-checked .ant-checkbox-inner) {
-    background: linear-gradient(135deg, #b08d3e 0%, #d4a852 100%) !important;
-    border-color: #d4a852 !important;
+    background: linear-gradient(135deg, var(--color-gold-dark) 0%, var(--color-gold-primary) 100%) !important;
+    border-color: var(--color-gold-primary) !important;
 }
 
 /* 评分输入框特殊样式 */
@@ -221,14 +221,14 @@
     left: -24px;
     top: 50%;
     transform: translateY(-50%);
-    color: #d4a852;
+    color: var(--color-gold-primary);
     font-size: 18px;
     animation: starGlow 2s ease-in-out infinite;
 }
 
 @keyframes starGlow {
     0%, 100% {
-        text-shadow: 0 0 8px rgba(212, 168, 82, 0.3);
+        text-shadow: 0 0 8px var(--color-border-gold);
     }
     50% {
         text-shadow: 0 0 16px rgba(212, 168, 82, 0.6);
@@ -243,7 +243,7 @@
 }
 
 .actorsContainer :global(.ant-avatar:hover) {
-    border-color: #d4a852 !important;
+    border-color: var(--color-gold-primary) !important;
     box-shadow:
         0 6px 16px rgba(0, 0, 0, 0.5),
         0 0 20px rgba(212, 168, 82, 0.4);
@@ -252,7 +252,7 @@
 
 /* 演员名称样式 */
 .actorsContainer :global(.ant-typography) {
-    color: #f0f0f2 !important;
+    color: var(--color-text-primary) !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -265,10 +265,10 @@
 
 .websiteTag {
     background: rgba(26, 26, 29, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--color-border-primary);
     border-radius: 6px;
     padding: 6px 12px;
-    color: #a0a0a8;
+    color: var(--color-text-secondary);
     font-size: 13px;
     font-weight: 500;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -277,68 +277,68 @@
 
 .websiteTag:hover {
     background: rgba(212, 168, 82, 0.15);
-    border-color: rgba(212, 168, 82, 0.3);
-    color: #e8c780;
+    border-color: var(--color-border-gold);
+    color: var(--color-gold-light);
     box-shadow: 0 0 12px rgba(212, 168, 82, 0.2);
 }
 
 /* Modal 覆盖样式 */
 :global(.ant-modal-content) {
-    background: #1a1a1d !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--color-bg-container) !important;
+    border: 1px solid var(--color-border-primary);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
 }
 
 :global(.ant-modal-header) {
     background: transparent !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 1px solid var(--color-border-primary) !important;
 }
 
 :global(.ant-modal-title) {
-    color: #f0f0f2 !important;
+    color: var(--color-text-primary) !important;
     font-weight: 600;
 }
 
 :global(.ant-modal-close) {
-    color: #a0a0a8 !important;
+    color: var(--color-text-secondary) !important;
 }
 
 :global(.ant-modal-close:hover) {
-    color: #d4a852 !important;
+    color: var(--color-gold-primary) !important;
 }
 
 :global(.ant-modal-footer) {
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-top: 1px solid var(--color-border-primary) !important;
     background: rgba(13, 13, 15, 0.5) !important;
 }
 
 /* 按钮样式优化 */
 :global(.ant-btn-primary) {
-    background: linear-gradient(135deg, #b08d3e 0%, #d4a852 100%) !important;
+    background: linear-gradient(135deg, var(--color-gold-dark) 0%, var(--color-gold-primary) 100%) !important;
     border: none !important;
-    color: #0d0d0f !important;
+    color: var(--color-bg-base) !important;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(212, 168, 82, 0.3);
+    box-shadow: 0 4px 12px var(--color-border-gold);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 :global(.ant-btn-primary:hover) {
-    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+    background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%) !important;
     box-shadow: 0 6px 20px rgba(212, 168, 82, 0.5) !important;
     transform: translateY(-2px);
 }
 
 :global(.ant-btn-default) {
     background: rgba(26, 26, 29, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    color: #f0f0f2 !important;
+    border: 1px solid var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 :global(.ant-btn-default:hover) {
     background: rgba(34, 34, 38, 0.9) !important;
-    border-color: rgba(212, 168, 82, 0.3) !important;
-    color: #e8c780 !important;
+    border-color: var(--color-border-gold) !important;
+    color: var(--color-gold-light) !important;
 }
 
 :global(.ant-btn-dangerous) {
@@ -354,27 +354,27 @@
 
 /* Loading 样式 */
 :global(.ant-spin-dot-item) {
-    background-color: #d4a852 !important;
+    background-color: var(--color-gold-primary) !important;
 }
 
 /* 下拉框样式 */
 :global(.ant-select-dropdown) {
-    background: #1a1a1d !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: var(--color-bg-container) !important;
+    border: 1px solid var(--color-border-primary) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
 }
 
 :global(.ant-select-item) {
-    color: #f0f0f2 !important;
+    color: var(--color-text-primary) !important;
 }
 
 :global(.ant-select-item-option-selected) {
     background: rgba(212, 168, 82, 0.15) !important;
-    color: #e8c780 !important;
+    color: var(--color-gold-light) !important;
 }
 
 :global(.ant-select-item-option-active) {
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: var(--color-border-secondary) !important;
 }
 
 /* 响应式优化 */
