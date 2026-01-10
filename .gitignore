@@ -941,3 +941,7 @@ data/
 *.sh
 !start.sh
 !start_with_log.sh
+
+# 防止错误的数据库文件
+tissue.db
+app/db/*.db
