@@ -42,7 +42,7 @@ import {
 import Await from "../../../components/Await";
 import { useDispatch } from "react-redux";
 import { Dispatch } from "../../../models";
-import Preview from "./-components/preview.tsx";
+import Preview from "../../../components/VideoPreview";
 import DownloadModal from "./-components/downloadModal.tsx";
 import DownloadListModal from "./-components/downloadListModal.tsx";
 import HistoryModal from "./-components/historyModal.tsx";

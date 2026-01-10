@@ -7,11 +7,12 @@
  */
 import React, { useState } from "react";
 import { Badge, Rate, Space, theme, Button, Tooltip, App } from "antd";
-import { CloudDownloadOutlined } from "@ant-design/icons";
+import { CloudDownloadOutlined, EyeOutlined } from "@ant-design/icons";
 import VideoCover from "../../../../components/VideoCover";
 import * as api from "../../../../apis/video";
 import * as subscribeApi from "../../../../apis/subscribe";
 import DownloadListModal from "../../../_index/search/-components/downloadListModal";
+import { PreviewModal } from "../../../../components/VideoPreview";
 import { useRequest } from "ahooks";
 
 const { useToken } = theme
@@ -25,6 +26,11 @@ function JavDBItem(props: { item: any }) {
     const [selectedVideo, setSelectedVideo] = useState<any>(null);
     const [downloadOptions, setDownloadOptions] = useState<any[]>([]);
     const [showDownloadList, setShowDownloadList] = useState(false);
+    
+    // 预览相关状态
+    const [loadingPreview, setLoadingPreview] = useState(false);
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [previewData, setPreviewData] = useState<any[]>([]);
 
     // 添加下载功能
     const { run: onDownload, loading: onDownloading } = useRequest(subscribeApi.downloadVideos, {
@@ -97,6 +103,48 @@ function JavDBItem(props: { item: any }) {
         // 这里不需要显式阻止冒泡，因为这是回调函数而非事件处理函数
     };
 
+    // 处理预览按钮点击
+    const handlePreviewClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        
+        setLoadingPreview(true);
+        message.loading({ content: '正在获取预览...', key: 'preview' });
+        
+        const source = 'JavDB';
+        
+        api.getVideoDownloads(item.num, source.toLowerCase(), item.url)
+            .then(detailData => {
+                setLoadingPreview(false);
+                
+                if (detailData && detailData.previews && detailData.previews.length > 0) {
+                    // 获取第一个网站的预览数据
+                    const firstPreview = detailData.previews[0];
+                    if (firstPreview && firstPreview.items && firstPreview.items.length > 0) {
+                        setPreviewData(firstPreview.items);
+                        setShowPreviewModal(true);
+                        message.destroy('preview');
+                    } else {
+                        message.warning({ content: '该视频暂无预览图片', key: 'preview' });
+                    }
+                } else {
+                    message.warning({ content: '该视频暂无预览图片', key: 'preview' });
+                }
+            })
+            .catch(error => {
+                setLoadingPreview(false);
+                console.error('获取预览失败:', error);
+                message.error({ content: '获取预览失败', key: 'preview' });
+            });
+    };
+
+    // 处理预览模态框关闭
+    const handlePreviewModalCancel = (e?: React.MouseEvent) => {
+        if (e && e.stopPropagation) {
+            e.stopPropagation();
+        }
+        setShowPreviewModal(false);
+    };
+
     function render() {
         const videoId = `${item.num}-${Math.random().toString(36).substring(2, 7)}`;
         return (
@@ -126,10 +174,23 @@ function JavDBItem(props: { item: any }) {
                         bottom: '10px',
                         right: '10px',
                         zIndex: 10,
-                        background: 'rgba(0,0,0,0.6)',
-                        borderRadius: '50%',
-                        padding: '5px'
+                        display: 'flex',
+                        gap: '8px'
                     }}>
+                        <Tooltip title="预览图片">
+                            <Button
+                                type="default"
+                                shape="circle"
+                                icon={<EyeOutlined />}
+                                size="middle"
+                                loading={loadingPreview}
+                                onClick={handlePreviewClick}
+                                style={{ 
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                                    background: 'rgba(255,255,255,0.9)'
+                                }}
+                            />
+                        </Tooltip>
                         <Tooltip title="推送到下载器">
                             <Button
                                 type="primary"
@@ -202,6 +263,14 @@ function JavDBItem(props: { item: any }) {
                             {modal}
                         </div>
                     )}
+                />
+                
+                {/* 添加预览模态框 */}
+                <PreviewModal
+                    open={showPreviewModal}
+                    onCancel={handlePreviewModalCancel}
+                    previews={previewData}
+                    title={`${item.num} 预览`}
                 />
             </div>
         )

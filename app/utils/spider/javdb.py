@@ -164,32 +164,38 @@ class JavdbSpider(Spider):
             title = title_element[0].text.strip()
             meta.title = f'{num.upper()} {title}'
 
-        premiered_element = html.xpath("//strong[text()='日期:']/../span")
+        # 日期 - 修正XPath，添加 span[@class='value']
+        premiered_element = html.xpath("//strong[text()='日期:']/following-sibling::span[@class='value']")
         if premiered_element:
             meta.premiered = premiered_element[0].text
 
-        runtime_element = html.xpath("//strong[text()='時長:']/../span")
+        # 时长 - 修正XPath
+        runtime_element = html.xpath("//strong[text()='時長:']/following-sibling::span[@class='value']")
         if runtime_element:
             runtime = runtime_element[0].text
             runtime = runtime.replace(" 分鍾", "")
             meta.runtime = runtime
 
-        director_element = html.xpath("//strong[text()='導演:']/../span/a")
+        # 导演 - 修正XPath
+        director_element = html.xpath("//strong[text()='導演:']/following-sibling::span[@class='value']/a")
         if director_element:
             director = director_element[0].text
             meta.director = director
 
-        studio_element = html.xpath("//strong[text()='片商:']/../span/a")
+        # 片商 - 修正XPath
+        studio_element = html.xpath("//strong[text()='片商:']/following-sibling::span[@class='value']/a")
         if studio_element:
             studio = studio_element[0].text
             meta.studio = studio
 
-        publisher_element = html.xpath("//strong[text()='發行:']/../span/a")
+        # 发行 - 修正XPath
+        publisher_element = html.xpath("//strong[text()='發行:']/following-sibling::span[@class='value']/a")
         if publisher_element:
             publisher = publisher_element[0].text
             meta.publisher = publisher
 
-        series_element = html.xpath("//strong[text()='系列:']/../span/a")
+        # 系列 - 修正XPath
+        series_element = html.xpath("//strong[text()='系列:']/following-sibling::span[@class='value']/a")
         if series_element:
             series = series_element[0].text
             meta.series = series
@@ -219,17 +225,20 @@ class JavdbSpider(Spider):
         score_elements = html.xpath("//span[@class='score-stars']/../text()")
         if score_elements:
             score_text = str(score_elements[0])
-            pattern_result = re.search(r"(\d+\.\d+)分", score_text)
-            score = pattern_result.group(1)
-            meta.rating = score
+            pattern_result = re.search(r"(\d+\.?\d*)", score_text)
+            if pattern_result:
+                score = pattern_result.group(1)
+                meta.rating = score
 
-        # 获取评论数
-        comments_elements = html.xpath("//a[contains(@href,'/reviews?')]/text()")
-        if comments_elements:
-            comments_text = comments_elements[0]
-            comments_match = re.search(r"(\d+)", comments_text)
-            if comments_match:
-                meta.comments_count = int(comments_match.group(1))
+        # 获取评论数 - 支持新格式 短評(44) 和旧格式 Reviews(44)
+        comments_elements = html.xpath("//div[contains(@class, 'tabs')]//a")
+        for el in comments_elements:
+            text = ''.join(el.itertext()).strip()
+            if '短評' in text or 'Reviews' in text:
+                comments_match = re.search(r"\((\d+)\)", text)
+                if comments_match:
+                    meta.comments_count = int(comments_match.group(1))
+                    break
 
         meta.website.append(url)
 
@@ -507,6 +516,17 @@ class JavdbSpider(Spider):
             response = self._get(url, headers=headers)
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
+            # 尝试多种XPath匹配评论数
+            # 新格式: 短評(44) 或 Reviews(44)
+            comments_elements = html.xpath("//div[contains(@class, 'tabs')]//a")
+            for el in comments_elements:
+                text = ''.join(el.itertext()).strip()
+                if '短評' in text or 'Reviews' in text:
+                    comments_match = re.search(r"\((\d+)\)", text)
+                    if comments_match:
+                        return int(comments_match.group(1))
+            
+            # 回退: 旧格式
             comments_elements = html.xpath("//a[contains(@href,'/reviews?')]/text()")
             if comments_elements:
                 comments_text = comments_elements[0]
@@ -522,34 +542,71 @@ class JavdbSpider(Spider):
 
     def get_downloads(self, url: str, html: etree.HTML):
         result = []
-        table = html.xpath("//div[@id='magnets-content']/div")
+        # 新结构: div.item.columns > div.magnet-name > a
+        table = html.xpath("//div[@id='magnets-content']/div[contains(@class, 'item')]")
+        
         for item in table:
             download = VideoDownload()
 
-            parts = item.xpath("./div[1]/a")[0]
+            # 获取磁力链接元素
+            magnet_link = item.xpath(".//div[contains(@class, 'magnet-name')]/a")
+            if not magnet_link:
+                magnet_link = item.xpath("./div[1]/a")
+            if not magnet_link:
+                continue
+                
+            parts = magnet_link[0]
             download.website = self.name
             download.url = url
-            download.name = parts[0].text.strip()
             download.magnet = parts.get('href')
 
-            name = parts.xpath("./span[1]")
-            if name:
-                if '无码' in name[0].text or '破解' in name[0].text:
-                    download.is_uncensored = True
+            # 获取名称 - 新结构使用 span.name
+            name_el = parts.xpath("./span[@class='name']")
+            if name_el:
+                download.name = name_el[0].text.strip()
+            else:
+                # 旧结构回退
+                first_text = parts.xpath("./text()")
+                if first_text:
+                    download.name = first_text[0].strip()
+                else:
+                    download.name = parts.text.strip() if parts.text else ""
 
-            size = parts.xpath("./span[2]")
-            if size:
-                download.size = size[0].text.split(',')[0].strip()
+            # 检查无码/破解标签
+            name_text = download.name or ""
+            if '无码' in name_text or '破解' in name_text or 'UC' in name_text:
+                download.is_uncensored = True
 
-            for tag in parts.xpath('./div[@class="tags"]/span'):
-                if tag.text == '高清':
+            # 获取文件大小 - 新结构使用 span.meta
+            size_el = parts.xpath("./span[@class='meta']")
+            if size_el:
+                download.size = size_el[0].text.strip().split(',')[0].strip()
+            else:
+                # 旧结构回退
+                size = parts.xpath("./span[2]")
+                if size:
+                    download.size = size[0].text.split(',')[0].strip() if size[0].text else ""
+
+            # 获取标签 (HD, 字幕等) - 新结构
+            for tag in parts.xpath('.//div[@class="tags"]/span') or parts.xpath('.//span[contains(@class, "tag")]'):
+                tag_text = tag.text.strip() if tag.text else ""
+                if tag_text in ['高清', 'HD']:
                     download.is_hd = True
-                if tag.text == '字幕':
+                if tag_text in ['字幕', 'Subtitle']:
                     download.is_zh = True
 
-            publish_date = item.xpath(".//span[@class='time']")
+            # 获取发布日期 - 新结构使用不同的元素
+            publish_date = item.xpath(".//span[@class='time']") or \
+                          item.xpath(".//div[contains(@class, 'date')]") or \
+                          item.xpath("./div[last()]")
             if publish_date:
-                download.publish_date = datetime.strptime(publish_date[0].text.strip(), "%Y-%m-%d").date()
+                date_text = publish_date[0].text
+                if date_text:
+                    date_text = date_text.strip()
+                    try:
+                        download.publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
+                    except ValueError:
+                        pass
 
             result.append(download)
         return result
@@ -845,27 +902,21 @@ class JavdbSpider(Spider):
         
         html = etree.HTML(html_content, parser=etree.HTMLParser(encoding='utf-8'))
         
-        # 记录XPath查询结果
-        actors_list = html.xpath('//div[contains(@class, "actors-list")]')
-        logger.info(f"找到actors-list元素: {len(actors_list)}个")
+        # 网站结构：div.actors > div.actor-box > a
+        actors_container = html.xpath('//div[contains(@class, "actors")]')
+        logger.info(f"找到actors容器元素: {len(actors_container)}个")
         
-        if not actors_list:
-            # 网站可能需要登录，或者页面结构变化
-            logger.warning("未找到actors-list元素，尝试查找其他可能的演员元素")
+        if not actors_container:
+            logger.warning("未找到actors容器元素，尝试查找其他可能的演员元素")
             
-            # 尝试其他可能的XPath
-            alt_actors = html.xpath('//div[contains(@class, "actor-box")]') or html.xpath('//a[contains(@href, "/actors/")]')
+            alt_actors = html.xpath('//a[contains(@href, "/actors/")]')
             logger.info(f"尝试替代方式找到演员元素: {len(alt_actors)}个")
             
-            # 如果没有找到任何元素，可能是网站需要登录
             if not alt_actors:
                 logger.error("无法找到任何演员元素，可能需要登录或网站结构已更改")
-                
-                # 记录一些页面基本信息以帮助调试
                 title = html.xpath('//title/text()')
                 logger.info(f"页面标题: {title}")
                 
-                # 检查是否有登录表单
                 login_form = html.xpath('//form[contains(@action, "login") or contains(@action, "sign_in")]')
                 if login_form:
                     logger.error("检测到登录表单，网站可能需要登录才能访问演员列表")
@@ -873,12 +924,11 @@ class JavdbSpider(Spider):
                 return []
         
         result = []
-        # 先尝试标准路径
-        actors = html.xpath('//div[contains(@class, "actors-list")]/div/a')
+        # 使用 //a 来穿透中间的 div.actor-box 层
+        actors = html.xpath('//div[contains(@class, "actors")]//a[contains(@href, "/actors/")]')
         
         if not actors:
-            # 尝试其他可能的路径
-            actors = html.xpath('//a[contains(@href, "/actors/")]')
+            actors = html.xpath('//a[contains(@href, "/actors/") and .//strong]')
             logger.info(f"使用替代XPath找到演员: {len(actors)}个")
         
         logger.info(f"找到演员元素: {len(actors)}个")
@@ -886,25 +936,28 @@ class JavdbSpider(Spider):
         for actor in actors:
             try:
                 actor_url = actor.get('href')
-                if not actor_url or 'actors' not in actor_url:
+                if not actor_url or '/actors/' not in actor_url:
                     continue
                 
                 actor_code = actor_url.split("/")[-1]
+                # 排除分类页面链接
+                if not actor_code or actor_code in ['', 'censored', 'uncensored', 'western']:
+                    continue
                 
-                # 尝试不同方式查找演员名称
-                name_el = actor.xpath('./div[@class="name"]')
-                if name_el:
-                    actor_name = name_el[0].text.strip()
-                else:
-                    # 尝试其他可能的方式获取名称
-                    name_el = actor.xpath('.//text()')
-                    if name_el and name_el[0].strip():
+                # 优先从 title 属性获取演员名称
+                actor_name = actor.get('title')
+                
+                if not actor_name:
+                    # 从 strong 标签获取名称
+                    name_el = actor.xpath('./strong/text()')
+                    if name_el:
                         actor_name = name_el[0].strip()
                     else:
-                        # 尝试从title属性获取
-                        actor_name = actor.get('title')
-                        if not actor_name:
-                            continue
+                        continue
+                
+                actor_name = actor_name.strip()
+                if not actor_name:
+                    continue
                 
                 logger.info(f"找到演员: {actor_name}, URL: {actor_url}")
                 
