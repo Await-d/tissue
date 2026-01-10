@@ -101,29 +101,35 @@ function JavDB() {
     // 排序函数
     const sortVideos = (videos: any[], sortBy: string, sortOrder: string) => {
         return [...videos].sort((a, b) => {
-            let aValue, bValue;
+            const getValue = (video: any) => {
+                switch (sortBy) {
+                    case 'rank_count':
+                        return Number(video.rank_count ?? video.comments_count ?? video.comments ?? 0) || 0;
+                    case 'publish_date': {
+                        const date = video.publish_date ?? video.release_date ?? '1970-01-01';
+                        return new Date(date).getTime();
+                    }
+                    case 'rank':
+                    default:
+                        return Number(video.rank ?? video.rating ?? 0) || 0;
+                }
+            };
 
-            switch (sortBy) {
-                case 'rank_count':
-                    aValue = a.rank_count || 0;
-                    bValue = b.rank_count || 0;
-                    break;
-                case 'publish_date':
-                    aValue = new Date(a.publish_date || '1970-01-01').getTime();
-                    bValue = new Date(b.publish_date || '1970-01-01').getTime();
-                    break;
-                case 'rank':
-                default:
-                    aValue = a.rank || 0;
-                    bValue = b.rank || 0;
-                    break;
-            }
+            const aValue = getValue(a);
+            const bValue = getValue(b);
 
-            if (sortOrder === 'asc') {
-                return aValue - bValue;
-            } else {
-                return bValue - aValue;
-            }
+            return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+        });
+    };
+
+    // 兼容缓存数据与实时爬取字段，统一映射到 rank/rank_count/publish_date
+    const normalizeVideos = (videos: any[]) => {
+        if (!Array.isArray(videos)) return [];
+        return videos.map((video) => {
+            const rank = Number(video.rank ?? video.rating ?? 0) || 0;
+            const rankCount = Number(video.rank_count ?? video.comments_count ?? video.comments ?? 0) || 0;
+            const publishDate = video.publish_date ?? video.release_date ?? '';
+            return { ...video, rank, rank_count: rankCount, publish_date: publishDate };
         });
     };
 
@@ -165,8 +171,10 @@ function JavDB() {
                 </Row>
             )}>
                 {(data = []) => {
-                    // 先按评分过滤，再排序
-                    const filteredVideos = data.filter((item: any) => item.rank >= filter.rank);
+                    // 兼容缓存数据字段差异后再过滤排序
+                    const videos = normalizeVideos(data);
+                    const minRank = Number(filter.rank ?? 0);
+                    const filteredVideos = videos.filter((item: any) => item.rank >= minRank);
                     const sortedVideos = sortVideos(filteredVideos, filter.sort_by || 'rank', filter.sort_order || 'desc');
 
                     return sortedVideos.length > 0 ? (
