@@ -39,6 +39,8 @@ class AsyncLoggerManager:
         self.log_queue = queue.Queue()
         self.logger = logging.getLogger(log_path.stem)
         self.logger.setLevel(logging.INFO)
+        # 防止日志向上传播到根logger，避免重复输出
+        self.logger.propagate = False
         
         # 清除现有的handlers
         for handler in self.logger.handlers[:]:
