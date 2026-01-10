@@ -15,6 +15,7 @@ from app.utils.logger import logger
 from app.service.actor_subscribe import ActorSubscribeService
 from app.service.auto_download import AutoDownloadService
 from app.service.video_cache import VideoCacheService
+from app.service.pending_torrent import PendingTorrentService
 
 
 class Job(BaseModel):
@@ -60,6 +61,13 @@ class Scheduler:
                                    name='刷新视频数据缓存',
                                    job=VideoCacheService.job_refresh_video_cache,
                                    interval=120, jitter=30 * 60),  # 每2小时执行，抖动30分钟
+        'process_pending_torrents': Job(
+            key='process_pending_torrents',
+            name='处理待处理种子',
+            job=PendingTorrentService.job_process_pending_torrents,
+            interval=1,  # 每分钟检查一次
+            jitter=0
+        ),
     }
 
     def __init__(self):
@@ -73,6 +81,7 @@ class Scheduler:
         self.add('clean_cache')
         self.add('auto_download')
         self.add('refresh_video_cache')  # 启动视频缓存刷新任务
+        self.add('process_pending_torrents')
 
         setting = Setting()
         if setting.download.trans_auto:
@@ -99,6 +108,16 @@ class Scheduler:
             minute='0',
             id='actor_works_count_update',
             replace_existing=True,
+        )
+
+        # 添加待处理种子每日清理任务（每天凌晨3点执行）
+        self.scheduler.add_job(
+            PendingTorrentService.job_cleanup_pending_torrents,
+            'cron',
+            hour='3',
+            minute='0',
+            id='cleanup_pending_torrents',
+            replace_existing=True
         )
 
     def list(self):

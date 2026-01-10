@@ -103,8 +103,11 @@ class DownloadFilterService(BaseService):
             # 获取过滤设置
             filter_settings = self.get_filter_settings()
             if not filter_settings:
-                result["filter_reason"] = "未找到过滤设置"
-                return result
+                # 没有过滤设置时，使用默认设置
+                logger.info("未找到过滤设置，使用默认设置")
+                default_settings = self.get_default_filter_settings()
+                from types import SimpleNamespace
+                filter_settings = SimpleNamespace(**default_settings)
             
             # 解析磁力链接基本信息
             magnet_info = torrent_parser.parse_magnet_info(magnet_url)
@@ -175,8 +178,12 @@ class DownloadFilterService(BaseService):
             # 获取过滤设置
             filter_settings = self.get_filter_settings()
             if not filter_settings:
-                result["message"] = "未找到过滤设置"
-                return result
+                # 没有过滤设置时，使用默认设置继续过滤
+                logger.info("未找到过滤设置，使用默认设置")
+                default_settings = self.get_default_filter_settings()
+                # 创建一个临时的设置对象
+                from types import SimpleNamespace
+                filter_settings = SimpleNamespace(**default_settings)
             
             # 从qBittorrent获取文件列表
             qb_files_response = self.qb.get_torrent_files(torrent_hash)

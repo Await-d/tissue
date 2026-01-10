@@ -79,6 +79,8 @@ class Setting(BaseModel):
     def write_section(section: str, setting: dict):
         parser = ConfigParser()
         parser.read(config_path)
-        parser[section] = setting
+        # configparser 要求所有值必须是字符串类型
+        string_setting = {k: "" if v is None else str(v) for k, v in setting.items()}
+        parser[section] = string_setting
         with open(config_path, "w") as file:
             parser.write(file)

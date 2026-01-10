@@ -8,3 +8,4 @@ from .download_filter import *
 from .site_management import *
 from .search import *
 from .video_cache import *
+from .pending_torrent import PendingTorrent, PendingTorrentStatus
