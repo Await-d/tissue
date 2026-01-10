@@ -42,7 +42,13 @@ function VideoActors(props: Props) {
     return (
         <>
             <div style={{ marginBottom: 16 }}>
-                <Typography.Title level={5} style={{ marginBottom: 12 }}>
+                <Typography.Title level={5} style={{ 
+                    marginBottom: 12,
+                    color: '#f0f0f2',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    letterSpacing: '0.5px'
+                }}>
                     演员信息
                 </Typography.Title>
                 {value && value.length > 0 ? (
@@ -61,8 +67,9 @@ function VideoActors(props: Props) {
                                     <Avatar
                                         style={{
                                             cursor: 'pointer',
-                                            border: '2px solid #f0f0f0',
-                                            transition: 'all 0.3s'
+                                            border: '2px solid rgba(212, 168, 82, 0.5)',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                                         }}
                                         size={64}
                                         src={actor?.thumb && api.getVideoCover(actor.thumb)}
@@ -73,10 +80,13 @@ function VideoActors(props: Props) {
                                     />
                                     <Typography.Text
                                         style={{
-                                            marginTop: 4,
+                                            marginTop: 8,
                                             maxWidth: 64,
                                             textAlign: 'center',
-                                            fontSize: 12
+                                            fontSize: 12,
+                                            color: '#f0f0f2',
+                                            textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)',
+                                            fontWeight: 500
                                         }}
                                         ellipsis={{ tooltip: actor?.name }}
                                     >
@@ -90,15 +100,18 @@ function VideoActors(props: Props) {
                                             position: 'absolute',
                                             top: -8,
                                             right: -8,
-                                            background: '#fff',
+                                            background: 'linear-gradient(135deg, #b08d3e 0%, #d4a852 100%)',
                                             borderRadius: '50%',
-                                            border: '1px solid #f0f0f0',
+                                            border: 'none',
                                             padding: 0,
                                             height: 24,
                                             width: 24,
                                             display: 'flex',
                                             justifyContent: 'center',
-                                            alignItems: 'center'
+                                            alignItems: 'center',
+                                            color: '#0d0d0f',
+                                            boxShadow: '0 2px 8px rgba(212, 168, 82, 0.4)',
+                                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
                                         }}
                                         onClick={() => {
                                             setEditMode('edit')
@@ -115,13 +128,14 @@ function VideoActors(props: Props) {
                                 <Avatar
                                     style={{
                                         cursor: 'pointer',
-                                        backgroundColor: '#fafafa',
-                                        border: '1px dashed #d9d9d9',
+                                        backgroundColor: 'rgba(26, 26, 29, 0.6)',
+                                        border: '2px dashed rgba(212, 168, 82, 0.3)',
                                         display: 'flex',
                                         justifyContent: 'center',
                                         alignItems: 'center',
-                                        transition: 'all 0.3s',
-                                        color: '#999'
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        color: '#d4a852',
+                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
                                     }}
                                     size={64}
                                     icon={<PlusOutlined />}
@@ -130,7 +144,12 @@ function VideoActors(props: Props) {
                                         setSelected(undefined)
                                     }}
                                 />
-                                <Typography.Text style={{ marginTop: 4, fontSize: 12 }}>
+                                <Typography.Text style={{ 
+                                    marginTop: 8, 
+                                    fontSize: 12,
+                                    color: '#a0a0a8',
+                                    fontWeight: 500
+                                }}>
                                     添加演员
                                 </Typography.Text>
                             </div>

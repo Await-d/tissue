@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, message, Modal, Radio, Space, Button, Tooltip, Tag, App, Rate, Select, Checkbox, Row, Col, InputNumber, Switch } from 'antd';
-import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined, StarFilled, CheckCircleFilled, FilterOutlined } from '@ant-design/icons';
+import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, Modal, Radio, Space, Button, Tooltip, Tag, App, Rate, Select, Checkbox, Row, Col, InputNumber, Switch } from 'antd';
+import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined, StarFilled, CheckCircleFilled, FilterOutlined, CheckSquareOutlined, BorderOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -12,6 +12,10 @@ import DownloadModal from "../../routes/_index/search/-components/downloadModal"
 import DownloadListModal from "../../routes/_index/search/-components/downloadListModal";
 import ActorSubscribeModal from '../../routes/_index/actor-subscribe/-components/ActorSubscribeModal';
 import LoadingComponent from '@/components/Loading';
+import { useBatchSelect, type BatchSelectVideo } from '@/hooks/useBatchSelect';
+import { BatchActionBar, BatchDownloadModal } from '@/components/BatchDownload';
+import './actorSearchStyles.css';
+import './webActorSearch.css';
 
 // 本地存储的键名
 const STORAGE_KEY = 'web_actor_search_state';
@@ -98,6 +102,10 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         loaded: 0,
         isLoading: false
     });
+
+    // 批量选择相关状态
+    const batchSelect = useBatchSelect();
+    const [batchDownloadModalVisible, setBatchDownloadModalVisible] = useState(false);
 
     // 保存状态到localStorage
     const saveState = () => {
@@ -412,31 +420,55 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         }
 
         if (!actors || actors.length === 0) {
-            return <Empty description="没有找到演员列表" />;
+            return (
+                <div className="web-actor-empty">
+                    <Empty description="没有找到演员列表" />
+                </div>
+            );
         }
 
         return (
-            <div style={{ marginTop: '16px' }}>
-                <h3>热门演员</h3>
+            <div style={{ marginTop: '24px' }}>
+                <h3 className="web-actor-section-title">热门演员</h3>
                 <List
-                    grid={{ gutter: 16, xs: 2, sm: 3, md: 4, lg: 6, xl: 8, xxl: 10 }}
+                    grid={{ gutter: [20, 20], xs: 2, sm: 3, md: 4, lg: 6, xl: 8, xxl: 10 }}
                     dataSource={actorsWithUniqueKeys}
-                    renderItem={(actor: WebActor & { uniqueKey?: string }) => (
-                        <List.Item key={actor.uniqueKey || actor.id || `${actor.name}-${Math.random().toString(36).substr(2, 9)}`}>
+                    renderItem={(actor: WebActor & { uniqueKey?: string }, index: number) => (
+                        <List.Item
+                            key={actor.uniqueKey || actor.id || `${actor.name}-${Math.random().toString(36).substr(2, 9)}`}
+                            style={{ '--index': index } as any}
+                        >
                             <div
-                                style={{ textAlign: 'center', cursor: 'pointer' }}
+                                className="web-actor-card"
                                 onClick={() => {
                                     setSelectedActor(actor);
                                     setSearchValue(actor.name);
                                     fetchActorVideos(actor.name);
                                 }}
                             >
-                                <Avatar
-                                    size={64}
-                                    icon={<UserOutlined />}
-                                    src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
-                                />
-                                <div style={{ marginTop: 8 }}>{actor.name}</div>
+                                <div className="web-actor-avatar-wrapper">
+                                    <Avatar
+                                        size={72}
+                                        icon={<UserOutlined />}
+                                        src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
+                                        style={{
+                                            border: '3px solid #141416',
+                                            background: '#222226'
+                                        }}
+                                    />
+                                </div>
+                                <div style={{
+                                    marginTop: 12,
+                                    color: '#f0f0f2',
+                                    fontWeight: 500,
+                                    fontSize: '14px',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    padding: '0 4px'
+                                }}>
+                                    {actor.name}
+                                </div>
                             </div>
                         </List.Item>
                     )}
@@ -452,31 +484,57 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         }
 
         if (!searchResults || searchResults.length === 0) {
-            return <Empty description="没有找到匹配的演员" />;
+            return (
+                <div className="web-actor-empty">
+                    <Empty description="没有找到匹配的演员" />
+                </div>
+            );
         }
 
         return (
-            <div style={{ marginTop: '16px' }}>
-                <h3>搜索结果 - "{searchValue}" ({searchResults.length})</h3>
+            <div style={{ marginTop: '24px' }}>
+                <h3 className="web-actor-section-title">
+                    搜索结果 - "{searchValue}" ({searchResults.length} 位演员)
+                </h3>
                 <List
-                    grid={{ gutter: 16, xs: 2, sm: 3, md: 4, lg: 6, xl: 8, xxl: 10 }}
+                    grid={{ gutter: [20, 20], xs: 2, sm: 3, md: 4, lg: 6, xl: 8, xxl: 10 }}
                     dataSource={searchResultsWithUniqueKeys}
-                    renderItem={(actor: WebActor & { uniqueKey?: string }) => (
-                        <List.Item key={actor.uniqueKey || actor.id || `${actor.name}-${Math.random().toString(36).substr(2, 9)}`}>
+                    renderItem={(actor: WebActor & { uniqueKey?: string }, index: number) => (
+                        <List.Item
+                            key={actor.uniqueKey || actor.id || `${actor.name}-${Math.random().toString(36).substr(2, 9)}`}
+                            style={{ '--index': index } as any}
+                        >
                             <div
-                                style={{ textAlign: 'center', cursor: 'pointer' }}
+                                className="web-actor-card"
                                 onClick={() => {
                                     setSelectedActor(actor);
                                     setSearchValue(actor.name);
                                     fetchActorVideos(actor.name);
                                 }}
                             >
-                                <Avatar
-                                    size={64}
-                                    icon={<UserOutlined />}
-                                    src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
-                                />
-                                <div style={{ marginTop: 8 }}>{actor.name}</div>
+                                <div className="web-actor-avatar-wrapper">
+                                    <Avatar
+                                        size={72}
+                                        icon={<UserOutlined />}
+                                        src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
+                                        style={{
+                                            border: '3px solid #141416',
+                                            background: '#222226'
+                                        }}
+                                    />
+                                </div>
+                                <div style={{
+                                    marginTop: 12,
+                                    color: '#f0f0f2',
+                                    fontWeight: 500,
+                                    fontSize: '14px',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    padding: '0 4px'
+                                }}>
+                                    {actor.name}
+                                </div>
                             </div>
                         </List.Item>
                     )}
@@ -545,39 +603,63 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     };
 
     return (
-        <div style={{ padding: '16px' }}>
-            <Space direction="vertical" style={{ width: '100%', marginBottom: '16px' }}>
+        <div className="web-actor-container">
+            <Space direction="vertical" style={{ width: '100%', marginBottom: '24px' }}>
                 <Radio.Group
                     value={sourceType}
                     onChange={handleSourceChange}
                     optionType="button"
                     buttonStyle="solid"
-                    style={{ marginBottom: '16px' }}
+                    className="web-actor-source-group"
                 >
                     <Radio.Button value="javdb">JavDB</Radio.Button>
                     <Radio.Button value="javbus">JavBus</Radio.Button>
                 </Radio.Group>
 
                 <AutoComplete
-                    popupMatchSelectWidth={252}
+                    popupMatchSelectWidth={400}
                     style={{ width: '100%' }}
                     options={options}
                     onSelect={handleSelect}
                     onSearch={handleSearch}
                     value={searchValue}
                     notFoundContent={loadingActors || searching ? <Spin size="small" /> : null}
+                    classNames={{ popup: { root: 'web-actor-search-dropdown' } }}
                 >
-                    <Input.Search
+                    <Input
                         size="large"
-                        placeholder={`搜索${sourceType}演员...`}
-                        prefix={<SearchOutlined />}
-                        onSearch={(value) => {
+                        placeholder={`在 ${sourceType.toUpperCase()} 搜索演员...`}
+                        prefix={<SearchOutlined style={{ color: '#a0a0a8', fontSize: '16px' }} />}
+                        onPressEnter={(e) => {
+                            const value = (e.target as HTMLInputElement).value;
                             if (value.trim()) {
                                 searchActor(value);
                             }
                         }}
-                        enterButton
                         allowClear
+                        suffix={
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<SearchOutlined />}
+                                onClick={() => {
+                                    if (searchValue.trim()) {
+                                        searchActor(searchValue);
+                                    }
+                                }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
+                                    borderColor: '#d4a852',
+                                    transition: 'all 0.3s ease',
+                                    height: '32px',
+                                    padding: '0 16px',
+                                    borderRadius: '6px',
+                                    fontWeight: 600,
+                                    color: '#0d0d0f'
+                                }}
+                            />
+                        }
+                        className="web-actor-search-input"
                     />
                 </AutoComplete>
             </Space>
@@ -585,46 +667,123 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
             {selectedActor ? (
                 // 已选择演员，显示演员详情和视频列表
                 <>
-                    <div style={{ textAlign: 'center', margin: '16px 0' }}>
-                        <Avatar
-                            size={64}
-                            icon={<UserOutlined />}
-                            src={selectedActor.thumb ? api.getVideoCover(selectedActor.thumb) : undefined}
-                        />
-                        <h2 style={{ marginTop: 8 }}>
-                            {selectedActor.name}
+                    <div className="web-actor-selected-card">
+                        <div className="web-actor-avatar-wrapper" style={{ padding: '6px' }}>
+                            <Avatar
+                                size={100}
+                                icon={<UserOutlined />}
+                                src={selectedActor.thumb ? api.getVideoCover(selectedActor.thumb) : undefined}
+                                style={{
+                                    border: '4px solid #141416',
+                                    background: '#222226'
+                                }}
+                            />
+                        </div>
+                        <h2 style={{
+                            marginTop: 20,
+                            color: '#f0f0f2',
+                            fontSize: '28px',
+                            fontWeight: 600,
+                            letterSpacing: '1px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '12px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <span>{selectedActor.name}</span>
                             {checkingSubscription ? (
-                                <Spin size="small" style={{ marginLeft: 8 }} />
+                                <Spin size="small" />
                             ) : isSubscribed ? (
-                                <Tag color="green" icon={<CheckCircleFilled />} style={{ marginLeft: 8 }}>
+                                <Tag
+                                    color="green"
+                                    icon={<CheckCircleFilled />}
+                                    style={{
+                                        fontSize: '14px',
+                                        padding: '4px 12px',
+                                        borderRadius: '6px'
+                                    }}
+                                >
                                     已订阅
                                 </Tag>
                             ) : null}
                         </h2>
 
-                        {/* 订阅按钮根据订阅状态显示不同样式 */}
+                        <div className="web-actor-stats">
+                            <div className="web-actor-stat-item">
+                                <div className="web-actor-stat-label">作品数量</div>
+                                <div className="web-actor-stat-value">{actorVideos.length}</div>
+                            </div>
+                            {actorVideos.length > 0 && (
+                                <>
+                                    <div className="web-actor-stat-item">
+                                        <div className="web-actor-stat-label">中文字幕</div>
+                                        <div className="web-actor-stat-value">
+                                            {actorVideos.filter((v: WebVideo) => v.is_zh).length}
+                                        </div>
+                                    </div>
+                                    <div className="web-actor-stat-item">
+                                        <div className="web-actor-stat-label">无码作品</div>
+                                        <div className="web-actor-stat-value">
+                                            {actorVideos.filter((v: WebVideo) => v.is_uncensored).length}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* 订阅按钮 */}
                         <Button
                             type={isSubscribed ? "default" : "primary"}
                             icon={isSubscribed ? <StarFilled /> : <StarOutlined />}
-                            style={{ marginTop: 8 }}
+                            size="large"
+                            className="web-actor-subscribe-btn"
+                            style={isSubscribed ? {
+                                background: '#1a1a1d',
+                                borderColor: 'rgba(255, 255, 255, 0.08)',
+                                color: '#a0a0a8',
+                                fontWeight: 600,
+                            } : {}}
                             onClick={() => setSubscribeModalVisible(true)}
                         >
                             {isSubscribed ? "修改订阅" : "订阅演员"}
                         </Button>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <div>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 20,
+                        flexWrap: 'wrap',
+                        gap: '12px'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <Button
                                 icon={<FilterOutlined />}
                                 onClick={() => setShowFilters(!showFilters)}
-                                style={{ marginRight: 8 }}
+                                style={{
+                                    background: showFilters ? 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)' : '#1a1a1d',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    color: showFilters ? '#0d0d0f' : '#d4a852',
+                                    fontWeight: showFilters ? 600 : 500,
+                                    height: '36px',
+                                    borderRadius: '8px',
+                                    transition: 'all 0.3s ease'
+                                }}
                             >
                                 筛选 {showFilters ? '▼' : '▶'}
                             </Button>
                             {actorVideos.length > 0 && (
-                                <span style={{ color: '#666', fontSize: '12px' }}>
-                                    共找到 {actorVideos.length} 个作品
+                                <span style={{
+                                    color: '#a0a0a8',
+                                    fontSize: '14px',
+                                    background: '#1a1a1d',
+                                    padding: '6px 16px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                                }}>
+                                    共 <span style={{ color: '#d4a852', fontWeight: 600 }}>{actorVideos.length}</span> 个作品
                                 </span>
                             )}
                         </div>
@@ -639,14 +798,53 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                         message.info('正在刷新作品列表...');
                                     }
                                 }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
+                                    borderColor: '#d4a852',
+                                    color: '#0d0d0f',
+                                    fontWeight: 600,
+                                    height: '36px',
+                                    borderRadius: '8px'
+                                }}
                             >
                                 刷新
+                            </Button>
+                        </Tooltip>
+                        <Tooltip title={batchSelect.isBatchMode ? "退出批量选择" : "批量选择"}>
+                            <Button
+                                icon={batchSelect.isBatchMode ? <CheckSquareOutlined /> : <BorderOutlined />}
+                                onClick={batchSelect.toggleBatchMode}
+                                style={{
+                                    background: batchSelect.isBatchMode ? 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)' : '#1a1a1d',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    color: batchSelect.isBatchMode ? '#0d0d0f' : '#d4a852',
+                                    fontWeight: batchSelect.isBatchMode ? 600 : 500,
+                                    height: '36px',
+                                    borderRadius: '8px',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                {batchSelect.isBatchMode ? '取消' : '批量'}
                             </Button>
                         </Tooltip>
                     </div>
 
                     {showFilters && (
-                        <Card size="small" style={{ marginBottom: 16 }}>
+                        <Card
+                            size="small"
+                            className="web-actor-filter-card"
+                            style={{
+                                marginBottom: 20,
+                                background: '#1a1a1d',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: '12px'
+                            }}
+                            styles={{
+                                body: {
+                                    padding: '20px'
+                                }
+                            }}
+                        >
                             <Row gutter={[16, 16]}>
                                 <Col span={12}>
                                     <div style={{ marginBottom: 8 }}>评分范围</div>
@@ -811,20 +1009,77 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                         ) : filteredVideos.length > 0 ? (
                             <>
                                 {filteredVideos.length !== actorVideos.length && (
-                                    <div style={{ marginBottom: 16, color: '#666', fontSize: '12px' }}>
-                                        筛选结果：{filteredVideos.length} / {actorVideos.length} 个作品
+                                    <div style={{
+                                        marginBottom: 16,
+                                        color: '#a0a0a8',
+                                        fontSize: '13px',
+                                        background: '#1a1a1d',
+                                        padding: '10px 16px',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(255, 255, 255, 0.08)'
+                                    }}>
+                                        筛选结果：
+                                        <span style={{ color: '#d4a852', fontWeight: 600, margin: '0 4px' }}>
+                                            {filteredVideos.length}
+                                        </span>
+                                        / {actorVideos.length} 个作品
                                     </div>
                                 )}
                                 <List
-                                    grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 3, xl: 4, xxl: 5 }}
+                                    grid={{ gutter: [20, 20], xs: 1, sm: 2, md: 3, lg: 4, xl: 4, xxl: 5 }}
                                     dataSource={filteredVideos}
                                     renderItem={(video: WebVideo, index: number) => {
                                 // 为每个视频生成一个唯一的ID用于加载状态跟踪
                                 const videoId = `${video.num}-${index}-${Math.random().toString(36).substring(2, 7)}`;
+                                const batchVideo: BatchSelectVideo = {
+                                    num: video.num,
+                                    title: video.title,
+                                    cover: video.cover,
+                                    url: video.url,
+                                    is_zh: video.is_zh,
+                                    is_uncensored: video.is_uncensored,
+                                    rank: video.rank,
+                                    publish_date: video.publish_date,
+                                    source: sourceType,
+                                };
+                                const isSelected = batchSelect.isSelected(video.num);
+
                                 return (
                                     <List.Item key={videoId}>
+                                        <div style={{ position: 'relative' }}>
+                                            {batchSelect.isBatchMode && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: 10,
+                                                    left: 10,
+                                                    zIndex: 10,
+                                                }}>
+                                                    <Checkbox
+                                                        checked={isSelected}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onChange={() => batchSelect.toggleVideoSelection(batchVideo)}
+                                                        style={{
+                                                            transform: 'scale(1.2)',
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            <div style={{
+                                                borderRadius: '14px',
+                                                overflow: 'hidden',
+                                                border: isSelected ? '2px solid #d4a852' : '2px solid transparent',
+                                                transition: 'all 0.2s ease',
+                                                opacity: batchSelect.isBatchMode && !isSelected ? 0.7 : 1,
+                                            }}>
                                         <Card
                                             hoverable
+                                            className="web-actor-video-card"
+                                            styles={{
+                                                body: {
+                                                    padding: '16px',
+                                                    background: '#141416',
+                                                }
+                                            }}
                                             cover={
                                                 video.cover ? (
                                                     <div style={{ height: 200, overflow: 'hidden' }}>
@@ -836,8 +1091,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                     </div>
                                                 )
                                             }
-                                            onClick={() => handleVideoSelect(video)}
-                                            actions={[
+                                            onClick={() => {
+                                                if (batchSelect.isBatchMode) {
+                                                    batchSelect.toggleVideoSelection(batchVideo);
+                                                } else {
+                                                    handleVideoSelect(video);
+                                                }
+                                            }}
+                                            actions={batchSelect.isBatchMode ? undefined : [
                                                 <Tooltip title="推送到下载器">
                                                     <Button
                                                         type="primary"
@@ -863,39 +1124,89 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                         display: '-webkit-box',
                                                         WebkitLineClamp: 2,
                                                         WebkitBoxOrient: 'vertical',
-                                                        lineHeight: '1.3'
+                                                        lineHeight: '1.4',
+                                                        color: '#f0f0f2',
+                                                        fontWeight: 600,
+                                                        fontSize: '14px',
+                                                        minHeight: '40px',
                                                     }}>
                                                         {video.title || video.num}
                                                     </div>
                                                 }
                                                 description={
                                                     <div>
-                                                        <div><strong>{video.num}</strong></div>
+                                                        <div style={{
+                                                            color: '#d4a852',
+                                                            fontWeight: 600,
+                                                            fontSize: '13px',
+                                                            marginBottom: '8px',
+                                                        }}>
+                                                            {video.num}
+                                                        </div>
                                                         {video.rank && (
                                                             <div className={'flex items-center my-2'}>
-                                                                <Rate disabled allowHalf value={video.rank} style={{ fontSize: 12 }} />
-                                                                <div className={'mx-1'}>{video.rank}分</div>
-                                                                {video.rank_count && <div>由{video.rank_count}人评价</div>}
+                                                                <Rate
+                                                                    disabled
+                                                                    allowHalf
+                                                                    value={video.rank}
+                                                                    style={{
+                                                                        fontSize: 12,
+                                                                        color: '#d4a852',
+                                                                    }}
+                                                                />
+                                                                <div className={'mx-1'} style={{ color: '#e8c780', fontWeight: 600 }}>
+                                                                    {video.rank}分
+                                                                </div>
+                                                                {video.rank_count && (
+                                                                    <div style={{ color: '#6a6a72', fontSize: '12px' }}>
+                                                                        由{video.rank_count}人评价
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
-                                                        <div>
-                                                            {video.is_zh && <span style={{ marginRight: 8, color: '#1890ff' }}>中文</span>}
-                                                            {video.is_uncensored && <span style={{ color: '#ff4d4f' }}>无码</span>}
+                                                        <div style={{ marginTop: '8px' }}>
+                                                            {video.is_zh && (
+                                                                <span className="web-actor-badge web-actor-badge-zh" style={{
+                                                                    marginRight: 8,
+                                                                    borderRadius: '4px',
+                                                                }}>
+                                                                    中文
+                                                                </span>
+                                                            )}
+                                                            {video.is_uncensored && (
+                                                                <span className="web-actor-badge web-actor-badge-uncensored">
+                                                                    无码
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                        {video.publish_date && <div style={{ marginTop: 4, color: '#8c8c8c', fontSize: '12px' }}>发行日期: {video.publish_date}</div>}
+                                                        {video.publish_date && (
+                                                            <div style={{
+                                                                marginTop: 8,
+                                                                color: '#6a6a72',
+                                                                fontSize: '12px',
+                                                            }}>
+                                                                发行日期: {video.publish_date}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 }
                                             />
                                         </Card>
+                                            </div>
+                                        </div>
                                     </List.Item>
                                 );
                             }}
                                 />
                             </>
                         ) : actorVideos.length > 0 ? (
-                            <Empty description="没有符合筛选条件的视频" />
+                            <div className="web-actor-empty">
+                                <Empty description="没有符合筛选条件的视频" />
+                            </div>
                         ) : (
-                            <Empty description="没有找到相关视频" />
+                            <div className="web-actor-empty">
+                                <Empty description="没有找到相关视频" />
+                            </div>
                         );
                     })()}
                 </>
@@ -977,6 +1288,44 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     onOk={handleSubscribeSuccess}
                 />
             )}
+
+            {/* 批量操作工具栏 */}
+            <BatchActionBar
+                visible={batchSelect.isBatchMode && selectedActor !== null}
+                selectedCount={batchSelect.selectedCount}
+                totalCount={actorVideos.length}
+                onSelectAll={() => {
+                    const batchVideos: BatchSelectVideo[] = actorVideos.map((video: WebVideo) => ({
+                        num: video.num,
+                        title: video.title,
+                        cover: video.cover,
+                        url: video.url,
+                        is_zh: video.is_zh,
+                        is_uncensored: video.is_uncensored,
+                        rank: video.rank,
+                        publish_date: video.publish_date,
+                        source: sourceType,
+                    }));
+                    batchSelect.selectAll(batchVideos);
+                }}
+                onUnselectAll={batchSelect.unselectAll}
+                onBatchDownload={() => setBatchDownloadModalVisible(true)}
+                onExit={batchSelect.exitBatchMode}
+            />
+
+            {/* 批量下载弹窗 */}
+            <BatchDownloadModal
+                open={batchDownloadModalVisible}
+                videos={batchSelect.getSelectedList()}
+                sourceType={sourceType}
+                onCancel={() => setBatchDownloadModalVisible(false)}
+                onComplete={(successCount, failCount) => {
+                    setBatchDownloadModalVisible(false);
+                    if (successCount > 0) {
+                        batchSelect.exitBatchMode();
+                    }
+                }}
+            />
         </div>
     );
 };

@@ -11,7 +11,7 @@ const IconButton = forwardRef<HTMLSpanElement, ComponentProps<any>>((props, ref)
 
 
     return (
-        <span ref={ref} {...otherProps}>
+        <span ref={ref} {...otherProps} style={{ display: 'inline-flex', alignItems: 'center', ...otherProps.style }}>
             <span
                 className={[Styles.container, currentTheme === 'dark' ? Styles.triggerDark : Styles.triggerLight].join(" ")}>
                 {children}

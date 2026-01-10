@@ -1,0 +1,311 @@
+/* TISSUE+ Actor Search Styles - 暗黑电影美学 */
+
+/* 演员卡片样式 */
+.web-actor-card {
+  text-align: center;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 12px;
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.web-actor-card:hover {
+  transform: translateY(-4px);
+  border-color: #d4a852;
+  box-shadow: 0 8px 24px rgba(212, 168, 82, 0.25);
+  background: #222226;
+}
+
+/* 演员头像容器 */
+.web-actor-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.web-actor-avatar-wrapper .ant-avatar {
+  border: 3px solid #d4a852 !important;
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.3);
+  transition: all 0.3s ease;
+}
+
+.web-actor-card:hover .web-actor-avatar-wrapper .ant-avatar {
+  box-shadow: 0 6px 16px rgba(212, 168, 82, 0.5);
+  transform: scale(1.05);
+}
+
+/* 暗色 AutoComplete 下拉菜单 */
+.dark-autocomplete .ant-select-dropdown {
+  background: #1a1a1d !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark-autocomplete .ant-select-item {
+  color: #f0f0f2 !important;
+  background: #1a1a1d !important;
+}
+
+.dark-autocomplete .ant-select-item-option-selected {
+  background: rgba(212, 168, 82, 0.2) !important;
+  color: #d4a852 !important;
+}
+
+.dark-autocomplete .ant-select-item-option-active {
+  background: rgba(212, 168, 82, 0.1) !important;
+}
+
+/* 暗色 Radio Group */
+.dark-radio-group .ant-radio-button-wrapper {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-radio-group .ant-radio-button-wrapper:hover {
+  color: #e8c780;
+}
+
+/* 输入框样式覆盖 */
+.ant-input {
+  background: #1a1a1d !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f0f0f2 !important;
+}
+
+.ant-input::placeholder {
+  color: #6a6a72 !important;
+}
+
+.ant-input:hover,
+.ant-input:focus {
+  border-color: #d4a852 !important;
+  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1) !important;
+}
+
+/* Select 组件样式 */
+.ant-select-selector {
+  background: #1a1a1d !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f0f0f2 !important;
+}
+
+.ant-select-arrow {
+  color: #a0a0a8 !important;
+}
+
+.ant-select-dropdown {
+  background: #1a1a1d !important;
+}
+
+.ant-select-item {
+  color: #f0f0f2 !important;
+}
+
+.ant-select-item-option-selected {
+  background: rgba(212, 168, 82, 0.2) !important;
+}
+
+/* Switch 开关样式 */
+.ant-switch {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.ant-switch-checked {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+}
+
+/* Empty 组件样式 */
+.ant-empty-description {
+  color: #6a6a72 !important;
+}
+
+/* Modal 弹窗样式 */
+.ant-modal-content {
+  background: #1a1a1d !important;
+}
+
+.ant-modal-header {
+  background: #0d0d0f !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.ant-modal-title {
+  color: #f0f0f2 !important;
+}
+
+.ant-modal-close-x {
+  color: #a0a0a8 !important;
+}
+
+.ant-modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 视频卡片样式 */
+.ant-card {
+  background: #1a1a1d;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.ant-card-head {
+  color: #f0f0f2;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.ant-card-body {
+  color: #a0a0a8;
+}
+
+/* Progress 进度条样式 */
+.ant-progress-bg {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+}
+
+.ant-progress-inner {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Rate 评分星星样式 */
+.ant-rate-star-full .anticon {
+  color: #d4a852 !important;
+}
+
+.ant-rate-star-half .ant-rate-star-first .anticon {
+  color: #d4a852 !important;
+}
+
+/* Tag 标签样式 */
+.ant-tag {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Collapse 折叠面板样式 */
+.ant-collapse {
+  background: transparent !important;
+  border: none !important;
+}
+
+.ant-collapse-item {
+  background: #1a1a1d !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  margin-bottom: 12px !important;
+}
+
+.ant-collapse-header {
+  color: #f0f0f2 !important;
+  padding: 16px !important;
+}
+
+.ant-collapse-content {
+  background: #0d0d0f !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.ant-collapse-content-box {
+  padding: 16px !important;
+}
+
+/* List 列表样式 */
+.ant-list-item {
+  color: #a0a0a8 !important;
+}
+
+.ant-list-item-meta-title {
+  color: #f0f0f2 !important;
+}
+
+.ant-list-item-meta-description {
+  color: #6a6a72 !important;
+}
+
+/* 链接样式 */
+a {
+  color: #d4a852;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #e8c780;
+}
+
+/* Button 按钮通用样式 */
+.ant-btn-default {
+  background: #1a1a1d !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #a0a0a8 !important;
+}
+
+.ant-btn-default:hover {
+  border-color: #d4a852 !important;
+  color: #d4a852 !important;
+}
+
+.ant-btn-primary {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+  border-color: #d4a852 !important;
+  color: #0d0d0f !important;
+  font-weight: 600 !important;
+}
+
+.ant-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(212, 168, 82, 0.35) !important;
+}
+
+/* Spin 加载样式 */
+.ant-spin-dot-item {
+  background: #d4a852 !important;
+}
+
+/* Statistic 统计样式 */
+.ant-statistic-title {
+  color: #a0a0a8 !important;
+}
+
+.ant-statistic-content {
+  color: #f0f0f2 !important;
+}
+
+/* Badge 徽章样式 */
+.ant-badge-count {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+  color: #0d0d0f !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3) !important;
+}
+
+/* Divider 分割线样式 */
+.ant-divider {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Tooltip 工具提示样式 */
+.ant-tooltip-inner {
+  background: #1a1a1d !important;
+  color: #f0f0f2 !important;
+}
+
+.ant-tooltip-arrow-content {
+  background: #1a1a1d !important;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0d0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4a852;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e8c780;
+}

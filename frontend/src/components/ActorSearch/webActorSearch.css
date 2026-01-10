@@ -1,0 +1,563 @@
+/* TISSUE+ Web Actor Search - 暗黑电影美学完整样式 */
+
+/* ========== 主容器样式 ========== */
+.web-actor-container {
+  padding: 24px;
+  background: linear-gradient(180deg, #0d0d0f 0%, #141416 50%, #0d0d0f 100%);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ========== 源切换按钮组 ========== */
+.web-actor-source-group {
+  margin-bottom: 20px;
+}
+
+.web-actor-source-group .ant-radio-button-wrapper {
+  background: #1a1a1d;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #a0a0a8;
+  height: 40px;
+  line-height: 38px;
+  padding: 0 24px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.web-actor-source-group .ant-radio-button-wrapper:hover {
+  color: #d4a852;
+  border-color: rgba(212, 168, 82, 0.3);
+}
+
+.web-actor-source-group .ant-radio-button-wrapper-checked {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  border-color: #d4a852;
+  color: #0d0d0f;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.3);
+}
+
+.web-actor-source-group .ant-radio-button-wrapper-checked::before {
+  background-color: transparent;
+}
+
+/* ========== 搜索框样式 ========== */
+.web-actor-search-input {
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  height: 48px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.web-actor-search-input:hover {
+  background: #1a1a1d !important;
+  border-color: rgba(212, 168, 82, 0.3) !important;
+}
+
+.web-actor-search-input:focus,
+.web-actor-search-input:focus-within {
+  background: #1a1a1d !important;
+  border-color: #d4a852 !important;
+  box-shadow: 0 0 0 3px rgba(212, 168, 82, 0.1) !important;
+}
+
+.web-actor-search-input input {
+  background: transparent !important;
+  color: #f0f0f2 !important;
+  font-size: 15px !important;
+}
+
+.web-actor-search-input input::placeholder {
+  color: #6a6a72 !important;
+}
+
+.web-actor-search-input .ant-input-prefix {
+  margin-right: 12px;
+}
+
+.web-actor-search-input .ant-input-suffix button {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  border: none;
+  color: #0d0d0f;
+  border-radius: 6px;
+  height: 32px;
+  padding: 0 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.web-actor-search-input .ant-input-suffix button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4);
+}
+
+/* ========== 下拉框样式 ========== */
+.web-actor-search-dropdown {
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(20px);
+  padding: 8px !important;
+}
+
+.web-actor-search-dropdown .ant-select-item {
+  color: #f0f0f2 !important;
+  border-radius: 8px !important;
+  margin-bottom: 4px !important;
+  transition: all 0.2s ease !important;
+  padding: 10px 12px !important;
+}
+
+.web-actor-search-dropdown .ant-select-item:hover {
+  background: #1a1a1d !important;
+}
+
+.web-actor-search-dropdown .ant-select-item-option-selected {
+  background: rgba(212, 168, 82, 0.15) !important;
+  border-left: 3px solid #d4a852 !important;
+  padding-left: 9px !important;
+}
+
+/* ========== 选中演员卡片 ========== */
+.web-actor-selected-card {
+  text-align: center;
+  margin: 32px 0;
+  padding: 32px;
+  background: linear-gradient(135deg, #141416 0%, #1a1a1d 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.web-actor-selected-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    #d4a852 25%,
+    #e8c780 50%,
+    #d4a852 75%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.web-actor-selected-card:hover::before {
+  opacity: 1;
+}
+
+.web-actor-selected-card:hover {
+  border-color: rgba(212, 168, 82, 0.3);
+  box-shadow: 0 12px 48px rgba(212, 168, 82, 0.15);
+  transform: translateY(-2px);
+}
+
+/* 演员头像包装器 */
+.web-actor-avatar-wrapper {
+  display: inline-block;
+  position: relative;
+  padding: 4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+}
+
+.web-actor-avatar-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(135deg, #d4a852, #e8c780);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: avatarGlow 2s ease-in-out infinite;
+}
+
+.web-actor-selected-card:hover .web-actor-avatar-wrapper::after {
+  opacity: 1;
+}
+
+@keyframes avatarGlow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.web-actor-avatar-wrapper .ant-avatar {
+  border: 4px solid #141416 !important;
+  background: #222226 !important;
+  transition: transform 0.3s ease;
+}
+
+.web-actor-selected-card:hover .web-actor-avatar-wrapper .ant-avatar {
+  transform: scale(1.05);
+}
+
+/* 演员名称 */
+.web-actor-selected-card h2 {
+  margin-top: 16px;
+  color: #f0f0f2;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 订阅按钮 */
+.web-actor-subscribe-btn {
+  margin-top: 16px;
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  border: none;
+  color: #0d0d0f;
+  font-weight: 600;
+  height: 44px;
+  padding: 0 32px;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+}
+
+.web-actor-subscribe-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 168, 82, 0.45);
+}
+
+.web-actor-subscribe-btn:active {
+  transform: translateY(0);
+}
+
+/* ========== 演员列表卡片 ========== */
+.web-actor-card {
+  text-align: center;
+  cursor: pointer;
+  padding: 16px;
+  border-radius: 16px;
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.web-actor-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(212, 168, 82, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.web-actor-card:hover::before {
+  left: 100%;
+}
+
+.web-actor-card:hover {
+  transform: translateY(-6px);
+  border-color: #d4a852;
+  box-shadow: 0 12px 32px rgba(212, 168, 82, 0.25);
+  background: #222226;
+}
+
+.web-actor-card .web-actor-avatar-wrapper {
+  padding: 3px;
+  margin-bottom: 12px;
+}
+
+.web-actor-card:hover .web-actor-avatar-wrapper {
+  transform: scale(1.1);
+}
+
+/* ========== 视频卡片样式 ========== */
+.web-actor-video-card {
+  background: #1a1a1d !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+}
+
+.web-actor-video-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  transition: border-color 0.3s ease;
+  pointer-events: none;
+}
+
+.web-actor-video-card:hover {
+  transform: translateY(-8px);
+  border-color: #d4a852 !important;
+  box-shadow: 0 16px 48px rgba(212, 168, 82, 0.3) !important;
+}
+
+.web-actor-video-card:hover::after {
+  border-color: rgba(212, 168, 82, 0.4);
+}
+
+.web-actor-video-card .ant-card-cover {
+  position: relative;
+  overflow: hidden;
+  background: #0d0d0f;
+}
+
+.web-actor-video-card .ant-card-cover img {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.web-actor-video-card:hover .ant-card-cover img {
+  transform: scale(1.08);
+}
+
+.web-actor-video-card .ant-card-body {
+  padding: 16px !important;
+  background: #1a1a1d !important;
+}
+
+.web-actor-video-card .ant-card-actions {
+  background: #141416 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.web-actor-video-card .ant-card-actions > li {
+  margin: 8px 0;
+}
+
+.web-actor-video-card .ant-card-actions button {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  border: none;
+  color: #0d0d0f;
+  transition: all 0.3s ease;
+}
+
+.web-actor-video-card .ant-card-actions button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.4);
+}
+
+/* 视频徽章 */
+.web-actor-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.web-actor-badge-zh {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  color: #0d0d0f;
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3);
+}
+
+.web-actor-badge-uncensored {
+  background: linear-gradient(135deg, #e8c780 0%, #d4a852 100%);
+  color: #0d0d0f;
+  box-shadow: 0 2px 8px rgba(232, 199, 128, 0.3);
+}
+
+/* ========== 筛选区域 ========== */
+.web-actor-filter-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.web-actor-filter-card:hover {
+  border-color: rgba(212, 168, 82, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== 加载状态 ========== */
+.web-actor-loading {
+  text-align: center;
+  padding: 80px 24px;
+  background: #141416;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.web-actor-loading .ant-spin-dot-item {
+  background: #d4a852 !important;
+}
+
+/* ========== 空状态 ========== */
+.web-actor-empty {
+  padding: 80px 24px;
+  background: linear-gradient(135deg, #141416 0%, #1a1a1d 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.web-actor-empty .ant-empty-description {
+  color: #a0a0a8;
+  font-size: 15px;
+}
+
+/* ========== 悬浮按钮 ========== */
+.web-actor-float-btn {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+  color: #0d0d0f !important;
+  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.4) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.web-actor-float-btn:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 24px rgba(212, 168, 82, 0.5) !important;
+}
+
+/* ========== 分节标题 ========== */
+.web-actor-section-title {
+  color: #f0f0f2;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 32px 0 20px;
+  padding-left: 16px;
+  border-left: 4px solid #d4a852;
+  letter-spacing: 0.5px;
+}
+
+/* ========== 统计信息 ========== */
+.web-actor-stats {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.web-actor-stat-item {
+  padding: 12px 24px;
+  background: #0d0d0f;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.web-actor-stat-item:hover {
+  border-color: rgba(212, 168, 82, 0.3);
+  transform: translateY(-2px);
+}
+
+.web-actor-stat-label {
+  color: #a0a0a8;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.web-actor-stat-value {
+  color: #d4a852;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+  .web-actor-container {
+    padding: 16px;
+  }
+
+  .web-actor-selected-card {
+    padding: 24px 16px;
+    margin: 24px 0;
+  }
+
+  .web-actor-selected-card h2 {
+    font-size: 22px;
+  }
+
+  .web-actor-avatar-wrapper {
+    transform: scale(0.9);
+  }
+
+  .web-actor-section-title {
+    font-size: 18px;
+    margin: 24px 0 16px;
+  }
+
+  .web-actor-video-card:hover {
+    transform: translateY(-4px);
+  }
+}
+
+/* ========== 动画效果 ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.web-actor-card,
+.web-actor-video-card,
+.web-actor-selected-card {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.web-actor-card:nth-child(n) {
+  animation-delay: calc(0.05s * var(--index, 0));
+}
+
+/* ========== 滚动条优化 ========== */
+.web-actor-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.web-actor-container::-webkit-scrollbar-track {
+  background: #0d0d0f;
+  border-radius: 4px;
+}
+
+.web-actor-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4a852 0%, #e8c780 100%);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.web-actor-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #e8c780 0%, #d4a852 100%);
+}

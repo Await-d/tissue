@@ -1,3 +1,389 @@
-.form :global(.ant-form-item){
+/* 视频详情 - 暗黑电影美学风格 */
+
+.form :global(.ant-form-item) {
     margin-bottom: 0 !important;
+}
+
+/* 主容器动画 */
+.container {
+    animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 左侧封面区域 */
+.coverSection {
+    animation: slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 电影海报风格封面容器 */
+.posterContainer {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a1d 0%, #141416 100%);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.posterContainer:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(212, 168, 82, 0.15),
+        0 0 0 1px rgba(212, 168, 82, 0.3);
+}
+
+/* 底部渐变遮罩 */
+.posterContainer::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to top, rgba(13, 13, 15, 0.9), transparent);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 信息卡片区域 */
+.infoSection {
+    animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s backwards;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 深色玻璃态信息卡片 */
+.infoCard {
+    background: rgba(26, 26, 29, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.infoCard:hover {
+    background: rgba(34, 34, 38, 0.85);
+    border-color: rgba(212, 168, 82, 0.2);
+    box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(212, 168, 82, 0.1);
+}
+
+/* 表单项标签样式 */
+.form :global(.ant-form-item-label > label) {
+    color: #a0a0a8 !important;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* 输入框样式 */
+.form :global(.ant-input),
+.form :global(.ant-input-number),
+.form :global(.ant-picker) {
+    background: rgba(13, 13, 15, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f0f0f2 !important;
+    border-radius: 6px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.form :global(.ant-input:hover),
+.form :global(.ant-input-number:hover),
+.form :global(.ant-picker:hover) {
+    border-color: rgba(212, 168, 82, 0.3) !important;
+    background: rgba(20, 20, 22, 0.8) !important;
+}
+
+.form :global(.ant-input:focus),
+.form :global(.ant-input-focused),
+.form :global(.ant-input-number-focused),
+.form :global(.ant-picker-focused) {
+    border-color: #d4a852 !important;
+    background: rgba(20, 20, 22, 0.9) !important;
+    box-shadow: 0 0 0 3px rgba(212, 168, 82, 0.15) !important;
+}
+
+.form :global(.ant-input::placeholder) {
+    color: #6a6a72 !important;
+}
+
+/* 文本域样式 */
+.form :global(.ant-input-textarea textarea) {
+    background: rgba(13, 13, 15, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f0f0f2 !important;
+    border-radius: 6px !important;
+}
+
+.form :global(.ant-input-textarea textarea:hover) {
+    border-color: rgba(212, 168, 82, 0.3) !important;
+}
+
+.form :global(.ant-input-textarea-focused textarea) {
+    border-color: #d4a852 !important;
+    box-shadow: 0 0 0 3px rgba(212, 168, 82, 0.15) !important;
+}
+
+/* 标签选择器样式 */
+.form :global(.ant-select-selector) {
+    background: rgba(13, 13, 15, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px !important;
+}
+
+.form :global(.ant-select-focused .ant-select-selector) {
+    border-color: #d4a852 !important;
+    box-shadow: 0 0 0 3px rgba(212, 168, 82, 0.15) !important;
+}
+
+/* 金色标签样式 */
+.form :global(.ant-select-selection-item) {
+    background: linear-gradient(135deg, #b08d3e 0%, #d4a852 100%) !important;
+    color: #0d0d0f !important;
+    border: 1px solid rgba(212, 168, 82, 0.5) !important;
+    border-radius: 4px !important;
+    font-weight: 500;
+    padding: 2px 8px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form :global(.ant-select-selection-item:hover) {
+    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+    box-shadow: 0 0 12px rgba(212, 168, 82, 0.4);
+    transform: translateY(-1px);
+}
+
+.form :global(.ant-select-selection-item-remove) {
+    color: rgba(13, 13, 15, 0.7) !important;
+}
+
+/* Checkbox 样式 */
+.form :global(.ant-checkbox-wrapper) {
+    color: #f0f0f2 !important;
+}
+
+.form :global(.ant-checkbox-inner) {
+    background: rgba(13, 13, 15, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.form :global(.ant-checkbox-checked .ant-checkbox-inner) {
+    background: linear-gradient(135deg, #b08d3e 0%, #d4a852 100%) !important;
+    border-color: #d4a852 !important;
+}
+
+/* 评分输入框特殊样式 */
+.ratingInput {
+    position: relative;
+}
+
+.ratingInput::before {
+    content: '★';
+    position: absolute;
+    left: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #d4a852;
+    font-size: 18px;
+    animation: starGlow 2s ease-in-out infinite;
+}
+
+@keyframes starGlow {
+    0%, 100% {
+        text-shadow: 0 0 8px rgba(212, 168, 82, 0.3);
+    }
+    50% {
+        text-shadow: 0 0 16px rgba(212, 168, 82, 0.6);
+    }
+}
+
+/* 演员头像优化 */
+.actorsContainer :global(.ant-avatar) {
+    border: 2px solid rgba(212, 168, 82, 0.5) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.actorsContainer :global(.ant-avatar:hover) {
+    border-color: #d4a852 !important;
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(212, 168, 82, 0.4);
+    transform: translateY(-4px) scale(1.05);
+}
+
+/* 演员名称样式 */
+.actorsContainer :global(.ant-typography) {
+    color: #f0f0f2 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* 网站标签样式 */
+.websiteContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.websiteTag {
+    background: rgba(26, 26, 29, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #a0a0a8;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.websiteTag:hover {
+    background: rgba(212, 168, 82, 0.15);
+    border-color: rgba(212, 168, 82, 0.3);
+    color: #e8c780;
+    box-shadow: 0 0 12px rgba(212, 168, 82, 0.2);
+}
+
+/* Modal 覆盖样式 */
+:global(.ant-modal-content) {
+    background: #1a1a1d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+}
+
+:global(.ant-modal-header) {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+:global(.ant-modal-title) {
+    color: #f0f0f2 !important;
+    font-weight: 600;
+}
+
+:global(.ant-modal-close) {
+    color: #a0a0a8 !important;
+}
+
+:global(.ant-modal-close:hover) {
+    color: #d4a852 !important;
+}
+
+:global(.ant-modal-footer) {
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(13, 13, 15, 0.5) !important;
+}
+
+/* 按钮样式优化 */
+:global(.ant-btn-primary) {
+    background: linear-gradient(135deg, #b08d3e 0%, #d4a852 100%) !important;
+    border: none !important;
+    color: #0d0d0f !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(212, 168, 82, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+:global(.ant-btn-primary:hover) {
+    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+    box-shadow: 0 6px 20px rgba(212, 168, 82, 0.5) !important;
+    transform: translateY(-2px);
+}
+
+:global(.ant-btn-default) {
+    background: rgba(26, 26, 29, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f0f0f2 !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+:global(.ant-btn-default:hover) {
+    background: rgba(34, 34, 38, 0.9) !important;
+    border-color: rgba(212, 168, 82, 0.3) !important;
+    color: #e8c780 !important;
+}
+
+:global(.ant-btn-dangerous) {
+    background: rgba(180, 40, 40, 0.15) !important;
+    border: 1px solid rgba(180, 40, 40, 0.3) !important;
+    color: #ff6b6b !important;
+}
+
+:global(.ant-btn-dangerous:hover) {
+    background: rgba(180, 40, 40, 0.25) !important;
+    border-color: rgba(180, 40, 40, 0.5) !important;
+}
+
+/* Loading 样式 */
+:global(.ant-spin-dot-item) {
+    background-color: #d4a852 !important;
+}
+
+/* 下拉框样式 */
+:global(.ant-select-dropdown) {
+    background: #1a1a1d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+:global(.ant-select-item) {
+    color: #f0f0f2 !important;
+}
+
+:global(.ant-select-item-option-selected) {
+    background: rgba(212, 168, 82, 0.15) !important;
+    color: #e8c780 !important;
+}
+
+:global(.ant-select-item-option-active) {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .posterContainer {
+        margin-bottom: 24px;
+    }
+
+    .infoCard {
+        padding: 16px;
+    }
 }

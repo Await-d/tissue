@@ -5,12 +5,26 @@
     padding: 8px;
     cursor: pointer;
     border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
 .triggerLight:hover {
     background: rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
 }
 
 .triggerDark:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: #222226;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 168, 82, 0.15);
+}
+
+.triggerDark:active {
+    transform: translateY(0);
+    background: #1a1a1d;
+}
+
+.triggerLight:active {
+    transform: translateY(0);
 }
