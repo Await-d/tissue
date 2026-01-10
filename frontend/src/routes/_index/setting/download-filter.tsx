@@ -6,7 +6,7 @@ import {
   Button,
   Card,
   Space,
-  message,
+  App,
   Divider,
   Row,
   Col,
@@ -18,9 +18,9 @@ import {
   Tooltip,
   Typography
 } from 'antd'
-import { 
-  InfoCircleOutlined, 
-  ExperimentOutlined, 
+import {
+  InfoCircleOutlined,
+  ExperimentOutlined,
   ReloadOutlined,
   SettingOutlined,
   FilterOutlined
@@ -36,12 +36,12 @@ export const Route = createFileRoute('/_index/setting/download-filter')({
 const { Text, Title } = Typography
 
 function DownloadFilterSettings() {
+  const { message } = App.useApp()
   const [form] = Form.useForm()
   const [testModalVisible, setTestModalVisible] = useState(false)
   const [testMagnetUrl, setTestMagnetUrl] = useState('')
   const [testResult, setTestResult] = useState<api.MagnetFilterResult | null>(null)
 
-  // 获取当前设置
   const { loading } = useRequest(api.getFilterSettings, {
     onSuccess: (res) => {
       if (res.data) {
@@ -53,7 +53,6 @@ function DownloadFilterSettings() {
     }
   })
 
-  // 保存设置
   const { run: saveSettings, loading: saving } = useRequest(api.saveFilterSettings, {
     manual: true,
     onSuccess: (res) => {
@@ -68,13 +67,11 @@ function DownloadFilterSettings() {
     }
   })
 
-  // 重置为默认设置
   const { run: resetSettings, loading: resetting } = useRequest(api.resetToDefaultSettings, {
     manual: true,
     onSuccess: (res) => {
       if (res.success) {
         message.success('设置已重置为默认值')
-        // 重新获取设置
         window.location.reload()
       } else {
         message.error(res.message || '重置失败')
@@ -82,7 +79,6 @@ function DownloadFilterSettings() {
     }
   })
 
-  // 测试磁力链接
   const { run: testMagnet, loading: testingMagnet } = useRequest(api.testMagnetFilter, {
     manual: true,
     onSuccess: (res) => {
@@ -95,9 +91,7 @@ function DownloadFilterSettings() {
     }
   })
 
-  // 表单提交
   const handleSubmit = (values: any) => {
-    // 处理数据格式
     const settings = {
       min_file_size_mb: values.min_file_size_mb || 300,
       max_file_size_mb: values.max_file_size_mb || null,
@@ -107,11 +101,9 @@ function DownloadFilterSettings() {
       media_files_only: values.media_files_only === true,
       include_subtitles: values.include_subtitles !== false,
     }
-
     saveSettings(settings)
   }
 
-  // 测试磁力链接
   const handleTestMagnet = () => {
     if (!testMagnetUrl.trim()) {
       message.error('请输入磁力链接')
@@ -120,295 +112,322 @@ function DownloadFilterSettings() {
     testMagnet(testMagnetUrl)
   }
 
-  // 渲染测试结果
   const renderTestResult = () => {
     if (!testResult) return null
 
     return (
-      <div style={{ marginTop: 16 }}>
-        <Row gutter={16} style={{ marginBottom: 16 }}>
+      <div className="mt-4">
+        <Row gutter={16} className="mb-4">
           <Col span={6}>
-            <Statistic 
-              title="原始文件数" 
-              value={testResult.total_files} 
-            />
+            <div className="bg-[#1a1a1d] p-4 rounded-lg border border-white/8">
+              <div className="text-[#6a6a72] text-xs mb-1">原始文件数</div>
+              <div className="text-[#f0f0f2] text-2xl font-bold">{testResult.total_files}</div>
+            </div>
           </Col>
           <Col span={6}>
-            <Statistic 
-              title="过滤后文件数" 
-              value={testResult.filtered_files} 
-              valueStyle={{ color: testResult.filtered_files > 0 ? '#3f8600' : '#cf1322' }}
-            />
+            <div className="bg-[#1a1a1d] p-4 rounded-lg border border-white/8">
+              <div className="text-[#6a6a72] text-xs mb-1">过滤后文件数</div>
+              <div className="text-[#d4a852] text-2xl font-bold">{testResult.filtered_files}</div>
+            </div>
           </Col>
           <Col span={6}>
-            <Statistic 
-              title="过滤后大小" 
-              value={testResult.filtered_size_mb} 
-              suffix="MB" 
-              precision={1}
-            />
+            <div className="bg-[#1a1a1d] p-4 rounded-lg border border-white/8">
+              <div className="text-[#6a6a72] text-xs mb-1">过滤后大小</div>
+              <div className="text-[#f0f0f2] text-2xl font-bold">{testResult.filtered_size_mb}<span className="text-sm text-[#6a6a72] ml-1">MB</span></div>
+            </div>
           </Col>
           <Col span={6}>
-            <div>
-              <Text strong>建议下载：</Text>
-              <Tag color={testResult.should_download ? 'success' : 'error'}>
+            <div className="bg-[#1a1a1d] p-4 rounded-lg border border-white/8">
+              <div className="text-[#6a6a72] text-xs mb-1">建议下载</div>
+              <Tag color={testResult.should_download ? 'success' : 'error'} className="mt-2">
                 {testResult.should_download ? '是' : '否'}
               </Tag>
             </div>
           </Col>
         </Row>
 
-        <Alert 
-          message={testResult.filter_reason} 
+        <Alert
+          message={testResult.filter_reason}
           type={testResult.should_download ? 'success' : 'warning'}
-          style={{ marginBottom: 16 }}
+          className="mb-4 bg-[#1a1a1d] border-white/8"
         />
 
         {testResult.files.length > 0 && (
-          <Card title="过滤后的文件" size="small">
+          <div className="bg-[#1a1a1d] rounded-lg border border-white/8 p-4">
+            <div className="text-[#e8c780] font-semibold mb-3">过滤后的文件</div>
             {testResult.files.map((file, index) => (
-              <div key={index} style={{ marginBottom: 8 }}>
-                <Text>{file.name}</Text>
-                <Tag color="blue" style={{ marginLeft: 8 }}>
-                  {file.size_mb} MB
-                </Tag>
+              <div key={index} className="mb-2 p-2 bg-[#141416] rounded border border-white/8">
+                <Text className="text-[#f0f0f2]">{file.name}</Text>
+                <Tag color="blue" className="ml-2">{file.size_mb} MB</Tag>
                 {file.is_video && <Tag color="green">视频</Tag>}
                 {file.is_sample && <Tag color="orange">样本</Tag>}
               </div>
             ))}
-          </Card>
+          </div>
         )}
       </div>
     )
   }
 
   return (
-    <div>
-      <Card title={
-        <Space>
-          <FilterOutlined />
-          下载过滤设置
-        </Space>
-      }>
-        <Alert
-          message="下载过滤功能说明"
-          description="此功能会分析种子中的文件，根据设置的规则过滤掉不需要的文件，只下载符合条件的内容。"
-          type="info"
-          showIcon
-          style={{ marginBottom: 24 }}
-        />
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="bg-[#1a1a1d] rounded-2xl border border-white/8 shadow-2xl overflow-hidden">
+        {/* 页面标题 */}
+        <div className="px-8 py-6 border-b border-white/8 bg-gradient-to-r from-[#141416] to-[#1a1a1d]">
+          <h2 className="text-2xl font-bold text-[#d4a852] flex items-center gap-3">
+            <span className="w-1.5 h-8 bg-gradient-to-b from-[#d4a852] to-[#b08d3e] rounded-full"></span>
+            下载过滤设置
+          </h2>
+          <p className="text-[#a0a0a8] text-sm mt-2 ml-6">智能过滤种子文件，只下载符合条件的内容</p>
+        </div>
 
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{
-            min_file_size_mb: 300,
-            enable_smart_filter: true,
-            skip_sample_files: true,
-            skip_subtitle_only: true,
-            media_files_only: false,
-            include_subtitles: true
-          }}
-        >
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item
-                name="min_file_size_mb"
-                label={
-                  <Space>
-                    最小文件大小 (MB)
-                    <Tooltip title="小于此大小的文件将被过滤掉">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
-                }
-                rules={[{ required: true, message: '请输入最小文件大小' }]}
-              >
-                <InputNumber
-                  min={1}
-                  max={10000}
-                  placeholder="300"
-                  style={{ width: '100%' }}
-                  addonAfter="MB"
-                />
-              </Form.Item>
-            </Col>
+        <div className="p-8">
+          <Alert
+            message="下载过滤功能说明"
+            description="此功能会分析种子中的文件，根据设置的规则过滤掉不需要的文件，只下载符合条件的内容。"
+            type="info"
+            showIcon
+            className="mb-6 bg-[#141416] border-[#d4a852]/20"
+          />
 
-            <Col span={12}>
-              <Form.Item
-                name="max_file_size_mb"
-                label={
-                  <Space>
-                    最大文件大小 (MB)
-                    <Tooltip title="大于此大小的文件将被过滤掉，留空表示无限制">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
-                }
-              >
-                <InputNumber
-                  min={1}
-                  max={50000}
-                  placeholder="无限制"
-                  style={{ width: '100%' }}
-                  addonAfter="MB"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            initialValues={{
+              min_file_size_mb: 300,
+              enable_smart_filter: true,
+              skip_sample_files: true,
+              skip_subtitle_only: true,
+              media_files_only: false,
+              include_subtitles: true
+            }}
+          >
+            {/* 文件大小过滤 */}
+            <div className="mb-8">
+              <h3 className="text-[#e8c780] text-lg font-semibold mb-4 flex items-center gap-2">
+                <span className="w-1 h-5 bg-[#d4a852] rounded-full"></span>
+                文件大小过滤
+              </h3>
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item
+                    name="min_file_size_mb"
+                    label={
+                      <span className="text-[#f0f0f2] flex items-center gap-2">
+                        最小文件大小 (MB)
+                        <Tooltip title="小于此大小的文件将被过滤掉">
+                          <InfoCircleOutlined className="text-[#6a6a72]" />
+                        </Tooltip>
+                      </span>
+                    }
+                    rules={[{ required: true, message: '请输入最小文件大小' }]}
+                  >
+                    <InputNumber
+                      min={1}
+                      max={10000}
+                      placeholder="300"
+                      className="w-full bg-[#141416] border-white/8 text-[#f0f0f2] hover:border-[#d4a852]/50 focus:border-[#d4a852] focus:shadow-[0_0_0_2px_rgba(212,168,82,0.1)]"
+                    />
+                  </Form.Item>
+                </Col>
 
-          <Row gutter={24}>
-            <Col span={8}>
-              <Form.Item
-                name="enable_smart_filter"
-                label="启用智能过滤"
-                valuePropName="checked"
-              >
-                <Switch 
-                  checkedChildren="开启" 
-                  unCheckedChildren="关闭"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="max_file_size_mb"
+                    label={
+                      <span className="text-[#f0f0f2] flex items-center gap-2">
+                        最大文件大小 (MB)
+                        <Tooltip title="大于此大小的文件将被过滤掉，留空表示无限制">
+                          <InfoCircleOutlined className="text-[#6a6a72]" />
+                        </Tooltip>
+                      </span>
+                    }
+                  >
+                    <InputNumber
+                      min={1}
+                      max={50000}
+                      placeholder="无限制"
+                      className="w-full bg-[#141416] border-white/8 text-[#f0f0f2] hover:border-[#d4a852]/50 focus:border-[#d4a852] focus:shadow-[0_0_0_2px_rgba(212,168,82,0.1)]"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
 
-            <Col span={8}>
-              <Form.Item
-                name="skip_sample_files"
-                label="跳过样本文件"
-                valuePropName="checked"
-              >
-                <Switch 
-                  checkedChildren="跳过" 
-                  unCheckedChildren="保留"
-                />
-              </Form.Item>
-            </Col>
+            {/* 智能过滤选项 */}
+            <div className="mb-8 pt-8 border-t border-white/8">
+              <h3 className="text-[#e8c780] text-lg font-semibold mb-4 flex items-center gap-2">
+                <span className="w-1 h-5 bg-[#d4a852] rounded-full"></span>
+                智能过滤选项
+              </h3>
+              <Row gutter={24}>
+                <Col span={8}>
+                  <Form.Item
+                    name="enable_smart_filter"
+                    label={<span className="text-[#f0f0f2]">启用智能过滤</span>}
+                    valuePropName="checked"
+                    className="mb-0"
+                  >
+                    <Switch className="custom-switch-gold" />
+                  </Form.Item>
+                </Col>
 
-            <Col span={8}>
-              <Form.Item
-                name="media_files_only"
-                label={
-                  <Space>
-                    只保留媒体文件
-                    <Tooltip title="启用后只保留视频文件和字幕文件，过滤其他所有文件类型">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
-                }
-                valuePropName="checked"
-              >
-                <Switch 
-                  checkedChildren="开启" 
-                  unCheckedChildren="关闭"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+                <Col span={8}>
+                  <Form.Item
+                    name="skip_sample_files"
+                    label={<span className="text-[#f0f0f2]">跳过样本文件</span>}
+                    valuePropName="checked"
+                    className="mb-0"
+                  >
+                    <Switch className="custom-switch-gold" />
+                  </Form.Item>
+                </Col>
 
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item
-                name="include_subtitles"
-                label={
-                  <Space>
-                    包含字幕文件
-                    <Tooltip title="在媒体文件模式下是否包含字幕文件">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
-                }
-                valuePropName="checked"
-              >
-                <Switch 
-                  checkedChildren="包含" 
-                  unCheckedChildren="排除"
-                />
-              </Form.Item>
-            </Col>
+                <Col span={8}>
+                  <Form.Item
+                    name="media_files_only"
+                    label={
+                      <span className="text-[#f0f0f2] flex items-center gap-2">
+                        只保留媒体文件
+                        <Tooltip title="启用后只保留视频文件和字幕文件，过滤其他所有文件类型">
+                          <InfoCircleOutlined className="text-[#6a6a72]" />
+                        </Tooltip>
+                      </span>
+                    }
+                    valuePropName="checked"
+                    className="mb-0"
+                  >
+                    <Switch className="custom-switch-gold" />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
 
-            <Col span={12}>
-              <Form.Item
-                name="skip_subtitle_only"
-                label={
-                  <Space>
-                    跳过纯字幕文件
-                    <Tooltip title="在非媒体文件模式下是否跳过字幕文件">
-                      <InfoCircleOutlined />
-                    </Tooltip>
-                  </Space>
-                }
-                valuePropName="checked"
-              >
-                <Switch 
-                  checkedChildren="跳过" 
-                  unCheckedChildren="保留"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+            {/* 字幕控制 */}
+            <div className="mb-8 pt-8 border-t border-white/8">
+              <h3 className="text-[#e8c780] text-lg font-semibold mb-4 flex items-center gap-2">
+                <span className="w-1 h-5 bg-[#d4a852] rounded-full"></span>
+                字幕控制
+              </h3>
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item
+                    name="include_subtitles"
+                    label={
+                      <span className="text-[#f0f0f2] flex items-center gap-2">
+                        包含字幕文件
+                        <Tooltip title="在媒体文件模式下是否包含字幕文件">
+                          <InfoCircleOutlined className="text-[#6a6a72]" />
+                        </Tooltip>
+                      </span>
+                    }
+                    valuePropName="checked"
+                    className="mb-0"
+                  >
+                    <Switch className="custom-switch-gold" />
+                  </Form.Item>
+                </Col>
 
-          <Divider />
+                <Col span={12}>
+                  <Form.Item
+                    name="skip_subtitle_only"
+                    label={
+                      <span className="text-[#f0f0f2] flex items-center gap-2">
+                        跳过纯字幕文件
+                        <Tooltip title="在非媒体文件模式下是否跳过字幕文件">
+                          <InfoCircleOutlined className="text-[#6a6a72]" />
+                        </Tooltip>
+                      </span>
+                    }
+                    valuePropName="checked"
+                    className="mb-0"
+                  >
+                    <Switch className="custom-switch-gold" />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
 
-          <Form.Item>
-            <Space>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
+            <div className="flex justify-center gap-4 pt-6 border-t border-white/8">
+              <Button
+                type="primary"
+                htmlType="submit"
                 loading={saving}
+                size="large"
                 icon={<SettingOutlined />}
+                className="bg-gradient-to-r from-[#d4a852] to-[#b08d3e] border-0 text-[#0d0d0f] font-semibold hover:from-[#e8c780] hover:to-[#d4a852] shadow-lg hover:shadow-[#d4a852]/20"
               >
                 保存设置
               </Button>
 
-              <Button 
+              <Button
                 onClick={() => setTestModalVisible(true)}
+                size="large"
                 icon={<ExperimentOutlined />}
+                className="bg-[#222226] border-white/8 text-[#d4a852] hover:border-[#d4a852] hover:text-[#e8c780]"
               >
                 测试过滤
               </Button>
 
-              <Button 
-                onClick={resetSettings} 
+              <Button
+                onClick={resetSettings}
                 loading={resetting}
+                size="large"
                 icon={<ReloadOutlined />}
+                className="bg-[#222226] border-white/8 text-[#a0a0a8] hover:border-white/20 hover:text-[#f0f0f2]"
               >
                 重置为默认
               </Button>
-            </Space>
-          </Form.Item>
-        </Form>
+            </div>
+          </Form>
 
-        <Divider />
+          {/* 使用说明 */}
+          <div className="mt-8 pt-8 border-t border-white/8">
+            <div className="bg-[#141416] rounded-lg p-6 border border-white/8">
+              <h4 className="text-[#e8c780] text-base font-semibold mb-4">功能特点</h4>
+              <ul className="text-[#a0a0a8] space-y-2 mb-6">
+                <li className="flex items-start gap-2">
+                  <span className="text-[#d4a852] mt-1">•</span>
+                  <span><span className="text-[#f0f0f2] font-medium">文件大小过滤</span>：设置最小和最大文件大小限制</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#d4a852] mt-1">•</span>
+                  <span><span className="text-[#f0f0f2] font-medium">智能过滤</span>：自动识别和过滤样本文件、宣传文件等</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#d4a852] mt-1">•</span>
+                  <span><span className="text-[#f0f0f2] font-medium">媒体文件模式</span>：只保留视频文件和字幕文件，过滤其他类型</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#d4a852] mt-1">•</span>
+                  <span><span className="text-[#f0f0f2] font-medium">字幕控制</span>：可单独控制是否包含字幕文件</span>
+                </li>
+              </ul>
 
-        {/* 使用说明 */}
-        <Card type="inner" title="使用说明" size="small">
-          <div style={{ color: '#666', lineHeight: '1.6' }}>
-            <Title level={5}>功能特点：</Title>
-            <ul>
-              <li><strong>文件大小过滤</strong>：设置最小和最大文件大小限制</li>
-              <li><strong>智能过滤</strong>：自动识别和过滤样本文件、宣传文件等</li>
-              <li><strong>媒体文件模式</strong>：只保留视频文件和字幕文件，过滤其他类型</li>
-              <li><strong>字幕控制</strong>：可单独控制是否包含字幕文件</li>
-              <li><strong>实时生效</strong>：新设置会应用到后续的下载任务</li>
-            </ul>
-            
-            <Title level={5}>注意事项：</Title>
-            <ul>
-              <li>过滤规则会应用到所有新添加的种子</li>
-              <li>已存在的种子需要手动应用过滤规则</li>
-              <li>建议合理设置文件大小，避免过滤掉重要内容</li>
-              <li><strong>媒体文件模式</strong>：开启后只保留视频和字幕文件，忽略图片、文档等</li>
-              <li><strong>字幕控制</strong>：在媒体文件模式下，可选择是否包含字幕文件</li>
-              <li>样本文件通常很小，建议保持"跳过样本文件"开启</li>
-            </ul>
+              <h4 className="text-[#e8c780] text-base font-semibold mb-4">注意事项</h4>
+              <ul className="text-[#a0a0a8] space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-[#d4a852] mt-1">•</span>
+                  <span>过滤规则会应用到所有新添加的种子</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#d4a852] mt-1">•</span>
+                  <span>建议合理设置文件大小，避免过滤掉重要内容</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-[#d4a852] mt-1">•</span>
+                  <span>样本文件通常很小，建议保持"跳过样本文件"开启</span>
+                </li>
+              </ul>
+            </div>
           </div>
-        </Card>
-      </Card>
+        </div>
+      </div>
 
       {/* 测试磁力链接对话框 */}
       <Modal
-        title="测试过滤规则"
+        title={<span className="text-[#d4a852]">测试过滤规则</span>}
         open={testModalVisible}
         onCancel={() => {
           setTestModalVisible(false)
@@ -417,24 +436,29 @@ function DownloadFilterSettings() {
         }}
         footer={null}
         width={800}
+        className="dark-modal"
       >
-        <Space.Compact style={{ width: '100%', marginBottom: 16 }}>
-          <Input
-            placeholder="输入磁力链接进行测试..."
-            value={testMagnetUrl}
-            onChange={(e) => setTestMagnetUrl(e.target.value)}
-            onPressEnter={handleTestMagnet}
-          />
-          <Button 
-            type="primary" 
-            onClick={handleTestMagnet}
-            loading={testingMagnet}
-          >
-            测试
-          </Button>
-        </Space.Compact>
+        <div className="bg-[#1a1a1d] p-6 rounded-lg">
+          <div className="flex gap-2 mb-4">
+            <Input
+              placeholder="输入磁力链接进行测试..."
+              value={testMagnetUrl}
+              onChange={(e) => setTestMagnetUrl(e.target.value)}
+              onPressEnter={handleTestMagnet}
+              className="flex-1 bg-[#141416] border-white/8 text-[#f0f0f2] hover:border-[#d4a852]/50 focus:border-[#d4a852] focus:shadow-[0_0_0_2px_rgba(212,168,82,0.1)]"
+            />
+            <Button
+              type="primary"
+              onClick={handleTestMagnet}
+              loading={testingMagnet}
+              className="bg-gradient-to-r from-[#d4a852] to-[#b08d3e] border-0 text-[#0d0d0f] hover:from-[#e8c780] hover:to-[#d4a852]"
+            >
+              测试
+            </Button>
+          </div>
 
-        {renderTestResult()}
+          {renderTestResult()}
+        </div>
       </Modal>
     </div>
   )
