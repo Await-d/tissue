@@ -89,7 +89,8 @@ class Spider:
         logger.info(f"初始化爬虫: {self.name}, 域名: {self.host}")
 
     @abstractmethod
-    def get_info(self, num: str, url: str = None, include_downloads: bool = False, include_previews: bool = False):
+    def get_info(self, num: str, url: str = None, include_downloads: bool = False, include_previews: bool = False,
+                include_comments: bool = False):
         pass
 
     # 获取网站演员列表
