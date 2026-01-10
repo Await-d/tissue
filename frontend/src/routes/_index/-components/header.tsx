@@ -101,15 +101,29 @@ function Header(props: Props) {
     function renderDropdown(menu: any) {
         return (
             <div style={{
-                backgroundColor: token.colorBgElevated,
-                borderRadius: token.borderRadiusLG,
-                boxShadow: token.boxShadowSecondary,
+                backgroundColor: '#1a1a1d',
+                borderRadius: 14,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                overflow: 'hidden',
             }}>
-                <div className={'w-36 py-2.5 px-4'}>
-                    <div className={'text-base'} style={{ color: token.colorText }}>{userInfo.name}</div>
-                    <div className={'text-xs'} style={{ color: token.colorTextSecondary }}>{userInfo.username}</div>
+                {/* 用户信息头部 */}
+                <div style={{
+                    padding: '16px 20px',
+                    background: 'linear-gradient(135deg, rgba(212, 168, 82, 0.08) 0%, transparent 100%)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                }}>
+                    <div style={{
+                        fontSize: 15,
+                        fontWeight: 600,
+                        color: '#f0f0f2',
+                        marginBottom: 4,
+                    }}>{userInfo.name}</div>
+                    <div style={{
+                        fontSize: 12,
+                        color: '#6a6a72',
+                    }}>{userInfo.username}</div>
                 </div>
-                <Divider style={{ margin: 0 }} type={'horizontal'} />
                 {menu}
             </div>
         )
@@ -121,47 +135,85 @@ function Header(props: Props) {
             <div className={'cursor-pointer flex items-center'} onClick={() => props.onCollapse?.()}>
                 {props.collapsible && (
                     <IconButton ref={menuIconRef}>
-                        <MenuOutlined style={{ color: token.colorText, fontSize: token.sizeMD }} />
+                        <MenuOutlined style={{ color: '#a0a0a8', fontSize: 18 }} />
                     </IconButton>
                 )}
                 {!props.collapsible && (
                     (canBack && !responsive.lg) ? (
                         <IconButton ref={backIconRef} onClick={() => history.go(-1)}>
-                            <ArrowLeftOutlined style={{ fontSize: token.sizeLG }} />
+                            <ArrowLeftOutlined style={{ fontSize: 18, color: '#a0a0a8' }} />
                         </IconButton>
                     ) : (
                         <Link to={'/'}
-                            className={'flex items-center'}>
-                            <img className={responsive.lg ? 'ml-4 mr-4 h-12' : 'mr-1 h-10'} src={Logo} alt="" />
+                            className={'flex items-center group'}>
+                            <img
+                                className={`${responsive.lg ? 'ml-4 mr-4 h-12' : 'mr-1 h-10'} transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(212,168,82,0.4)]`}
+                                src={Logo}
+                                alt=""
+                            />
                         </Link>
                     )
                 )}
             </div>
-            <div className={'flex-1 flex flex-row-reverse items-center'}>
-                <Space>
-                    <IconButton ref={eyeIconRef} onClick={() => onGoodBoyChange()}>
-                        {isGoodBoy ? (<EyeInvisibleOutlined style={{ fontSize: token.sizeLG }} />) : (
-                            <EyeOutlined style={{ fontSize: token.sizeLG }} />)}
+            <div className={'flex-1 flex flex-row-reverse items-center h-full'}>
+                <Space size={4} align="center">
+                    {/* 隐私模式按钮 */}
+                    <IconButton
+                        ref={eyeIconRef}
+                        onClick={() => onGoodBoyChange()}
+                        style={{
+                            background: isGoodBoy ? 'rgba(212, 168, 82, 0.1)' : 'transparent',
+                            border: isGoodBoy ? '1px solid rgba(212, 168, 82, 0.3)' : '1px solid transparent',
+                        }}
+                    >
+                        {isGoodBoy ? (
+                            <EyeInvisibleOutlined style={{ fontSize: 18, color: '#d4a852' }} />
+                        ) : (
+                            <EyeOutlined style={{ fontSize: 18, color: '#a0a0a8' }} />
+                        )}
                     </IconButton>
+
+                    {/* 主题切换按钮 */}
                     <Dropdown menu={{ items: themeItems, onClick: onThemeClick }} arrow placement="bottomRight">
                         <IconButton ref={themeIconRef}>
-                            <CurrentTheme.icon style={{ fontSize: token.sizeLG }} />
+                            <CurrentTheme.icon style={{ fontSize: 18, color: '#a0a0a8' }} />
                         </IconButton>
                     </Dropdown>
-                    <Dropdown menu={{ items: userItems, onClick: onUserClick }} arrow placement="bottomRight" dropdownRender={renderDropdown}>
-                        <IconButton ref={userIconRef}>
-                            <UserOutlined style={{ fontSize: token.sizeLG }} />
+
+                    {/* 用户菜单按钮 */}
+                    <Dropdown menu={{ items: userItems, onClick: onUserClick }} arrow placement="bottomRight" popupRender={renderDropdown}>
+                        <IconButton
+                            ref={userIconRef}
+                            style={{
+                                background: 'linear-gradient(135deg, rgba(212, 168, 82, 0.15) 0%, rgba(212, 168, 82, 0.05) 100%)',
+                                border: '1px solid rgba(212, 168, 82, 0.2)',
+                            }}
+                        >
+                            <UserOutlined style={{ fontSize: 18, color: '#d4a852' }} />
                         </IconButton>
                     </Dropdown>
                 </Space>
             </div>
-            <Modal title={'日志'}
+            <Modal
+                title={'日志'}
                 open={logOpen}
                 onCancel={() => setLogOpen(false)}
                 footer={null}
-                destroyOnClose
+                destroyOnHidden
                 width={1000}
                 centered
+                styles={{
+                    content: {
+                        background: '#1a1a1d',
+                        borderRadius: 14,
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                    },
+                    header: {
+                        background: 'transparent',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                        paddingBottom: 16,
+                    },
+                }}
             >
                 <Log />
             </Modal>

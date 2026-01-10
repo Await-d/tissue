@@ -3,18 +3,15 @@
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
  * @LastEditTime: 2025-05-27 18:08:05
- * @Description: 请填写简介
+ * @Description: TISSUE+ 底部导航栏 - 电影美学风格
  */
-import { CarryOutOutlined, HomeOutlined, MenuOutlined, SearchOutlined, UserOutlined, VideoCameraOutlined, RobotOutlined } from "@ant-design/icons";
+import { CarryOutOutlined, HomeOutlined, MenuOutlined, SearchOutlined, VideoCameraOutlined, RobotOutlined } from "@ant-design/icons";
 import React from "react";
-import { theme, Badge } from "antd";
+import { Badge } from "antd";
 import { Link, useLocation } from "@tanstack/react-router";
-
-const { useToken } = theme
 
 function TabBar() {
 
-    const { token } = useToken()
     const location = useLocation()
 
     const menus = [
@@ -41,7 +38,7 @@ function TabBar() {
         {
             link: '/auto-download',
             icon: <RobotOutlined />,
-            title: '智能下载'
+            title: '智能'
         },
         {
             link: '/menu',
@@ -52,46 +49,82 @@ function TabBar() {
 
     // 检查当前路径是否匹配菜单项
     const isActive = (menuLink: string) => {
-        // 移除开头的斜杠以进行一致比较
         const currentPath = location.pathname.replace(/^\/+/, '');
         const menuPath = menuLink.replace(/^\/+/, '');
-
         return currentPath === menuPath || currentPath.startsWith(menuPath + '/');
     };
 
     return (
-        <div className={'flex justify-around items-center'}
+        <div
+            className={'flex justify-around items-center'}
             style={{
-                marginBottom: 'env(safe-area-inset-bottom,0)',
-                padding: '8px 0',
-                boxShadow: '0 -1px 2px rgba(0,0,0,0.05)'
-            }}>
+                marginBottom: 'env(safe-area-inset-bottom, 0)',
+                padding: '6px 0 8px',
+            }}
+        >
             {menus.map(item => {
                 const active = isActive(item.link);
                 return (
-                    <div key={item.link} className={'flex flex-col items-center'}>
-                        <Link to={item.link}
-                            style={{
-                                color: active ? token.colorPrimary : token.colorText,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                padding: '4px 0'
-                            }}>
-                            <Badge dot={false}>
-                                <div className={'text-xl mb-1'}>
-                                    {item.icon}
-                                </div>
-                            </Badge>
-                            <div style={{
-                                fontSize: '12px',
-                                lineHeight: '1',
-                                fontWeight: active ? 'bold' : 'normal'
-                            }}>
-                                {item.title}
+                    <Link
+                        key={item.link}
+                        to={item.link}
+                        className="flex flex-col items-center relative group"
+                        style={{
+                            padding: '6px 12px',
+                            borderRadius: 12,
+                            transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                            background: active
+                                ? 'linear-gradient(135deg, rgba(212, 168, 82, 0.15) 0%, rgba(212, 168, 82, 0.05) 100%)'
+                                : 'transparent',
+                        }}
+                    >
+                        {/* 激活指示器 */}
+                        {active && (
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    width: 20,
+                                    height: 2,
+                                    borderRadius: 1,
+                                    background: 'linear-gradient(90deg, #d4a852 0%, #e8c780 100%)',
+                                    boxShadow: '0 0 8px rgba(212, 168, 82, 0.5)',
+                                }}
+                            />
+                        )}
+
+                        {/* 图标 */}
+                        <Badge dot={false}>
+                            <div
+                                style={{
+                                    fontSize: 20,
+                                    marginBottom: 2,
+                                    color: active ? '#d4a852' : '#6a6a72',
+                                    transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                    transform: active ? 'scale(1.1)' : 'scale(1)',
+                                    filter: active ? 'drop-shadow(0 0 6px rgba(212, 168, 82, 0.4))' : 'none',
+                                }}
+                            >
+                                {item.icon}
                             </div>
-                        </Link>
-                    </div>
+                        </Badge>
+
+                        {/* 标题 */}
+                        <div
+                            style={{
+                                fontSize: 10,
+                                lineHeight: 1.2,
+                                fontWeight: active ? 600 : 400,
+                                color: active ? '#d4a852' : '#6a6a72',
+                                transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                letterSpacing: active ? '0.02em' : '0',
+                            }}
+                        >
+                            {item.title}
+                        </div>
+                    </Link>
                 );
             })}
         </div>

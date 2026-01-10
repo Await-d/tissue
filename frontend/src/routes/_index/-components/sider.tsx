@@ -3,7 +3,7 @@
  * @Date: 2025-05-24 17:05:38
  * @LastEditors: Await
  * @LastEditTime: 2025-05-26 18:51:02
- * @Description: 请填写简介
+ * @Description: TISSUE+ 侧边栏 - 电影美学风格
  */
 import React from "react";
 import { Menu } from "antd";
@@ -45,18 +45,55 @@ function Sider(props: Props) {
     }
 
     return (
-        <div>
-            <div className={'h-16 flex items-center'} style={{ marginTop: 'env(safe-area-inset-top, 0)' }}>
+        <div className="h-full flex flex-col">
+            {/* Logo 区域 */}
+            <div
+                className={'h-16 flex items-center'}
+                style={{ marginTop: 'env(safe-area-inset-top, 0)' }}
+            >
                 {showLogo && (
-                    <Link to={'/'}>
-                        <img className={'ml-8 mr-4 h-12'} src={Logo} alt="" />
+                    <Link to={'/'} className="group flex items-center">
+                        <img
+                            className={'ml-6 mr-4 h-11 transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(212,168,82,0.5)]'}
+                            src={Logo}
+                            alt=""
+                        />
                     </Link>
                 )}
             </div>
-            <Menu selectedKeys={selected} mode={'inline'} items={generateItems(routes)} onSelect={item => {
-                props.onSelect?.()
-                return navigate({ to: item.key })
-            }} />
+
+            {/* 菜单区域 */}
+            <div className="flex-1 overflow-y-auto px-2">
+                <Menu
+                    selectedKeys={selected}
+                    mode={'inline'}
+                    items={generateItems(routes)}
+                    onSelect={item => {
+                        props.onSelect?.()
+                        return navigate({ to: item.key })
+                    }}
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                    }}
+                />
+            </div>
+
+            {/* 底部装饰 */}
+            <div
+                className="px-6 py-4 mt-auto"
+                style={{
+                    borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+                    background: 'linear-gradient(180deg, transparent 0%, rgba(212, 168, 82, 0.02) 100%)',
+                }}
+            >
+                <div
+                    className="text-xs"
+                    style={{ color: '#4a4a52' }}
+                >
+                    TISSUE+
+                </div>
+            </div>
         </div>
     )
 }
