@@ -56,7 +56,7 @@ def get_ranking_detail(source: str, num: str, url: str):
     # 根据URL自动修正source参数
     import logging
     logger = logging.getLogger(__name__)
-    
+
     original_source = source
     # 如果URL包含javbus但source不是JavBus，自动修正
     if 'javbus' in url.lower() and source != 'JavBus':
@@ -66,7 +66,7 @@ def get_ranking_detail(source: str, num: str, url: str):
     elif 'javdb' in url.lower() and source != 'JavDB':
         source = 'JavDB'
         logger.info(f"根据URL自动修正source: {original_source} -> {source}")
-    
+
     if source == 'JavDB':
         return spider.JavdbSpider().get_info(num, url=url, include_downloads=True, include_previews=True)
     elif source == 'JavBus':
