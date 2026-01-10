@@ -18,6 +18,9 @@ class SettingApp(BaseModel):
     concurrent_scraping: bool = True
     max_concurrent_spiders: int = 4
 
+    # JavDB登录Cookie（排行榜等页面需要登录才能访问）
+    javdb_cookie: Optional[str] = None
+
 
 class SettingFile(BaseModel):
     path: str = "/data/file"

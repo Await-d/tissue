@@ -115,7 +115,7 @@ def _get_web_actors(source: str = 'javdb'):
 
 
 @router.get('/web/actors')  # 无需token验证的API
-def get_web_actors(source: str = 'javdb', force: bool = False):
+def get_web_actors(source: str = 'javdb', force: bool = True):
     """从网站获取热门演员列表"""
     logger.info(f"尝试获取演员列表，源：{source}，强制刷新：{force}")
     cache_key = f"actors_{source.lower()}"

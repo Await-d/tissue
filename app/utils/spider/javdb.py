@@ -51,6 +51,10 @@ class JavdbSpider(Spider):
             "Upgrade-Insecure-Requests": "1",
             "Referer": self.host,
         })
+        
+        # 从设置中读取并应用JavDB登录Cookie
+        self._apply_login_cookie()
+        
         # 动态选择可用域名（被封或不可达时自动切换）
         try:
             self._select_best_host()
@@ -69,6 +73,25 @@ class JavdbSpider(Spider):
             self.session.cookies.set('locale', 'zh', domain=dom)
         except Exception as e:
             logger.debug(f"设置年龄验证Cookie失败: {e}")
+
+    def _apply_login_cookie(self):
+        """从设置中读取并应用JavDB登录Cookie"""
+        try:
+            from app.schema.setting import Setting
+            javdb_cookie = self.setting.javdb_cookie
+            if javdb_cookie:
+                logger.info("检测到JavDB登录Cookie配置，正在应用...")
+                # 解析cookie字符串并设置到session
+                # 支持格式: "key1=value1; key2=value2"
+                dom = self._cookie_domain()
+                for cookie_pair in javdb_cookie.split(';'):
+                    cookie_pair = cookie_pair.strip()
+                    if '=' in cookie_pair:
+                        key, value = cookie_pair.split('=', 1)
+                        self.session.cookies.set(key.strip(), value.strip(), domain=dom)
+                logger.info(f"已应用JavDB登录Cookie到域名: {dom}")
+        except Exception as e:
+            logger.debug(f"应用JavDB登录Cookie失败: {e}")
 
     def _select_best_host(self):
         """尝试镜像域名，选择可用的host"""
@@ -651,6 +674,16 @@ class JavdbSpider(Spider):
     def get_ranking(self, video_type: str, cycle: str):
         url = urljoin(self.host, f'/rankings/movies?p={cycle}&t={video_type}')
         response = self._get(url)
+        
+        # 检测是否被重定向到登录页面
+        if '/login' in str(response.url) or b'requires login' in response.content.lower():
+            # 检查是否配置了cookie
+            if self.setting.javdb_cookie:
+                logger.warning("排行榜页面需要登录，已配置Cookie但可能已过期或无效，请更新Cookie")
+            else:
+                logger.warning("排行榜页面需要登录访问，请在设置中配置javdb_cookie以获取排行榜数据")
+            return []
+        
         html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
 
         result = []

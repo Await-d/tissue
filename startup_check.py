@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class StartupChecker:
-    def __init__(self, db_path: str = "app.db"):
+    def __init__(self, db_path: str = "config/app.db"):
         self.db_path = db_path
         self.issues_found = []
         self.fixes_applied = []
@@ -40,9 +40,9 @@ class StartupChecker:
         try:
             logger.info("🔍 检查数据库Schema...")
 
-            # 运行schema检查工具
+            # 运行schema检查工具（以模块形式运行）
             result = subprocess.run(
-                [sys.executable, "db_schema_checker.py", "--check"],
+                [sys.executable, "-m", "app.utils.db_schema_checker", "--check"],
                 capture_output=True,
                 text=True,
                 cwd="."
@@ -58,16 +58,16 @@ class StartupChecker:
 
         except Exception as e:
             logger.warning(f"⚠️ Schema检查跳过: {e}")
-            return True  # 不阻塞启动
+            return True  # 不阻塞启动  # 不阻塞启动  # 不阻塞启动
 
     def auto_fix_schema(self) -> bool:
         """自动修复数据库Schema"""
         try:
             logger.info("🔧 开始自动修复数据库Schema...")
 
-            # 运行schema修复工具
+            # 运行schema修复工具（以模块形式运行）
             result = subprocess.run(
-                [sys.executable, "db_schema_checker.py", "--fix"],
+                [sys.executable, "-m", "app.utils.db_schema_checker", "--fix"],
                 capture_output=True,
                 text=True,
                 cwd="."
@@ -125,12 +125,11 @@ class StartupChecker:
                 conn.close()
                 return True  # 表不存在时返回True，让迁移来处理
             
-            # 检查枚举值格式
+            # 检查枚举值格式（只检查 time_range_type）
             cursor.execute("""
-                SELECT time_range_type, status 
+                SELECT time_range_type 
                 FROM auto_download_rules 
-                WHERE time_range_type IN ('DAY', 'WEEK', 'MONTH') 
-                OR status IN ('ACTIVE', 'INACTIVE')
+                WHERE time_range_type IN ('DAY', 'WEEK', 'MONTH')
             """)
             
             old_enum_records = cursor.fetchall()
@@ -193,9 +192,9 @@ class StartupChecker:
         try:
             logger.info("🔧 开始自动修复数据库迁移...")
             
-            # 运行数据库迁移
+            # 运行数据库迁移（使用 heads 支持多分支）
             result = subprocess.run(
-                ["alembic", "upgrade", "head"],
+                ["alembic", "upgrade", "heads"],
                 capture_output=True,
                 text=True,
                 cwd="."
@@ -280,7 +279,7 @@ class StartupChecker:
             report.append("\n🔧 建议操作:")
             report.append("  1. 确保在正确的项目目录中运行此脚本")
             report.append("  2. 检查数据库文件权限")
-            report.append("  3. 手动运行: alembic upgrade head")
+            report.append("  3. 手动运行: alembic upgrade heads")
             report.append("  4. 如果问题持续，请检查日志文件")
         
         return "\n".join(report)

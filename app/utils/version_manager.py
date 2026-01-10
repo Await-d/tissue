@@ -108,7 +108,7 @@ class VersionManager:
             
             # 执行数据库迁移
             result = subprocess.run(
-                ['alembic', 'upgrade', 'head'],
+                ['alembic', 'upgrade', 'heads'],
                 capture_output=True,
                 text=True,
                 timeout=300  # 5分钟超时
