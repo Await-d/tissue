@@ -1,0 +1,23 @@
+import{r as d,I as h,_ as m,a7 as x,aa as f,F as e,a$ as y,au as g,b0 as j,R as k,G as I,b1 as v,$ as R,am as $,ap as w,ak as M,b2 as z,b3 as F,b4 as S,b5 as D,b6 as Y,aY as B,b7 as E}from"./index-CPAKaPzh.js";import{R as H}from"./RobotOutlined-DiJIUNe9.js";var N={icon:{tag:"svg",attrs:{viewBox:"64 64 896 896",focusable:"false"},children:[{tag:"path",attrs:{d:"M505.7 661a8 8 0 0012.6 0l112-141.7c4.1-5.2.4-12.9-6.3-12.9h-74.1V168c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v338.3H400c-6.7 0-10.4 7.7-6.3 12.9l112 141.8zM878 626h-60c-4.4 0-8 3.6-8 8v154H214V634c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v198c0 17.7 14.3 32 32 32h684c17.7 0 32-14.3 32-32V634c0-4.4-3.6-8-8-8z"}}]},name:"download",theme:"outlined"},C=function(n,l){return d.createElement(h,m({},n,{ref:l,icon:N}))},G=d.forwardRef(C);const{useToken:O}=x,a={bg:{base:"#0d0d0f",elevated:"#141416",container:"#1a1a1d",spotlight:"#222226"},gold:{primary:"#d4a852",light:"#e8c780",dark:"#b08d3e"},text:{primary:"#f0f0f2",secondary:"#a0a0a8"},border:"rgba(255, 255, 255, 0.08)"};function W(){O();const c=f(),n=[{key:"home",icon:e.jsx($,{}),label:"首页",path:"/home"},{key:"search",icon:e.jsx(w,{}),label:"搜索",path:"/search"},{key:"actor",icon:e.jsx(M,{}),label:"演员",path:"/actor"},{key:"actor-subscribe",icon:e.jsx(z,{}),label:"演员订阅",path:"/actor-subscribe"},{key:"subscribe",icon:e.jsx(F,{}),label:"订阅",path:"/subscribe"},{key:"schedule",icon:e.jsx(S,{}),label:"定时任务",path:"/schedule"},{key:"file",icon:e.jsx(D,{}),label:"文件",path:"/file"},{key:"setting",icon:e.jsx(Y,{}),label:"设置",path:"/setting"},{key:"history",icon:e.jsx(B,{}),label:"历史",path:"/history"},{key:"download",icon:e.jsx(G,{}),label:"下载",path:"/download"},{key:"about",icon:e.jsx(E,{}),label:"关于",path:"/about"},{key:"auto-download",icon:e.jsx(H,{}),label:"智能下载",path:"/auto-download"}],l=[{title:"常用功能",items:["home","search","actor","subscribe","auto-download"]},{title:"内容管理",items:["file","download","history"]},{title:"系统设置",items:["setting","schedule","about","actor-subscribe"]}],b=o=>n.find(s=>s.key===o);function p(){return l.map((o,s)=>e.jsxs("div",{style:{animation:`menuFadeIn 0.4s ease-out ${s*.1}s both`},children:[e.jsx(j,{style:{borderColor:a.border,marginTop:s===0?"0":"24px",marginBottom:"20px"},children:e.jsx("span",{style:{color:a.gold.primary,fontSize:"13px",fontWeight:600,letterSpacing:"0.5px",textTransform:"uppercase"},children:o.title})}),e.jsx(k,{gutter:[12,12],justify:"center",children:o.items.map((i,t)=>{const r=b(i);return r?e.jsx(I,{span:6,children:u(r,s,t)},r.key):null})})]},o.title))}function u(o,s,i){const[t,r]=v.useState(!1);return e.jsx(R,{to:o.path,style:{textDecoration:"none"},children:e.jsxs("div",{className:"p-3 flex flex-col items-center",onMouseEnter:()=>r(!0),onMouseLeave:()=>r(!1),style:{background:t?a.bg.spotlight:a.bg.container,borderRadius:"12px",transition:"all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",border:`1px solid ${t?a.gold.dark:a.border}`,height:"100%",cursor:"pointer",boxShadow:t?`0 8px 24px rgba(212, 168, 82, 0.12), 0 0 0 1px ${a.gold.dark}`:"0 2px 8px rgba(0, 0, 0, 0.15)",transform:t?"translateY(-2px)":"translateY(0)",animation:`menuItemFadeIn 0.3s ease-out ${s*.1+i*.05}s both`},children:[e.jsx("div",{className:"text-3xl",style:{color:t?a.gold.light:a.gold.primary,transition:"all 0.3s ease",filter:t?`drop-shadow(0 0 8px ${a.gold.primary})`:"none",transform:t?"scale(1.1)":"scale(1)"},children:o.icon}),e.jsx("div",{className:"mt-2 text-center",style:{fontSize:"12px",color:t?a.text.primary:a.text.secondary,transition:"color 0.3s ease",fontWeight:t?500:400},children:o.label})]})})}return c.md?e.jsx(y,{to:"/"}):e.jsxs(e.Fragment,{children:[e.jsx("style",{children:`
+                    @keyframes menuFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    
+                    @keyframes menuItemFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: scale(0.95);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: scale(1);
+                        }
+                    }
+                `}),e.jsx(g,{title:e.jsx("span",{style:{color:a.gold.primary,fontSize:"18px",fontWeight:600},children:"功能菜单"}),variant:"borderless",style:{background:a.bg.elevated,borderRadius:"16px"},styles:{header:{borderBottom:`1px solid ${a.border}`,background:a.bg.base},body:{background:a.bg.elevated}},children:p()})]})}export{W as component};
