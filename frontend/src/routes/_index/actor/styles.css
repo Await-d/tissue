@@ -1,0 +1,141 @@
+/* TISSUE+ Actor Page Styles - 暗黑电影美学 + 柔和现代风格 */
+
+/* ========== 页面容器样式 ========== */
+.actor-page-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0d0d0f 0%, #141416 50%, #0d0d0f 100%);
+  padding: 24px;
+}
+
+/* ========== 演员卡片主容器 ========== */
+.actor-main-card {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.actor-main-card:hover {
+  box-shadow: 0 8px 32px rgba(212, 168, 82, 0.15);
+  border-color: rgba(212, 168, 82, 0.3);
+}
+
+/* ========== 卡片头部样式 ========== */
+.actor-card-header {
+  background: linear-gradient(135deg, #0d0d0f 0%, #1a1a1d 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actor-card-title {
+  color: #f0f0f2;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actor-card-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(180deg, #d4a852 0%, #e8c780 100%);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.4);
+}
+
+/* ========== 搜索按钮样式 ========== */
+.actor-search-button {
+  background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+  border: none;
+  color: #0d0d0f;
+  font-weight: 600;
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.25);
+}
+
+.actor-search-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(212, 168, 82, 0.4);
+  background: linear-gradient(135deg, #e8c780 0%, #d4a852 100%);
+}
+
+.actor-search-button:active {
+  transform: translateY(0);
+}
+
+/* ========== 卡片内容区域 ========== */
+.actor-card-body {
+  padding: 0;
+  background: #141416;
+}
+
+/* ========== Web演员搜索容器 ========== */
+.web-actor-search-wrapper {
+  position: relative;
+  min-height: calc(100vh - 120px);
+}
+
+/* ========== 响应式优化 ========== */
+@media (max-width: 768px) {
+  .actor-page-container {
+    padding: 16px;
+  }
+
+  .actor-card-header {
+    padding: 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .actor-card-title {
+    font-size: 16px;
+  }
+
+  .actor-search-button {
+    width: 100%;
+    justify-content: center;
+    height: 36px;
+  }
+}
+
+/* ========== 加载动画优化 ========== */
+@keyframes actorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.actor-main-card {
+  animation: actorFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== 搜索图标动画 ========== */
+.actor-search-button .anticon {
+  transition: transform 0.3s ease;
+}
+
+.actor-search-button:hover .anticon {
+  transform: scale(1.1) rotate(15deg);
+}

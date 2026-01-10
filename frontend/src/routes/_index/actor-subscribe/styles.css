@@ -1,0 +1,315 @@
+/* 演员订阅页面 - 暗黑电影美学 */
+.actor-subscribe-container {
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* 头部卡片 */
+.actor-subscribe-header-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.actor-subscribe-title {
+  color: #f0f0f2;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.actor-subscribe-icon {
+  margin-right: 8px;
+  color: #d4a852;
+}
+
+.actor-subscribe-subtitle {
+  color: #a0a0a8;
+  font-size: 14px;
+}
+
+/* 按钮 */
+.actor-subscribe-primary-btn {
+  background: #d4a852;
+  border: 1px solid #d4a852;
+  color: #0d0d0f;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.actor-subscribe-primary-btn:hover {
+  background: #e8c780;
+  border-color: #e8c780;
+  color: #0d0d0f;
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4);
+  transform: translateY(-1px);
+}
+
+.actor-subscribe-action-btn {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f0f0f2;
+  transition: all 0.3s ease;
+}
+
+.actor-subscribe-action-btn:hover {
+  background: #222226;
+  border-color: #d4a852;
+  color: #d4a852;
+  transform: translateY(-1px);
+}
+
+/* 演员卡片 */
+.actor-subscribe-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.actor-subscribe-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px #d4a852;
+  border-color: #d4a852;
+}
+
+.actor-subscribe-card .ant-card-body {
+  background: #1a1a1d;
+}
+
+.actor-subscribe-card .ant-card-actions {
+  background: #141416;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.actor-subscribe-card .ant-card-actions > li {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.actor-subscribe-card .ant-card-actions > li > span {
+  color: #a0a0a8;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.actor-subscribe-card .ant-card-actions > li > span:hover {
+  color: #d4a852;
+}
+
+/* 封面 */
+.actor-subscribe-cover-wrapper {
+  height: 180px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: #0d0d0f;
+  position: relative;
+  cursor: pointer;
+}
+
+.actor-subscribe-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.actor-subscribe-card:hover .actor-subscribe-cover-img {
+  transform: scale(1.1);
+}
+
+.actor-subscribe-avatar {
+  background: linear-gradient(135deg, #d4a852 0%, #b08d3e 100%);
+}
+
+.actor-subscribe-name-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 30px 12px 12px;
+  background: linear-gradient(to top, rgba(13, 13, 15, 0.95), transparent);
+  color: white;
+}
+
+.actor-subscribe-name {
+  color: #f0f0f2 !important;
+  margin: 0 !important;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* 卡片内容 */
+.actor-subscribe-card-body {
+  padding: 0 4px;
+}
+
+.actor-subscribe-statistic .ant-statistic-title {
+  color: #a0a0a8;
+  font-size: 12px;
+}
+
+.actor-subscribe-statistic .ant-statistic-content {
+  color: #d4a852;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.actor-subscribe-statistic .ant-statistic-content-suffix {
+  color: #a0a0a8;
+  font-size: 12px;
+}
+
+.actor-subscribe-statistic .ant-statistic-content-prefix {
+  color: #d4a852;
+}
+
+/* 标签 */
+.actor-subscribe-tags-container {
+  margin-top: 12px;
+}
+
+.actor-subscribe-tag {
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+  border: 1px solid;
+  transition: all 0.3s ease;
+}
+
+.actor-subscribe-tag-paused {
+  background: rgba(212, 82, 82, 0.12);
+  border-color: rgba(212, 82, 82, 0.3);
+  color: #e88080;
+}
+
+.actor-subscribe-tag-hd {
+  background: rgba(212, 168, 82, 0.12);
+  border-color: rgba(212, 168, 82, 0.3);
+  color: #e8c780;
+}
+
+.actor-subscribe-tag-zh {
+  background: rgba(82, 196, 212, 0.12);
+  border-color: rgba(82, 196, 212, 0.3);
+  color: #80d9e8;
+}
+
+.actor-subscribe-tag-uncensored {
+  background: rgba(212, 82, 130, 0.12);
+  border-color: rgba(212, 82, 130, 0.3);
+  color: #e880ac;
+}
+
+.actor-subscribe-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.2);
+}
+
+/* 徽章 */
+.actor-subscribe-ribbon .ant-ribbon-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 空状态 */
+.actor-subscribe-empty-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  text-align: center;
+  padding: 40px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.actor-subscribe-empty-text {
+  color: #6a6a72;
+}
+
+.actor-subscribe-empty-btn {
+  margin-top: 16px !important;
+}
+
+/* 模态框 */
+.actor-subscribe-download-modal .ant-modal-content {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.actor-subscribe-download-modal .ant-modal-header {
+  background: #1a1a1d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.actor-subscribe-download-modal .ant-modal-body {
+  background: #1a1a1d;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.actor-subscribe-modal-title {
+  display: flex;
+  align-items: center;
+  color: #f0f0f2;
+}
+
+.actor-subscribe-modal-icon {
+  margin-right: 8px;
+  color: #d4a852;
+}
+
+.actor-subscribe-download-modal .ant-list-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.actor-subscribe-download-modal .ant-card {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.actor-subscribe-download-modal .ant-card:hover {
+  border-color: #d4a852;
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.2);
+}
+
+/* 悬浮按钮 */
+.actor-subscribe-container .ant-float-btn {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.actor-subscribe-container .ant-float-btn:hover {
+  background: #d4a852;
+  border-color: #d4a852;
+  box-shadow: 0 6px 20px rgba(212, 168, 82, 0.4);
+}
+
+.actor-subscribe-container .ant-float-btn .ant-float-btn-icon {
+  color: #d4a852;
+}
+
+.actor-subscribe-container .ant-float-btn:hover .ant-float-btn-icon {
+  color: #0d0d0f;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .actor-subscribe-container {
+    padding: 12px;
+  }
+  
+  .actor-subscribe-header-card {
+    margin-bottom: 16px;
+  }
+  
+  .actor-subscribe-title {
+    font-size: 16px;
+  }
+}

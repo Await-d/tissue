@@ -6,10 +6,11 @@
  * @Description: 请填写简介
  */
 import React from "react";
-import { Button, Card, Col, Row } from "antd";
+import { Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { createFileRoute, useSearch, Link } from "@tanstack/react-router";
 import WebActorSearch from '../../../components/ActorSearch/WebActorSearch';
+import './styles.css';
 
 export const Route = createFileRoute('/_index/actor/')({
     component: ActorSearch,
@@ -20,25 +21,25 @@ export function ActorSearch() {
     const search: any = useSearch({ from: '/_index/actor/' });
 
     return (
-        <Row gutter={[15, 15]} style={{ height: '100%' }}>
-            <Col span={24}>
-                <Card
-                    title="演员搜索"
-                    extra={
-                        <Link to="/search">
-                            <Button type="primary" icon={<SearchOutlined />}>
-                                番号搜索
-                            </Button>
-                        </Link>
-                    }
-                    style={{ height: '100%' }}
-                    bodyStyle={{ padding: 0 }}
-                >
+        <div className="actor-page-container">
+            <div className="actor-main-card">
+                <div className="actor-card-header">
+                    <h1 className="actor-card-title">
+                        演员搜索
+                    </h1>
+                    <Link to="/search">
+                        <button className="actor-search-button">
+                            <SearchOutlined />
+                            <span>番号搜索</span>
+                        </button>
+                    </Link>
+                </div>
+                <div className="actor-card-body">
                     <WebActorSearch
                         defaultSearchValue={search?.actorName || ""}
                     />
-                </Card>
-            </Col>
-        </Row>
+                </div>
+            </div>
+        </div>
     );
 }

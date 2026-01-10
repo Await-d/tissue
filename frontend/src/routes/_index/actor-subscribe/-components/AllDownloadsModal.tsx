@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, List, Card, Row, Col, Space, Tag, Typography, Button, Tooltip, Avatar, message, Checkbox, Empty, Spin, Input, Select, Radio } from 'antd';
+import { Modal, List, Card, Row, Col, Space, Tag, Typography, Button, Tooltip, Avatar, App, Checkbox, Empty, Spin, Input, Select, Radio } from 'antd';
 import { DeleteOutlined, UserOutlined, FileOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/subscribe';
 import * as videoApi from '../../../../apis/video';
+import './AllDownloadsModal.css';
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -14,6 +15,7 @@ interface AllDownloadsModalProps {
 }
 
 const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, onRefresh }) => {
+    const { message, modal } = App.useApp();
     const [downloads, setDownloads] = useState<any[]>([]);
     const [filteredDownloads, setFilteredDownloads] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -91,7 +93,7 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
     const handleDelete = (download: any) => {
         let deleteFiles = false;
 
-        Modal.confirm({
+        modal.confirm({
             title: '确认删除下载记录',
             content: (
                 <div>
@@ -134,8 +136,8 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
     return (
         <Modal
             title={
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <FileOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                <div className="all-downloads-modal-title">
+                    <FileOutlined className="all-downloads-modal-icon" />
                     所有下载记录
                 </div>
             }
@@ -143,9 +145,9 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
             onCancel={onCancel}
             footer={null}
             width={800}
-            styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
+            className="all-downloads-modal"
         >
-            <div style={{ marginBottom: 16 }}>
+            <div className="all-downloads-filter-section">
                 <Row gutter={[16, 16]}>
                     <Col span={24}>
                         <Search
@@ -153,14 +155,14 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                             allowClear
                             enterButton={<SearchOutlined />}
                             onSearch={(value) => setSearchText(value)}
-                            style={{ width: '100%' }}
+                            className="all-downloads-search"
                         />
                     </Col>
                     <Col span={24}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        <div className="all-downloads-filter-tags">
                             <Select
                                 placeholder="按演员筛选"
-                                style={{ width: 160 }}
+                                className="all-downloads-select"
                                 allowClear
                                 onChange={(value) => setFilters(prev => ({ ...prev, actor: value || '' }))}
                                 options={Array.from(new Set((downloads || [])
@@ -171,25 +173,25 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                                     value: name
                                 }))}
                             />
-                            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                            <div className="all-downloads-checkable-tags">
                                 <Tag.CheckableTag
                                     checked={filters.isHd}
                                     onChange={checked => setFilters(prev => ({ ...prev, isHd: checked }))}
-                                    style={{ border: '1px solid #d9d9d9', padding: '0 8px' }}
+                                    className="all-downloads-tag"
                                 >
                                     高清
                                 </Tag.CheckableTag>
                                 <Tag.CheckableTag
                                     checked={filters.isZh}
                                     onChange={checked => setFilters(prev => ({ ...prev, isZh: checked }))}
-                                    style={{ border: '1px solid #d9d9d9', padding: '0 8px' }}
+                                    className="all-downloads-tag"
                                 >
                                     中文字幕
                                 </Tag.CheckableTag>
                                 <Tag.CheckableTag
                                     checked={filters.isUncensored}
                                     onChange={checked => setFilters(prev => ({ ...prev, isUncensored: checked }))}
-                                    style={{ border: '1px solid #d9d9d9', padding: '0 8px' }}
+                                    className="all-downloads-tag"
                                 >
                                     无码
                                 </Tag.CheckableTag>
@@ -199,9 +201,9 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                 </Row>
             </div>
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '30px 0' }}>
+                <div className="all-downloads-loading">
                     <Spin />
-                    <div style={{ marginTop: 8 }}>加载中...</div>
+                    <div className="all-downloads-loading-text">加载中...</div>
                 </div>
             ) : filteredDownloads.length > 0 ? (
                 <List
@@ -209,11 +211,7 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                     renderItem={(item) => (
                         <List.Item>
                             <Card
-                                style={{
-                                    width: '100%',
-                                    borderRadius: '8px',
-                                    overflow: 'hidden'
-                                }}
+                                className="all-downloads-card"
                                 hoverable
                             >
                                 <Row gutter={16} align="middle">
@@ -222,19 +220,11 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                                             <img
                                                 alt={item.title || item.num}
                                                 src={videoApi.getVideoCover(item.cover)}
-                                                style={{ width: '100%', borderRadius: '4px' }}
+                                                className="all-downloads-cover"
                                             />
                                         ) : (
-                                            <div style={{
-                                                width: '100%',
-                                                height: '80px',
-                                                background: '#f0f0f0',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                borderRadius: '4px'
-                                            }}>
-                                                <FileOutlined style={{ fontSize: 24, color: '#999' }} />
+                                            <div className="all-downloads-placeholder">
+                                                <FileOutlined className="all-downloads-placeholder-icon" />
                                             </div>
                                         )}
                                     </Col>
@@ -270,12 +260,13 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                                             }
                                         />
                                     </Col>
-                                    <Col span={4} style={{ textAlign: 'right' }}>
+                                    <Col span={4} className="all-downloads-action-col">
                                         <Button
                                             danger
                                             icon={<DeleteOutlined />}
                                             onClick={() => handleDelete(item)}
                                             loading={deleting === item.id}
+                                            className="all-downloads-delete-btn"
                                         >
                                             删除
                                         </Button>

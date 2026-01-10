@@ -5,6 +5,7 @@ import * as api from '../../../../apis/video';
 import * as subscribeApi from '../../../../apis/subscribe';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
+import './ActorSubscribeModal.css';
 
 interface ActorSubscribeModalProps {
     open: boolean;
@@ -71,13 +72,15 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
         <Modal
             title="订阅演员"
             open={open}
+            forceRender
             onCancel={onCancel}
             confirmLoading={confirmLoading || loading}
+            className="actor-subscribe-modal"
             footer={[
-                <Button key="cancel" onClick={onCancel}>
+                <Button key="cancel" onClick={onCancel} className="actor-subscribe-modal-cancel-btn">
                     取消
                 </Button>,
-                <Button key="submit" type="primary" loading={confirmLoading || loading} onClick={handleSubmit}>
+                <Button key="submit" type="primary" loading={confirmLoading || loading} onClick={handleSubmit} className="actor-subscribe-modal-submit-btn">
                     确定
                 </Button>
             ]}
@@ -85,6 +88,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
             <Form
                 form={form}
                 layout="vertical"
+                className="actor-subscribe-modal-form"
                 initialValues={{
                     is_hd: true,
                     is_zh: false,
@@ -93,13 +97,14 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                 }}
             >
                 {actor && (
-                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                    <div className="actor-subscribe-modal-actor-info">
                         <Avatar
                             size={64}
                             icon={<UserOutlined />}
                             src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
+                            className="actor-subscribe-modal-avatar"
                         />
-                        <h2 style={{ marginTop: 8 }}>{actor.name}</h2>
+                        <h2 className="actor-subscribe-modal-actor-name">{actor.name}</h2>
                     </div>
                 )}
 
@@ -120,7 +125,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                         <Space>
                             <span>订阅起始日期</span>
                             <Tooltip title="系统将从该日期之后的新作品中进行订阅">
-                                <InfoCircleOutlined />
+                                <InfoCircleOutlined className="actor-subscribe-modal-info-icon" />
                             </Tooltip>
                         </Space>
                     }
@@ -130,6 +135,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                     <DatePicker
                         style={{ width: '100%' }}
                         format="YYYY-MM-DD"
+                        className="actor-subscribe-modal-datepicker"
                     />
                 </Form.Item>
 
@@ -140,7 +146,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                             name="is_hd"
                             valuePropName="checked"
                         >
-                            <Checkbox />
+                            <Checkbox className="actor-subscribe-modal-checkbox" />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -149,7 +155,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                             name="is_zh"
                             valuePropName="checked"
                         >
-                            <Checkbox />
+                            <Checkbox className="actor-subscribe-modal-checkbox" />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -158,7 +164,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                             name="is_uncensored"
                             valuePropName="checked"
                         >
-                            <Checkbox />
+                            <Checkbox className="actor-subscribe-modal-checkbox" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -168,10 +174,10 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                         <Form.Item
                             label={
                                 <Space>
-                                    <StarOutlined />
+                                    <StarOutlined className="actor-subscribe-modal-label-icon" />
                                     <span>最低评分</span>
                                     <Tooltip title="只订阅评分不低于此值的作品，0表示不限制">
-                                        <InfoCircleOutlined />
+                                        <InfoCircleOutlined className="actor-subscribe-modal-info-icon" />
                                     </Tooltip>
                                 </Space>
                             }
@@ -184,6 +190,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                                 precision={1}
                                 placeholder="0.0"
                                 style={{ width: '100%' }}
+                                className="actor-subscribe-modal-input-number"
                             />
                         </Form.Item>
                     </Col>
@@ -191,10 +198,10 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                         <Form.Item
                             label={
                                 <Space>
-                                    <MessageOutlined />
+                                    <MessageOutlined className="actor-subscribe-modal-label-icon" />
                                     <span>最低评论数</span>
                                     <Tooltip title="只订阅评论数不少于此值的作品，0表示不限制">
-                                        <InfoCircleOutlined />
+                                        <InfoCircleOutlined className="actor-subscribe-modal-info-icon" />
                                     </Tooltip>
                                 </Space>
                             }
@@ -204,13 +211,14 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                                 min={0}
                                 placeholder="0"
                                 style={{ width: '100%' }}
+                                className="actor-subscribe-modal-input-number"
                             />
                         </Form.Item>
                     </Col>
                 </Row>
 
-                <div style={{ marginTop: '16px', color: '#888', fontSize: '14px' }}>
-                    <div style={{ marginBottom: '8px' }}>订阅设置说明：</div>
+                <div className="actor-subscribe-modal-help-text">
+                    <div className="actor-subscribe-modal-help-title">订阅设置说明：</div>
                     <div>• 系统将自动监控该演员的新作品，并根据设置的条件进行下载</div>
                     <div>• 评分和评论数筛选可以帮助你只订阅高质量作品</div>
                     <div>• 设置为 0 表示不启用该筛选条件</div>

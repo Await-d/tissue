@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, Checkbox, Input, Switch, InputNumber } from 'antd';
+import { Modal, Form, DatePicker, Button, Row, Col, Avatar, Space, Tooltip, Checkbox, Input, Switch, InputNumber, App } from 'antd';
 import { UserOutlined, InfoCircleOutlined, StarOutlined, MessageOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/video';
 import * as subscribeApi from '../../../../apis/subscribe';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
-import { message } from 'antd';
+import './EditSubscribeModal.css';
 
 interface EditSubscribeModalProps {
     open: boolean;
@@ -22,6 +22,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
     onOk,
     confirmLoading = false
 }) => {
+    const { message } = App.useApp();
     const [form] = Form.useForm();
 
     // 当订阅信息变化时，更新表单数据
@@ -76,13 +77,15 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
         <Modal
             title="编辑订阅设置"
             open={open}
+            forceRender
             onCancel={onCancel}
             confirmLoading={confirmLoading || loading}
+            className="edit-subscribe-modal"
             footer={[
-                <Button key="cancel" onClick={onCancel}>
+                <Button key="cancel" onClick={onCancel} className="edit-subscribe-modal-cancel-btn">
                     取消
                 </Button>,
-                <Button key="submit" type="primary" loading={confirmLoading || loading} onClick={handleSubmit}>
+                <Button key="submit" type="primary" loading={confirmLoading || loading} onClick={handleSubmit} className="edit-subscribe-modal-submit-btn">
                     保存
                 </Button>
             ]}
@@ -90,6 +93,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
             <Form
                 form={form}
                 layout="vertical"
+                className="edit-subscribe-modal-form"
                 initialValues={{
                     is_hd: true,
                     is_zh: false,
@@ -100,13 +104,14 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                 }}
             >
                 {subscription && (
-                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                    <div className="edit-subscribe-modal-actor-info">
                         <Avatar
                             size={64}
                             icon={<UserOutlined />}
                             src={subscription.actor_thumb ? api.getVideoCover(subscription.actor_thumb) : undefined}
+                            className="edit-subscribe-modal-avatar"
                         />
-                        <h2 style={{ marginTop: 8 }}>{subscription.actor_name}</h2>
+                        <h2 className="edit-subscribe-modal-actor-name">{subscription.actor_name}</h2>
                     </div>
                 )}
 
@@ -131,7 +136,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                         <Space>
                             <span>订阅起始日期</span>
                             <Tooltip title="系统将从该日期之后的新作品中进行订阅">
-                                <InfoCircleOutlined />
+                                <InfoCircleOutlined className="edit-subscribe-modal-info-icon" />
                             </Tooltip>
                         </Space>
                     }
@@ -141,6 +146,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                     <DatePicker
                         style={{ width: '100%' }}
                         format="YYYY-MM-DD"
+                        className="edit-subscribe-modal-datepicker"
                     />
                 </Form.Item>
 
@@ -151,7 +157,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                             name="is_hd"
                             valuePropName="checked"
                         >
-                            <Switch />
+                            <Switch className="edit-subscribe-modal-switch" />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -160,7 +166,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                             name="is_zh"
                             valuePropName="checked"
                         >
-                            <Switch />
+                            <Switch className="edit-subscribe-modal-switch" />
                         </Form.Item>
                     </Col>
                     <Col span={8}>
@@ -169,7 +175,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                             name="is_uncensored"
                             valuePropName="checked"
                         >
-                            <Switch />
+                            <Switch className="edit-subscribe-modal-switch" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -179,10 +185,10 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                         <Form.Item
                             label={
                                 <Space>
-                                    <StarOutlined />
+                                    <StarOutlined className="edit-subscribe-modal-label-icon" />
                                     <span>最低评分</span>
                                     <Tooltip title="只订阅评分不低于此值的作品，0表示不限制">
-                                        <InfoCircleOutlined />
+                                        <InfoCircleOutlined className="edit-subscribe-modal-info-icon" />
                                     </Tooltip>
                                 </Space>
                             }
@@ -195,6 +201,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                                 precision={1}
                                 placeholder="0.0"
                                 style={{ width: '100%' }}
+                                className="edit-subscribe-modal-input-number"
                             />
                         </Form.Item>
                     </Col>
@@ -202,10 +209,10 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                         <Form.Item
                             label={
                                 <Space>
-                                    <MessageOutlined />
+                                    <MessageOutlined className="edit-subscribe-modal-label-icon" />
                                     <span>最低评论数</span>
                                     <Tooltip title="只订阅评论数不少于此值的作品，0表示不限制">
-                                        <InfoCircleOutlined />
+                                        <InfoCircleOutlined className="edit-subscribe-modal-info-icon" />
                                     </Tooltip>
                                 </Space>
                             }
@@ -215,6 +222,7 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                                 min={0}
                                 placeholder="0"
                                 style={{ width: '100%' }}
+                                className="edit-subscribe-modal-input-number"
                             />
                         </Form.Item>
                     </Col>
@@ -226,11 +234,11 @@ const EditSubscribeModal: React.FC<EditSubscribeModalProps> = ({
                     valuePropName="checked"
                     extra="暂停后将不会自动检查和下载新作品"
                 >
-                    <Switch />
+                    <Switch className="edit-subscribe-modal-switch" />
                 </Form.Item>
 
-                <div style={{ marginTop: '16px', color: '#888', fontSize: '14px' }}>
-                    <div style={{ marginBottom: '8px' }}>筛选条件说明：</div>
+                <div className="edit-subscribe-modal-help-text">
+                    <div className="edit-subscribe-modal-help-title">筛选条件说明：</div>
                     <div>• 评分和评论数筛选可以帮助你只订阅高质量作品</div>
                     <div>• 设置为 0 表示不启用该筛选条件</div>
                     <div>• 更改设置后，系统将根据新的条件进行下载</div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Col, Row, List, Avatar, Tag, Space, Button, message, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography, Checkbox } from 'antd';
+import { Card, Col, Row, List, Avatar, Tag, Space, Button, App, Tooltip, Empty, Spin, Modal, FloatButton, Badge, Statistic, Typography, Checkbox } from 'antd';
 import { UserOutlined, DeleteOutlined, EyeOutlined, PlayCircleOutlined, CalendarOutlined, PlusOutlined, SyncOutlined, FileOutlined, EditOutlined, PauseOutlined, PlaySquareOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import * as api from '../../../apis/video';
@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import EditSubscribeModal from './-components/EditSubscribeModal';
 import AllDownloadsModal from './-components/AllDownloadsModal';
 import LoadingComponent from '@/components/Loading';
+import './styles.css';
 
 const { Title, Text } = Typography;
 
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_index/actor-subscribe/')({
 });
 
 function ActorSubscribe() {
+    const { message, modal } = App.useApp();
     const navigate = useNavigate();
     const [selectedActor, setSelectedActor] = useState<any>(null);
     const [downloadsVisible, setDownloadsVisible] = useState(false);
@@ -99,7 +101,7 @@ function ActorSubscribe() {
     const confirmDelete = (actor: any) => {
         let deleteDownloads = false;
 
-        Modal.confirm({
+        modal.confirm({
             title: '确认取消订阅',
             content: (
                 <div>
@@ -164,23 +166,17 @@ function ActorSubscribe() {
     };
 
     return (
-        <div className="actor-subscribe-container" style={{ padding: '16px' }}>
+        <div className="actor-subscribe-container">
             <Row gutter={[16, 16]}>
                 <Col span={24}>
-                    <Card
-                        className="header-card"
-                        style={{
-                            marginBottom: 24,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.09)'
-                        }}
-                    >
+                    <Card className="actor-subscribe-header-card">
                         <Row align="middle" justify="space-between">
                             <Col>
-                                <Title level={4} style={{ margin: 0 }}>
-                                    <UserOutlined style={{ marginRight: 8 }} />
+                                <Title level={4} className="actor-subscribe-title">
+                                    <UserOutlined className="actor-subscribe-icon" />
                                     演员订阅管理
                                 </Title>
-                                <Text type="secondary">
+                                <Text className="actor-subscribe-subtitle">
                                     共 {subscriptions.length} 个订阅，系统将自动检查新作品并下载
                                 </Text>
                             </Col>
@@ -190,21 +186,22 @@ function ActorSubscribe() {
                                         type="primary"
                                         icon={<PlusOutlined />}
                                         onClick={() => navigate({ to: '/actor' })}
+                                        className="actor-subscribe-primary-btn"
                                     >
                                         添加订阅
                                     </Button>
                                     <Button
-                                        type="default"
                                         icon={<SyncOutlined />}
                                         loading={runningTask}
                                         onClick={() => runActorSubscribe()}
+                                        className="actor-subscribe-action-btn"
                                     >
                                         立即检查更新
                                     </Button>
                                     <Button
-                                        type="default"
                                         icon={<DatabaseOutlined />}
                                         onClick={() => setAllDownloadsVisible(true)}
+                                        className="actor-subscribe-action-btn"
                                     >
                                         所有下载
                                     </Button>
@@ -227,60 +224,31 @@ function ActorSubscribe() {
                                 <Badge.Ribbon
                                     text={item.last_updated ? `${new Date(item.last_updated).toLocaleDateString()}更新` : '未更新'}
                                     color={statusColor}
-                                    style={{ opacity: 0.85 }}
+                                    className="actor-subscribe-ribbon"
                                 >
                                     <Card
                                         hoverable
-                                        className="actor-card"
-                                        style={{
-                                            overflow: 'hidden',
-                                            transition: 'all 0.3s',
-                                            borderRadius: '8px',
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.09)'
-                                        }}
+                                        className="actor-subscribe-card"
                                         cover={
-                                            <div
-                                                style={{
-                                                    height: '180px',
-                                                    display: 'flex',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                    overflow: 'hidden',
-                                                    background: '#f5f5f5',
-                                                    position: 'relative'
-                                                }}
+                                            <div className="actor-subscribe-cover-wrapper"
                                                 onClick={() => viewActorDetail(item)}
                                             >
                                                 {item.actor_thumb ? (
                                                     <img
                                                         alt={item.actor_name}
                                                         src={api.getVideoCover(item.actor_thumb)}
-                                                        style={{
-                                                            width: '100%',
-                                                            height: '100%',
-                                                            objectFit: 'cover',
-                                                            transition: 'transform 0.3s'
-                                                        }}
+className="actor-subscribe-cover-img"
                                                     />
                                                 ) : (
                                                     <Avatar
                                                         size={100}
                                                         icon={<UserOutlined />}
-                                                        style={{ backgroundColor: '#1890ff' }}
+                                                        className="actor-subscribe-avatar"
                                                     />
                                                 )}
-                                                <div
-                                                    style={{
-                                                        position: 'absolute',
-                                                        bottom: 0,
-                                                        left: 0,
-                                                        right: 0,
-                                                        padding: '30px 12px 12px',
-                                                        background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
-                                                        color: 'white'
-                                                    }}
+                                                <div className="actor-subscribe-name-overlay"
                                                 >
-                                                    <Typography.Title level={5} style={{ color: 'white', margin: 0 }}>
+                                                    <Typography.Title level={5} className="actor-subscribe-name">
                                                         {item.actor_name}
                                                     </Typography.Title>
                                                 </div>
@@ -319,13 +287,13 @@ function ActorSubscribe() {
                                             </Tooltip>
                                         ]}
                                     >
-                                        <div style={{ padding: '0 4px' }}>
+                                        <div className="actor-subscribe-card-body">
                                             <Row gutter={[16, 8]}>
                                                 <Col span={8}>
                                                     <Statistic
                                                         title="订阅日期"
                                                         value={item.from_date}
-                                                        valueStyle={{ fontSize: '14px' }}
+                                                        className="actor-subscribe-statistic"
                                                         prefix={<CalendarOutlined />}
                                                     />
                                                 </Col>
@@ -334,7 +302,7 @@ function ActorSubscribe() {
                                                         title="已下载"
                                                         value={downloadCount}
                                                         suffix="部"
-                                                        valueStyle={{ fontSize: '14px' }}
+                                                        className="actor-subscribe-statistic"
                                                     />
                                                 </Col>
                                                 <Col span={8}>
@@ -342,17 +310,17 @@ function ActorSubscribe() {
                                                         title="订阅作品"
                                                         value={item.subscribed_works_count || 0}
                                                         suffix="部"
-                                                        valueStyle={{ fontSize: '14px' }}
+                                                        className="actor-subscribe-statistic"
                                                         prefix={<FileOutlined />}
                                                     />
                                                 </Col>
                                             </Row>
-                                            <div style={{ marginTop: 12 }}>
+                                            <div className="actor-subscribe-tags-container">
                                                 <Space size={[0, 8]} wrap>
-                                                    {item.is_paused && <Tag color="volcano">已暂停</Tag>}
-                                                    {item.is_hd && <Tag color="blue">高清</Tag>}
-                                                    {item.is_zh && <Tag color="green">中文字幕</Tag>}
-                                                    {item.is_uncensored && <Tag color="red">无码</Tag>}
+                                                    {item.is_paused && <Tag className="actor-subscribe-tag actor-subscribe-tag-paused">已暂停</Tag>}
+                                                    {item.is_hd && <Tag className="actor-subscribe-tag actor-subscribe-tag-hd">高清</Tag>}
+                                                    {item.is_zh && <Tag className="actor-subscribe-tag actor-subscribe-tag-zh">中文字幕</Tag>}
+                                                    {item.is_uncensored && <Tag className="actor-subscribe-tag actor-subscribe-tag-uncensored">无码</Tag>}
                                                 </Space>
                                             </div>
                                         </div>
@@ -363,15 +331,15 @@ function ActorSubscribe() {
                     }}
                 />
             ) : (
-                <Card style={{ textAlign: 'center', padding: '40px 0' }}>
+                <Card className="actor-subscribe-empty-card">
                     <Empty
                         description={
-                            <span>
+                            <span className="actor-subscribe-empty-text">
                                 暂无订阅的演员 <br />
                                 <Button
                                     type="primary"
                                     icon={<PlusOutlined />}
-                                    style={{ marginTop: 16 }}
+                                    className="actor-subscribe-primary-btn actor-subscribe-empty-btn"
                                     onClick={() => navigate({ to: '/actor' })}
                                 >
                                     添加订阅
@@ -385,16 +353,16 @@ function ActorSubscribe() {
             {/* 下载记录模态框 */}
             <Modal
                 title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <PlayCircleOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                    <div className="actor-subscribe-modal-title">
+                        <PlayCircleOutlined className="actor-subscribe-modal-icon" />
                         {selectedActor ? `${selectedActor.actor_name} 的下载记录` : '下载记录'}
                     </div>
                 }
-                open={downloadsVisible}
+open={downloadsVisible}
                 onCancel={() => setDownloadsVisible(false)}
                 footer={null}
                 width={800}
-                styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
+                className="actor-subscribe-download-modal"
             >
                 {loadingDownloads ? (
                     <div style={{ textAlign: 'center', padding: '30px 0' }}>
