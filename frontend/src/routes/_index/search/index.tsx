@@ -363,21 +363,61 @@ export function Search() {
                                 {!detailMatch && (
                                     <div style={{
                                         marginBottom: '16px',
-                                        padding: '12px',
-                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                        borderRadius: '8px'
+                                        padding: '16px',
+                                        background: '#1a1a1d',
+                                        borderRadius: '12px',
+                                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
                                     }}>
-                                        <Input.Search
-                                            placeholder={'请输入番号搜索...'}
-                                            enterButton
-                                            size="large"
-                                            value={searchInput}
-                                            allowClear
-                                            onChange={e => setSearchInput(e.target.value)}
-                                            onSearch={(num) => {
-                                                return router.navigate({ search: { num: num } as any, replace: true })
-                                            }}
-                                        />
+                                        <Space.Compact style={{width: '100%'}}>
+                                            <Input
+                                                placeholder={'请输入番号搜索...'}
+                                                size="large"
+                                                value={searchInput}
+                                                allowClear
+                                                onChange={e => setSearchInput(e.target.value)}
+                                                onPressEnter={() => {
+                                                    router.navigate({ search: { num: searchInput } as any, replace: true })
+                                                }}
+                                                style={{
+                                                    background: '#0d0d0f',
+                                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                                    color: '#f0f0f2',
+                                                    transition: 'all 0.3s'
+                                                }}
+                                                onFocus={(e) => {
+                                                    e.currentTarget.style.borderColor = '#d4a852';
+                                                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(212, 168, 82, 0.1)';
+                                                }}
+                                                onBlur={(e) => {
+                                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }}
+                                            />
+                                            <Button
+                                                type="primary"
+                                                size="large"
+                                                icon={<SearchOutlined />}
+                                                onClick={() => {
+                                                    router.navigate({ search: { num: searchInput } as any, replace: true })
+                                                }}
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
+                                                    border: 'none',
+                                                    color: '#0d0d0f',
+                                                    fontWeight: 600,
+                                                    transition: 'all 0.3s'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #e8c780 0%, #d4a852 100%)';
+                                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)';
+                                                    e.currentTarget.style.transform = 'scale(1)';
+                                                }}
+                                            />
+                                        </Space.Compact>
                                     </div>
                                 )}
                                 <Await promise={loaderData}>
@@ -543,8 +583,9 @@ export function Search() {
                                         size="small"
                                         style={{
                                             marginBottom: 16,
-                                            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                                            border: '1px solid #d9d9d9'
+                                            background: '#1a1a1d',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
                                         }}
                                     >
                                         <Row gutter={[16, 8]}>
@@ -696,9 +737,10 @@ export function Search() {
                                                     <div style={{
                                                         marginBottom: 16,
                                                         padding: '12px 16px',
-                                                        background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+                                                        background: '#222226',
                                                         borderRadius: 8,
-                                                        border: '1px solid #90caf9'
+                                                        border: '1px solid #d4a852',
+                                                        boxShadow: '0 2px 8px rgba(212, 168, 82, 0.2)'
                                                     }}>
                                                         <Space>
                                                             <Badge
@@ -741,21 +783,24 @@ export function Search() {
                                                     <div
                                                         style={{
                                                             marginBottom: '12px',
-                                                            padding: '12px',
-                                                            borderRadius: '8px',
-                                                            border: '1px solid #f0f0f0',
+                                                            padding: '16px',
+                                                            borderRadius: '12px',
+                                                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                                                            background: '#1a1a1d',
                                                             transition: 'all 0.3s',
                                                             cursor: 'pointer'
                                                         }}
                                                         onMouseEnter={(e) => {
-                                                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                                                            e.currentTarget.style.borderColor = '#1890ff';
-                                                            e.currentTarget.style.transform = 'translateX(4px)';
+                                                            e.currentTarget.style.boxShadow = '0 8px 24px rgba(212, 168, 82, 0.15)';
+                                                            e.currentTarget.style.borderColor = '#d4a852';
+                                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                                            e.currentTarget.style.background = '#222226';
                                                         }}
                                                         onMouseLeave={(e) => {
                                                             e.currentTarget.style.boxShadow = 'none';
-                                                            e.currentTarget.style.borderColor = '#f0f0f0';
-                                                            e.currentTarget.style.transform = 'translateX(0)';
+                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                                            e.currentTarget.style.transform = 'translateY(0)';
+                                                            e.currentTarget.style.background = '#1a1a1d';
                                                         }}
                                                     >
                                                         <List.Item
@@ -798,11 +843,11 @@ export function Search() {
                                                                         </div>
                                                                         <div>
                                                                             {item.is_hd &&
-                                                                                <Tag color={'red'} bordered={false}>高清</Tag>}
+                                                                                <Tag color={'red'} variant="borderless">高清</Tag>}
                                                                             {item.is_zh &&
-                                                                                <Tag color={'blue'} bordered={false}>中文</Tag>}
+                                                                                <Tag color={'blue'} variant="borderless">中文</Tag>}
                                                                             {item.is_uncensored &&
-                                                                                <Tag color={'green'} bordered={false}>无码</Tag>}
+                                                                                <Tag color={'green'} variant="borderless">无码</Tag>}
                                                                         </div>
                                                                         <div><Tag color="default">{item.publish_date}</Tag></div>
                                                                     </Space>

@@ -54,12 +54,24 @@ function Video() {
 
     if (loading) {
         return (
-            <Row gutter={[15, 15]}>
+            <Row gutter={[16, 16]}>
                 {[...Array(8)].map((_, index) => (
-                    <Col key={index} span={24} md={12} lg={6}>
-                        <Card>
-                            <Skeleton.Image active style={{ width: '100%', height: '200px', marginBottom: '12px' }} />
-                            <Skeleton active paragraph={{ rows: 2 }} />
+                    <Col key={index} span={24} md={12} lg={6} className="tissue-animate-in" style={{ animationDelay: `${index * 50}ms` }}>
+                        <Card
+                            style={{
+                                background: 'var(--color-bg-container)',
+                                border: '1px solid var(--color-border-primary)',
+                                borderRadius: 'var(--radius-lg)',
+                            }}
+                        >
+                            <div className="tissue-skeleton" style={{ width: '100%', height: '240px', marginBottom: '16px', borderRadius: 'var(--radius-md)' }} />
+                            <div className="tissue-skeleton" style={{ width: '100%', height: '20px', marginBottom: '12px' }} />
+                            <div className="tissue-skeleton" style={{ width: '60%', height: '16px', marginBottom: '8px' }} />
+                            <div style={{ display: 'flex', gap: '6px', marginTop: '12px' }}>
+                                <div className="tissue-skeleton" style={{ width: '50px', height: '24px', borderRadius: 'var(--radius-sm)' }} />
+                                <div className="tissue-skeleton" style={{ width: '50px', height: '24px', borderRadius: 'var(--radius-sm)' }} />
+                                <div className="tissue-skeleton" style={{ width: '60px', height: '24px', borderRadius: 'var(--radius-sm)' }} />
+                            </div>
                         </Card>
                     </Col>
                 ))}
@@ -68,77 +80,224 @@ function Video() {
     }
 
     return (
-        <Row gutter={[15, 15]}>
+        <Row gutter={[16, 16]}>
             {videos.length > 0 ? (
-                videos.map((video: any) => (
-                    <Col key={video.path} span={24} md={12} lg={6}>
-                        <Card hoverable
-                              size={"small"}
-                              cover={(<VideoCover src={video.cover}/>)}
-                              onClick={() => setSelected(video.path)}
-                              style={{
-                                  transition: 'all 0.3s',
-                                  cursor: 'pointer'
-                              }}
-                              onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(-4px)';
-                                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)';
-                              }}
-                              onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = 'translateY(0)';
-                                  e.currentTarget.style.boxShadow = '';
-                              }}
+                videos.map((video: any, index: number) => (
+                    <Col key={video.path} span={24} md={12} lg={6} className="tissue-animate-in" style={{ animationDelay: `${index * 50}ms` }}>
+                        <Card
+                            hoverable
+                            size="small"
+                            cover={
+                                <div className="tissue-cover" style={{ height: '240px' }}>
+                                    <VideoCover src={video.cover}/>
+                                </div>
+                            }
+                            onClick={() => setSelected(video.path)}
+                            style={{
+                                background: 'var(--color-bg-container)',
+                                border: '1px solid var(--color-border-primary)',
+                                borderRadius: 'var(--radius-lg)',
+                                overflow: 'hidden',
+                                transition: 'all var(--transition-base)',
+                                cursor: 'pointer',
+                                position: 'relative',
+                            }}
+                            className="tissue-glow-border"
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-6px)';
+                                e.currentTarget.style.boxShadow = '0 0 24px rgba(212, 168, 82, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5)';
+                                e.currentTarget.style.borderColor = 'var(--color-border-gold)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '';
+                                e.currentTarget.style.borderColor = 'var(--color-border-primary)';
+                            }}
                         >
+                            <div style={{
+                                position: 'absolute',
+                                inset: 0,
+                                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 50%)',
+                                pointerEvents: 'none',
+                                zIndex: 1,
+                            }} />
                             <Card.Meta
-                                       title={
-                                           <div style={{
-                                               overflow: 'hidden',
-                                               textOverflow: 'ellipsis',
-                                               display: '-webkit-box',
-                                               WebkitLineClamp: 2,
-                                               WebkitBoxOrient: 'vertical',
-                                               lineHeight: '1.4',
-                                               minHeight: '2.8em',
-                                               fontSize: '14px',
-                                               fontWeight: 600
-                                           }}>
-                                               {video.title}
-                                           </div>
-                                       }
-                                       description={(
-                                           <div style={{
-                                               display: 'flex',
-                                               flexWrap: 'wrap',
-                                               gap: '4px',
-                                               marginTop: '8px'
-                                           }}>
-                                               {video.is_zh && (<Tag color={'blue'} bordered={false}>中文</Tag>)}
-                                               {video.is_uncensored && (<Tag color={'green'} bordered={false}>无码</Tag>)}
-                                               {video.actors.slice(0, 3).map((actor: any) => (
-                                                   <Tag key={actor.name} color={'purple'} bordered={false}>{actor.name}</Tag>
-                                               ))}
-                                               {video.actors.length > 3 && (
-                                                   <Tag color={'default'} bordered={false}>+{video.actors.length - 3}</Tag>
-                                               )}
-                                           </div>
-                                       )}
+                                title={
+                                    <div style={{
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical',
+                                        lineHeight: '1.5',
+                                        minHeight: '3em',
+                                        fontSize: '14px',
+                                        fontWeight: 600,
+                                        color: 'var(--color-text-primary)',
+                                        transition: 'color var(--transition-fast)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.color = 'var(--color-gold-light)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.color = 'var(--color-text-primary)';
+                                    }}
+                                    >
+                                        {video.title}
+                                    </div>
+                                }
+                                description={(
+                                    <div style={{
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '6px',
+                                        marginTop: '10px'
+                                    }}>
+                                        {video.is_zh && (
+                                            <Tag
+                                                variant="borderless"
+                                                style={{
+                                                    background: 'rgba(24, 144, 255, 0.15)',
+                                                    color: '#4ea8ff',
+                                                    border: '1px solid rgba(24, 144, 255, 0.3)',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    fontWeight: 500,
+                                                    fontSize: '12px',
+                                                    padding: '2px 10px',
+                                                    margin: 0,
+                                                }}
+                                            >
+                                                中文
+                                            </Tag>
+                                        )}
+                                        {video.is_uncensored && (
+                                            <Tag
+                                                variant="borderless"
+                                                style={{
+                                                    background: 'rgba(82, 196, 26, 0.15)',
+                                                    color: '#73d13d',
+                                                    border: '1px solid rgba(82, 196, 26, 0.3)',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    fontWeight: 500,
+                                                    fontSize: '12px',
+                                                    padding: '2px 10px',
+                                                    margin: 0,
+                                                }}
+                                            >
+                                                无码
+                                            </Tag>
+                                        )}
+                                        {video.actors.slice(0, 3).map((actor: any) => (
+                                            <Tag
+                                                key={actor.name}
+                                                variant="borderless"
+                                                style={{
+                                                    background: 'var(--color-gold-glow)',
+                                                    color: 'var(--color-gold-primary)',
+                                                    border: '1px solid var(--color-border-gold)',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    fontWeight: 500,
+                                                    fontSize: '12px',
+                                                    padding: '2px 10px',
+                                                    margin: 0,
+                                                    transition: 'all var(--transition-fast)',
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = 'rgba(212, 168, 82, 0.25)';
+                                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'var(--color-gold-glow)';
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                }}
+                                            >
+                                                {actor.name}
+                                            </Tag>
+                                        ))}
+                                        {video.actors.length > 3 && (
+                                            <Tag
+                                                variant="borderless"
+                                                style={{
+                                                    background: 'var(--color-bg-spotlight)',
+                                                    color: 'var(--color-text-tertiary)',
+                                                    border: '1px solid var(--color-border-primary)',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    fontWeight: 500,
+                                                    fontSize: '12px',
+                                                    padding: '2px 10px',
+                                                    margin: 0,
+                                                }}
+                                            >
+                                                +{video.actors.length - 3}
+                                            </Tag>
+                                        )}
+                                    </div>
+                                )}
                             />
                         </Card>
                     </Col>
                 ))
             ) : (
                 <Col span={24}>
-                    <Card title={'视频'}>
+                    <Card
+                        title={
+                            <span style={{
+                                color: 'var(--color-text-primary)',
+                                fontSize: '16px',
+                                fontWeight: 600,
+                            }}>
+                                视频
+                            </span>
+                        }
+                        style={{
+                            background: 'var(--color-bg-container)',
+                            border: '1px solid var(--color-border-primary)',
+                            borderRadius: 'var(--radius-lg)',
+                        }}
+                    >
                         <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
                             description={
-                                <div>
-                                    <div style={{ fontSize: '16px', marginBottom: '8px' }}>
+                                <div style={{ padding: '24px 0' }}>
+                                    <div style={{
+                                        fontSize: '16px',
+                                        marginBottom: '12px',
+                                        color: 'var(--color-text-primary)',
+                                        fontWeight: 500,
+                                    }}>
                                         {hasFilter ? '没有找到符合条件的视频' : '暂无视频'}
                                     </div>
-                                    <div style={{ fontSize: '14px', color: '#999' }}>
+                                    <div style={{
+                                        fontSize: '14px',
+                                        color: 'var(--color-text-secondary)',
+                                        lineHeight: '1.6',
+                                    }}>
                                         {hasFilter
                                             ? '请尝试调整筛选条件'
-                                            : (<span>请先 <Link to={'/setting'} hash={'video'} style={{ fontWeight: 500 }}>配置视频路径</Link> 以添加视频</span>)
+                                            : (
+                                                <span>
+                                                    请先{' '}
+                                                    <Link
+                                                        to={'/setting'}
+                                                        hash={'video'}
+                                                        style={{
+                                                            fontWeight: 500,
+                                                            color: 'var(--color-gold-primary)',
+                                                            textDecoration: 'none',
+                                                            transition: 'color var(--transition-fast)',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.color = 'var(--color-gold-light)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.color = 'var(--color-gold-primary)';
+                                                        }}
+                                                    >
+                                                        配置视频路径
+                                                    </Link>
+                                                    {' '}以添加视频
+                                                </span>
+                                            )
                                         }
                                     </div>
                                 </div>
@@ -169,9 +328,28 @@ function Video() {
             <>
                 {createPortal((
                         <>
-                            <FloatButton icon={<RedoOutlined/>} onClick={() => run(true)}/>
-                            <FloatButton icon={<FilterOutlined/>} type={hasFilter ? 'primary' : 'default'}
-                                         onClick={() => setFilterOpen(true)}/>
+                            <FloatButton
+                                icon={<RedoOutlined/>}
+                                onClick={() => run(true)}
+                                style={{
+                                    background: 'var(--color-bg-spotlight)',
+                                    border: '1px solid var(--color-border-primary)',
+                                }}
+                            />
+                            <FloatButton
+                                icon={<FilterOutlined/>}
+                                type={hasFilter ? 'primary' : 'default'}
+                                onClick={() => setFilterOpen(true)}
+                                style={{
+                                    ...(hasFilter ? {
+                                        background: 'linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%)',
+                                        boxShadow: 'var(--shadow-gold)',
+                                    } : {
+                                        background: 'var(--color-bg-spotlight)',
+                                        border: '1px solid var(--color-border-primary)',
+                                    })
+                                }}
+                            />
                         </>
                     ), document.getElementsByClassName('index-float-button-group')[0]
                 )}

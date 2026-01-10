@@ -56,11 +56,11 @@ function DownloadListModal(props: Props) {
         <Modal
             title={
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <CloudDownloadOutlined style={{ marginRight: 10, color: '#1890ff', fontSize: 22 }} />
-                    <span>选择下载资源</span>
+                    <CloudDownloadOutlined style={{ marginRight: 10, color: '#d4a852', fontSize: 22 }} />
+                    <span style={{ color: '#e8c780', fontWeight: 600 }}>选择下载资源</span>
                     {video && video.title &&
                         <Tooltip title={video.title}>
-                            <span style={{ marginLeft: 10, fontSize: '14px', color: '#888', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ marginLeft: 10, fontSize: '14px', color: '#6a6a72', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 - {video.num}
                             </span>
                         </Tooltip>
@@ -69,7 +69,15 @@ function DownloadListModal(props: Props) {
             }
             {...otherProps}
             footer={[
-                <Button key="cancel" onClick={props.onCancel}>
+                <Button 
+                    key="cancel" 
+                    onClick={props.onCancel}
+                    style={{
+                        background: '#1a1a1d',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: '#a0a0a8'
+                    }}
+                >
                     取消
                 </Button>,
                 <Button
@@ -79,23 +87,46 @@ function DownloadListModal(props: Props) {
                     loading={confirmLoading}
                     icon={<CloudDownloadOutlined />}
                     onClick={handleDownload}
+                    style={{
+                        background: selectedItem ? 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)' : '#222226',
+                        border: 'none',
+                        color: selectedItem ? '#0d0d0f' : '#6a6a72',
+                        fontWeight: 600
+                    }}
                 >
                     下载
                 </Button>
             ]}
             width={700}
             centered
-            styles={{ body: { maxHeight: '60vh', overflowY: 'auto', padding: '12px 24px' } }}
+            styles={{ 
+                mask: { backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.6)' },
+                content: { 
+                    background: '#141416',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 12px 48px rgba(0, 0, 0, 0.6)'
+                },
+                body: { maxHeight: '60vh', overflowY: 'auto', padding: '12px 24px' }
+            }}
         >
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography.Text>
-                    共找到 <Typography.Text strong>{downloads?.length || 0}</Typography.Text> 个下载资源:
+                <Typography.Text style={{ color: '#f0f0f2' }}>
+                    共找到 <Typography.Text strong style={{ color: '#e8c780' }}>{downloads?.length || 0}</Typography.Text> 个下载资源:
                 </Typography.Text>
 
                 <Space>
-                    <Tag icon={<FileOutlined />} color="blue">文件大小</Tag>
-                    <Tag icon={<CalendarOutlined />} color="purple">发布日期</Tag>
-                    <Tag icon={<SettingOutlined />} color="orange">资源特性</Tag>
+                    <Tag 
+                        icon={<FileOutlined />} 
+                        style={{ background: '#222226', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                    >文件大小</Tag>
+                    <Tag 
+                        icon={<CalendarOutlined />} 
+                        style={{ background: '#222226', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                    >发布日期</Tag>
+                    <Tag 
+                        icon={<SettingOutlined />} 
+                        style={{ background: '#222226', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                    >资源特性</Tag>
                 </Space>
             </div>
 
@@ -113,12 +144,26 @@ function DownloadListModal(props: Props) {
                             hoverable
                             style={{
                                 marginBottom: 16,
-                                borderColor: selectedItem === item ? '#1890ff' : '#f0f0f0',
-                                backgroundColor: selectedItem === item ? '#e6f7ff' : getSizeColor(item.size),
-                                transition: 'all 0.3s'
+                                borderColor: selectedItem === item ? '#d4a852' : 'rgba(255, 255, 255, 0.08)',
+                                backgroundColor: selectedItem === item ? '#222226' : '#1a1a1d',
+                                transition: 'all 0.3s',
+                                cursor: 'pointer',
+                                boxShadow: selectedItem === item ? '0 4px 16px rgba(212, 168, 82, 0.2)' : 'none'
                             }}
                             styles={{ body: { padding: 16 } }}
                             onClick={() => handleSelectItem(item)}
+                            onMouseEnter={(e) => {
+                                if (selectedItem !== item) {
+                                    e.currentTarget.style.borderColor = '#d4a852';
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (selectedItem !== item) {
+                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                }
+                            }}
                         >
                             <Row gutter={16} align="middle">
                                 <Col span={16}>
@@ -126,21 +171,27 @@ function DownloadListModal(props: Props) {
                                         <CloudDownloadOutlined style={{
                                             fontSize: 20,
                                             marginRight: 12,
-                                            color: selectedItem === item ? '#1890ff' : '#8c8c8c'
+                                            color: selectedItem === item ? '#d4a852' : '#6a6a72'
                                         }} />
-                                        <Typography.Title level={5} style={{ margin: 0 }}>
+                                        <Typography.Title level={5} style={{ margin: 0, color: '#f0f0f2' }}>
                                             {item.name}
                                             {selectedItem === item &&
-                                                <CheckCircleOutlined style={{ color: '#52c41a', marginLeft: 8, fontSize: 16 }} />
+                                                <CheckCircleOutlined style={{ color: '#d4a852', marginLeft: 8, fontSize: 16 }} />
                                             }
                                         </Typography.Title>
                                     </div>
 
                                     <div style={{ marginTop: 8, marginLeft: 32 }}>
                                         <Space wrap>
-                                            <Tag icon={<GlobalOutlined />} color="cyan">{item.website}</Tag>
+                                            <Tag 
+                                                icon={<GlobalOutlined />} 
+                                                style={{ background: '#0d0d0f', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                                            >{item.website}</Tag>
                                             {item.publish_date &&
-                                                <Tag icon={<CalendarOutlined />} color="purple">{item.publish_date}</Tag>
+                                                <Tag 
+                                                    icon={<CalendarOutlined />} 
+                                                    style={{ background: '#0d0d0f', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                                                >{item.publish_date}</Tag>
                                             }
                                         </Space>
                                     </div>
@@ -148,10 +199,19 @@ function DownloadListModal(props: Props) {
 
                                 <Col span={8}>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
-                                        <Tag color="blue" style={{ minWidth: 60, textAlign: 'center' }}>{item.size}</Tag>
-                                        {item.is_hd && <Tag color="red" bordered={false}>高清</Tag>}
-                                        {item.is_zh && <Tag color="blue" bordered={false}>中文</Tag>}
-                                        {item.is_uncensored && <Tag color="green" bordered={false}>无码</Tag>}
+                                        <Tag 
+                                            style={{ 
+                                                minWidth: 60, 
+                                                textAlign: 'center',
+                                                background: '#222226',
+                                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                                color: '#e8c780',
+                                                fontWeight: 600
+                                            }}
+                                        >{item.size}</Tag>
+                                        {item.is_hd && <Tag style={{ background: '#d4a85220', border: '1px solid #d4a852', color: '#e8c780' }}>高清</Tag>}
+                                        {item.is_zh && <Tag style={{ background: '#d4a85220', border: '1px solid #d4a852', color: '#e8c780' }}>中文</Tag>}
+                                        {item.is_uncensored && <Tag style={{ background: '#d4a85220', border: '1px solid #d4a852', color: '#e8c780' }}>无码</Tag>}
                                     </div>
                                 </Col>
                             </Row>
@@ -161,17 +221,46 @@ function DownloadListModal(props: Props) {
             />
 
             {selectedItem && (
-                <div style={{ marginTop: 16, padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
+                <div style={{ 
+                    marginTop: 16, 
+                    padding: '16px', 
+                    backgroundColor: '#0d0d0f', 
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                }}>
+                    <Typography.Text strong style={{ display: 'block', marginBottom: 8, color: '#e8c780' }}>
                         下载设置
                     </Typography.Text>
-                    <Input
-                        placeholder="请输入保存路径（留空则使用默认路径）"
-                        value={savePath}
-                        onChange={(e) => setSavePath(e.target.value)}
-                        addonBefore={<SettingOutlined />}
-                        allowClear
-                    />
+                    <Space.Compact style={{ width: '100%' }}>
+                        <Button 
+                            disabled 
+                            icon={<SettingOutlined />}
+                            style={{
+                                background: '#1a1a1d',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                color: '#6a6a72'
+                            }}
+                        />
+                        <Input
+                            placeholder="请输入保存路径（留空则使用默认路径）"
+                            value={savePath}
+                            onChange={(e) => setSavePath(e.target.value)}
+                            allowClear
+                            style={{
+                                background: '#141416',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                color: '#f0f0f2'
+                            }}
+                            onFocus={(e) => {
+                                e.currentTarget.style.borderColor = '#d4a852';
+                                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(212, 168, 82, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }}
+                        />
+                    </Space.Compact>
                 </div>
             )}
         </Modal>

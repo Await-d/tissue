@@ -30,8 +30,8 @@ function ActorsModal(props: Props) {
             </div>
             {items && (
                 <Space wrap className={'mt-2'}>
-                    {items.map((item: any) => (
-                        <span>
+                    {items.map((item: any, index: number) => (
+                        <span key={item.name || index}>
                             <SearchOutlined/>
                             <a>{item.name}</a>
                         </span>

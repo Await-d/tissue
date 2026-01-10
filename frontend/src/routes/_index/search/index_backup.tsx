@@ -453,11 +453,11 @@ export function Search() {
                                                                     </div>
                                                                     <div>
                                                                         {item.is_hd &&
-                                                                            <Tag color={'red'} bordered={false}>高清</Tag>}
+                                                                            <Tag color={'red'} variant="borderless">高清</Tag>}
                                                                         {item.is_zh &&
-                                                                            <Tag color={'blue'} bordered={false}>中文</Tag>}
+                                                                            <Tag color={'blue'} variant="borderless">中文</Tag>}
                                                                         {item.is_uncensored &&
-                                                                            <Tag color={'green'} bordered={false}>无码</Tag>}
+                                                                            <Tag color={'green'} variant="borderless">无码</Tag>}
                                                                     </div>
                                                                     <div>{item.publish_date}</div>
                                                                 </Space>
