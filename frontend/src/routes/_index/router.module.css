@@ -1,3 +1,5 @@
+/* TISSUE+ 布局样式 - 电影美学 */
+
 .header {
     padding-top: env(safe-area-inset-top, 0);
     padding-left: env(safe-area-inset-left, 0);
@@ -7,9 +9,17 @@
     right: 0;
     top: 0;
     z-index: 20;
-    backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.6);
-    border-block-end: 1px solid;
+
+    /* 玻璃态效果 */
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(13, 13, 15, 0.85);
+    border-block-end: 1px solid rgba(255, 255, 255, 0.06);
+
+    /* 微妙的顶部高光 */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .footer {
@@ -18,26 +28,78 @@
     right: 0;
     bottom: 0;
     z-index: 20;
-    backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.6);
-    border-block-start: 1px solid;
+
+    /* 玻璃态效果 */
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(13, 13, 15, 0.9);
+    border-block-start: 1px solid rgba(255, 255, 255, 0.06);
     padding-bottom: env(safe-area-inset-bottom, 0);
+
+    /* 微妙的底部阴影 */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.03),
+        0 -4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .side {
-    border-right: 1px solid;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(
+        180deg,
+        rgba(20, 20, 22, 0.5) 0%,
+        rgba(13, 13, 15, 1) 100%
+    );
+
+    /* 微妙的内侧光 */
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.02);
 }
 
 .content {
     padding-top: calc(env(safe-area-inset-top, 0) + 64px);
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
-    /* 修复滚动问题 */
     height: 100%;
     width: 100%;
-    /* 使用 -webkit-overflow-scrolling 改善 iOS 滚动 */
     -webkit-overflow-scrolling: touch;
-    /* 确保可以滚动 */
     overflow-y: scroll;
     overflow-x: hidden;
+
+    /* 深色渐变背景，增加层次感 */
+    background:
+        radial-gradient(
+            ellipse 80% 50% at 50% 0%,
+            rgba(212, 168, 82, 0.03) 0%,
+            transparent 50%
+        ),
+        linear-gradient(
+            180deg,
+            #0d0d0f 0%,
+            #0a0a0c 100%
+        );
+}
+
+/* 桌面端侧边栏悬浮效果 */
+@media (min-width: 1024px) {
+    .side {
+        transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .side:hover {
+        background: linear-gradient(
+            180deg,
+            rgba(26, 26, 29, 0.8) 0%,
+            rgba(13, 13, 15, 1) 100%
+        );
+    }
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .header {
+        background: rgba(13, 13, 15, 0.92);
+    }
+
+    .footer {
+        background: rgba(13, 13, 15, 0.95);
+    }
 }

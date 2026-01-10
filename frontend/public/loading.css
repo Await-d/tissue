@@ -1,32 +1,70 @@
+/* TISSUE+ 全局加载页面 - 支持亮暗双主题 */
 body {
-    background: var(--loading-background-color, #000000);
+    background: var(--loading-background-color, #0d0d0f);
+    margin: 0;
+    padding: 0;
 }
 
 .loading-container {
     block-size: 100vh;
     inline-size: 100vw;
-    background: var(--loading-background-color, #000000);
+    background: var(--loading-background-color, #0d0d0f);
 
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 48px;
+}
+
+.loading-logo {
+    position: relative;
+    animation: logo-float 3s ease-in-out infinite;
 }
 
 .loading-logo img {
-    width: 80px;
-    height: 80px;
-    border-radius: 20px;
+    width: 88px;
+    height: 88px;
+    border-radius: 22px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.loading-logo::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    height: 120px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 168, 82, 0.1) 0%, transparent 70%);
+    animation: logo-glow 2s ease-in-out infinite alternate;
+    z-index: -1;
 }
 
 .loading-indicator {
-    width: 30px;
-    height: 30px;
-    border: 4px solid transparent;
-    border-top-color: #1890ff;
-    border-right-color: #1890ff;
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(212, 168, 82, 0.15);
+    border-top-color: #d4a852;
+    border-right-color: #e8c780;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    box-shadow: 0 0 20px rgba(212, 168, 82, 0.2);
+}
+
+/* 加载文字 (可选) */
+.loading-text {
+    color: #6a6a72;
+    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    animation: text-pulse 2s ease-in-out infinite;
 }
 
 @keyframes spin {
@@ -35,5 +73,81 @@ body {
     }
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes logo-float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes logo-glow {
+    from {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+@keyframes text-pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* 亮色主题适配 */
+@media (prefers-color-scheme: light) {
+    .loading-logo img {
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.15),
+            0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+
+    .loading-logo::after {
+        background: radial-gradient(circle, rgba(180, 140, 60, 0.15) 0%, transparent 70%);
+    }
+
+    .loading-indicator {
+        border-color: rgba(180, 140, 60, 0.2);
+        border-top-color: #b08d3e;
+        border-right-color: #d4a852;
+        box-shadow: 0 0 15px rgba(180, 140, 60, 0.15);
+    }
+
+    .loading-text {
+        color: #8a8a92;
+    }
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+    .loading-logo img {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+    }
+
+    .loading-logo::after {
+        width: 100px;
+        height: 100px;
+    }
+
+    .loading-indicator {
+        width: 30px;
+        height: 30px;
+    }
+
+    .loading-container {
+        gap: 36px;
     }
 }

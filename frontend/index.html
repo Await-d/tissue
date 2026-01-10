@@ -17,12 +17,13 @@
     <link rel="stylesheet" type="text/css" href="/loading.css" />
     <meta name="viewport"
         content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-    <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Tissue-Plus</title>
     <script>
+        // TISSUE+ 双主题支持
         let theme = localStorage.getItem('themeMode') || 'system';
         if (theme === 'system') {
             if (window.matchMedia("(prefers-color-scheme: light)").matches) {
@@ -31,7 +32,8 @@
                 theme = 'dark';
             }
         }
-        let loadingBackgroundColor = theme === 'dark' ? '#0f172a' : '#1e293b';
+        // 暗色主题使用电影美学深色，亮色主题使用浅灰
+        let loadingBackgroundColor = theme === 'dark' ? '#0d0d0f' : '#f5f5f7';
         document.documentElement.style.setProperty('--loading-background-color', loadingBackgroundColor)
     </script>
 </head>
