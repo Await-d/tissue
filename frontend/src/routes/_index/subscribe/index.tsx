@@ -133,7 +133,6 @@ function Subscribe() {
                 )}
             </Row>
             <ModifyModal width={1100}
-                form={form}
                 onDelete={onDelete}
                 {...modalProps} />
             <HistoryModal open={historyModalOpen}

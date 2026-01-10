@@ -24,11 +24,12 @@ function Preview(props: PreviewProps) {
     const slides = data.map((item: any) => (
         item.type === "video" ? (
             {
-                type: "video",
+                type: "video" as const,
                 poster: api.getVideoCover(item.thumb),
                 sources: [
                     {
                         src: api.getVideoTrailer(item.url),
+                        type: "video/mp4",
                     },
                 ],
             }

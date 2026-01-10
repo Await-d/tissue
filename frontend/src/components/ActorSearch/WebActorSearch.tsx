@@ -96,7 +96,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         year: { min: 1990, max: new Date().getFullYear() },
         showOnlyZh: false,
         showOnlyUncensored: false,
-        sortBy: 'date',
+        sortBy: 'comments',
         sortOrder: 'desc'
     });
     const [progress, setProgress] = useState({
@@ -626,6 +626,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     onSearch={handleSearch}
                     value={searchValue}
                     notFoundContent={loadingActors || searching ? <Spin size="small" /> : null}
+                    className="web-actor-autocomplete"
                     classNames={{ popup: { root: 'web-actor-search-dropdown' } }}
                 >
                     <Input
@@ -769,7 +770,6 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                     border: `1px solid ${colors.borderColor}`,
                                     color: showFilters ? colors.dark : colors.gold,
                                     fontWeight: showFilters ? 600 : 500,
-                                    height: '36px',
                                     borderRadius: '8px',
                                     transition: 'all 0.3s ease'
                                 }}
@@ -805,7 +805,6 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                     borderColor: colors.gold,
                                     color: colors.dark,
                                     fontWeight: 600,
-                                    height: '36px',
                                     borderRadius: '8px'
                                 }}
                             >
@@ -821,7 +820,6 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                     border: `1px solid ${colors.borderColor}`,
                                     color: batchSelect.isBatchMode ? colors.dark : colors.gold,
                                     fontWeight: batchSelect.isBatchMode ? 600 : 500,
-                                    height: '36px',
                                     borderRadius: '8px',
                                     transition: 'all 0.3s ease'
                                 }}

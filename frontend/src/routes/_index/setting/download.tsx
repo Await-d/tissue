@@ -1,4 +1,4 @@
-import { Button, Form, Input, message, Select, Skeleton, Switch } from "antd";
+import { App, Button, Form, Input, Select, Skeleton, Switch } from "antd";
 import * as api from "../../../apis/setting.ts";
 import { useRequest } from "ahooks";
 import { createFileRoute } from "@tanstack/react-router";
@@ -12,6 +12,7 @@ export const Route = createFileRoute('/_index/setting/download')({
 
 function SettingDownload() {
     const colors = useThemeColors();
+    const { message } = App.useApp();
     const [form] = Form.useForm()
 
     const { loading } = useRequest(api.getSettings, {
@@ -59,7 +60,7 @@ function SettingDownload() {
             <Skeleton active />
         ) : (
             <div className="max-w-5xl mx-auto px-6 py-8">
-                <div style={{ background: colors.cardBg }} className="rounded-2xl border shadow-2xl overflow-hidden" style={{ borderColor: colors.border }}>
+                <div style={{ background: colors.cardBg, borderColor: colors.border }} className="rounded-2xl border shadow-2xl overflow-hidden">
                     {/* 页面标题 */}
                     <div className="px-8 py-6 border-b" style={{
                         borderColor: colors.border,
@@ -97,6 +98,7 @@ function SettingDownload() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <Form.Item label={<span style={{ color: colors.text }}>用户名</span>} name={'username'}>
                                             <Input
+                                                autoComplete={'username'}
                                                 style={{
                                                     background: colors.bgDark,
                                                     borderColor: colors.border,

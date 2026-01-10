@@ -157,7 +157,6 @@ function Video() {
                                     }}>
                                         {video.is_zh && (
                                             <Tag
-                                                variant="borderless"
                                                 style={{
                                                     background: colors.rgba('white', 0.08),
                                                     color: '#4ea8ff',
@@ -174,7 +173,6 @@ function Video() {
                                         )}
                                         {video.is_uncensored && (
                                             <Tag
-                                                variant="borderless"
                                                 style={{
                                                     background: colors.rgba('white', 0.08),
                                                     color: '#73d13d',
@@ -192,7 +190,6 @@ function Video() {
                                         {video.actors.slice(0, 3).map((actor: any) => (
                                             <Tag
                                                 key={actor.name}
-                                                variant="borderless"
                                                 style={{
                                                     background: colors.goldGlow,
                                                     color: colors.goldPrimary,
@@ -218,7 +215,6 @@ function Video() {
                                         ))}
                                         {video.actors.length > 3 && (
                                             <Tag
-                                                variant="borderless"
                                                 style={{
                                                     background: colors.bgSpotlight,
                                                     color: colors.textTertiary,

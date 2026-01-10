@@ -6,7 +6,6 @@ import * as videoApi from '../../../../apis/video';
 import './AllDownloadsModal.css';
 
 const { Text } = Typography;
-const { Search } = Input;
 
 interface AllDownloadsModalProps {
     open: boolean;
@@ -150,13 +149,21 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
             <div className="all-downloads-filter-section">
                 <Row gutter={[16, 16]}>
                     <Col span={24}>
-                        <Search
-                            placeholder="搜索番号或标题"
-                            allowClear
-                            enterButton={<SearchOutlined />}
-                            onSearch={(value) => setSearchText(value)}
-                            className="all-downloads-search"
-                        />
+                        <Space.Compact style={{ width: '100%' }}>
+                            <Input
+                                placeholder="搜索番号或标题"
+                                allowClear
+                                value={searchText}
+                                onChange={(e) => setSearchText(e.target.value)}
+                                onPressEnter={() => applyFilters()}
+                                className="all-downloads-search"
+                            />
+                            <Button
+                                type="primary"
+                                icon={<SearchOutlined />}
+                                onClick={() => applyFilters()}
+                            />
+                        </Space.Compact>
                     </Col>
                     <Col span={24}>
                         <div className="all-downloads-filter-tags">

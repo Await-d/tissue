@@ -35,7 +35,7 @@ function SettingApp() {
             <Skeleton active />
         ) : (
             <div className="max-w-5xl mx-auto px-6 py-8">
-                <div style={{ background: colors.cardBg }} className="rounded-2xl border shadow-2xl overflow-hidden" style={{ borderColor: colors.border }}>
+                <div style={{ background: colors.cardBg, borderColor: colors.border }} className="rounded-2xl border shadow-2xl overflow-hidden">
                     {/* 页面标题 */}
                     <div className="px-8 py-6 border-b" style={{
                         borderColor: colors.border,

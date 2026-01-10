@@ -143,107 +143,301 @@ function JavDB() {
     };
 
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div style={{ flex: 1 }}>
-                    <Filter initialValues={filter} onChange={(values, field) => {
-                        return navigate({ search: values as any })
-                    }} fields={filterFields} />
+        <div style={{ 
+            minHeight: '100vh',
+            padding: '0 0 80px 0',
+        }}>
+            {/* 顶部筛选栏 - 玻璃态效果 */}
+            <div style={{ 
+                position: 'sticky',
+                top: 0,
+                zIndex: 100,
+                marginBottom: '20px',
+                background: colors.rgba('bgContainer', 0.85),
+                backdropFilter: 'blur(20px) saturate(180%)',
+                borderRadius: '16px',
+                padding: '16px',
+                border: `1px solid ${colors.borderPrimary}`,
+                boxShadow: `0 4px 24px ${colors.rgba('black', 0.1)}`,
+            }}>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                }}>
+                    {/* 筛选器 */}
+                    <div style={{ flex: 1 }}>
+                        <Filter 
+                            initialValues={filter} 
+                            onChange={(values, field) => {
+                                return navigate({ search: values as any })
+                            }} 
+                            fields={filterFields} 
+                        />
+                    </div>
+
+                    {/* 操作按钮组 */}
+                    <div style={{ 
+                        display: 'flex', 
+                        gap: '8px',
+                        flexShrink: 0,
+                    }}>
+                        {/* 刷新按钮 */}
+                        <Tooltip title="刷新数据" placement="bottom">
+                            <Button
+                                type="text"
+                                icon={<ReloadOutlined spin={refreshing} />}
+                                onClick={handleRefresh}
+                                loading={refreshing}
+                                size="large"
+                                style={{
+                                    background: colors.rgba('bgContainer', 0.8),
+                                    border: `1px solid ${colors.borderPrimary}`,
+                                    borderRadius: '12px',
+                                    color: colors.textSecondary,
+                                    height: 44,
+                                    minWidth: 44,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = colors.rgba('gold', 0.12);
+                                    e.currentTarget.style.borderColor = colors.borderGold;
+                                    e.currentTarget.style.color = colors.goldPrimary;
+                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
+                                    e.currentTarget.style.borderColor = colors.borderPrimary;
+                                    e.currentTarget.style.color = colors.textSecondary;
+                                    e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                            />
+                        </Tooltip>
+
+                        {/* 批量选择按钮 */}
+                        <Tooltip 
+                            title={batchSelect.isBatchMode ? "退出批量选择" : "批量选择"} 
+                            placement="bottom"
+                        >
+                            <Button
+                                type="text"
+                                icon={batchSelect.isBatchMode ? 
+                                    <CheckSquareOutlined /> : 
+                                    <BorderOutlined />
+                                }
+                                onClick={batchSelect.toggleBatchMode}
+                                size="large"
+                                style={{
+                                    background: batchSelect.isBatchMode ? 
+                                        colors.rgba('gold', 0.15) : 
+                                        colors.rgba('bgContainer', 0.8),
+                                    border: batchSelect.isBatchMode ? 
+                                        `1px solid ${colors.borderGold}` : 
+                                        `1px solid ${colors.borderPrimary}`,
+                                    borderRadius: '12px',
+                                    color: batchSelect.isBatchMode ? 
+                                        colors.goldPrimary : 
+                                        colors.textSecondary,
+                                    height: 44,
+                                    minWidth: 44,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = colors.rgba('gold', 0.15);
+                                    e.currentTarget.style.borderColor = colors.borderGold;
+                                    e.currentTarget.style.color = colors.goldPrimary;
+                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!batchSelect.isBatchMode) {
+                                        e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
+                                        e.currentTarget.style.borderColor = colors.borderPrimary;
+                                        e.currentTarget.style.color = colors.textSecondary;
+                                    }
+                                    e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                            />
+                        </Tooltip>
+                    </div>
                 </div>
-                <Tooltip title="刷新数据">
-                    <Button
-                        type="text"
-                        icon={<ReloadOutlined spin={refreshing} style={{ color: colors.goldPrimary }} />}
-                        onClick={handleRefresh}
-                        loading={refreshing}
-                        style={{
-                            marginLeft: '8px',
-                            marginTop: '4px',
-                            background: colors.rgba('bgContainer', 0.6),
-                            border: `1px solid ${colors.borderPrimary}`,
-                            borderRadius: '10px',
-                            transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = colors.rgba('gold', 0.15);
-                            e.currentTarget.style.borderColor = colors.borderGold;
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = colors.rgba('bgContainer', 0.6);
-                            e.currentTarget.style.borderColor = colors.borderPrimary;
-                        }}
-                    />
-                </Tooltip>
-                <Tooltip title={batchSelect.isBatchMode ? "退出批量选择" : "批量选择"}>
-                    <Button
-                        type="text"
-                        icon={batchSelect.isBatchMode ? <CheckSquareOutlined style={{ color: colors.goldPrimary }} /> : <BorderOutlined style={{ color: colors.goldPrimary }} />}
-                        onClick={batchSelect.toggleBatchMode}
-                        style={{
-                            marginLeft: '8px',
-                            marginTop: '4px',
-                            background: batchSelect.isBatchMode ? colors.rgba('gold', 0.15) : colors.rgba('bgContainer', 0.6),
-                            border: batchSelect.isBatchMode ? `1px solid ${colors.borderGold}` : `1px solid ${colors.borderPrimary}`,
-                            borderRadius: '10px',
-                            transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = colors.rgba('gold', 0.15);
-                            e.currentTarget.style.borderColor = colors.borderGold;
-                        }}
-                        onMouseLeave={(e) => {
-                            if (!batchSelect.isBatchMode) {
-                                e.currentTarget.style.background = colors.rgba('bgContainer', 0.6);
-                                e.currentTarget.style.borderColor = colors.borderPrimary;
-                            }
-                        }}
-                    />
-                </Tooltip>
             </div>
             <Await promise={data} fallback={(
-                <Row className={'mt-2'} gutter={[12, 12]}>
+                <Row className={'mt-2'} gutter={[16, 16]}>
                     {[...Array(8)].map((_, index) => (
-                        <Col key={index} span={24} md={12} lg={6} className={`tissue-animate-in tissue-stagger-${(index % 8) + 1}`}>
+                        <Col 
+                            key={index} 
+                            span={24} 
+                            md={12} 
+                            lg={6} 
+                            className={`tissue-animate-in tissue-stagger-${(index % 8) + 1}`}
+                        >
                             <div style={{
                                 background: colors.bgContainer,
-                                borderRadius: '14px',
+                                borderRadius: '16px',
                                 overflow: 'hidden',
                                 border: `1px solid ${colors.borderSecondary}`,
-                                boxShadow: `0 4px 16px ${colors.rgba('black', 0.4)}`,
+                                boxShadow: `0 4px 12px ${colors.rgba('black', 0.15)}`,
                             }}>
+                                {/* 封面骨架 - 更丰富的动画 */}
                                 <div style={{
                                     aspectRatio: '16/10',
-                                    background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
-                                    backgroundSize: '200% 100%',
-                                    animation: 'tissue-shimmer 1.5s infinite',
-                                }} />
-                                <div style={{ padding: '14px 16px' }}>
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    background: colors.bgSpotlight,
+                                }}>
                                     <div style={{
-                                        width: '60%',
-                                        height: '12px',
-                                        background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
+                                        position: 'absolute',
+                                        inset: 0,
+                                        background: `linear-gradient(
+                                            90deg, 
+                                            transparent 0%, 
+                                            ${colors.rgba('gold', 0.08)} 50%, 
+                                            transparent 100%
+                                        )`,
                                         backgroundSize: '200% 100%',
-                                        animation: 'tissue-shimmer 1.5s infinite',
-                                        borderRadius: '6px',
-                                        marginBottom: '8px',
+                                        animation: 'tissue-shimmer 2s ease-in-out infinite',
                                     }} />
+                                    {/* 模拟评分角标 */}
                                     <div style={{
-                                        width: '90%',
-                                        height: '14px',
-                                        background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
-                                        backgroundSize: '200% 100%',
-                                        animation: 'tissue-shimmer 1.5s infinite',
-                                        borderRadius: '6px',
-                                        marginBottom: '6px',
+                                        position: 'absolute',
+                                        top: 14,
+                                        left: 14,
+                                        width: 60,
+                                        height: 28,
+                                        background: colors.rgba('gold', 0.15),
+                                        borderRadius: 10,
                                     }} />
+                                </div>
+
+                                {/* 内容骨架 */}
+                                <div style={{ padding: '16px 18px' }}>
+                                    {/* 番号标签骨架 */}
+                                    <div style={{
+                                        width: '40%',
+                                        height: 20,
+                                        background: colors.rgba('gold', 0.12),
+                                        borderRadius: 6,
+                                        marginBottom: 10,
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                    }}>
+                                        <div style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            background: `linear-gradient(
+                                                90deg, 
+                                                transparent 0%, 
+                                                ${colors.rgba('white', 0.08)} 50%, 
+                                                transparent 100%
+                                            )`,
+                                            backgroundSize: '200% 100%',
+                                            animation: 'tissue-shimmer 2s ease-in-out infinite 0.2s',
+                                        }} />
+                                    </div>
+
+                                    {/* 标题骨架 */}
+                                    <div style={{
+                                        width: '100%',
+                                        height: 16,
+                                        background: colors.bgSpotlight,
+                                        borderRadius: 6,
+                                        marginBottom: 8,
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                    }}>
+                                        <div style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            background: `linear-gradient(
+                                                90deg, 
+                                                transparent 0%, 
+                                                ${colors.rgba('white', 0.05)} 50%, 
+                                                transparent 100%
+                                            )`,
+                                            backgroundSize: '200% 100%',
+                                            animation: 'tissue-shimmer 2s ease-in-out infinite 0.4s',
+                                        }} />
+                                    </div>
                                     <div style={{
                                         width: '75%',
-                                        height: '14px',
-                                        background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
-                                        backgroundSize: '200% 100%',
-                                        animation: 'tissue-shimmer 1.5s infinite',
-                                        borderRadius: '6px',
-                                    }} />
+                                        height: 16,
+                                        background: colors.bgSpotlight,
+                                        borderRadius: 6,
+                                        marginBottom: 14,
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                    }}>
+                                        <div style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            background: `linear-gradient(
+                                                90deg, 
+                                                transparent 0%, 
+                                                ${colors.rgba('white', 0.05)} 50%, 
+                                                transparent 100%
+                                            )`,
+                                            backgroundSize: '200% 100%',
+                                            animation: 'tissue-shimmer 2s ease-in-out infinite 0.6s',
+                                        }} />
+                                    </div>
+
+                                    {/* 底部信息骨架 */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        paddingTop: 12,
+                                        borderTop: `1px solid ${colors.borderSecondary}`,
+                                    }}>
+                                        <div style={{
+                                            width: '50%',
+                                            height: 14,
+                                            background: colors.bgSpotlight,
+                                            borderRadius: 6,
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                        }}>
+                                            <div style={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                background: `linear-gradient(
+                                                    90deg, 
+                                                    transparent 0%, 
+                                                    ${colors.rgba('white', 0.05)} 50%, 
+                                                    transparent 100%
+                                                )`,
+                                                backgroundSize: '200% 100%',
+                                                animation: 'tissue-shimmer 2s ease-in-out infinite 0.8s',
+                                            }} />
+                                        </div>
+                                        <div style={{
+                                            width: '25%',
+                                            height: 14,
+                                            background: colors.bgSpotlight,
+                                            borderRadius: 6,
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                        }}>
+                                            <div style={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                background: `linear-gradient(
+                                                    90deg, 
+                                                    transparent 0%, 
+                                                    ${colors.rgba('white', 0.05)} 50%, 
+                                                    transparent 100%
+                                                )`,
+                                                backgroundSize: '200% 100%',
+                                                animation: 'tissue-shimmer 2s ease-in-out infinite 1s',
+                                            }} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </Col>
@@ -274,7 +468,7 @@ function JavDB() {
                     currentVideosRef.current = batchVideos;
 
                     return sortedVideos.length > 0 ? (
-                        <Row className={'mt-2 cursor-pointer'} gutter={[12, 12]}>
+                        <Row className={'mt-2 cursor-pointer'} gutter={[16, 16]}>
                             {sortedVideos.map((item: any, index: number) => {
                                 const isSelected = batchSelect.isSelected(item.num);
                                 const batchVideo: BatchSelectVideo = batchVideos[index];
@@ -297,30 +491,48 @@ function JavDB() {
                                             }
                                         }}
                                     >
-                                        <div style={{ position: 'relative' }}>
+                                        <div style={{ 
+                                            position: 'relative',
+                                            height: '100%',
+                                        }}>
+                                            {/* 批量选择复选框 */}
                                             {batchSelect.isBatchMode && (
                                                 <div style={{
                                                     position: 'absolute',
-                                                    top: 10,
-                                                    left: 10,
-                                                    zIndex: 10,
+                                                    top: 12,
+                                                    left: 12,
+                                                    zIndex: 20,
+                                                    background: colors.rgba('bgContainer', 0.95),
+                                                    backdropFilter: 'blur(10px)',
+                                                    borderRadius: '8px',
+                                                    padding: '4px',
+                                                    border: `1px solid ${colors.borderPrimary}`,
+                                                    boxShadow: `0 2px 8px ${colors.rgba('black', 0.2)}`,
                                                 }}>
                                                     <Checkbox
                                                         checked={isSelected}
                                                         onClick={(e) => e.stopPropagation()}
                                                         onChange={() => batchSelect.toggleVideoSelection(batchVideo)}
                                                         style={{
-                                                            transform: 'scale(1.2)',
+                                                            transform: 'scale(1.15)',
                                                         }}
                                                     />
                                                 </div>
                                             )}
+                                            
+                                            {/* 选中状态的外边框 */}
                                             <div style={{
-                                                borderRadius: '14px',
+                                                borderRadius: '18px',
                                                 overflow: 'hidden',
-                                                border: isSelected ? `2px solid ${colors.goldPrimary}` : '2px solid transparent',
-                                                transition: 'all 0.2s ease',
-                                                opacity: batchSelect.isBatchMode && !isSelected ? 0.7 : 1,
+                                                border: isSelected ? 
+                                                    `3px solid ${colors.goldPrimary}` : 
+                                                    '3px solid transparent',
+                                                boxShadow: isSelected ? 
+                                                    `0 0 0 1px ${colors.rgba('gold', 0.2)}, 0 8px 24px ${colors.rgba('gold', 0.3)}` : 
+                                                    'none',
+                                                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                                opacity: batchSelect.isBatchMode && !isSelected ? 0.6 : 1,
+                                                transform: isSelected ? 'scale(0.98)' : 'scale(1)',
                                             }}>
                                                 <JavDBItem item={item} />
                                             </div>
@@ -337,35 +549,90 @@ function JavDB() {
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '80px 20px',
-                                background: colors.rgba('bgContainer', 0.6),
-                                borderRadius: '14px',
-                                border: `1px solid ${colors.borderSecondary}`,
-                                marginTop: '40px',
+                                padding: '100px 40px',
+                                background: `linear-gradient(135deg, ${colors.rgba('bgContainer', 0.8)} 0%, ${colors.rgba('bgElevated', 0.6)} 100%)`,
+                                backdropFilter: 'blur(20px)',
+                                borderRadius: '20px',
+                                border: `1px solid ${colors.borderPrimary}`,
+                                boxShadow: `0 8px 32px ${colors.rgba('black', 0.1)}`,
+                                marginTop: '60px',
+                                position: 'relative',
+                                overflow: 'hidden',
                             }}
                         >
-                            <InboxOutlined style={{
-                                fontSize: '64px',
-                                color: colors.rgba('gold', 0.3),
-                                marginBottom: '20px',
+                            {/* 装饰性背景元素 */}
+                            <div style={{
+                                position: 'absolute',
+                                top: -50,
+                                right: -50,
+                                width: 200,
+                                height: 200,
+                                borderRadius: '50%',
+                                background: `radial-gradient(circle, ${colors.rgba('gold', 0.08)} 0%, transparent 70%)`,
+                                pointerEvents: 'none',
                             }} />
                             <div style={{
-                                fontSize: '18px',
-                                fontWeight: 500,
-                                color: colors.textSecondary,
-                                marginBottom: '8px',
+                                position: 'absolute',
+                                bottom: -30,
+                                left: -30,
+                                width: 150,
+                                height: 150,
+                                borderRadius: '50%',
+                                background: `radial-gradient(circle, ${colors.rgba('gold', 0.05)} 0%, transparent 70%)`,
+                                pointerEvents: 'none',
+                            }} />
+
+                            {/* 图标容器 - 带动画效果 */}
+                            <div style={{
+                                width: 120,
+                                height: 120,
+                                borderRadius: '50%',
+                                background: colors.rgba('gold', 0.08),
+                                border: `2px solid ${colors.rgba('gold', 0.2)}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '32px',
+                                animation: 'tissue-glow-pulse 3s ease-in-out infinite',
+                            }}>
+                                <InboxOutlined style={{
+                                    fontSize: '56px',
+                                    color: colors.goldPrimary,
+                                }} />
+                            </div>
+
+                            {/* 标题 */}
+                            <div style={{
+                                fontSize: '22px',
+                                fontWeight: 600,
+                                color: colors.textPrimary,
+                                marginBottom: '12px',
                                 letterSpacing: '0.02em',
                             }}>
                                 没有找到符合条件的视频
                             </div>
+
+                            {/* 描述文字 */}
                             <div style={{
-                                fontSize: '14px',
-                                color: colors.textTertiary,
+                                fontSize: '15px',
+                                color: colors.textSecondary,
                                 textAlign: 'center',
                                 lineHeight: '1.6',
+                                maxWidth: '400px',
+                                marginBottom: '24px',
                             }}>
-                                {filter.rank > 0 ? '请尝试降低评分要求或调整其他筛选条件' : '请调整筛选条件重试'}
+                                {filter.rank > 0 
+                                    ? '请尝试降低评分要求或调整其他筛选条件' 
+                                    : '请调整筛选条件重试，或者稍后再来看看'}
                             </div>
+
+                            {/* 装饰性分割线 */}
+                            <div style={{
+                                width: '60px',
+                                height: '3px',
+                                background: `linear-gradient(90deg, transparent 0%, ${colors.goldPrimary} 50%, transparent 100%)`,
+                                borderRadius: '2px',
+                            }} />
                         </div>
                     )
                 }}

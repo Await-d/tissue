@@ -20,11 +20,11 @@ import {
 export interface ThemeColors extends ThemeColorConfig {
     /**
      * 工具方法：生成 rgba 颜色（用于动态透明度）
-     * @param color - 颜色类型: 'gold' | 'white' | 'black'
+     * @param color - 颜色类型: 'gold' | 'white' | 'black' | 'red' | 'bgContainer'
      * @param alpha - 透明度值 (0-1)
      * @returns rgba 颜色字符串
      */
-    rgba: (color: 'gold' | 'white' | 'black', alpha: number) => string
+    rgba: (color: 'gold' | 'white' | 'black' | 'red' | 'bgContainer', alpha: number) => string
 }
 
 /**
@@ -50,7 +50,7 @@ export const useThemeColors = (): ThemeColors => {
         return {
             ...baseColors,
             // 工具方法：生成 rgba 颜色（用于动态透明度）
-            rgba: (color: 'gold' | 'white' | 'black', alpha: number) => {
+            rgba: (color: 'gold' | 'white' | 'black' | 'red' | 'bgContainer', alpha: number) => {
                 return `rgba(${rgbaColors[color]}, ${alpha})`
             },
             // 模态框专用颜色（直接暴露）

@@ -215,7 +215,7 @@ function AutoDownloadSubscriptions() {
       title: '封面',
       dataIndex: 'cover',
       key: 'cover',
-      width: 80,
+      width: 90,
       render: (cover: string) => (
         cover ? (
           <Image
@@ -248,7 +248,7 @@ function AutoDownloadSubscriptions() {
       title: '番号',
       dataIndex: 'num',
       key: 'num',
-      width: 120,
+      width: 130,
       ellipsis: true,
       render: (value) => <span style={{ color: colors.textPrimary, fontWeight: 500 }}>{value}</span>
     },
@@ -257,14 +257,14 @@ function AutoDownloadSubscriptions() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      width: 200,
+      width: 180,
       render: (value) => <span style={{ color: colors.textSecondary }}>{value}</span>
     },
     {
       title: '规则',
       dataIndex: 'rule_name',
       key: 'rule_name',
-      width: 100,
+      width: 110,
       ellipsis: true,
       render: (value) => (
         <Tag style={{
@@ -285,7 +285,7 @@ function AutoDownloadSubscriptions() {
           <div>评论: {record.comments_count || 0}</div>
         </div>
       ),
-      width: 90
+      width: 100
     },
     {
       title: '状态',
@@ -365,13 +365,13 @@ function AutoDownloadSubscriptions() {
       title: '操作',
       key: 'actions',
       render: (_, record) => (
-        <Space direction="vertical" size="small">
+        <Space size="small">
           <Button
             type="text"
             size="small"
             icon={<EyeOutlined />}
             onClick={() => handleViewDetail(record)}
-            style={{ fontSize: '12px', padding: '0 4px', color: colors.textGold }}
+            style={{ color: colors.goldPrimary }}
             className="action-btn"
           >
             查看
@@ -382,7 +382,7 @@ function AutoDownloadSubscriptions() {
               size="small"
               icon={<ReloadOutlined />}
               onClick={() => handleSingleRetry(record.id)}
-              style={{ fontSize: '12px', padding: '0 4px', color: colors.textGold }}
+              style={{ color: colors.goldPrimary }}
               className="action-btn"
             >
               重试
@@ -398,14 +398,14 @@ function AutoDownloadSubscriptions() {
               size="small"
               danger
               icon={<DeleteOutlined />}
-              style={{ fontSize: '12px', padding: '0 4px', color: colors.error }}
+              style={{ color: colors.error }}
             >
               删除
             </Button>
           </Popconfirm>
         </Space>
       ),
-      width: 80,
+      width: 180,
       fixed: 'right'
     }
   ]

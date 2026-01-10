@@ -20,7 +20,6 @@ function DownloadModal(props: Props) {
     function renderDownloadTag(label: string, field: string, color: string) {
         return (
             <Tag className={'cursor-pointer'} color={item?.[field] ? color : 'default'}
-                variant={item?.[field] ? "outlined" : "borderless"}
                 onClick={() => {
                     setItem({ ...item, [field]: !item[field] })
                 }}

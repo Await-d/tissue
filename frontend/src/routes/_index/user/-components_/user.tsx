@@ -180,7 +180,7 @@ function UserList() {
                 }}
             >
                 <Table rowKey={'id'} columns={columns} {...tableProps} pagination={false} />
-                <UserModal form={form} {...modalProps} />
+                <UserModal {...modalProps} />
             </Card>
         </>
     )

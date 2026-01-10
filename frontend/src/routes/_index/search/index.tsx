@@ -845,11 +845,11 @@ export function Search() {
                                                                         </div>
                                                                         <div>
                                                                             {item.is_hd &&
-                                                                                <Tag color={'red'} variant="borderless">高清</Tag>}
+                                                                                <Tag color={'red'}>高清</Tag>}
                                                                             {item.is_zh &&
-                                                                                <Tag color={'blue'} variant="borderless">中文</Tag>}
+                                                                                <Tag color={'blue'}>中文</Tag>}
                                                                             {item.is_uncensored &&
-                                                                                <Tag color={'green'} variant="borderless">无码</Tag>}
+                                                                                <Tag color={'green'}>无码</Tag>}
                                                                         </div>
                                                                         <div><Tag color="default">{item.publish_date}</Tag></div>
                                                                     </Space>
@@ -911,7 +911,6 @@ export function Search() {
             </Col>
 
             <SubscribeModifyModal width={1100}
-                form={subscribeForm}
                 {...subscribeModalProps} />
             <DownloadModal open={!!selectedDownload}
                 download={selectedDownload}

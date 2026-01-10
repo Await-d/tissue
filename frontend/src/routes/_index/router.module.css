@@ -13,7 +13,7 @@
     /* 玻璃态效果 */
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    background: rgba(13, 13, 15, 0.85);
+    background: var(--color-layout-glass);
     border-block-end: 1px solid var(--color-fill);
 
     /* 微妙的顶部高光 */
@@ -32,7 +32,7 @@
     /* 玻璃态效果 */
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    background: rgba(13, 13, 15, 0.9);
+    background: var(--color-layout-glass-heavy);
     border-block-start: 1px solid var(--color-fill);
     padding-bottom: env(safe-area-inset-bottom, 0);
 
@@ -46,8 +46,8 @@
     border-right: 1px solid var(--color-fill);
     background: linear-gradient(
         180deg,
-        rgba(20, 20, 22, 0.5) 0%,
-        rgba(13, 13, 15, 1) 100%
+        var(--color-layout-side-start) 0%,
+        var(--color-layout-side-end) 100%
     );
 
     /* 微妙的内侧光 */
@@ -64,17 +64,17 @@
     overflow-y: scroll;
     overflow-x: hidden;
 
-    /* 深色渐变背景，增加层次感 */
+    /* 渐变背景，增加层次感 */
     background:
         radial-gradient(
             ellipse 80% 50% at 50% 0%,
-            rgba(212, 168, 82, 0.03) 0%,
+            var(--color-content-accent) 0%,
             transparent 50%
         ),
         linear-gradient(
             180deg,
             var(--color-bg-base) 0%,
-            #0a0a0c 100%
+            var(--color-bg-gradient-end) 100%
         );
 }
 
@@ -87,8 +87,8 @@
     .side:hover {
         background: linear-gradient(
             180deg,
-            rgba(26, 26, 29, 0.8) 0%,
-            rgba(13, 13, 15, 1) 100%
+            var(--color-layout-side-hover-start) 0%,
+            var(--color-layout-side-hover-end) 100%
         );
     }
 }

@@ -233,16 +233,20 @@ const darkComponentTokens = {
         paddingLG: 20,
     },
     Button: {
-        primaryColor: '#0d0d0f',
+        primaryColor: '#ffffff',
+        colorPrimaryHover: '#ffffff',
+        colorPrimaryActive: '#ffffff',
         defaultBg: '#1a1a1d',
         defaultColor: '#f0f0f2',
-        defaultBorderColor: 'rgba(255, 255, 255, 0.08)',
+        defaultBorderColor: 'rgba(255, 255, 255, 0.15)',
         defaultHoverBg: '#222226',
-        defaultHoverColor: '#d4a852',
-        defaultHoverBorderColor: 'rgba(212, 168, 82, 0.3)',
+        defaultHoverColor: '#f0f0f2',
+        defaultHoverBorderColor: 'rgba(212, 168, 82, 0.4)',
         defaultActiveBg: '#2a2a2e',
-        defaultActiveBorderColor: 'rgba(212, 168, 82, 0.5)',
+        defaultActiveBorderColor: 'rgba(212, 168, 82, 0.6)',
         textHoverBg: 'rgba(212, 168, 82, 0.08)',
+        colorText: '#f0f0f2',
+        colorTextDisabled: '#6a6a72',
     },
     Input: {
         colorBgContainer: '#1a1a1d',
@@ -585,15 +589,17 @@ function App() {
         return isDark() ? darkComponentTokens : lightComponentTokens
     }
 
-    // 同步主题到 HTML 元素，以便 CSS 变量能正确切换
+    // 同步主题到 HTML 和 body 元素，以便 CSS 变量能正确切换
     useEffect(() => {
         const currentTheme = isDark() ? 'dark' : 'light'
         document.documentElement.setAttribute('data-theme', currentTheme)
+        document.body.setAttribute('data-theme', currentTheme)
     }, [themeMode, systemTheme])
 
     return (
         <ConfigProvider
             locale={zhCN}
+            getPopupContainer={() => document.body}
             theme={{
                 algorithm: getAlgorithm(),
                 token: getThemeTokens(),

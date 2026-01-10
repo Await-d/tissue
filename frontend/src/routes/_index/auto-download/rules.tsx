@@ -186,7 +186,7 @@ function AutoDownloadRules() {
       title: '规则名称',
       dataIndex: 'name',
       key: 'name',
-      width: 150,
+      width: 140,
       render: (value) => <span style={{ color: colors.textPrimary, fontWeight: 500 }}>{value}</span>
     },
     {
@@ -288,10 +288,12 @@ function AutoDownloadRules() {
     {
       title: '操作',
       key: 'actions',
+      fixed: 'right',
       render: (_, record) => (
-        <Space>
+        <Space size="small">
           <Button
             type="text"
+            size="small"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
             style={{ color: colors.goldPrimary }}
@@ -301,6 +303,7 @@ function AutoDownloadRules() {
           </Button>
           <Button
             type="text"
+            size="small"
             icon={record.is_enabled ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
             onClick={() => handleToggle(record.id, !record.is_enabled)}
             style={{ color: colors.goldPrimary }}
@@ -310,6 +313,7 @@ function AutoDownloadRules() {
           </Button>
           <Button
             type="text"
+            size="small"
             onClick={() => handleTrigger([record.id])}
             style={{ color: colors.goldPrimary }}
             className="action-btn"
@@ -322,6 +326,7 @@ function AutoDownloadRules() {
           >
             <Button
               type="text"
+              size="small"
               danger
               icon={<DeleteOutlined />}
               style={{ color: colors.error }}
@@ -331,7 +336,7 @@ function AutoDownloadRules() {
           </Popconfirm>
         </Space>
       ),
-      width: 200
+      width: 260
     }
   ]
 
@@ -422,6 +427,7 @@ function AutoDownloadRules() {
           loading={loading}
           className="dark-table rules-table"
           rowClassName="dark-table-row"
+          scroll={{ x: 900 }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,

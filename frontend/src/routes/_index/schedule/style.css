@@ -28,10 +28,15 @@
   background: transparent;
 }
 
+/* 表格容器 - 添加边框 */
 .dark-table .ant-table {
   background: transparent;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
+/* 表头 - 统一配置 */
 .dark-table .ant-table-thead > tr > th {
   background: var(--color-bg-container);
   color: var(--color-text-secondary);
@@ -40,6 +45,7 @@
   padding: 16px;
 }
 
+/* 行背景 - 统一配置 */
 .dark-table-row {
   background: var(--color-bg-elevated);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -64,11 +70,13 @@
   }
 }
 
+/* hover状态 - 统一配置 */
 .dark-table-row:hover {
   background: var(--color-bg-container) !important;
   box-shadow: 0 0 0 1px rgba(212, 168, 82, 0.1) inset;
 }
 
+/* 单元格 - 统一padding */
 .dark-table .ant-table-tbody > tr > td {
   border-bottom: 1px solid var(--color-border-secondary);
   color: var(--color-text-primary);

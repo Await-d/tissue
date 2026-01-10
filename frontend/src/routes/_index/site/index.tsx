@@ -52,7 +52,6 @@ function Site() {
                         title={(
                             <div className={'flex items-center gap-2'}>
                                 <Tag
-                                    variant="borderless"
                                     style={{
                                         background: colors.rgba('gold', 0.15),
                                         color: colors.goldPrimary,
@@ -98,7 +97,6 @@ function Site() {
                             <div className={'flex gap-2'}>
                                 <Tag
                                     color={'blue'}
-                                    variant="borderless"
                                     style={{
                                         background: 'rgba(24, 144, 255, 0.15)',
                                         border: '1px solid rgba(24, 144, 255, 0.3)',
@@ -110,7 +108,6 @@ function Site() {
                                 {item.downloadable && (
                                     <Tag
                                         color={'green'}
-                                        variant="borderless"
                                         style={{
                                             background: 'rgba(82, 196, 26, 0.15)',
                                             border: '1px solid rgba(82, 196, 26, 0.3)',

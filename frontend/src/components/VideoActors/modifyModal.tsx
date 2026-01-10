@@ -174,7 +174,7 @@ function ModifyModal(props: Props) {
             width={480}
             forceRender
             onCancel={onCancel}
-            styles={styles.modal}
+            styles={styles.modal as any}
             footer={[
                 data && (
                     <Button

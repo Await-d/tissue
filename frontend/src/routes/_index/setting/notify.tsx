@@ -47,7 +47,7 @@ function SettingNotify() {
             <Skeleton active/>
         ) : (
             <div className="max-w-5xl mx-auto px-6 py-8">
-                <div style={{ backgroundColor: colors.bgContainer }} className="rounded-2xl border shadow-2xl overflow-hidden" style={{ borderColor: colors.borderPrimary }}>
+                <div style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }} className="rounded-2xl border shadow-2xl overflow-hidden">
                     {/* 页面标题 */}
                     <div style={{ borderBottomColor: colors.borderPrimary, backgroundImage: `linear-gradient(to right, ${colors.bgElevated}, ${colors.bgContainer})` }} className="px-8 py-6 border-b">
                         <h2 style={{ color: colors.goldPrimary }} className="text-2xl font-bold flex items-center gap-3">

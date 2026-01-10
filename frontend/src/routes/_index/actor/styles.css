@@ -1,4 +1,4 @@
-/* TISSUE+ Actor Page Styles - 暗黑电影美学 + 柔和现代风格 */
+/* TISSUE+ Actor Page Styles - 暗黑电影美学 + 柔和现代风格 + 完整主题适配 */
 
 /* ========== 页面容器样式 ========== */
 .actor-page-container {
@@ -20,6 +20,7 @@
 .actor-main-card:hover {
   box-shadow: var(--shadow-gold);
   border-color: var(--color-border-gold);
+  transform: translateY(-2px);
 }
 
 /* ========== 卡片头部样式 ========== */
@@ -30,54 +31,88 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .actor-card-title {
   color: var(--color-text-primary);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.5px;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
 }
 
 .actor-card-title::before {
   content: '';
   display: inline-block;
   width: 4px;
-  height: 20px;
+  height: 24px;
   background: linear-gradient(180deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
   border-radius: 2px;
-  box-shadow: 0 2px 8px var(--shadow-gold-light);
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3);
+  animation: titleGlow 2s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%, 100% {
+    opacity: 0.8;
+    box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 4px 12px rgba(212, 168, 82, 0.5);
+  }
 }
 
 /* ========== 搜索按钮样式 ========== */
 .actor-search-button {
   background: linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-light) 100%);
   border: none;
-  color: var(--color-bg-base);
+  color: #1a1a1d;
   font-weight: 600;
   height: 40px;
+  min-width: 120px;
   padding: 0 24px;
   border-radius: 8px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--shadow-gold-light);
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.actor-search-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.actor-search-button:hover::before {
+  left: 100%;
 }
 
 .actor-search-button:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-gold);
+  box-shadow: 0 6px 20px rgba(212, 168, 82, 0.4);
   background: linear-gradient(135deg, var(--color-gold-light) 0%, var(--color-gold-primary) 100%);
 }
 
 .actor-search-button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3);
 }
 
 /* ========== 卡片内容区域 ========== */
@@ -102,16 +137,36 @@
     padding: 16px;
     flex-direction: column;
     gap: 12px;
+    align-items: stretch;
   }
 
   .actor-card-title {
-    font-size: 16px;
+    font-size: 18px;
+    justify-content: center;
+  }
+
+  .actor-card-title::before {
+    height: 20px;
   }
 
   .actor-search-button {
     width: 100%;
     justify-content: center;
-    height: 36px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .actor-page-container {
+    padding: 12px;
+  }
+
+  .actor-main-card {
+    border-radius: 12px;
+  }
+
+  .actor-card-title {
+    font-size: 16px;
   }
 }
 
@@ -134,8 +189,40 @@
 /* ========== 搜索图标动画 ========== */
 .actor-search-button .anticon {
   transition: transform 0.3s ease;
+  font-size: 16px;
 }
 
 .actor-search-button:hover .anticon {
-  transform: scale(1.1) rotate(15deg);
+  transform: scale(1.15) rotate(15deg);
+}
+
+/* ========== 主题特定样式 - 亮色主题 ========== */
+[data-theme='light'] .actor-search-button {
+  color: #1a1a1d;
+  box-shadow: 0 4px 12px rgba(138, 109, 46, 0.25);
+}
+
+[data-theme='light'] .actor-search-button:hover {
+  box-shadow: 0 6px 20px rgba(138, 109, 46, 0.35);
+}
+
+[data-theme='light'] .actor-main-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .actor-main-card:hover {
+  box-shadow: 0 8px 32px rgba(138, 109, 46, 0.15);
+}
+
+/* ========== 主题特定样式 - 暗色主题 ========== */
+[data-theme='dark'] .actor-search-button {
+  color: #1a1a1d;
+}
+
+[data-theme='dark'] .actor-main-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .actor-main-card:hover {
+  box-shadow: 0 8px 32px rgba(212, 168, 82, 0.2);
 }

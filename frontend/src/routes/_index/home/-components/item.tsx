@@ -130,140 +130,237 @@ function JavDBItem(props: { item: any }) {
     function render() {
         return (
             <div
-                className="tissue-card group"
+                className="tissue-home-card"
                 style={{
                     background: colors.bgContainer,
-                    borderRadius: 14,
+                    borderRadius: 16,
                     overflow: 'hidden',
-                    border: `1px solid ${colors.borderPrimary}`,
+                    border: `1px solid ${colors.borderSecondary}`,
                     cursor: 'pointer',
-                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    position: 'relative',
+                    boxShadow: `0 4px 12px ${colors.rgba('black', 0.15)}`,
                 }}
                 onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.01)';
-                    e.currentTarget.style.boxShadow = `0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px ${colors.borderGold}`;
+                    e.currentTarget.style.transform = 'translateY(-8px)';
+                    e.currentTarget.style.boxShadow = `
+                        0 24px 48px ${colors.rgba('black', 0.3)},
+                        0 0 0 1px ${colors.borderGold},
+                        0 0 32px ${colors.rgba('gold', 0.2)}
+                    `;
                     e.currentTarget.style.borderColor = colors.borderGold;
                 }}
                 onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.borderColor = colors.borderPrimary;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${colors.rgba('black', 0.15)}`;
+                    e.currentTarget.style.borderColor = colors.borderSecondary;
                 }}
             >
+                {/* 金色光晕装饰 */}
+                <div style={{
+                    position: 'absolute',
+                    top: -2,
+                    left: -2,
+                    right: -2,
+                    height: '50%',
+                    background: `linear-gradient(135deg, ${colors.rgba('gold', 0.08)} 0%, transparent 50%)`,
+                    opacity: 0,
+                    transition: 'opacity 400ms ease',
+                    pointerEvents: 'none',
+                    zIndex: 1,
+                }} className="tissue-card-glow" />
+
                 {/* 封面区域 */}
                 <div style={{ position: 'relative', overflow: 'hidden' }}>
                     <div style={{
                         aspectRatio: '16/10',
                         overflow: 'hidden',
+                        position: 'relative',
                     }}>
                         <VideoCover src={item.cover} />
+                        
+                        {/* 顶部淡入遮罩 */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '40%',
+                            background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%)',
+                            pointerEvents: 'none',
+                        }} />
                     </div>
 
-                    {/* 渐变遮罩 */}
+                    {/* 底部渐变遮罩 - 更自然的过渡 */}
                     <div style={{
                         position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.9) 100%)',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: '60%',
+                        background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.85) 100%)',
                         pointerEvents: 'none',
                     }} />
 
                     {/* 悬浮时显示的播放图标 */}
                     <div
-                        className="opacity-0 group-hover:opacity-100"
+                        className="tissue-play-icon"
                         style={{
                             position: 'absolute',
                             top: '50%',
                             left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                            transform: 'translate(-50%, -50%) scale(0.8)',
+                            opacity: 0,
+                            transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            pointerEvents: 'none',
                         }}
                     >
-                        <PlayCircleOutlined style={{
-                            fontSize: 56,
-                            color: colors.textPrimary,
-                            filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))',
-                        }} />
+                        <div style={{
+                            width: 72,
+                            height: 72,
+                            borderRadius: '50%',
+                            background: colors.rgba('bgContainer', 0.95),
+                            backdropFilter: 'blur(20px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: `2px solid ${colors.goldPrimary}`,
+                            boxShadow: `0 8px 24px ${colors.rgba('black', 0.4)}, 0 0 32px ${colors.rgba('gold', 0.3)}`,
+                        }}>
+                            <PlayCircleOutlined style={{
+                                fontSize: 36,
+                                color: colors.goldPrimary,
+                            }} />
+                        </div>
                     </div>
 
-                    {/* 操作按钮 */}
+                    {/* 操作按钮组 */}
                     <div style={{
                         position: 'absolute',
-                        bottom: 12,
-                        right: 12,
+                        bottom: 14,
+                        right: 14,
                         zIndex: 10,
                         display: 'flex',
-                        gap: 8,
+                        gap: 10,
                     }}>
-                        <Tooltip title="预览图片">
+                        <Tooltip title="预览图片" placement="top">
                             <Button
                                 type="default"
                                 shape="circle"
-                                icon={<EyeOutlined style={{ color: colors.textPrimary }} />}
-                                size="middle"
+                                icon={<EyeOutlined />}
+                                size="large"
                                 loading={loadingPreview}
                                 onClick={handlePreviewClick}
                                 style={{
-                                    background: `rgba(${colors.rgba('black', 0.1)})`,
-                                    backdropFilter: 'blur(10px)',
+                                    background: colors.rgba('bgContainer', 0.95),
+                                    backdropFilter: 'blur(20px)',
                                     border: `1px solid ${colors.borderPrimary}`,
-                                    boxShadow: colors.shadowMd,
+                                    boxShadow: `0 4px 12px ${colors.rgba('black', 0.3)}`,
+                                    color: colors.textPrimary,
+                                    width: 40,
+                                    height: 40,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = colors.rgba('bgContainer', 1);
+                                    e.currentTarget.style.borderColor = colors.borderGold;
+                                    e.currentTarget.style.color = colors.goldPrimary;
+                                    e.currentTarget.style.transform = 'scale(1.1)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = colors.rgba('bgContainer', 0.95);
+                                    e.currentTarget.style.borderColor = colors.borderPrimary;
+                                    e.currentTarget.style.color = colors.textPrimary;
+                                    e.currentTarget.style.transform = 'scale(1)';
                                 }}
                             />
                         </Tooltip>
-                        <Tooltip title="推送到下载器">
+                        <Tooltip title="推送到下载器" placement="top">
                             <Button
                                 type="primary"
                                 shape="circle"
                                 icon={<CloudDownloadOutlined />}
-                                size="middle"
+                                size="large"
                                 loading={!!loadingVideoId}
                                 onClick={handleVideoDownload}
                                 style={{
-                                    background: colors.goldGradient,
+                                    background: `linear-gradient(135deg, ${colors.goldPrimary} 0%, ${colors.goldDark} 100%)`,
                                     border: 'none',
-                                    boxShadow: colors.shadowGold,
+                                    boxShadow: `0 4px 16px ${colors.rgba('gold', 0.4)}`,
+                                    color: colors.bgBase,
+                                    width: 40,
+                                    height: 40,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.boxShadow = `0 6px 24px ${colors.rgba('gold', 0.5)}`;
+                                    e.currentTarget.style.transform = 'scale(1.1)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.boxShadow = `0 4px 16px ${colors.rgba('gold', 0.4)}`;
+                                    e.currentTarget.style.transform = 'scale(1)';
                                 }}
                             />
                         </Tooltip>
                     </div>
 
-                    {/* 评分角标 */}
+                    {/* 评分角标 - 更精致的设计 */}
                     {item.rank > 0 && (
                         <div style={{
                             position: 'absolute',
-                            top: 12,
-                            left: 12,
-                            background: colors.goldGradient,
-                            padding: '4px 10px',
-                            borderRadius: 8,
+                            top: 14,
+                            left: 14,
+                            background: `linear-gradient(135deg, ${colors.goldPrimary} 0%, ${colors.goldDark} 100%)`,
+                            padding: '6px 12px',
+                            borderRadius: 10,
                             display: 'flex',
                             alignItems: 'center',
                             gap: 4,
-                            boxShadow: colors.shadowSm,
+                            boxShadow: `0 4px 12px ${colors.rgba('gold', 0.3)}`,
+                            border: `1px solid ${colors.rgba('gold', 0.3)}`,
                         }}>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: colors.bgBase }}>
-                                {item.rank?.toFixed(1)}
+                            <span style={{ 
+                                fontSize: 15, 
+                                fontWeight: 700, 
+                                color: colors.bgBase,
+                                letterSpacing: '0.02em',
+                            }}>
+                                ★ {item.rank?.toFixed(1)}
                             </span>
                         </div>
                     )}
                 </div>
 
                 {/* 内容区域 */}
-                <div style={{ padding: '14px 16px' }}>
-                    {/* 番号 */}
+                <div style={{ 
+                    padding: '16px 18px',
+                    background: `linear-gradient(to bottom, ${colors.bgContainer} 0%, ${colors.bgElevated} 100%)`,
+                }}>
+                    {/* 番号标签 */}
                     <div style={{
+                        display: 'inline-block',
                         fontSize: 11,
-                        fontWeight: 600,
-                        color: colors.textGold,
-                        letterSpacing: '0.05em',
-                        marginBottom: 6,
+                        fontWeight: 700,
+                        color: colors.goldPrimary,
+                        letterSpacing: '0.08em',
+                        marginBottom: 8,
                         textTransform: 'uppercase',
+                        padding: '3px 8px',
+                        background: colors.rgba('gold', 0.12),
+                        borderRadius: 6,
+                        border: `1px solid ${colors.rgba('gold', 0.25)}`,
                     }}>
                         {item.num}
                     </div>
 
                     {/* 标题 */}
-                    <Tooltip title={item.title || ''}>
+                    <Tooltip title={item.title || ''} placement="top">
                         <div style={{
                             fontSize: 14,
                             fontWeight: 500,
@@ -273,9 +370,10 @@ function JavDBItem(props: { item: any }) {
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
-                            lineHeight: 1.4,
-                            minHeight: '2.8em',
-                            marginBottom: 10,
+                            lineHeight: 1.5,
+                            minHeight: '3em',
+                            marginBottom: 12,
+                            letterSpacing: '0.01em',
                         }}>
                             {item.title || ''}
                         </div>
@@ -286,26 +384,29 @@ function JavDBItem(props: { item: any }) {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        paddingTop: 10,
-                        borderTop: `1px solid ${colors.borderPrimary}`,
+                        paddingTop: 12,
+                        borderTop: `1px solid ${colors.borderSecondary}`,
                     }}>
-                        <Space size={6} align="center">
+                        <Space size={8} align="center">
                             <Rate
                                 disabled
                                 allowHalf
                                 value={item.rank || 0}
-                                style={{ fontSize: 12 }}
+                                style={{ fontSize: 13, color: colors.goldPrimary }}
                             />
                             <span style={{
                                 fontSize: 12,
                                 color: colors.textTertiary,
+                                fontWeight: 500,
                             }}>
-                                {item.rank_count || 0} 评论
+                                {item.rank_count || 0}
                             </span>
                         </Space>
                         <span style={{
                             fontSize: 11,
                             color: colors.textTertiary,
+                            fontWeight: 500,
+                            letterSpacing: '0.02em',
                         }}>
                             {item.publish_date || ''}
                         </span>
