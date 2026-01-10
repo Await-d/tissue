@@ -52,14 +52,18 @@ class JavdbSpider(Spider):
             "Referer": self.host,
         })
         
-        # 从设置中读取并应用JavDB登录Cookie
-        self._apply_login_cookie()
-        
         # 动态选择可用域名（被封或不可达时自动切换）
         try:
             self._select_best_host()
         except Exception as e:
             logger.warning(f"选择JavDB可用域名失败，使用默认 {self.host}: {e}")
+        
+        # 设置年龄验证Cookie（over18=1表示已确认年满18岁）
+        # 需要在选择域名后设置，确保domain正确
+        self.session.cookies.set("over18", "1", domain=self._cookie_domain())
+        
+        # 从设置中读取并应用JavDB登录Cookie
+        self._apply_login_cookie()
 
     def _cookie_domain(self) -> str:
         netloc = urlparse(self.host).netloc
@@ -73,6 +77,90 @@ class JavdbSpider(Spider):
             self.session.cookies.set('locale', 'zh', domain=dom)
         except Exception as e:
             logger.debug(f"设置年龄验证Cookie失败: {e}")
+
+    def _parse_score_text(self, score_text: str) -> tuple:
+        """解析评分文本，支持新旧两种格式
+        
+        支持格式:
+        - 新格式: "4.55, by 754 users" 或 "4.55 by 754 users"
+        - 旧格式: "4.55分, 由754人評價"
+        
+        Args:
+            score_text: 评分文本字符串
+            
+        Returns:
+            tuple: (rank, rank_count) 元组，解析失败时返回 (None, 0)
+        """
+        if not score_text:
+            return (None, 0)
+        
+        score_text = score_text.strip()
+        
+        # 尝试新格式: "4.55, by 754 users" 或 "4.55 by 754 users"
+        rank_matched = re.search(r'([\d.]+),?\s*by\s*([\d,]+)\s*users?', score_text)
+        if rank_matched:
+            try:
+                rank = float(rank_matched.group(1))
+                rank_count = int(rank_matched.group(2).replace(',', ''))
+                return (rank, rank_count)
+            except (ValueError, TypeError):
+                pass
+        
+        # 尝试旧格式: "4.55分, 由754人評價"
+        rank_matched = re.match(r'(.+?)分,\s*由(.+?)人評價', score_text)
+        if rank_matched:
+            try:
+                rank = float(rank_matched.group(1))
+                rank_count = int(rank_matched.group(2))
+                return (rank, rank_count)
+            except (ValueError, TypeError):
+                pass
+        
+        # 尝试仅有评分的旧格式: "4.55分"
+        rank_matched = re.search(r'(\d+\.?\d*)分', score_text)
+        if rank_matched:
+            try:
+                rank = float(rank_matched.group(1))
+                # 单独解析评论数
+                count_match = re.search(r'由(\d+)人評價', score_text)
+                rank_count = int(count_match.group(1)) if count_match else 0
+                return (rank, rank_count)
+            except (ValueError, TypeError):
+                pass
+        
+        return (None, 0)
+
+    def _parse_date(self, date_str: str):
+        """解析日期字符串，支持多种格式
+        
+        支持格式:
+        - MM/DD/YYYY (如 01/15/2024)
+        - YYYY-MM-DD (如 2024-01-15)
+        
+        Args:
+            date_str: 日期字符串
+            
+        Returns:
+            date: 解析成功返回 date 对象，失败返回 None
+        """
+        if not date_str:
+            return None
+        
+        date_str = date_str.strip()
+        
+        # 尝试 MM/DD/YYYY 格式
+        try:
+            return datetime.strptime(date_str, "%m/%d/%Y").date()
+        except ValueError:
+            pass
+        
+        # 尝试 YYYY-MM-DD 格式
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+        
+        return None
 
     def _apply_login_cookie(self):
         """从设置中读取并应用JavDB登录Cookie"""
@@ -138,8 +226,12 @@ class JavdbSpider(Spider):
         try:
             if resp.status_code in (401, 403, 429, 503):
                 return True
+            # 如果是登录页面重定向，不算被封禁（可能只是需要登录）
+            if '/login' in str(resp.url):
+                return False
             content_lower = resp.content.lower() if isinstance(resp.content, (bytes, bytearray)) else b""
-            markers = [b"banned your access", b"access denied", b"captcha", b"forbidden", b"just a moment"]
+            # 注意：移除了captcha检查，因为登录页面会包含验证码但不代表被封禁
+            markers = [b"banned your access", b"access denied", b"forbidden", b"just a moment"]
             return any(m in content_lower for m in markers)
         except Exception:
             return False
@@ -675,20 +767,24 @@ class JavdbSpider(Spider):
         url = urljoin(self.host, f'/rankings/movies?p={cycle}&t={video_type}')
         response = self._get(url)
         
-        # 检测是否被重定向到登录页面
-        if '/login' in str(response.url) or b'requires login' in response.content.lower():
-            # 检查是否配置了cookie
-            if self.setting.javdb_cookie:
-                logger.warning("排行榜页面需要登录，已配置Cookie但可能已过期或无效，请更新Cookie")
-            else:
-                logger.warning("排行榜页面需要登录访问，请在设置中配置javdb_cookie以获取排行榜数据")
-            return []
-        
         html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
 
         result = []
 
         videos = html.xpath('//div[contains(@class, "movie-list")]/div[@class="item"]/a')
+        
+        # 如果没有找到视频，检测是否需要登录并尝试fallback
+        if not videos:
+            needs_login = '/login' in str(response.url) or b'requires login' in response.content.lower()
+            
+            if needs_login:
+                logger.warning("排行榜页面需要登录，尝试使用首页列表作为替代...")
+                # 使用首页带过滤器的URL作为fallback
+                fallback_url = urljoin(self.host, f'/?vft=1&t={video_type}')
+                return self._parse_homepage_videos(fallback_url, video_type)
+            else:
+                logger.warning(f"排行榜页面未找到视频列表，URL: {response.url}")
+        
         for video in videos:
             try:
                 ranking = JavDBRanking()
@@ -706,42 +802,21 @@ class JavdbSpider(Spider):
                 if num_elements:
                     ranking.num = num_elements[0].text
 
-                # 发布日期 - 支持两种格式: %Y-%m-%d 和 %m/%d/%Y
+                # 发布日期 - 使用公共方法解析
                 meta_elements = video.xpath('./div[@class="meta"]')
                 if meta_elements:
-                    date_str = meta_elements[0].text.strip()
-                    try:
-                        # 尝试新格式 MM/DD/YYYY
-                        ranking.publish_date = datetime.strptime(date_str, "%m/%d/%Y").date()
-                    except ValueError:
-                        try:
-                            # 尝试旧格式 YYYY-MM-DD
-                            ranking.publish_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-                        except ValueError:
-                            ranking.publish_date = None
+                    date_str = meta_elements[0].text
+                    if date_str:
+                        ranking.publish_date = self._parse_date(date_str)
 
-                # 评分 - 支持两种格式
-                # 新格式: "4.55, by 754 users"
-                # 旧格式: "4.55分, 由754人評價"
+                # 评分 - 使用公共方法解析
                 score_elements = video.xpath('./div[@class="score"]/span[@class="value"]')
                 if not score_elements:
                     score_elements = video.xpath('./div[@class="score"]/span')
 
                 if score_elements:
-                    # 获取所有文本内容
-                    rank_str = ''.join(score_elements[0].itertext()).strip()
-
-                    # 尝试新格式: "4.55, by 754 users"
-                    rank_matched = re.search(r'([\d.]+),?\s*by\s*([\d,]+)\s*users?', rank_str)
-                    if rank_matched:
-                        ranking.rank = float(rank_matched.group(1))
-                        ranking.rank_count = int(rank_matched.group(2).replace(',', ''))
-                    else:
-                        # 尝试旧格式: "4.55分, 由754人評價"
-                        rank_matched = re.match(r'(.+?)分,\s*由(.+?)人評價', rank_str)
-                        if rank_matched:
-                            ranking.rank = float(rank_matched.group(1))
-                            ranking.rank_count = int(rank_matched.group(2))
+                    score_text = ''.join(score_elements[0].itertext()).strip()
+                    ranking.rank, ranking.rank_count = self._parse_score_text(score_text)
 
                 ranking.url = urljoin(self.host, video.get('href'))
 
@@ -759,6 +834,105 @@ class JavdbSpider(Spider):
                 continue
 
         return result
+
+    def _parse_homepage_videos(self, url: str, video_type: str):
+        """解析首页视频列表 - 作为排行榜页面的fallback"""
+        try:
+            logger.info(f"使用首页列表作为fallback: {url}")
+            response = self._get(url)
+            html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
+            
+            result = []
+            
+            # 优化XPath选择器 - 限定在 movie-list 或 video-list 容器内查找
+            # 避免匹配页面其他区域的链接
+            video_links = html.xpath('//div[contains(@class, "movie-list") or contains(@class, "video-list")]//a[contains(@href, "/v/")]')
+            
+            # 如果没找到，尝试使用备用选择器
+            if not video_links:
+                video_links = html.xpath('//div[@class="grid-item"]//a[contains(@href, "/v/")]')
+            
+            # 最后再使用更宽松的选择器
+            if not video_links:
+                video_links = html.xpath('//a[contains(@href, "/v/")]')
+            
+            logger.info(f"首页找到 {len(video_links)} 个视频链接")
+            
+            for video in video_links:
+                try:
+                    ranking = JavDBRanking()
+                    
+                    # 获取视频URL
+                    href = video.get('href')
+                    if not href or '/v/' not in href:
+                        continue
+                    ranking.url = urljoin(self.host, href)
+                    
+                    # 获取标题属性
+                    ranking.title = video.get('title')
+                    
+                    # 番号 - 从 video-title/strong 或直接的 strong 元素获取
+                    num_elements = video.xpath('.//div[contains(@class, "video-title")]/strong')
+                    if not num_elements:
+                        num_elements = video.xpath('.//strong')
+                    if num_elements and num_elements[0].text:
+                        ranking.num = num_elements[0].text.strip()
+                    else:
+                        continue  # 没有番号则跳过
+                    
+                    # 封面图片
+                    cover_imgs = video.xpath('.//img')
+                    if cover_imgs:
+                        cover_src = cover_imgs[0].get('src')
+                        if cover_src:
+                            if cover_src.startswith('//'):
+                                cover_src = 'https:' + cover_src
+                            elif not cover_src.startswith('http'):
+                                cover_src = urljoin(self.host, cover_src)
+                            ranking.cover = cover_src
+                    
+                    # 评分和评论数 - 使用公共方法解析
+                    score_elements = video.xpath('.//div[contains(@class, "score")]//span[@class="value"]')
+                    if not score_elements:
+                        score_elements = video.xpath('.//div[contains(@class, "score")]/span')
+                    
+                    if score_elements:
+                        score_text = ''.join(score_elements[0].itertext()).strip()
+                        ranking.rank, ranking.rank_count = self._parse_score_text(score_text)
+                    
+                    # 发布日期 - 使用公共方法解析
+                    meta_elements = video.xpath('.//div[contains(@class, "meta")]')
+                    if meta_elements:
+                        date_text = meta_elements[0].text
+                        if date_text:
+                            ranking.publish_date = self._parse_date(date_text)
+                    
+                    # 标签 - 检查是否有中文字幕
+                    tag_elements = video.xpath('.//div[contains(@class, "tags")]/span/text()')
+                    if tag_elements:
+                        tag_str = ' '.join(tag_elements)
+                        ranking.isZh = ('中字' in tag_str or 'CnSub' in tag_str)
+                    else:
+                        ranking.isZh = False
+                    
+                    # 使用 video_type 参数设置是否无码
+                    ranking.is_uncensored = (video_type == 'uncensored')
+                    
+                    result.append(ranking)
+                    
+                except Exception as e:
+                    logger.debug(f"解析首页视频项目失败: {e}")
+                    continue
+            
+            # 按评分排序（降序），模拟排行榜效果
+            result.sort(key=lambda x: (x.rank or 0, x.rank_count or 0), reverse=True)
+            
+            logger.info(f"首页fallback成功解析 {len(result)} 个视频")
+            return result
+            
+        except Exception as e:
+            logger.error(f"解析首页视频列表失败: {e}")
+            return []
 
     def get_ranking_with_details(self, video_type: str, cycle: str, max_pages: int = 1):
         """获取排行榜数据，包含评分和评论信息，用于智能下载规则"""
@@ -903,34 +1077,17 @@ class JavdbSpider(Spider):
                 if cover_element:
                     video_info['cover'] = cover_element[0].get('src')
                 
-                # 获取评分和评论数 - 从score div中提取
+                # 获取评分和评论数 - 使用公共方法解析
                 score_element = element.xpath(".//div[@class='score']/span[@class='value']")
                 rating = None
                 comments = 0
                 
                 if score_element:
-                    # 提取所有文本内容，包括嵌套元素的文本
                     score_text = ''.join(score_element[0].itertext()).strip()
                     logger.debug(f"原始评分文本: '{score_text}'")
-
-                    # 尝试新格式: "4.55, by 754 users"
-                    rating_match = re.search(r"([\d.]+),?\s*by\s*([\d,]+)\s*users?", score_text)
-                    if rating_match:
-                        rating = float(rating_match.group(1))
-                        comments = int(rating_match.group(2).replace(',', ''))
-                        logger.debug(f"成功提取评分(新格式): {rating}, 评论数: {comments}")
-                    else:
-                        # 尝试旧格式: "4.54分, 由346人評價"
-                        rating_match = re.search(r"(\d+\.\d+)分", score_text)
-                        if rating_match:
-                            rating = float(rating_match.group(1))
-                            logger.debug(f"成功提取评分(旧格式): {rating}")
-
-                        # 提取评论数：格式如 "由346人評價"
-                        comment_match = re.search(r"由(\d+)人評價", score_text)
-                        if comment_match:
-                            comments = int(comment_match.group(1))
-                            logger.debug(f"成功提取评论数(旧格式): {comments}")
+                    rating, comments = self._parse_score_text(score_text)
+                    if rating is not None:
+                        logger.debug(f"成功提取评分: {rating}, 评论数: {comments}")
                 
                 video_info['rating'] = rating
                 video_info['comments'] = comments
@@ -943,13 +1100,13 @@ class JavdbSpider(Spider):
                 video_info['website'] = self.name
                 
                 videos.append(video_info)
-                logger.debug(f"✅ 成功解析视频: {num} - 评分: {rating} - 评论: {comments}")
+                logger.debug(f"成功解析视频: {num} - 评分: {rating} - 评论: {comments}")
                 
             except Exception as e:
                 logger.warning(f"解析{page_type}视频信息时出错: {str(e)}")
                 continue
         
-        logger.info(f"🎯 {page_type}第{page}页解析完成: 总数{len(videos)}个, 有评分{sum(1 for v in videos if v.get('rating'))}个, 有评论{sum(1 for v in videos if v.get('comments', 0) > 0)}个")
+        logger.info(f"{page_type}第{page}页解析完成: 总数{len(videos)}个, 有评分{sum(1 for v in videos if v.get('rating'))}个, 有评论{sum(1 for v in videos if v.get('comments', 0) > 0)}个")
         return videos
     
     def _parse_uncensored_ranking_page(self, html, page):
@@ -1092,10 +1249,6 @@ class JavdbSpider(Spider):
         
     def get_actor_videos(self, actor_url: str):
         """获取演员的所有视频 - 优化版本，直接从演员页面提取所有信息"""
-        import logging
-        import re
-        logger = logging.getLogger('spider')
-        
         # 处理不同格式的actor_url输入
         if not actor_url.startswith(self.host):
             if not actor_url.startswith('http'):
@@ -1188,42 +1341,16 @@ class JavdbSpider(Spider):
                             cover_url = 'https:' + cover_url if cover_url.startswith('//') else urljoin(self.host, cover_url)
                         item.cover = cover_url
                     
-                    # 直接从演员页面提取评分和评论数信息
+                    # 使用公共方法提取评分和评论数
                     score_element = box.xpath('.//div[contains(@class, "score")]//span[@class="value"]')
                     if score_element:
-                        # 提取所有文本内容，包括嵌套元素的文本
                         score_text = ''.join(score_element[0].itertext()).strip()
-                        
-                        # 尝试新格式: "4.55, by 754 users"
-                        rating_match = re.search(r'([\d.]+),?\s*by\s*([\d,]+)\s*users?', score_text)
-                        if rating_match:
-                            try:
-                                rating_value = float(rating_match.group(1))
-                                item.rank = rating_value  # 前端使用
-                                item.rating = str(rating_value)  # 演员订阅使用
-                                comments_value = int(rating_match.group(2).replace(',', ''))
-                                item.rank_count = comments_value
-                            except:
-                                pass
-                        else:
-                            # 尝试旧格式: "4.55分, 由346人評價"
-                            score_match = re.search(r'(\d+\.\d+)分', score_text)
-                            if score_match:
-                                try:
-                                    rating_value = float(score_match.group(1))
-                                    item.rank = rating_value  # 前端使用
-                                    item.rating = str(rating_value)  # 演员订阅使用
-                                except:
-                                    pass
-                            
-                            # 解析评论数（旧格式）
-                            count_match = re.search(r'由(\d+)人評價', score_text)
-                            if count_match:
-                                try:
-                                    comments_value = int(count_match.group(1))
-                                    item.rank_count = comments_value
-                                except:
-                                    pass
+                        rank, rank_count = self._parse_score_text(score_text)
+                        if rank is not None:
+                            item.rank = rank  # 前端使用
+                            item.rating = str(rank)  # 演员订阅使用
+                        if rank_count:
+                            item.rank_count = rank_count
                     
                     # 检查中文字幕和无码标签
                     cnsub_element = box.xpath('.//span[contains(@class, "cnsub")]')
@@ -1232,16 +1359,11 @@ class JavdbSpider(Spider):
                     uncensored_element = box.xpath('.//span[contains(@class, "uncensored")]')
                     item.is_uncensored = len(uncensored_element) > 0
                     
-                    # 提取发布日期
+                    # 使用公共方法解析发布日期
                     date_element = box.xpath('.//div[contains(@class, "meta")]/text()')
                     if date_element and len(date_element) > 0:
                         date_text = date_element[0].strip()
-                        try:
-                            # 解析日期格式 YYYY-MM-DD
-                            if re.match(r'\d{4}-\d{2}-\d{2}', date_text):
-                                item.publish_date = datetime.strptime(date_text, "%Y-%m-%d").date()
-                        except:
-                            pass
+                        item.publish_date = self._parse_date(date_text)
                     
                     # 只有有番号的条目才添加到结果中
                     if item.num:
