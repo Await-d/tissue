@@ -42,20 +42,13 @@ function Subscribe() {
         }
     })
 
-    if (loading) {
-        return (
-            <Card className="subscribe-loading-card">
-                <Skeleton active />
-            </Card>
-        )
-    }
-
+    // 过滤订阅数据
     const subscribes = data.filter((item: any) => {
         if (!filter) return true
         return item.title.toUpperCase().includes(filter.toUpperCase()) || item.num.toUpperCase().includes(filter.toUpperCase())
     })
 
-    // 获取下载状态
+    // 获取下载状态（必须在条件返回之前调用）
     const { statusMap, error: downloadStatusError } = useDownloadStatus(subscribes);
 
     // 监听下载状态检测错误
@@ -64,6 +57,14 @@ function Subscribe() {
             message.warning(`下载状态检测失败: ${downloadStatusError.message}`);
         }
     }, [downloadStatusError, message]);
+
+    if (loading) {
+        return (
+            <Card className="subscribe-loading-card">
+                <Skeleton active />
+            </Card>
+        )
+    }
 
     return (
         <div className="subscribe-container">

@@ -4,7 +4,7 @@
  * @Description: 下载状态检测 Hook
  */
 import { useState, useEffect, useMemo } from 'react';
-import { checkDownloadStatusBatch } from '../apis/downloadStatus';
+import { checkDownloadStatusBatch, type DownloadStatus } from '../apis/downloadStatus';
 
 /**
  * 视频对象接口（最小化必需字段）
@@ -18,8 +18,8 @@ export interface VideoWithNum {
  * Hook 返回值接口
  */
 export interface UseDownloadStatusReturn {
-    /** 番号到下载状态的映射 { "ABC-123": true, "DEF-456": false } */
-    statusMap: Record<string, boolean>;
+    /** 番号到下载状态的映射 { "ABC-123": "downloaded", "DEF-456": "none" } */
+    statusMap: Record<string, DownloadStatus>;
     /** 是否正在加载 */
     loading: boolean;
     /** 错误信息（如果有） */
@@ -37,11 +37,11 @@ export interface UseDownloadStatusReturn {
  * @example
  * ```tsx
  * const { statusMap, loading } = useDownloadStatus(videos);
- * const isDownloaded = statusMap[video.num] || false;
+ * const downloadStatus = statusMap[video.num] || 'none';
  * ```
  */
 export function useDownloadStatus(videos: VideoWithNum[]): UseDownloadStatusReturn {
-    const [statusMap, setStatusMap] = useState<Record<string, boolean>>({});
+    const [statusMap, setStatusMap] = useState<Record<string, DownloadStatus>>({});
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
     const [reloadTrigger, setReloadTrigger] = useState<number>(0);

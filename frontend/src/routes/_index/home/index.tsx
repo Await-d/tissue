@@ -627,7 +627,7 @@ function JavDB() {
                                             }}>
                                                 <JavDBItem
                                                     item={item}
-                                                    isDownloaded={statusMap[item.num] || false}
+                                                    downloadStatus={statusMap[item.num] || 'none'}
                                                 />
                                             </div>
                                         </div>
@@ -836,7 +836,7 @@ function JavDB() {
                             {/* 扫描时间 */}
                             <Col span={12}>
                                 <div style={{
-                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    background: colors.rgba('bgContainer', 0.5),
                                     borderRadius: '12px',
                                     padding: '20px',
                                     border: `1px solid ${colors.borderSecondary}`,
@@ -868,7 +868,7 @@ function JavDB() {
                             {/* 扫描耗时 */}
                             <Col span={12}>
                                 <div style={{
-                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    background: colors.rgba('bgContainer', 0.5),
                                     borderRadius: '12px',
                                     padding: '20px',
                                     border: `1px solid ${colors.borderSecondary}`,
@@ -900,7 +900,7 @@ function JavDB() {
                             {/* 扫描文件总数 */}
                             <Col span={12}>
                                 <div style={{
-                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    background: colors.rgba('bgContainer', 0.5),
                                     borderRadius: '12px',
                                     padding: '20px',
                                     border: `1px solid ${colors.borderSecondary}`,
@@ -963,7 +963,7 @@ function JavDB() {
                             {/* 已存在视频数 */}
                             <Col span={24}>
                                 <div style={{
-                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    background: colors.rgba('bgContainer', 0.5),
                                     borderRadius: '12px',
                                     padding: '20px',
                                     border: `1px solid ${colors.borderSecondary}`,
@@ -993,7 +993,7 @@ function JavDB() {
                         </Row>
 
                         {/* 提示信息 */}
-                        {scanResult.new_videos > 0 && (
+                        {scanResult.new_found > 0 && (
                             <div style={{
                                 background: colors.rgba('gold', 0.05),
                                 border: `1px solid ${colors.borderGold}`,

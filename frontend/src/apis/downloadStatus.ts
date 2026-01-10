@@ -6,11 +6,16 @@
 import { request } from '../utils/requests';
 
 /**
+ * 下载状态类型
+ */
+export type DownloadStatus = 'downloaded' | 'downloading' | 'none';
+
+/**
  * 批量检查视频下载状态
  * @param nums - 视频番号列表
- * @returns Promise 返回番号到下载状态的映射 { "ABC-123": true, "DEF-456": false }
+ * @returns Promise 返回番号到下载状态的映射 { "ABC-123": "downloaded", "DEF-456": "none" }
  */
-export async function checkDownloadStatusBatch(nums: string[]): Promise<Record<string, boolean>> {
+export async function checkDownloadStatusBatch(nums: string[]): Promise<Record<string, DownloadStatus>> {
     const response = await request.request({
         url: '/download-status/check-batch',
         method: 'post',
