@@ -12,7 +12,7 @@ import {
     DARK_RGBA_COLORS,
     LIGHT_RGBA_COLORS,
     ThemeColorConfig
-} from '../config/colors.config'
+} from '../config/colors.config.ts'
 
 /**
  * 主题颜色 Hook 返回类型
