@@ -48,6 +48,11 @@ def upgrade() -> None:
         sa.Column('error_message', sa.Text(), nullable=True, comment='错误信息'),
         sa.Column('created_at', sa.DateTime(), nullable=True, comment='创建时间'),
         sa.Column('updated_at', sa.DateTime(), nullable=True, comment='更新时间'),
+        # Base 模型的标准审计字段
+        sa.Column('create_by', sa.Integer(), nullable=True),
+        sa.Column('create_time', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('update_by', sa.Integer(), nullable=True),
+        sa.Column('update_time', sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint('id'),
         comment='扫描记录表 - 存储文件扫描历史记录'
     )
