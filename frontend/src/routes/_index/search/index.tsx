@@ -11,23 +11,27 @@ import {
     Space,
     Tag,
     Tooltip,
-    Switch,
     Select,
     InputNumber,
-    Checkbox,
-    Progress,
-    Badge,
-    Divider
+    Badge
 } from "antd";
 import React, { useEffect, useState } from "react";
-import { CarryOutOutlined, CloudDownloadOutlined, CopyOutlined, HistoryOutlined, RedoOutlined, UserOutlined, ClearOutlined, FilterOutlined, SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons";
+import {
+    CarryOutOutlined,
+    CloudDownloadOutlined,
+    CopyOutlined,
+    HistoryOutlined,
+    RedoOutlined,
+    UserOutlined,
+    ClearOutlined,
+    FilterOutlined,
+    SearchOutlined
+} from "@ant-design/icons";
 import * as api from "../../../apis/subscribe";
-import * as videoApi from "../../../apis/video";
 import { useRequest, useResponsive } from "ahooks";
 import { useFormModal } from "../../../utils/useFormModal.ts";
 import Websites from "../../../components/Websites";
 import VideoCover from "../../../components/VideoCover";
-import VideoDetail from "../../../components/VideoDetail";
 import SubscribeModifyModal from "../subscribe/-components/modifyModal.tsx";
 import {
     createFileRoute,
@@ -42,6 +46,8 @@ import Preview from "./-components/preview.tsx";
 import DownloadModal from "./-components/downloadModal.tsx";
 import DownloadListModal from "./-components/downloadListModal.tsx";
 import HistoryModal from "./-components/historyModal.tsx";
+import Comment from "./-components/comment.tsx";
+import ActorsModal from "./-components/actorsModal.tsx";
 
 const cacheHistoryKey = 'search_video_histories'
 const cacheLastSearchKey = 'search_video_last_search'
@@ -90,6 +96,7 @@ export function Search() {
     const [searchInput, setSearchInput] = useState(search?.num)
     const [filter, setFilter] = useState({ isHd: false, isZh: false, isUncensored: false })
     const [previewSelected, setPreviewSelected] = useState<string>()
+    const [commentSelected, setCommentSelected] = useState<string>()
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
     const [advancedFilters, setAdvancedFilters] = useState({
         minSize: 0,
@@ -99,16 +106,12 @@ export function Search() {
         showOnlyWithPreviews: false,
         website: 'all'
     })
-    const [searchProgress, setSearchProgress] = useState({
-        current: 0,
-        total: 0,
-        isSearching: false
-    })
 
     const [selectedVideo, setSelectedVideo] = useState<any>()
     const [selectedDownload, setSelectedDownload] = useState<any>()
     const [showDownloadList, setShowDownloadList] = useState(false)
     const [historyModalOpen, setHistoryModalOpen] = useState(false)
+    const [actorsModalOpen, setActorsModalOpen] = useState(false)
     const [loadingDownloadId, setLoadingDownloadId] = useState<string | null>(null)
 
     // 组件加载时，检查是否有上一次搜索的番号，如果有且当前没有搜索参数，则自动搜索
@@ -167,23 +170,35 @@ export function Search() {
                 key: 'actors',
                 label: '演员',
                 span: 24,
-                children: typeof video.actors === 'string' ? (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {video.actors.split(',').map((actor: string) => {
-                            const actorName = actor.trim();
-                            return actorName ? (
-                                <Tag
-                                    key={actorName}
-                                    color="blue"
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => handleActorClick(actorName)}
-                                >
-                                    {actorName}
-                                </Tag>
-                            ) : null;
-                        })}
+                children: video.actors ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                        {typeof video.actors === 'string'
+                            ? video.actors.split(',').map((actor: string) => {
+                                const actorName = actor.trim();
+                                return actorName ? (
+                                    <Tag
+                                        key={actorName}
+                                        color="blue"
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => handleActorClick(actorName)}
+                                    >
+                                        {actorName}
+                                    </Tag>
+                                ) : null;
+                            })
+                            : video.actors}
+                        {video.site_actors?.length ? (
+                            <Button
+                                type="link"
+                                size="small"
+                                icon={<SearchOutlined />}
+                                onClick={() => setActorsModalOpen(true)}
+                            >
+                                查看站点演员
+                            </Button>
+                        ) : null}
                     </div>
-                ) : video.actors,
+                ) : null,
             },
             {
                 key: 'num',
@@ -285,26 +300,6 @@ export function Search() {
             search: { actorName: actorName } as any,
             replace: true
         });
-    };
-
-    const handleWebVideoSelect = (video: any) => {
-        if (video && video.url) {
-            let source = 'JavDB';
-
-            if (video.url.includes('javbus')) {
-                source = 'JavBus';
-                console.log('根据URL设置source为JavBus');
-            }
-            else if (video.url.includes('javdb')) {
-                source = 'JavDB';
-                console.log('根据URL设置source为JavDB');
-            }
-
-            navigate({
-                to: '/home/detail',
-                search: { source: source, num: video.num, url: video.url }
-            });
-        }
     };
 
     const handleHistorySelect = (num: string) => {
@@ -426,6 +421,13 @@ export function Search() {
                                                     column={24}
                                                     size={'small'}
                                                 />
+                                                {video.site_actors && (
+                                                    <ActorsModal
+                                                        open={actorsModalOpen}
+                                                        onCancel={() => setActorsModalOpen(false)}
+                                                        actors={video.site_actors}
+                                                    />
+                                                )}
                                             </>
                                         ) : (
                                             loading ? (
@@ -838,6 +840,24 @@ export function Search() {
                                     }}
                                 </Await>
                             </Card>
+                            <Await promise={loaderData}>
+                                {(video) => {
+                                    if (video?.comments && video.comments.length > 0) {
+                                        const comments = video.comments.find((i: any) => i.website === commentSelected) || video.comments[0]
+                                        return (
+                                            <Card title={'评论'} className={'mt-4'} extra={(
+                                                <Segmented
+                                                    onChange={(value: string) => setCommentSelected(value)}
+                                                    options={video.comments.map((i: any) => i.website)}
+                                                />
+                                            )}>
+                                                <Comment data={comments.items}/>
+                                            </Card>
+                                        )
+                                    }
+                                    return <div></div>
+                                }}
+                            </Await>
                         </Col>
                     </Row>
                 </Card>
@@ -868,4 +888,3 @@ export function Search() {
         </Row>
     )
 }
-
