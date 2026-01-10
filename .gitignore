@@ -926,3 +926,6 @@ nohup.out
 
 # TanStack Router generated files
 frontend/src/routeTree.gen.ts
+
+# Serena memories
+.serena/
