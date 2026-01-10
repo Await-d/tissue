@@ -164,47 +164,60 @@ class JavdbSpider(Spider):
             title = title_element[0].text.strip()
             meta.title = f'{num.upper()} {title}'
 
-        # 日期 - 修正XPath，添加 span[@class='value']
-        premiered_element = html.xpath("//strong[text()='日期:']/following-sibling::span[@class='value']")
+        # 日期 - 支持中英文标签
+        premiered_element = html.xpath("//strong[text()='日期:' or text()='Released Date:']/following-sibling::span[@class='value']")
         if premiered_element:
             meta.premiered = premiered_element[0].text
 
-        # 时长 - 修正XPath
-        runtime_element = html.xpath("//strong[text()='時長:']/following-sibling::span[@class='value']")
+        # 时长 - 支持中英文标签
+        runtime_element = html.xpath("//strong[text()='時長:' or text()='Duration:']/following-sibling::span[@class='value']")
         if runtime_element:
             runtime = runtime_element[0].text
-            runtime = runtime.replace(" 分鍾", "")
-            meta.runtime = runtime
+            # 清理时长格式：支持 "140 minute(s)" 和 "140 分鍾"
+            runtime = re.sub(r'\s*(minute\(s\)|分鍾)\s*', '', runtime)
+            meta.runtime = runtime.strip()
 
-        # 导演 - 修正XPath
-        director_element = html.xpath("//strong[text()='導演:']/following-sibling::span[@class='value']/a")
+        # 导演 - 支持中英文标签
+        director_element = html.xpath("//strong[text()='導演:' or text()='Director:']/following-sibling::span[@class='value']/a")
+        if not director_element:
+            # 有些情况下链接直接是兄弟元素
+            director_element = html.xpath("//strong[text()='導演:' or text()='Director:']/following-sibling::a[1]")
         if director_element:
             director = director_element[0].text
             meta.director = director
 
-        # 片商 - 修正XPath
-        studio_element = html.xpath("//strong[text()='片商:']/following-sibling::span[@class='value']/a")
+        # 片商/Maker - 支持中英文标签
+        studio_element = html.xpath("//strong[text()='片商:' or text()='Maker:']/following-sibling::span[@class='value']/a")
+        if not studio_element:
+            studio_element = html.xpath("//strong[text()='片商:' or text()='Maker:']/following-sibling::a[1]")
         if studio_element:
             studio = studio_element[0].text
             meta.studio = studio
 
-        # 发行 - 修正XPath
-        publisher_element = html.xpath("//strong[text()='發行:']/following-sibling::span[@class='value']/a")
+        # 发行/Publisher - 支持中英文标签
+        publisher_element = html.xpath("//strong[text()='發行:' or text()='Publisher:']/following-sibling::span[@class='value']/a")
+        if not publisher_element:
+            publisher_element = html.xpath("//strong[text()='發行:' or text()='Publisher:']/following-sibling::a[1]")
         if publisher_element:
             publisher = publisher_element[0].text
             meta.publisher = publisher
 
-        # 系列 - 修正XPath
-        series_element = html.xpath("//strong[text()='系列:']/following-sibling::span[@class='value']/a")
+        # 系列 - 支持中英文标签
+        series_element = html.xpath("//strong[text()='系列:' or text()='Series:']/following-sibling::span[@class='value']/a")
+        if not series_element:
+            series_element = html.xpath("//strong[text()='系列:' or text()='Series:']/following-sibling::a[1]")
         if series_element:
             series = series_element[0].text
             meta.series = series
 
+        # 标签 - Tags (过滤掉导航类标签如 '類別', 'Tags')
         tag_elements = html.xpath("//a[contains(@href,'/tags?')]")
         if tag_elements:
-            tags = [tag.text for tag in tag_elements]
+            skip_tags = ['類別', 'Tags', '标签']
+            tags = [tag.text for tag in tag_elements if tag.text and tag.text not in skip_tags]
             meta.tags = tags
 
+        # 演员 - 支持中英文标签，female symbol 或 Actor(s) 标签
         actor_elements = html.xpath("//strong[@class='symbol female']")
         if actor_elements:
             actors = []
@@ -222,23 +235,45 @@ class JavdbSpider(Spider):
         if cover_element:
             meta.cover = cover_element[0].get("src")
 
-        score_elements = html.xpath("//span[@class='score-stars']/../text()")
-        if score_elements:
-            score_text = str(score_elements[0])
-            pattern_result = re.search(r"(\d+\.?\d*)", score_text)
-            if pattern_result:
-                score = pattern_result.group(1)
-                meta.rating = score
+        # 评分和评论数 - 支持新格式 "4.56, by 1575 users" 和旧格式 "4.56分, 由1575人評價"
+        # 新结构: strong[text()='Rating:']/following-sibling::span[@class='value']
+        rating_element = html.xpath("//strong[text()='Rating:' or text()='評分:']/following-sibling::span[@class='value']")
+        if rating_element:
+            # 获取所有文本内容
+            rating_text = ''.join(rating_element[0].itertext()).strip()
+            
+            # 尝试新格式: "4.56, by 1575 users"
+            new_format_match = re.search(r'([\d.]+),?\s*by\s*([\d,]+)\s*users?', rating_text)
+            if new_format_match:
+                meta.rating = new_format_match.group(1)
+                meta.comments_count = int(new_format_match.group(2).replace(',', ''))
+            else:
+                # 旧格式: "4.56分, 由1575人評價"
+                score_match = re.search(r'(\d+\.?\d*)分?', rating_text)
+                if score_match:
+                    meta.rating = score_match.group(1)
+                count_match = re.search(r'由(\d+)人評價', rating_text)
+                if count_match:
+                    meta.comments_count = int(count_match.group(1))
+        else:
+            # 回退：旧的XPath方式
+            score_elements = html.xpath("//span[@class='score-stars']/../text()")
+            if score_elements:
+                score_text = str(score_elements[0])
+                pattern_result = re.search(r"(\d+\.?\d*)", score_text)
+                if pattern_result:
+                    meta.rating = pattern_result.group(1)
 
-        # 获取评论数 - 支持新格式 短評(44) 和旧格式 Reviews(44)
-        comments_elements = html.xpath("//div[contains(@class, 'tabs')]//a")
-        for el in comments_elements:
-            text = ''.join(el.itertext()).strip()
-            if '短評' in text or 'Reviews' in text:
-                comments_match = re.search(r"\((\d+)\)", text)
-                if comments_match:
-                    meta.comments_count = int(comments_match.group(1))
-                    break
+        # 如果上面没有获取到评论数，从tabs获取
+        if not meta.comments_count:
+            comments_elements = html.xpath("//div[contains(@class, 'tabs')]//a")
+            for el in comments_elements:
+                text = ''.join(el.itertext()).strip()
+                if '短評' in text or 'Reviews' in text:
+                    comments_match = re.search(r"\((\d+)\)", text)
+                    if comments_match:
+                        meta.comments_count = int(comments_match.group(1))
+                        break
 
         meta.website.append(url)
 
@@ -587,8 +622,10 @@ class JavdbSpider(Spider):
                 if size:
                     download.size = size[0].text.split(',')[0].strip() if size[0].text else ""
 
-            # 获取标签 (HD, 字幕等) - 新结构
-            for tag in parts.xpath('.//div[@class="tags"]/span') or parts.xpath('.//span[contains(@class, "tag")]'):
+            # 获取标签 (HD, 字幕等) - 新结构使用 span.tag
+            # 先尝试 div.tags 内的 span，再尝试直接的 span.tag
+            tag_elements = parts.xpath('.//div[@class="tags"]/span') or parts.xpath('.//span[contains(@class, "tag")]')
+            for tag in tag_elements:
                 tag_text = tag.text.strip() if tag.text else ""
                 if tag_text in ['高清', 'HD']:
                     download.is_hd = True
