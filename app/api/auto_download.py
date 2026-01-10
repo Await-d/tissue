@@ -5,7 +5,7 @@ import asyncio
 from typing import List, Optional
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import JSONResponse
 
 from app import schema
@@ -24,8 +24,8 @@ _task_status = {}
 # 规则管理API
 @router.get("/rules", response_model=schema.AutoDownloadListResponse, summary="获取自动下载规则列表")
 async def get_rules(
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(default=1, ge=1, description="页码"),
+    page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     is_enabled: Optional[bool] = None,
     name: Optional[str] = None,
     service: AutoDownloadService = Depends(get_auto_download_service)
@@ -113,8 +113,8 @@ async def delete_rule(
 # 订阅记录管理API
 @router.get("/subscriptions", response_model=schema.AutoDownloadListResponse, summary="获取自动下载订阅记录")
 async def get_subscriptions(
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(default=1, ge=1, description="页码"),
+    page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     rule_id: Optional[int] = None,
     download_status: Optional[schema.DownloadStatus] = None,
     num: Optional[str] = None,
@@ -284,7 +284,7 @@ async def get_task_status(task_id: str):
 @router.post("/rules/{rule_id}/test", response_model=schema.AutoDownloadResponse, summary="测试规则")
 async def test_rule(
     rule_id: int,
-    limit: int = 10,
+    limit: int = Query(default=10, ge=1, le=100, description="预览数量限制"),
     service: AutoDownloadService = Depends(get_auto_download_service)
 ):
     """测试自动下载规则，预览符合条件的视频"""

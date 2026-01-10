@@ -225,7 +225,7 @@ class BaseDownloadService:
                     logger.error(f"添加待处理种子失败: {e}")
                     # 添加失败时，仍然恢复种子下载（不应用过滤）
                     try:
-                        self.qb.resume_torrent(torrent_hash)
+                        qbittorent.resume_torrent(torrent_hash)
                     except Exception:
                         pass
                     result['success'] = True

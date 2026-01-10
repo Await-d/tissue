@@ -4,7 +4,7 @@
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.schema.r import R
 from app.service.pending_torrent import get_pending_torrent_service, PendingTorrentService
@@ -16,8 +16,8 @@ router = APIRouter()
 @router.get("/list")
 def get_pending_list(
     status: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(default=1, ge=1, description="页码"),
+    page_size: int = Query(default=20, ge=1, le=100, description="每页数量"),
     service: PendingTorrentService = Depends(get_pending_torrent_service)
 ):
     """
@@ -117,7 +117,7 @@ def delete_pending(
 
 @router.post("/cleanup")
 def cleanup_old_records(
-    days: int = 7,
+    days: int = Query(default=7, ge=1, le=365, description="保留天数"),
     service: PendingTorrentService = Depends(get_pending_torrent_service)
 ):
     """

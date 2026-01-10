@@ -90,3 +90,20 @@ export const filterTorrent = (torrentHash: string): Promise<ApiResponse<TorrentF
 export const getFilterStatistics = (): Promise<ApiResponse<FilterStatistics>> => {
   return request.get('/download-filter/statistics')
 }
+
+// 清理相关API
+export const previewCleanup = (torrentHash: string): Promise<ApiResponse> => {
+  return request.get(`/download-filter/preview-cleanup/${torrentHash}`)
+}
+
+export const cleanupTorrent = (torrentHash: string, dryRun: boolean = true): Promise<ApiResponse> => {
+  return request.post(`/download-filter/cleanup-torrent/${torrentHash}`, null, {
+    params: { dry_run: dryRun }
+  })
+}
+
+export const cleanupAllTorrents = (category?: string, dryRun: boolean = true): Promise<ApiResponse> => {
+  return request.post('/download-filter/cleanup-all', null, {
+    params: { category, dry_run: dryRun }
+  })
+}

@@ -23,12 +23,16 @@ import {
   ExperimentOutlined,
   ReloadOutlined,
   SettingOutlined,
-  FilterOutlined
+  FilterOutlined,
+  DeleteOutlined,
+  EyeOutlined
 } from '@ant-design/icons'
 import { createFileRoute } from '@tanstack/react-router'
 import { useRequest } from 'ahooks'
 import * as api from '@/apis/downloadFilter'
+import { cleanupAllTorrents } from '@/apis/downloadFilter'
 import { useThemeColors } from '../../../hooks/useThemeColors'
+import type { CleanupResultData } from '@/types/cleanup'
 
 export const Route = createFileRoute('/_index/setting/download-filter')({
   component: DownloadFilterSettings
@@ -37,12 +41,14 @@ export const Route = createFileRoute('/_index/setting/download-filter')({
 const { Text, Title } = Typography
 
 function DownloadFilterSettings() {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const colors = useThemeColors()
   const [form] = Form.useForm()
   const [testModalVisible, setTestModalVisible] = useState(false)
   const [testMagnetUrl, setTestMagnetUrl] = useState('')
   const [testResult, setTestResult] = useState<api.MagnetFilterResult | null>(null)
+  const [cleanupResultModalVisible, setCleanupResultModalVisible] = useState(false)
+  const [cleanupResult, setCleanupResult] = useState<CleanupResultData | null>(null)
 
   const { loading } = useRequest(api.getFilterSettings, {
     onSuccess: (res) => {
@@ -112,6 +118,46 @@ function DownloadFilterSettings() {
       return
     }
     testMagnet(testMagnetUrl)
+  }
+
+  const handlePreviewCleanup = async () => {
+    try {
+      const res = await cleanupAllTorrents(undefined, true)
+      if (res.success) {
+        setCleanupResult(res.data)
+        setCleanupResultModalVisible(true)
+      } else {
+        message.error(res.message || '预览清理失败')
+      }
+    } catch (err: any) {
+      message.error('预览清理失败：' + (err.message || '未知错误'))
+    }
+  }
+
+  const handleExecuteCleanup = () => {
+    modal.confirm({
+      title: '确认执行清理',
+      content: '此操作将删除不符合过滤规则的文件，无法恢复。是否继续？',
+      okText: '确认清理',
+      cancelText: '取消',
+      okButtonProps: {
+        danger: true
+      },
+      onOk: async () => {
+        try {
+          const res = await cleanupAllTorrents(undefined, false)
+          if (res.success) {
+            setCleanupResult(res.data)
+            setCleanupResultModalVisible(true)
+            message.success('清理完成')
+          } else {
+            message.error(res.message || '清理失败')
+          }
+        } catch (err: any) {
+          message.error('清理失败：' + (err.message || '未知错误'))
+        }
+      }
+    })
   }
 
   const renderTestResult = () => {
@@ -429,6 +475,45 @@ function DownloadFilterSettings() {
               </ul>
             </div>
           </div>
+
+          {/* 历史种子清理 */}
+          <div className="mt-8 pt-8" style={{ borderTop: `1px solid ${colors.borderPrimary}` }}>
+            <div className="rounded-lg p-6 border" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderPrimary }}>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: colors.goldLight }}>
+                <span className="w-1 h-5 rounded-full" style={{ backgroundColor: colors.goldPrimary }}></span>
+                历史种子清理
+              </h3>
+
+              <Alert
+                message="对 qBittorrent 中已下载的种子应用过滤规则，删除不符合条件的文件（如广告、样本等）"
+                type="info"
+                showIcon
+                className="mb-4"
+                style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderGold }}
+              />
+
+              <div className="flex justify-center gap-4">
+                <Button
+                  size="large"
+                  icon={<EyeOutlined />}
+                  onClick={handlePreviewCleanup}
+                  style={{ backgroundColor: colors.bgSpotlight, borderColor: colors.borderPrimary, color: colors.goldPrimary }}
+                >
+                  预览清理
+                </Button>
+
+                <Button
+                  size="large"
+                  icon={<DeleteOutlined />}
+                  onClick={handleExecuteCleanup}
+                  danger
+                  style={{ borderColor: colors.borderPrimary }}
+                >
+                  执行清理
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -466,6 +551,88 @@ function DownloadFilterSettings() {
           </div>
 
           {renderTestResult()}
+        </div>
+      </Modal>
+
+      {/* 清理结果对话框 */}
+      <Modal
+        title={<span style={{ color: colors.goldPrimary }}>清理结果</span>}
+        open={cleanupResultModalVisible}
+        onCancel={() => {
+          setCleanupResultModalVisible(false)
+          setCleanupResult(null)
+        }}
+        footer={[
+          <Button
+            key="close"
+            onClick={() => {
+              setCleanupResultModalVisible(false)
+              setCleanupResult(null)
+            }}
+            style={{ backgroundColor: colors.bgSpotlight, borderColor: colors.borderPrimary, color: colors.textPrimary }}
+          >
+            关闭
+          </Button>
+        ]}
+        width={800}
+        className="dark-modal"
+      >
+        <div className="p-6 rounded-lg" style={{ backgroundColor: colors.bgContainer }}>
+          {cleanupResult && (
+            <>
+              <Row gutter={16} className="mb-4">
+                <Col span={8}>
+                  <div className="p-4 rounded-lg border" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
+                    <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>处理种子数</div>
+                    <div className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                      {cleanupResult.torrents_processed || 0}
+                    </div>
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div className="p-4 rounded-lg border" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
+                    <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>删除文件数</div>
+                    <div className="text-2xl font-bold" style={{ color: colors.goldPrimary }}>
+                      {cleanupResult.files_deleted || 0}
+                    </div>
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div className="p-4 rounded-lg border" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
+                    <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>释放空间</div>
+                    <div className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                      {cleanupResult.space_freed_mb ? `${cleanupResult.space_freed_mb} MB` : '0 MB'}
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+
+              {cleanupResult.details && cleanupResult.details.length > 0 && (
+                <div className="rounded-lg border p-4" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
+                  <div className="font-semibold mb-3" style={{ color: colors.goldLight }}>清理详情</div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {cleanupResult.details.map((detail: any, index: number) => (
+                      <div key={index} className="mb-3 p-3 rounded border" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderPrimary }}>
+                        <div className="font-medium mb-2" style={{ color: colors.textPrimary }}>
+                          {detail.torrent_name || `种子 ${index + 1}`}
+                        </div>
+                        {detail.files_removed && detail.files_removed.length > 0 && (
+                          <div className="ml-4">
+                            <div className="text-xs mb-1" style={{ color: colors.textSecondary }}>删除的文件:</div>
+                            {detail.files_removed.map((file: string, fileIndex: number) => (
+                              <div key={fileIndex} className="text-xs py-1" style={{ color: colors.textTertiary }}>
+                                {file}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </Modal>
     </div>

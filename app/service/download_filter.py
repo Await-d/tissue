@@ -417,6 +417,15 @@ class DownloadFilterService(BaseService):
                 deleted_count = 0
                 for file in files_to_delete:
                     full_path = os.path.join(save_path, file.path)
+
+                    # 安全检查：确保路径在预期的 save_path 内，防止路径遍历攻击
+                    abs_full_path = os.path.abspath(full_path)
+                    abs_save_path = os.path.abspath(save_path)
+                    if not abs_full_path.startswith(abs_save_path):
+                        logger.error(f"检测到非法路径，可能是路径遍历攻击: {file.path}")
+                        result["errors"].append(f"非法路径: {file.path}")
+                        continue
+
                     try:
                         if os.path.exists(full_path):
                             os.remove(full_path)

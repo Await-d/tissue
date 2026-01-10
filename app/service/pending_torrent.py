@@ -60,23 +60,28 @@ class PendingTorrentService(BaseService):
             logger.info(f"待处理种子已存在: {torrent_hash}")
             return existing
 
-        pending = PendingTorrent(
-            torrent_hash=torrent_hash,
-            magnet=magnet,
-            savepath=savepath,
-            category=category,
-            num=num,
-            source=source,
-            status=PendingTorrentStatus.WAITING_METADATA,
-            retry_count=0,
-            added_at=datetime.now()
-        )
-        self.db.add(pending)
-        self.db.commit()
-        self.db.refresh(pending)
+        try:
+            pending = PendingTorrent(
+                torrent_hash=torrent_hash,
+                magnet=magnet,
+                savepath=savepath,
+                category=category,
+                num=num,
+                source=source,
+                status=PendingTorrentStatus.WAITING_METADATA,
+                retry_count=0,
+                added_at=datetime.now()
+            )
+            self.db.add(pending)
+            self.db.commit()
+            self.db.refresh(pending)
 
-        logger.info(f"添加待处理种子: hash={torrent_hash}, num={num}, source={source}")
-        return pending
+            logger.info(f"添加待处理种子: hash={torrent_hash}, num={num}, source={source}")
+            return pending
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"添加待处理种子失败: {e}")
+            raise
 
     def get_pending_torrent(self, torrent_hash: str) -> Optional[PendingTorrent]:
         """
@@ -116,26 +121,31 @@ class PendingTorrentService(BaseService):
             logger.warning(f"待处理种子不存在: {torrent_hash}")
             return None
 
-        pending.status = status
-        pending.last_check_at = datetime.now()
+        try:
+            pending.status = status
+            pending.last_check_at = datetime.now()
 
-        if error_message:
-            pending.error_message = error_message
+            if error_message:
+                pending.error_message = error_message
 
-        if filter_result:
-            pending.filter_result = json.dumps(filter_result, ensure_ascii=False)
-            pending.file_count = filter_result.get('original_files', 0)
-            pending.filtered_file_count = filter_result.get('filtered_files', 0)
+            if filter_result:
+                pending.filter_result = json.dumps(filter_result, ensure_ascii=False)
+                pending.file_count = filter_result.get('original_files', 0)
+                pending.filtered_file_count = filter_result.get('filtered_files', 0)
 
-        if status in (PendingTorrentStatus.COMPLETED, PendingTorrentStatus.FAILED,
-                      PendingTorrentStatus.TIMEOUT):
-            pending.completed_at = datetime.now()
+            if status in (PendingTorrentStatus.COMPLETED, PendingTorrentStatus.FAILED,
+                          PendingTorrentStatus.TIMEOUT):
+                pending.completed_at = datetime.now()
 
-        self.db.commit()
-        self.db.refresh(pending)
+            self.db.commit()
+            self.db.refresh(pending)
 
-        logger.debug(f"更新待处理种子状态: hash={torrent_hash}, status={status.value}")
-        return pending
+            logger.debug(f"更新待处理种子状态: hash={torrent_hash}, status={status.value}")
+            return pending
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"更新待处理种子状态失败: {e}")
+            raise
 
     def _get_torrent_info(self, torrent_hash: str) -> Optional[Dict]:
         """
@@ -210,7 +220,12 @@ class PendingTorrentService(BaseService):
         # 增加重试次数
         pending.retry_count += 1
         pending.last_check_at = datetime.now()
-        self.db.commit()
+        try:
+            self.db.commit()
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"更新重试次数失败: {e}")
+            return False
 
         try:
             # 1. 获取 qBittorrent 中的种子信息
@@ -237,12 +252,22 @@ class PendingTorrentService(BaseService):
             total_size = torrent_info.get('total_size', 0)
             pending.total_size_bytes = total_size
 
-            self.db.commit()
+            try:
+                self.db.commit()
+            except Exception as e:
+                self.db.rollback()
+                logger.error(f"更新元数据状态失败: {e}")
+                return False
             logger.info(f"种子元数据已就绪: {torrent_hash}, 大小: {total_size}")
 
             # 4. 更新状态为 FILTERING 并应用过滤规则
             pending.status = PendingTorrentStatus.FILTERING
-            self.db.commit()
+            try:
+                self.db.commit()
+            except Exception as e:
+                self.db.rollback()
+                logger.error(f"更新过滤状态失败: {e}")
+                return False
 
             filter_result = self.filter_service.filter_torrent_files(torrent_hash)
 
@@ -401,22 +426,27 @@ class PendingTorrentService(BaseService):
         """
         cutoff_date = datetime.now() - timedelta(days=days)
 
-        # 只删除已完成、失败、超时的记录
-        deleted_count = self.db.query(PendingTorrent).filter(
-            PendingTorrent.status.in_([
-                PendingTorrentStatus.COMPLETED,
-                PendingTorrentStatus.FAILED,
-                PendingTorrentStatus.TIMEOUT
-            ]),
-            PendingTorrent.completed_at < cutoff_date
-        ).delete(synchronize_session=False)
+        try:
+            # 只删除已完成、失败、超时的记录
+            deleted_count = self.db.query(PendingTorrent).filter(
+                PendingTorrent.status.in_([
+                    PendingTorrentStatus.COMPLETED,
+                    PendingTorrentStatus.FAILED,
+                    PendingTorrentStatus.TIMEOUT
+                ]),
+                PendingTorrent.completed_at < cutoff_date
+            ).delete(synchronize_session=False)
 
-        self.db.commit()
+            self.db.commit()
 
-        if deleted_count > 0:
-            logger.info(f"清理了 {deleted_count} 条旧的待处理种子记录")
+            if deleted_count > 0:
+                logger.info(f"清理了 {deleted_count} 条旧的待处理种子记录")
 
-        return deleted_count
+            return deleted_count
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"清理旧记录失败: {e}")
+            raise
 
     def get_pending_list(
         self,
@@ -485,17 +515,22 @@ class PendingTorrentService(BaseService):
             logger.warning(f"种子 {torrent_hash} 状态为 {pending.status.value}，无法重试")
             return None
 
-        # 重置状态
-        pending.status = PendingTorrentStatus.WAITING_METADATA
-        pending.retry_count = 0
-        pending.error_message = None
-        pending.last_check_at = None
+        try:
+            # 重置状态
+            pending.status = PendingTorrentStatus.WAITING_METADATA
+            pending.retry_count = 0
+            pending.error_message = None
+            pending.last_check_at = None
 
-        self.db.commit()
-        self.db.refresh(pending)
+            self.db.commit()
+            self.db.refresh(pending)
 
-        logger.info(f"重试待处理种子: {torrent_hash}")
-        return pending
+            logger.info(f"重试待处理种子: {torrent_hash}")
+            return pending
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"重试待处理种子失败: {e}")
+            raise
 
     def delete_pending(self, torrent_hash: str) -> bool:
         """
@@ -511,11 +546,16 @@ class PendingTorrentService(BaseService):
         if not pending:
             return False
 
-        self.db.delete(pending)
-        self.db.commit()
+        try:
+            self.db.delete(pending)
+            self.db.commit()
 
-        logger.info(f"删除待处理种子记录: {torrent_hash}")
-        return True
+            logger.info(f"删除待处理种子记录: {torrent_hash}")
+            return True
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"删除待处理种子记录失败: {e}")
+            raise
 
     def pending_to_dict(self, pending: PendingTorrent) -> Dict:
         """

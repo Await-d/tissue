@@ -1,12 +1,14 @@
 import { Card, Collapse, Empty, Input, List, App, Modal, Space, Tag, theme, Tooltip, Progress, Switch, Row, Col, Select, DatePicker, Divider, Button, Badge, Statistic } from "antd";
 import * as api from "../../../apis/download";
 import { useDebounce, useRequest } from "ahooks";
-import { FileDoneOutlined, FolderViewOutlined, UserOutlined, FilterOutlined, ReloadOutlined, DeleteOutlined, PauseOutlined, PlayCircleOutlined, SearchOutlined } from "@ant-design/icons";
+import { FileDoneOutlined, FolderViewOutlined, UserOutlined, FilterOutlined, ReloadOutlined, DeleteOutlined, PauseOutlined, PlayCircleOutlined, SearchOutlined, ClearOutlined } from "@ant-design/icons";
 import React, { useMemo, useState } from "react";
 import IconButton from "../../../components/IconButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
 import { useThemeColors } from "../../../hooks/useThemeColors";
+import { cleanupTorrent, previewCleanup } from "@/apis/downloadFilter";
+import type { CleanupPreviewData } from "@/types/cleanup";
 
 const { useToken } = theme
 
@@ -39,7 +41,11 @@ function Download() {
         failed: 0,
         totalSize: '0 GB'
     })
-    
+    const [cleanupModalVisible, setCleanupModalVisible] = useState(false)
+    const [cleanupPreview, setCleanupPreview] = useState<CleanupPreviewData | null>(null)
+    const [selectedTorrentHash, setSelectedTorrentHash] = useState<string>('')
+    const [cleanupLoading, setCleanupLoading] = useState(false)
+
     const { data = [], loading, refresh } = useRequest(
         () => api.getDownloads({
             include_success: includeSuccess,
@@ -105,6 +111,50 @@ function Download() {
             refresh()
         }
     })
+
+    // 清理文件处理函数
+    const handleCleanupClick = async (torrentHash: string) => {
+        try {
+            setCleanupLoading(true)
+            setSelectedTorrentHash(torrentHash)
+            const result = await previewCleanup(torrentHash)
+            if (result.success) {
+                setCleanupPreview(result.data)
+                setCleanupModalVisible(true)
+            } else {
+                message.error(result.message || '获取清理预览失败')
+            }
+        } catch (error: any) {
+            message.error(error?.message || '获取清理预览失败')
+        } finally {
+            setCleanupLoading(false)
+        }
+    }
+
+    const handleCleanupConfirm = async () => {
+        try {
+            setCleanupLoading(true)
+            const result = await cleanupTorrent(selectedTorrentHash, false)
+            if (result.success) {
+                message.success('清理成功')
+                setCleanupModalVisible(false)
+                setCleanupPreview(null)
+                refresh()
+            } else {
+                message.error(result.message || '清理失败')
+            }
+        } catch (error: any) {
+            message.error(error?.message || '清理失败')
+        } finally {
+            setCleanupLoading(false)
+        }
+    }
+
+    const handleCleanupCancel = () => {
+        setCleanupModalVisible(false)
+        setCleanupPreview(null)
+        setSelectedTorrentHash('')
+    }
 
     // 跳转到视频详情页面
     const handleVideoClick = (num: string) => {
@@ -325,6 +375,14 @@ function Download() {
             ),
             extra: (
                 <Space>
+                    <Tooltip title={'清理文件'}>
+                        <IconButton
+                            onClick={() => handleCleanupClick(torrent.hash)}
+                            loading={cleanupLoading && selectedTorrentHash === torrent.hash}
+                        >
+                            <ClearOutlined style={{ fontSize: token.sizeLG, color: colors.warning }} />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title={'重新开始下载'}>
                         <IconButton onClick={() => {
                             message.info('重新开始下载功能开发中...');
@@ -740,6 +798,114 @@ function Download() {
                     refresh()
                 }}
             />
+
+            {/* 清理文件预览 Modal */}
+            <Modal
+                title="清理文件预览"
+                open={cleanupModalVisible}
+                onOk={handleCleanupConfirm}
+                onCancel={handleCleanupCancel}
+                okText="确认清理"
+                cancelText="取消"
+                okButtonProps={{
+                    danger: true,
+                    loading: cleanupLoading
+                }}
+                width={800}
+                styles={{
+                    body: {
+                        background: colors.bgBase,
+                        maxHeight: '500px',
+                        overflowY: 'auto'
+                    }
+                }}
+            >
+                {cleanupPreview && (
+                    <div style={{ color: colors.textPrimary }}>
+                        <div style={{
+                            marginBottom: 16,
+                            padding: '12px 16px',
+                            background: colors.bgContainer,
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255, 255, 255, 0.08)'
+                        }}>
+                            <Row gutter={16}>
+                                <Col span={12}>
+                                    <span style={{ color: colors.textSecondary }}>将要删除的文件数：</span>
+                                    <span style={{ color: '#ff4d4f', fontWeight: 600, marginLeft: 8 }}>
+                                        {cleanupPreview.files_to_delete?.length || 0}
+                                    </span>
+                                </Col>
+                                <Col span={12}>
+                                    <span style={{ color: colors.textSecondary }}>预计释放空间：</span>
+                                    <span style={{ color: '#52c41a', fontWeight: 600, marginLeft: 8 }}>
+                                        {cleanupPreview.total_size || '0 MB'}
+                                    </span>
+                                </Col>
+                            </Row>
+                        </div>
+
+                        {cleanupPreview.files_to_delete && cleanupPreview.files_to_delete.length > 0 ? (
+                            <List
+                                dataSource={cleanupPreview.files_to_delete}
+                                renderItem={(file: any) => (
+                                    <List.Item
+                                        style={{
+                                            background: colors.bgElevated,
+                                            borderRadius: '8px',
+                                            padding: '12px 16px',
+                                            marginBottom: '8px',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)'
+                                        }}
+                                    >
+                                        <List.Item.Meta
+                                            title={
+                                                <span style={{ color: colors.textPrimary }}>
+                                                    {file.name}
+                                                </span>
+                                            }
+                                            description={
+                                                <div>
+                                                    <div style={{ color: colors.textTertiary, fontSize: '13px' }}>
+                                                        {file.path}
+                                                    </div>
+                                                    <Space style={{ marginTop: 4 }}>
+                                                        <Tag
+                                                            style={{
+                                                                background: 'rgba(255, 77, 79, 0.2)',
+                                                                borderColor: '#ff4d4f',
+                                                                color: '#ff4d4f'
+                                                            }}
+                                                        >
+                                                            {file.size}
+                                                        </Tag>
+                                                        {file.reason && (
+                                                            <Tag
+                                                                style={{
+                                                                    background: 'rgba(250, 173, 20, 0.2)',
+                                                                    borderColor: colors.warning,
+                                                                    color: colors.warning
+                                                                }}
+                                                            >
+                                                                {file.reason}
+                                                            </Tag>
+                                                        )}
+                                                    </Space>
+                                                </div>
+                                            }
+                                        />
+                                    </List.Item>
+                                )}
+                            />
+                        ) : (
+                            <Empty
+                                description="没有需要清理的文件"
+                                style={{ color: colors.textSecondary }}
+                            />
+                        )}
+                    </div>
+                )}
+            </Modal>
         </Card>
     )
 }
