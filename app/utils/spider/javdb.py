@@ -1119,27 +1119,41 @@ class JavdbSpider(Spider):
                         item.cover = cover_url
                     
                     # 直接从演员页面提取评分和评论数信息
-                    score_element = box.xpath('.//div[contains(@class, "score")]//span[@class="value"]/text()')
+                    score_element = box.xpath('.//div[contains(@class, "score")]//span[@class="value"]')
                     if score_element:
-                        score_text = score_element[0]
-                        # 解析评分
-                        score_match = re.search(r'(\d+\.\d+)分', score_text)
-                        if score_match:
+                        # 提取所有文本内容，包括嵌套元素的文本
+                        score_text = ''.join(score_element[0].itertext()).strip()
+                        
+                        # 尝试新格式: "4.55, by 754 users"
+                        rating_match = re.search(r'([\d.]+),?\s*by\s*([\d,]+)\s*users?', score_text)
+                        if rating_match:
                             try:
-                                rating_value = float(score_match.group(1))
+                                rating_value = float(rating_match.group(1))
                                 item.rank = rating_value  # 前端使用
                                 item.rating = str(rating_value)  # 演员订阅使用
-                            except:
-                                pass
-                        
-                        # 解析评论数
-                        count_match = re.search(r'由(\d+)人評價', score_text)
-                        if count_match:
-                            try:
-                                comments_value = int(count_match.group(1))
+                                comments_value = int(rating_match.group(2).replace(',', ''))
                                 item.rank_count = comments_value
                             except:
                                 pass
+                        else:
+                            # 尝试旧格式: "4.55分, 由346人評價"
+                            score_match = re.search(r'(\d+\.\d+)分', score_text)
+                            if score_match:
+                                try:
+                                    rating_value = float(score_match.group(1))
+                                    item.rank = rating_value  # 前端使用
+                                    item.rating = str(rating_value)  # 演员订阅使用
+                                except:
+                                    pass
+                            
+                            # 解析评论数（旧格式）
+                            count_match = re.search(r'由(\d+)人評價', score_text)
+                            if count_match:
+                                try:
+                                    comments_value = int(count_match.group(1))
+                                    item.rank_count = comments_value
+                                except:
+                                    pass
                     
                     # 检查中文字幕和无码标签
                     cnsub_element = box.xpath('.//span[contains(@class, "cnsub")]')

@@ -271,10 +271,9 @@ class VideoCacheService(BaseService):
             query = query.filter(VideoCache.comments_count >= min_comments)
 
         # 属性过滤
-        if is_hd is not None:
-            query = query.filter(VideoCache.is_hd == is_hd)
-        if is_zh is not None:
-            query = query.filter(VideoCache.is_zh == is_zh)
+        # 注意: is_hd 和 is_zh 不在此处过滤，因为排行榜缓存数据无法获知视频是否有高清/中字版本
+        # 这两个条件应该在下载链接选择阶段（_find_suitable_download）处理
+        # 只有 is_uncensored 可以在此过滤，因为它由榜单类型决定
         if is_uncensored is not None:
             query = query.filter(VideoCache.is_uncensored == is_uncensored)
 
