@@ -1,0 +1,166 @@
+/**
+ * 批量操作工具栏样式 - 电影美学主题
+ */
+
+.batch-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(13, 13, 15, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 24px;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.batch-action-bar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.batch-action-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.batch-action-left .ant-checkbox-wrapper {
+    color: #f0f0f2;
+}
+
+.batch-action-left .ant-checkbox-inner {
+    background: #1a1a1d;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.batch-action-left .ant-checkbox-checked .ant-checkbox-inner {
+    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+    border-color: #d4a852;
+}
+
+.batch-action-left .ant-checkbox-indeterminate .ant-checkbox-inner::after {
+    background: #d4a852;
+}
+
+.batch-select-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.batch-count-text {
+    color: #a0a0a8;
+    font-size: 14px;
+}
+
+.batch-count-number {
+    color: #d4a852;
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0 4px;
+}
+
+.batch-action-right {
+    display: flex;
+    align-items: center;
+}
+
+.batch-download-btn {
+    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+    border: none !important;
+    color: #0d0d0f !important;
+    font-weight: 600 !important;
+    height: 40px !important;
+    padding: 0 24px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.batch-download-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+}
+
+.batch-download-btn:disabled {
+    background: #2a2a2e !important;
+    color: #6a6a72 !important;
+    cursor: not-allowed;
+}
+
+.batch-exit-btn {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #a0a0a8 !important;
+    height: 40px !important;
+    padding: 0 20px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.batch-exit-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #f0f0f2 !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 移动端适配 */
+@media (max-width: 576px) {
+    .batch-action-bar {
+        padding: 10px 16px;
+    }
+
+    .batch-action-bar-content {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .batch-action-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .batch-action-right {
+        width: 100%;
+    }
+
+    .batch-action-right .ant-space {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .batch-download-btn,
+    .batch-exit-btn {
+        flex: 1;
+    }
+
+    .batch-select-text {
+        font-size: 13px;
+    }
+
+    .batch-count-text {
+        font-size: 13px;
+    }
+}
+
+/* 平板适配 */
+@media (min-width: 577px) and (max-width: 768px) {
+    .batch-action-bar {
+        padding: 12px 20px;
+    }
+}

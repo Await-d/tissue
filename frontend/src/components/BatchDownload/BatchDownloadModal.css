@@ -1,0 +1,267 @@
+/**
+ * 批量下载弹窗样式 - 电影美学主题
+ */
+
+.batch-download-modal .ant-modal-content {
+    background: #1a1a1d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+}
+
+.batch-download-modal .ant-modal-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 20px 24px;
+}
+
+.batch-download-modal .ant-modal-body {
+    padding: 20px 24px;
+}
+
+.batch-download-modal .ant-modal-close {
+    color: #a0a0a8;
+}
+
+.batch-download-modal .ant-modal-close:hover {
+    color: #f0f0f2;
+}
+
+/* 下载偏好设置 */
+.download-preferences {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.preference-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f0f0f2;
+    font-size: 14px;
+}
+
+.preference-item .ant-switch {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.preference-item .ant-switch-checked {
+    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%);
+}
+
+/* 进度区域 */
+.download-progress {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.download-progress .ant-progress-text {
+    color: #d4a852 !important;
+    font-weight: 600;
+}
+
+.progress-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 12px;
+    color: #a0a0a8;
+    font-size: 13px;
+}
+
+.progress-stats span {
+    display: flex;
+    align-items: center;
+}
+
+/* 视频列表 */
+.video-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.video-list-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.video-list-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.video-list-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.video-list-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.batch-video-list .ant-list-item {
+    padding: 12px 16px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    transition: all 0.3s ease;
+}
+
+.batch-video-list .ant-list-item:last-child {
+    border-bottom: none !important;
+}
+
+.batch-video-item {
+    background: transparent;
+}
+
+.batch-video-item.current {
+    background: rgba(212, 168, 82, 0.08);
+}
+
+.batch-video-item.success {
+    background: rgba(82, 196, 26, 0.05);
+}
+
+.batch-video-item.error {
+    background: rgba(255, 77, 79, 0.05);
+}
+
+.batch-video-item.skipped {
+    background: rgba(250, 173, 20, 0.05);
+}
+
+.video-item-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.video-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.video-num {
+    color: #d4a852;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.video-title {
+    color: #a0a0a8;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.video-status-message {
+    font-size: 12px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.video-status-message.success {
+    color: #52c41a;
+}
+
+.video-status-message.error {
+    color: #ff4d4f;
+}
+
+.video-status-message.skipped {
+    color: #faad14;
+}
+
+.video-status {
+    flex-shrink: 0;
+}
+
+/* 操作按钮 */
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.start-download-btn,
+.complete-btn {
+    background: linear-gradient(135deg, #d4a852 0%, #e8c780 100%) !important;
+    border: none !important;
+    color: #0d0d0f !important;
+    font-weight: 600 !important;
+    height: 44px !important;
+    padding: 0 32px !important;
+    border-radius: 10px !important;
+    transition: all 0.3s ease !important;
+}
+
+.start-download-btn:hover:not(:disabled),
+.complete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+}
+
+.start-download-btn:disabled {
+    background: #2a2a2e !important;
+    color: #6a6a72 !important;
+}
+
+.pause-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #f0f0f2 !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+}
+
+.pause-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* 空状态 */
+.batch-download-modal .ant-empty {
+    padding: 40px 0;
+}
+
+.batch-download-modal .ant-empty-description {
+    color: #6a6a72;
+}
+
+/* 移动端适配 */
+@media (max-width: 576px) {
+    .batch-download-modal .ant-modal-content {
+        margin: 16px;
+        max-height: 90vh;
+    }
+
+    .video-list-container {
+        max-height: 300px;
+    }
+
+    .download-preferences .ant-space {
+        flex-wrap: wrap;
+    }
+
+    .preference-item {
+        font-size: 13px;
+    }
+
+    .progress-stats {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+}
