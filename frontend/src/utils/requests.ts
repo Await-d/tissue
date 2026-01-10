@@ -26,7 +26,16 @@ request.interceptors.response.use(response => response, error => {
     if (error.response.status === 401) {
         store.dispatch.auth.logout()
     } else if (error.response.data) {
-        const errorMsg = error.response.data?.detail || error.response.data?.message || JSON.stringify(error.response.data)
+        let errorMsg: string;
+        const detail = error.response.data?.detail;
+        if (Array.isArray(detail)) {
+            // FastAPI/Pydantic validation error format: [{type, loc, msg, input}]
+            errorMsg = detail.map((e: { msg?: string }) => e.msg || '').filter(Boolean).join('; ') || '请求参数错误';
+        } else if (typeof detail === 'object' && detail !== null) {
+            errorMsg = detail.msg || JSON.stringify(detail);
+        } else {
+            errorMsg = detail || error.response.data?.message || JSON.stringify(error.response.data);
+        }
         message.error(errorMsg)
     }
     return Promise.reject(error)

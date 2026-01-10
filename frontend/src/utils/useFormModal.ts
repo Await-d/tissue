@@ -55,6 +55,7 @@ export function useFormModal(params: Params) {
             onCancel,
             confirmLoading,
             initValues: values,
+            form: formInstance,
         },
         form: formInstance,
         open,
