@@ -1,0 +1,68 @@
+/* 文件管理页面 - 暗黑电影美学 */
+.file-page-wrapper {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dark-file-list {
+  background: transparent;
+}
+
+.dark-file-item {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideIn 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.dark-file-item:nth-child(1) { animation-delay: 0.05s; }
+.dark-file-item:nth-child(2) { animation-delay: 0.1s; }
+.dark-file-item:nth-child(3) { animation-delay: 0.15s; }
+.dark-file-item:nth-child(4) { animation-delay: 0.2s; }
+.dark-file-item:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dark-file-item:hover {
+  background: #1a1a1d;
+  box-shadow: 0 0 0 1px rgba(212, 168, 82, 0.1) inset;
+  transform: translateX(4px);
+}
+
+.dark-file-item:last-child {
+  border-bottom: none;
+}
+
+.file-action-btn {
+  transition: all 0.3s ease;
+}
+
+.file-action-btn:hover {
+  color: #e8c780 !important;
+  transform: scale(1.1);
+}
+
+/* Empty 状态 */
+.ant-empty-description {
+  color: #a0a0a8;
+}

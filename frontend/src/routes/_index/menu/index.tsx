@@ -7,6 +7,27 @@ import { HomeOutlined, SearchOutlined, UserOutlined, StarOutlined, HeartOutlined
 
 const { useToken } = theme
 
+// 设计系统色彩变量
+const colors = {
+    bg: {
+        base: '#0d0d0f',
+        elevated: '#141416',
+        container: '#1a1a1d',
+        spotlight: '#222226'
+    },
+    gold: {
+        primary: '#d4a852',
+        light: '#e8c780',
+        dark: '#b08d3e'
+    },
+    text: {
+        primary: '#f0f0f2',
+        secondary: '#a0a0a8',
+        tertiary: '#6a6a72'
+    },
+    border: 'rgba(255, 255, 255, 0.08)'
+}
+
 export const Route = createFileRoute('/_index/menu/')({
     component: Menu,
 })
@@ -129,15 +150,36 @@ function Menu() {
 
     // 渲染分组菜单
     function renderGroupedMenu() {
-        return menuGroups.map(group => (
-            <div key={group.title}>
-                <Divider>{group.title}</Divider>
-                <Row gutter={[16, 16]} justify="center">
-                    {group.items.map(itemKey => {
+        return menuGroups.map((group, index) => (
+            <div 
+                key={group.title}
+                style={{
+                    animation: `menuFadeIn 0.4s ease-out ${index * 0.1}s both`
+                }}
+            >
+                <Divider 
+                    style={{ 
+                        borderColor: colors.border,
+                        marginTop: index === 0 ? '0' : '24px',
+                        marginBottom: '20px'
+                    }}
+                >
+                    <span style={{ 
+                        color: colors.gold.primary,
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        letterSpacing: '0.5px',
+                        textTransform: 'uppercase'
+                    }}>
+                        {group.title}
+                    </span>
+                </Divider>
+                <Row gutter={[12, 12]} justify="center">
+                    {group.items.map((itemKey, itemIndex) => {
                         const item = getItemByKey(itemKey);
                         return item ? (
                             <Col key={item.key} span={6}>
-                                {renderMenuItem(item)}
+                                {renderMenuItem(item, index, itemIndex)}
                             </Col>
                         ) : null;
                     })}
@@ -146,20 +188,48 @@ function Menu() {
         ));
     }
 
-    function renderMenuItem(item: MenuItem) {
+    function renderMenuItem(item: MenuItem, groupIndex: number, itemIndex: number) {
+        const [isHovered, setIsHovered] = React.useState(false);
+        
         return (
-            <Link to={item.path} style={{ color: token.colorText }}>
-                <div className={'p-3 flex flex-col items-center'}
+            <Link to={item.path} style={{ textDecoration: 'none' }}>
+                <div 
+                    className={'p-3 flex flex-col items-center'}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
                     style={{
-                        borderRadius: '8px',
-                        transition: 'all 0.3s ease',
-                        border: `1px solid ${token.colorBorderSecondary}`,
-                        height: '100%'
+                        background: isHovered ? colors.bg.spotlight : colors.bg.container,
+                        borderRadius: '12px',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        border: `1px solid ${isHovered ? colors.gold.dark : colors.border}`,
+                        height: '100%',
+                        cursor: 'pointer',
+                        boxShadow: isHovered 
+                            ? `0 8px 24px rgba(212, 168, 82, 0.12), 0 0 0 1px ${colors.gold.dark}` 
+                            : '0 2px 8px rgba(0, 0, 0, 0.15)',
+                        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+                        animation: `menuItemFadeIn 0.3s ease-out ${groupIndex * 0.1 + itemIndex * 0.05}s both`
                     }}>
-                    <div className={'text-3xl'} style={{ color: token.colorPrimary }}>
+                    <div 
+                        className={'text-3xl'} 
+                        style={{ 
+                            color: isHovered ? colors.gold.light : colors.gold.primary,
+                            transition: 'all 0.3s ease',
+                            filter: isHovered ? `drop-shadow(0 0 8px ${colors.gold.primary})` : 'none',
+                            transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                        }}
+                    >
                         {item.icon}
                     </div>
-                    <div className={'mt-2 text-center'} style={{ fontSize: '14px' }}>
+                    <div 
+                        className={'mt-2 text-center'} 
+                        style={{ 
+                            fontSize: '12px',
+                            color: isHovered ? colors.text.primary : colors.text.secondary,
+                            transition: 'color 0.3s ease',
+                            fontWeight: isHovered ? 500 : 400
+                        }}
+                    >
                         {item.label}
                     </div>
                 </div>
@@ -172,8 +242,59 @@ function Menu() {
     }
 
     return (
-        <Card title="功能菜单" bordered={false}>
-            {renderGroupedMenu()}
-        </Card>
+        <>
+            <style>
+                {`
+                    @keyframes menuFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    
+                    @keyframes menuItemFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: scale(0.95);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: scale(1);
+                        }
+                    }
+                `}
+            </style>
+            <Card 
+                title={
+                    <span style={{ 
+                        color: colors.gold.primary,
+                        fontSize: '18px',
+                        fontWeight: 600
+                    }}>
+                        功能菜单
+                    </span>
+                }
+                variant="borderless"
+                style={{
+                    background: colors.bg.elevated,
+                    borderRadius: '16px'
+                }}
+                styles={{
+                    header: {
+                        borderBottom: `1px solid ${colors.border}`,
+                        background: colors.bg.base
+                    },
+                    body: {
+                        background: colors.bg.elevated
+                    }
+                }}
+            >
+                {renderGroupedMenu()}
+            </Card>
+        </>
     )
 }

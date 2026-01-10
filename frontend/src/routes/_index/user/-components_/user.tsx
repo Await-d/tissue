@@ -61,14 +61,126 @@ function UserList() {
     }
 
     return (
-        <Card title={'用户管理'} extra={(
-            <IconButton onClick={() => setOpen(true)}>
-                <PlusOutlined />
-            </IconButton>
-        )}>
-            <Table rowKey={'id'} columns={columns} {...tableProps} pagination={false} />
-            <UserModal form={form} {...modalProps} />
-        </Card>
+        <>
+            <style>{`
+                .user-list-card .ant-card {
+                    background: #1a1a1d;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                }
+
+                .user-list-card .ant-card-head {
+                    background: #222226;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                }
+
+                .user-list-card .ant-card-head-title {
+                    color: #f0f0f2;
+                    font-weight: 600;
+                }
+
+                .user-list-card .ant-card-extra {
+                    padding: 0;
+                }
+
+                .user-list-card .ant-table {
+                    background: transparent;
+                }
+
+                .user-list-card .ant-table-thead > tr > th {
+                    background: #222226;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    color: #f0f0f2;
+                    font-weight: 600;
+                    padding: 16px;
+                }
+
+                .user-list-card .ant-table-tbody > tr {
+                    background: transparent;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .user-list-card .ant-table-tbody > tr > td {
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                    color: #a0a0a8;
+                    padding: 16px;
+                }
+
+                .user-list-card .ant-table-tbody > tr:hover {
+                    background: rgba(212, 168, 82, 0.08) !important;
+                }
+
+                .user-list-card .ant-table-tbody > tr:hover > td {
+                    color: #f0f0f2;
+                    border-bottom-color: rgba(212, 168, 82, 0.15);
+                }
+
+                .user-list-card .ant-table-tbody > tr:last-child > td {
+                    border-bottom: none;
+                }
+
+                .user-list-card .icon-button {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #d4a852;
+                    color: #0d0d0f;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 2px 6px rgba(212, 168, 82, 0.3);
+                }
+
+                .user-list-card .icon-button:hover {
+                    background: #e8c780;
+                    box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4);
+                    transform: translateY(-2px);
+                }
+
+                .user-list-card .icon-button:active {
+                    transform: translateY(0);
+                }
+
+                .user-list-card .ant-table-placeholder .ant-table-cell {
+                    background: transparent;
+                    border: none;
+                }
+
+                .user-list-card .ant-empty-description {
+                    color: #6a6a72;
+                }
+            `}</style>
+            <Card 
+                title={'用户管理'} 
+                extra={(
+                    <IconButton onClick={() => setOpen(true)}>
+                        <PlusOutlined />
+                    </IconButton>
+                )}
+                className="user-list-card"
+                style={{
+                    background: '#1a1a1d',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                }}
+                styles={{
+                    header: {
+                        background: '#222226',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                        color: '#f0f0f2'
+                    },
+                    body: {
+                        padding: 0
+                    }
+                }}
+            >
+                <Table rowKey={'id'} columns={columns} {...tableProps} pagination={false} />
+                <UserModal form={form} {...modalProps} />
+            </Card>
+        </>
     )
 }
 

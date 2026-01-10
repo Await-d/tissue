@@ -1,0 +1,121 @@
+/* 任务调度页面 - 暗黑电影美学 */
+.schedule-page-wrapper {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dark-card .ant-card-head {
+  background: #141416;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-card .ant-card-body {
+  background: #141416;
+  padding: 0;
+}
+
+.dark-table {
+  background: transparent;
+}
+
+.dark-table .ant-table {
+  background: transparent;
+}
+
+.dark-table .ant-table-thead > tr > th {
+  background: #1a1a1d;
+  color: #a0a0a8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500;
+  padding: 16px;
+}
+
+.dark-table-row {
+  background: #141416;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideIn 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.dark-table-row:nth-child(1) { animation-delay: 0.05s; }
+.dark-table-row:nth-child(2) { animation-delay: 0.1s; }
+.dark-table-row:nth-child(3) { animation-delay: 0.15s; }
+.dark-table-row:nth-child(4) { animation-delay: 0.2s; }
+.dark-table-row:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dark-table-row:hover {
+  background: #1a1a1d !important;
+  box-shadow: 0 0 0 1px rgba(212, 168, 82, 0.1) inset;
+}
+
+.dark-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #f0f0f2;
+  padding: 16px;
+}
+
+.dark-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* 状态指示点 */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.running {
+  background: #d4a852;
+  box-shadow: 0 0 8px rgba(212, 168, 82, 0.6);
+  animation: pulse 2s infinite;
+}
+
+.status-dot.waiting {
+  background: #6a6a72;
+  opacity: 0.6;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+}
+
+/* 执行按钮 */
+.execute-btn:hover {
+  background: linear-gradient(135deg, #e8c780 0%, #d4a852 100%) !important;
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.35) !important;
+  transform: translateY(-2px);
+}
+
+.execute-btn:active {
+  transform: translateY(0);
+}

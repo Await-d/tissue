@@ -1,0 +1,106 @@
+/* 历史记录页面 - 暗黑电影美学 */
+.history-page-wrapper {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dark-card .ant-card-head {
+  background: #141416;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-card .ant-card-body {
+  background: #141416;
+  padding: 0;
+}
+
+.dark-table {
+  background: transparent;
+}
+
+.dark-table .ant-table {
+  background: transparent;
+}
+
+.dark-table .ant-table-thead > tr > th {
+  background: #1a1a1d;
+  color: #a0a0a8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500;
+  padding: 16px;
+}
+
+.dark-table-row {
+  background: #141416;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark-table-row:hover {
+  background: #1a1a1d !important;
+  box-shadow: 0 0 0 1px rgba(212, 168, 82, 0.1) inset;
+}
+
+.dark-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #f0f0f2;
+  padding: 16px;
+}
+
+.dark-table .ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* 输入框样式 */
+.dark-input:hover {
+  border-color: rgba(212, 168, 82, 0.4);
+}
+
+.dark-input:focus {
+  border-color: #d4a852;
+  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1);
+}
+
+.dark-input::placeholder {
+  color: #6a6a72;
+}
+
+/* 分页样式 */
+.dark-table .ant-pagination {
+  padding: 16px;
+}
+
+.dark-table .ant-pagination-item {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-table .ant-pagination-item a {
+  color: #a0a0a8;
+}
+
+.dark-table .ant-pagination-item-active {
+  background: rgba(212, 168, 82, 0.1);
+  border-color: #d4a852;
+}
+
+.dark-table .ant-pagination-item-active a {
+  color: #d4a852;
+}
+
+.dark-table .ant-pagination-item:hover {
+  border-color: rgba(212, 168, 82, 0.4);
+}
+
+.dark-table .ant-pagination-item:hover a {
+  color: #e8c780;
+}
