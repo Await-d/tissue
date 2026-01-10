@@ -1,0 +1,200 @@
+/* 订阅编辑弹窗 - 暗黑电影美学 */
+.subscribe-modify-modal .ant-modal-content {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+}
+
+.subscribe-modify-modal .ant-modal-header {
+  background: #1a1a1d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.subscribe-modify-modal .ant-modal-title {
+  color: #f0f0f2;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.subscribe-modify-modal .ant-modal-close {
+  color: #a0a0a8;
+  transition: color 0.3s ease;
+}
+
+.subscribe-modify-modal .ant-modal-close:hover {
+  color: #d4a852;
+}
+
+.subscribe-modify-modal .ant-modal-body {
+  background: #1a1a1d;
+}
+
+.subscribe-modify-modal .ant-modal-footer {
+  background: #1a1a1d;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 表单样式 */
+.subscribe-modify-form .ant-form-item-label > label {
+  color: #f0f0f2;
+  font-size: 14px;
+}
+
+.subscribe-modify-form .ant-form-item-label > label::after {
+  color: #a0a0a8;
+}
+
+/* 输入框 */
+.subscribe-input {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f0f0f2;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.subscribe-input:hover {
+  border-color: #d4a852;
+  background: #1a1a1d;
+}
+
+.subscribe-input:focus {
+  border-color: #d4a852;
+  background: #1a1a1d;
+  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
+}
+
+.subscribe-input::placeholder {
+  color: #6a6a72;
+}
+
+.subscribe-input:disabled {
+  background: #0d0d0f;
+  color: #6a6a72;
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+/* 日期选择器 */
+.subscribe-modify-form .ant-picker {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.subscribe-modify-form .ant-picker:hover {
+  border-color: #d4a852;
+  background: #1a1a1d;
+}
+
+.subscribe-modify-form .ant-picker-focused {
+  border-color: #d4a852;
+  background: #1a1a1d;
+  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
+}
+
+.subscribe-modify-form .ant-picker-input > input {
+  color: #f0f0f2;
+}
+
+.subscribe-modify-form .ant-picker-suffix {
+  color: #a0a0a8;
+}
+
+/* 复选框 */
+.subscribe-checkbox .ant-checkbox-inner {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.subscribe-checkbox .ant-checkbox-inner:hover {
+  border-color: #d4a852;
+}
+
+.subscribe-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+  background: #d4a852;
+  border-color: #d4a852;
+}
+
+.subscribe-checkbox .ant-checkbox-checked::after {
+  border-color: #d4a852;
+}
+
+.subscribe-checkbox + span {
+  color: #f0f0f2;
+}
+
+/* 搜索按钮 */
+.subscribe-search-action-btn {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #d4a852;
+  transition: all 0.3s ease;
+}
+
+.subscribe-search-action-btn:hover {
+  background: #d4a852;
+  border-color: #d4a852;
+  color: #0d0d0f;
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3);
+}
+
+/* 底部按钮 */
+.subscribe-delete-btn {
+  background: transparent;
+  border: 1px solid rgba(212, 82, 82, 0.3);
+  color: #e88080;
+  transition: all 0.3s ease;
+}
+
+.subscribe-delete-btn:hover {
+  background: rgba(212, 82, 82, 0.15);
+  border-color: #e88080;
+  color: #e88080;
+}
+
+.subscribe-cancel-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #a0a0a8;
+  transition: all 0.3s ease;
+}
+
+.subscribe-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f0f0f2;
+}
+
+.subscribe-primary-btn {
+  background: #d4a852;
+  border: 1px solid #d4a852;
+  color: #0d0d0f;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.subscribe-primary-btn:hover {
+  background: #e8c780;
+  border-color: #e8c780;
+  color: #0d0d0f;
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4);
+}
+
+.subscribe-primary-btn:disabled {
+  background: rgba(212, 168, 82, 0.3);
+  border-color: rgba(212, 168, 82, 0.3);
+  color: #6a6a72;
+}
+
+/* Tooltip */
+.subscribe-modify-form .ant-form-item-tooltip {
+  color: #a0a0a8;
+}
+
+.subscribe-modify-form .ant-form-item-tooltip:hover {
+  color: #d4a852;
+}

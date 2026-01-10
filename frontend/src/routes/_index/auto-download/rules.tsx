@@ -10,7 +10,7 @@ import {
   InputNumber,
   Select,
   Switch,
-  message,
+  App,
   Popconfirm,
   Card,
   Row,
@@ -35,11 +35,13 @@ import {
   type AutoDownloadRule,
   type AutoDownloadStatistics
 } from '@/apis/autoDownload'
+import './rules-style.css'
 
 const { Option } = Select
 const { useBreakpoint } = Grid
 
 function AutoDownloadRules() {
+  const { message } = App.useApp()
   const [rules, setRules] = useState<AutoDownloadRule[]>([])
   const [statistics, setStatistics] = useState<AutoDownloadStatistics | null>(null)
   const [loading, setLoading] = useState(false)
@@ -120,7 +122,13 @@ function AutoDownloadRules() {
     } catch (error: any) {
       console.error('创建规则失败:', error)
       console.error('错误详情:', error?.response?.data)
-      const errorMessage = error?.response?.data?.detail || error?.message || '未知错误'
+      const detail = error?.response?.data?.detail;
+      let errorMessage: string;
+      if (Array.isArray(detail)) {
+        errorMessage = detail.map((e: { msg?: string }) => e.msg || '').filter(Boolean).join('; ') || '参数错误';
+      } else {
+        errorMessage = detail || error?.message || '未知错误';
+      }
       message.error(`${editingRule ? '规则更新失败' : '规则创建失败'}: ${errorMessage}`)
     }
   }
@@ -176,20 +184,21 @@ function AutoDownloadRules() {
       title: '规则名称',
       dataIndex: 'name',
       key: 'name',
-      width: 150
+      width: 150,
+      render: (value) => <span style={{ color: '#f0f0f2', fontWeight: 500 }}>{value}</span>
     },
     {
       title: '筛选条件',
       key: 'conditions',
       render: (_, record) => {
-        // 确保time_range_type是大写的
         const timeRangeType = record.time_range_type?.toUpperCase();
         return (
           <Space direction="vertical" size="small">
-            <div>评分 ≥ {record.min_rating}</div>
-            <div>评论 ≥ {record.min_comments}</div>
-            <div>时间: {record.time_range_value} {timeRangeType === 'DAY' ? '天' : timeRangeType === 'WEEK' ? '周' : '月'}</div>
-            <div style={{ fontSize: '10px', color: '#999' }}>枚举值: {record.time_range_type}</div>
+            <div style={{ color: '#a0a0a8', fontSize: 13 }}>评分 ≥ {record.min_rating}</div>
+            <div style={{ color: '#a0a0a8', fontSize: 13 }}>评论 ≥ {record.min_comments}</div>
+            <div style={{ color: '#a0a0a8', fontSize: 13 }}>
+              时间: {record.time_range_value} {timeRangeType === 'DAY' ? '天' : timeRangeType === 'WEEK' ? '周' : '月'}
+            </div>
           </Space>
         );
       },
@@ -200,9 +209,33 @@ function AutoDownloadRules() {
       key: 'quality',
       render: (_, record) => (
         <Space>
-          {record.is_hd && <Tag color="blue">高清</Tag>}
-          {record.is_zh && <Tag color="green">中文</Tag>}
-          {record.is_uncensored && <Tag color="red">无码</Tag>}
+          {record.is_hd && (
+            <Tag style={{
+              background: 'rgba(212, 168, 82, 0.12)',
+              border: '1px solid rgba(212, 168, 82, 0.25)',
+              color: '#e8c780'
+            }}>
+              高清
+            </Tag>
+          )}
+          {record.is_zh && (
+            <Tag style={{
+              background: 'rgba(212, 168, 82, 0.12)',
+              border: '1px solid rgba(212, 168, 82, 0.25)',
+              color: '#e8c780'
+            }}>
+              中文
+            </Tag>
+          )}
+          {record.is_uncensored && (
+            <Tag style={{
+              background: 'rgba(212, 168, 82, 0.12)',
+              border: '1px solid rgba(212, 168, 82, 0.25)',
+              color: '#e8c780'
+            }}>
+              无码
+            </Tag>
+          )}
         </Space>
       ),
       width: 120
@@ -212,7 +245,17 @@ function AutoDownloadRules() {
       dataIndex: 'is_enabled',
       key: 'is_enabled',
       render: (enabled: boolean) => (
-        <Tag color={enabled ? 'green' : 'default'}>
+        <Tag 
+          style={{
+            background: enabled ? 'rgba(212, 168, 82, 0.1)' : 'rgba(160, 160, 168, 0.1)',
+            border: enabled ? '1px solid rgba(212, 168, 82, 0.3)' : '1px solid rgba(160, 160, 168, 0.3)',
+            color: enabled ? '#d4a852' : '#a0a0a8',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
+        >
+          <span className={`status-dot ${enabled ? 'active' : 'inactive'}`}></span>
           {enabled ? '启用' : '禁用'}
         </Tag>
       ),
@@ -223,8 +266,8 @@ function AutoDownloadRules() {
       key: 'stats',
       render: (_, record) => (
         <Space direction="vertical" size="small">
-          <div>订阅: {record.subscription_count || 0}</div>
-          <div>成功: {record.success_count || 0}</div>
+          <div style={{ color: '#a0a0a8', fontSize: 13 }}>订阅: {record.subscription_count || 0}</div>
+          <div style={{ color: '#a0a0a8', fontSize: 13 }}>成功: {record.success_count || 0}</div>
         </Space>
       ),
       width: 80
@@ -233,7 +276,11 @@ function AutoDownloadRules() {
       title: '创建时间',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (time: string) => new Date(time).toLocaleDateString(),
+      render: (time: string) => (
+        <span style={{ color: '#a0a0a8', fontSize: 13 }}>
+          {new Date(time).toLocaleDateString()}
+        </span>
+      ),
       width: 100
     },
     {
@@ -245,6 +292,8 @@ function AutoDownloadRules() {
             type="text"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            style={{ color: '#d4a852' }}
+            className="action-btn"
           >
             编辑
           </Button>
@@ -252,12 +301,16 @@ function AutoDownloadRules() {
             type="text"
             icon={record.is_enabled ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
             onClick={() => handleToggle(record.id, !record.is_enabled)}
+            style={{ color: '#d4a852' }}
+            className="action-btn"
           >
             {record.is_enabled ? '禁用' : '启用'}
           </Button>
           <Button
             type="text"
             onClick={() => handleTrigger([record.id])}
+            style={{ color: '#d4a852' }}
+            className="action-btn"
           >
             执行
           </Button>
@@ -269,6 +322,7 @@ function AutoDownloadRules() {
               type="text"
               danger
               icon={<DeleteOutlined />}
+              style={{ color: '#ff4d4f' }}
             >
               删除
             </Button>
@@ -280,32 +334,45 @@ function AutoDownloadRules() {
   ]
 
   return (
-    <div>
+    <div className="rules-container">
       {/* 统计卡片 */}
       {statistics && (
-        <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Row gutter={16} style={{ marginBottom: 16 }} className="stats-row">
           <Col xs={12} sm={6}>
-            <Card>
-              <Statistic title="总规则数" value={statistics.total_rules} />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card>
-              <Statistic title="活跃规则" value={statistics.active_rules} />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card>
-              <Statistic title="总订阅数" value={statistics.total_subscriptions} />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card>
+            <Card className="stat-card">
               <Statistic 
-                title="成功率" 
+                title={<span style={{ color: '#a0a0a8' }}>总规则数</span>}
+                value={statistics.total_rules}
+                valueStyle={{ color: '#d4a852' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card className="stat-card">
+              <Statistic 
+                title={<span style={{ color: '#a0a0a8' }}>活跃规则</span>}
+                value={statistics.active_rules}
+                valueStyle={{ color: '#d4a852' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card className="stat-card">
+              <Statistic 
+                title={<span style={{ color: '#a0a0a8' }}>总订阅数</span>}
+                value={statistics.total_subscriptions}
+                valueStyle={{ color: '#d4a852' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card className="stat-card">
+              <Statistic 
+                title={<span style={{ color: '#a0a0a8' }}>成功率</span>}
                 value={statistics.success_rate} 
                 suffix="%" 
                 precision={1}
+                valueStyle={{ color: '#d4a852' }}
               />
             </Card>
           </Col>
@@ -323,16 +390,21 @@ function AutoDownloadRules() {
               form.resetFields()
               setModalVisible(true)
             }}
+            className="primary-btn"
           >
             创建规则
           </Button>
           <Button
             onClick={() => handleTrigger()}
             loading={loading}
+            className="secondary-btn"
           >
             执行所有规则
           </Button>
-          <Button onClick={() => loadRules()}>
+          <Button 
+            onClick={() => loadRules()}
+            className="secondary-btn"
+          >
             刷新
           </Button>
         </Space>
@@ -346,6 +418,8 @@ function AutoDownloadRules() {
           dataSource={rules}
           rowKey="id"
           loading={loading}
+          className="dark-table rules-table"
+          rowClassName="dark-table-row"
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
@@ -355,7 +429,8 @@ function AutoDownloadRules() {
             showTotal: (total) => `共 ${total} 条`,
             onChange: (page, pageSize) => {
               loadRules(page, pageSize)
-            }
+            },
+            className: 'dark-pagination'
           }}
         />
       ) : (
@@ -363,14 +438,22 @@ function AutoDownloadRules() {
         <List
           loading={loading}
           dataSource={rules}
-          renderItem={(rule) => (
-            <List.Item style={{ padding: 0, marginBottom: 16 }}>
+          className="rules-mobile-list"
+          renderItem={(rule, index) => (
+            <List.Item style={{ padding: 0, marginBottom: 16 }} className="mobile-rule-item">
               <Card
                 size="small"
+                className="mobile-rule-card"
                 title={
                   <Space>
-                    <span>{rule.name}</span>
-                    <Tag color={rule.is_enabled ? 'green' : 'default'}>
+                    <span style={{ color: '#f0f0f2' }}>{rule.name}</span>
+                    <Tag 
+                      style={{
+                        background: rule.is_enabled ? 'rgba(212, 168, 82, 0.1)' : 'rgba(160, 160, 168, 0.1)',
+                        border: rule.is_enabled ? '1px solid rgba(212, 168, 82, 0.3)' : '1px solid rgba(160, 160, 168, 0.3)',
+                        color: rule.is_enabled ? '#d4a852' : '#a0a0a8'
+                      }}
+                    >
                       {rule.is_enabled ? '启用' : '禁用'}
                     </Tag>
                   </Space>
@@ -382,12 +465,14 @@ function AutoDownloadRules() {
                       size="small"
                       icon={<EditOutlined />}
                       onClick={() => handleEdit(rule)}
+                      style={{ color: '#d4a852' }}
                     />
                     <Button
                       type="text"
                       size="small"
                       icon={rule.is_enabled ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
                       onClick={() => handleToggle(rule.id, !rule.is_enabled)}
+                      style={{ color: '#d4a852' }}
                     />
                   </Space>
                 }
@@ -395,30 +480,54 @@ function AutoDownloadRules() {
               >
                 <Row gutter={[16, 8]}>
                   <Col span={24}>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
+                    <div style={{ fontSize: '12px', color: '#a0a0a8' }}>
                       <div>评分 ≥ {rule.min_rating} | 评论 ≥ {rule.min_comments}</div>
                       <div>时间: {rule.time_range_value} {rule.time_range_type === 'DAY' ? '天' : rule.time_range_type === 'WEEK' ? '周' : '月'}</div>
                     </div>
                   </Col>
                   <Col span={24}>
                     <Space size="small">
-                      {rule.is_hd && <Tag color="blue">高清</Tag>}
-                      {rule.is_zh && <Tag color="green">中文</Tag>}
-                      {rule.is_uncensored && <Tag color="red">无码</Tag>}
+                      {rule.is_hd && (
+                        <Tag style={{
+                          background: 'rgba(212, 168, 82, 0.12)',
+                          border: '1px solid rgba(212, 168, 82, 0.25)',
+                          color: '#e8c780'
+                        }}>
+                          高清
+                        </Tag>
+                      )}
+                      {rule.is_zh && (
+                        <Tag style={{
+                          background: 'rgba(212, 168, 82, 0.12)',
+                          border: '1px solid rgba(212, 168, 82, 0.25)',
+                          color: '#e8c780'
+                        }}>
+                          中文
+                        </Tag>
+                      )}
+                      {rule.is_uncensored && (
+                        <Tag style={{
+                          background: 'rgba(212, 168, 82, 0.12)',
+                          border: '1px solid rgba(212, 168, 82, 0.25)',
+                          color: '#e8c780'
+                        }}>
+                          无码
+                        </Tag>
+                      )}
                     </Space>
                   </Col>
                   <Col span={12}>
-                    <div style={{ fontSize: '12px', color: '#999' }}>
+                    <div style={{ fontSize: '12px', color: '#6a6a72' }}>
                       订阅: {rule.subscription_count || 0} | 成功: {rule.success_count || 0}
                     </div>
                   </Col>
                   <Col span={12}>
-                    <div style={{ fontSize: '12px', color: '#999', textAlign: 'right' }}>
+                    <div style={{ fontSize: '12px', color: '#6a6a72', textAlign: 'right' }}>
                       {new Date(rule.created_at).toLocaleDateString()}
                     </div>
                   </Col>
                 </Row>
-                <Divider style={{ margin: '8px 0' }} />
+                <Divider style={{ margin: '8px 0', borderColor: 'rgba(255, 255, 255, 0.05)' }} />
                 <Row gutter={8}>
                   <Col span={8}>
                     <Button
@@ -426,6 +535,7 @@ function AutoDownloadRules() {
                       size="small"
                       block
                       onClick={() => handleTrigger([rule.id])}
+                      style={{ color: '#d4a852' }}
                     >
                       执行
                     </Button>
@@ -436,6 +546,7 @@ function AutoDownloadRules() {
                       size="small"
                       block
                       onClick={() => handleToggle(rule.id, !rule.is_enabled)}
+                      style={{ color: '#d4a852' }}
                     >
                       {rule.is_enabled ? '禁用' : '启用'}
                     </Button>
@@ -450,6 +561,7 @@ function AutoDownloadRules() {
                         size="small"
                         danger
                         block
+                        style={{ color: '#ff4d4f' }}
                       >
                         删除
                       </Button>
@@ -468,15 +580,17 @@ function AutoDownloadRules() {
             showTotal: (total) => `共 ${total} 条`,
             onChange: (page, pageSize) => {
               loadRules(page, pageSize)
-            }
+            },
+            className: 'dark-pagination'
           }}
         />
       )}
 
       {/* 创建/编辑对话框 */}
       <Modal
-        title={editingRule ? '编辑规则' : '创建规则'}
+        title={<span style={{ color: '#f0f0f2' }}>{editingRule ? '编辑规则' : '创建规则'}</span>}
         open={modalVisible}
+        forceRender
         onCancel={() => {
           setModalVisible(false)
           setEditingRule(null)
@@ -484,6 +598,7 @@ function AutoDownloadRules() {
         }}
         onOk={() => form.submit()}
         width={screens.md ? 600 : '90%'}
+        className="dark-modal"
       >
         <Form
           form={form}
@@ -502,17 +617,17 @@ function AutoDownloadRules() {
         >
           <Form.Item
             name="name"
-            label="规则名称"
+            label={<span style={{ color: '#a0a0a8' }}>规则名称</span>}
             rules={[{ required: true, message: '请输入规则名称' }]}
           >
-            <Input placeholder="输入规则名称" />
+            <Input placeholder="输入规则名称" className="dark-input" />
           </Form.Item>
 
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="min_rating"
-                label="最低评分"
+                label={<span style={{ color: '#a0a0a8' }}>最低评分</span>}
                 rules={[{ required: true, message: '请输入最低评分' }]}
               >
                 <InputNumber
@@ -521,19 +636,21 @@ function AutoDownloadRules() {
                   step={0.1}
                   placeholder="0.0"
                   style={{ width: '100%' }}
+                  className="dark-input-number"
                 />
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="min_comments"
-                label="最低评论数"
+                label={<span style={{ color: '#a0a0a8' }}>最低评论数</span>}
                 rules={[{ required: true, message: '请输入最低评论数' }]}
               >
                 <InputNumber
                   min={0}
                   placeholder="0"
                   style={{ width: '100%' }}
+                  className="dark-input-number"
                 />
               </Form.Item>
             </Col>
@@ -543,26 +660,27 @@ function AutoDownloadRules() {
             <Col xs={24} sm={12}>
               <Form.Item
                 name="time_range_type"
-                label="时间范围类型"
+                label={<span style={{ color: '#a0a0a8' }}>时间范围类型</span>}
                 rules={[{ required: true, message: '请选择时间范围类型' }]}
               >
-                <Select>
-                  <Option value="DAY">天</Option>
-                  <Option value="WEEK">周</Option>
-                  <Option value="MONTH">月</Option>
+                <Select className="dark-select">
+                  <Select.Option value="DAY">天</Select.Option>
+                  <Select.Option value="WEEK">周</Select.Option>
+                  <Select.Option value="MONTH">月</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
                 name="time_range_value"
-                label="时间范围值"
+                label={<span style={{ color: '#a0a0a8' }}>时间范围值</span>}
                 rules={[{ required: true, message: '请输入时间范围值' }]}
               >
                 <InputNumber
                   min={1}
                   placeholder="1"
                   style={{ width: '100%' }}
+                  className="dark-input-number"
                 />
               </Form.Item>
             </Col>
@@ -570,24 +688,52 @@ function AutoDownloadRules() {
 
           <Row gutter={16}>
             <Col xs={24} sm={8}>
-              <Form.Item name="is_hd" valuePropName="checked" label="质量要求">
-                <Switch checkedChildren="高清" unCheckedChildren="不限" />
+              <Form.Item 
+                name="is_hd" 
+                valuePropName="checked" 
+                label={<span style={{ color: '#a0a0a8' }}>质量要求</span>}
+              >
+                <Switch 
+                  checkedChildren="高清" 
+                  unCheckedChildren="不限"
+                  className="dark-switch"
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
-              <Form.Item name="is_zh" valuePropName="checked" label=" ">
-                <Switch checkedChildren="中文" unCheckedChildren="不限" />
+              <Form.Item 
+                name="is_zh" 
+                valuePropName="checked" 
+                label={<span style={{ color: '#a0a0a8' }}> </span>}
+              >
+                <Switch 
+                  checkedChildren="中文" 
+                  unCheckedChildren="不限"
+                  className="dark-switch"
+                />
               </Form.Item>
             </Col>
             <Col xs={24} sm={8}>
-              <Form.Item name="is_uncensored" valuePropName="checked" label=" ">
-                <Switch checkedChildren="无码" unCheckedChildren="不限" />
+              <Form.Item 
+                name="is_uncensored" 
+                valuePropName="checked" 
+                label={<span style={{ color: '#a0a0a8' }}> </span>}
+              >
+                <Switch 
+                  checkedChildren="无码" 
+                  unCheckedChildren="不限"
+                  className="dark-switch"
+                />
               </Form.Item>
             </Col>
           </Row>
 
           <Form.Item name="is_enabled" valuePropName="checked">
-            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
+            <Switch 
+              checkedChildren="启用" 
+              unCheckedChildren="禁用"
+              className="dark-switch"
+            />
           </Form.Item>
         </Form>
       </Modal>

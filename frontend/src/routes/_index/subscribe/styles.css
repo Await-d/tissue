@@ -1,0 +1,200 @@
+/* 订阅页面 - 暗黑电影美学 */
+.subscribe-container {
+  min-height: 100vh;
+}
+
+/* 加载状态卡片 */
+.subscribe-loading-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* 搜索栏 */
+.subscribe-search-bar {
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.subscribe-search-bar .ant-input {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f0f0f2;
+  transition: all 0.3s ease;
+}
+
+.subscribe-search-bar .ant-input:hover {
+  border-color: #d4a852;
+  background: #222226;
+}
+
+.subscribe-search-bar .ant-input:focus {
+  border-color: #d4a852;
+  background: #222226;
+  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
+}
+
+.subscribe-search-bar .ant-input::placeholder {
+  color: #6a6a72;
+}
+
+.subscribe-search-btn {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #d4a852;
+  transition: all 0.3s ease;
+}
+
+.subscribe-search-btn:hover {
+  background: #d4a852;
+  border-color: #d4a852;
+  color: #0d0d0f;
+}
+
+/* 订阅卡片 */
+.subscribe-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.subscribe-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px #d4a852;
+  border-color: #d4a852;
+}
+
+.subscribe-card .ant-card-body {
+  background: #1a1a1d;
+  padding: 12px;
+}
+
+.subscribe-card .ant-card-meta-title {
+  color: #f0f0f2;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.subscribe-card .ant-card-meta-description {
+  color: #a0a0a8;
+}
+
+.subscribe-card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #f0f0f2;
+  transition: color 0.3s ease;
+}
+
+.subscribe-card:hover .subscribe-card-title {
+  color: #e8c780;
+}
+
+/* 标签 */
+.subscribe-tag {
+  background: rgba(212, 168, 82, 0.12);
+  border: 1px solid rgba(212, 168, 82, 0.3);
+  color: #e8c780;
+  border-radius: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.subscribe-tag:hover {
+  background: rgba(212, 168, 82, 0.2);
+  border-color: #d4a852;
+}
+
+.subscribe-tag-date {
+  background: rgba(160, 160, 168, 0.12);
+  border-color: rgba(160, 160, 168, 0.3);
+  color: #a0a0a8;
+}
+
+.subscribe-tag-hd {
+  background: rgba(212, 168, 82, 0.12);
+  border-color: rgba(212, 168, 82, 0.3);
+  color: #e8c780;
+}
+
+.subscribe-tag-zh {
+  background: rgba(82, 196, 212, 0.12);
+  border-color: rgba(82, 196, 212, 0.3);
+  color: #80d9e8;
+}
+
+.subscribe-tag-uncensored {
+  background: rgba(212, 82, 82, 0.12);
+  border-color: rgba(212, 82, 82, 0.3);
+  color: #e88080;
+}
+
+/* 搜索图标 */
+.subscribe-search-icon {
+  padding: 0 8px;
+  color: #a0a0a8;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+}
+
+.subscribe-search-icon:hover {
+  color: #d4a852;
+  background: rgba(212, 168, 82, 0.12);
+}
+
+/* 空状态卡片 */
+.subscribe-empty-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.subscribe-empty {
+  color: #6a6a72;
+  padding: 40px 0;
+}
+
+.subscribe-empty .ant-empty-description {
+  color: #6a6a72;
+}
+
+/* 悬浮按钮 */
+.subscribe-float-btn {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.subscribe-float-btn:hover {
+  background: #d4a852;
+  border-color: #d4a852;
+  box-shadow: 0 4px 16px rgba(212, 168, 82, 0.3);
+}
+
+.subscribe-float-btn .ant-float-btn-icon {
+  color: #d4a852;
+  transition: color 0.3s ease;
+}
+
+.subscribe-float-btn:hover .ant-float-btn-icon {
+  color: #0d0d0f;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .subscribe-search-bar {
+    margin-bottom: 12px;
+  }
+  
+  .subscribe-card {
+    margin-bottom: 12px;
+  }
+}

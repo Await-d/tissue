@@ -4,6 +4,7 @@ import { SettingOutlined, UnorderedListOutlined, BarChartOutlined } from '@ant-d
 import { createFileRoute } from '@tanstack/react-router'
 import AutoDownloadRules from './rules'
 import AutoDownloadSubscriptions from './subscriptions'
+import './style.css'
 
 function AutoDownload() {
   const [activeTab, setActiveTab] = useState('rules')
@@ -12,7 +13,7 @@ function AutoDownload() {
     {
       key: 'rules',
       label: (
-        <span>
+        <span className="tab-label">
           <SettingOutlined />
           规则管理
         </span>
@@ -22,7 +23,7 @@ function AutoDownload() {
     {
       key: 'subscriptions',
       label: (
-        <span>
+        <span className="tab-label">
           <UnorderedListOutlined />
           订阅记录
         </span>
@@ -32,14 +33,33 @@ function AutoDownload() {
   ]
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <div style={{ marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
-            <BarChartOutlined style={{ marginRight: '8px' }} />
+    <div className="auto-download-wrapper animate-fade-in" style={{ padding: '24px' }}>
+      <Card
+        className="dark-card auto-download-card"
+        style={{
+          background: '#141416',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 8
+        }}
+      >
+        <div className="page-header" style={{ marginBottom: '24px' }}>
+          <h2 style={{ 
+            margin: 0, 
+            fontSize: '20px', 
+            fontWeight: 600,
+            color: '#f0f0f2',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10
+          }}>
+            <BarChartOutlined style={{ color: '#d4a852' }} />
             智能自动下载
           </h2>
-          <p style={{ margin: '8px 0 0 0', color: '#666' }}>
+          <p style={{ 
+            margin: '8px 0 0 0', 
+            color: '#a0a0a8',
+            fontSize: 14
+          }}>
             根据评分、评论数等条件自动筛选并订阅符合要求的作品
           </p>
         </div>
@@ -49,6 +69,7 @@ function AutoDownload() {
           onChange={setActiveTab}
           items={tabItems}
           size="large"
+          className="dark-tabs"
         />
       </Card>
     </div>

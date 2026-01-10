@@ -1,7 +1,7 @@
-import { Card, Collapse, Empty, Input, List, message, Modal, Space, Tag, theme, Tooltip, Progress, Switch, Row, Col, Select, DatePicker, Divider, Button, Badge, Statistic } from "antd";
+import { Card, Collapse, Empty, Input, List, App, Modal, Space, Tag, theme, Tooltip, Progress, Switch, Row, Col, Select, DatePicker, Divider, Button, Badge, Statistic } from "antd";
 import * as api from "../../../apis/download";
 import { useDebounce, useRequest } from "ahooks";
-import { FileDoneOutlined, FolderViewOutlined, UserOutlined, FilterOutlined, ReloadOutlined, DeleteOutlined, PauseOutlined, PlayCircleOutlined } from "@ant-design/icons";
+import { FileDoneOutlined, FolderViewOutlined, UserOutlined, FilterOutlined, ReloadOutlined, DeleteOutlined, PauseOutlined, PlayCircleOutlined, SearchOutlined } from "@ant-design/icons";
 import React, { useMemo, useState } from "react";
 import IconButton from "../../../components/IconButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_index/download/')({
 })
 
 function Download() {
-
+    const { message, modal } = App.useApp()
     const { token } = useToken()
     const navigate = useNavigate()
     const [selected, setSelected] = useState<string | undefined>()
@@ -136,8 +136,19 @@ function Download() {
         {
             key: torrent.hash,
             label: (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                    <span>{torrent.name}</span>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                }}>
+                    <span style={{
+                        color: '#f0f0f2',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                    }}>
+                        {torrent.name}
+                    </span>
                     <Space>
                         {(() => {
                             const totalFiles = torrent.files.length;
@@ -147,14 +158,37 @@ function Download() {
                             
                             return (
                                 <>
-                                    <Tag color={completedFiles === totalFiles ? 'success' : downloadingFiles > 0 ? 'processing' : 'default'}>
+                                    <Tag
+                                        style={{
+                                            background: completedFiles === totalFiles
+                                                ? 'rgba(82, 196, 26, 0.2)'
+                                                : downloadingFiles > 0
+                                                ? 'rgba(212, 168, 82, 0.2)'
+                                                : 'rgba(255, 255, 255, 0.08)',
+                                            borderColor: completedFiles === totalFiles
+                                                ? '#52c41a'
+                                                : downloadingFiles > 0
+                                                ? '#d4a852'
+                                                : 'rgba(255, 255, 255, 0.08)',
+                                            color: completedFiles === totalFiles
+                                                ? '#52c41a'
+                                                : downloadingFiles > 0
+                                                ? '#e8c780'
+                                                : '#a0a0a8',
+                                            fontWeight: 500,
+                                        }}
+                                    >
                                         {completedFiles}/{totalFiles} 文件
                                     </Tag>
                                     <Progress 
                                         percent={Math.round(avgProgress * 100)} 
                                         size="small" 
                                         style={{ width: 80 }}
-                                        strokeColor={completedFiles === totalFiles ? '#52c41a' : '#1890ff'}
+                                        strokeColor={completedFiles === totalFiles ? '#52c41a' : {
+                                            '0%': '#d4a852',
+                                            '100%': '#e8c780',
+                                        }}
+                                        trailColor="rgba(255, 255, 255, 0.08)"
                                     />
                                 </>
                             );
@@ -163,10 +197,33 @@ function Download() {
                 </div>
             ),
             children: (
-                <List itemLayout="horizontal"
+                <List
+                    itemLayout="horizontal"
                     dataSource={torrent.files}
+                    style={{
+                        background: '#0d0d0f',
+                        borderRadius: '8px',
+                        padding: '12px',
+                    }}
                     renderItem={(item: any, index) => (
-                        <List.Item actions={[
+                        <List.Item
+                            style={{
+                                background: '#141416',
+                                borderRadius: '8px',
+                                padding: '12px 16px',
+                                marginBottom: '8px',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                transition: 'all 0.3s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = '#d4a852';
+                                e.currentTarget.style.background = '#1a1a1d';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                e.currentTarget.style.background = '#141416';
+                            }}
+                            actions={[
                             <Tooltip title={'整理'}>
                                 <IconButton onClick={() => {
                                     setSelected(item.path)
@@ -179,31 +236,79 @@ function Download() {
                                 title={(
                                     <span>
                                         {item.num ? (
-                                            <a onClick={() => handleVideoClick(item.num)}>
+                                            <a
+                                                onClick={() => handleVideoClick(item.num)}
+                                                style={{
+                                                    color: '#d4a852',
+                                                    fontWeight: 500,
+                                                    transition: 'color 0.3s ease',
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.color = '#e8c780';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.color = '#d4a852';
+                                                }}
+                                            >
                                                 {item.name}
                                             </a>
                                         ) : (
-                                            item.name
+                                            <span style={{ color: '#f0f0f2', fontWeight: 500 }}>
+                                                {item.name}
+                                            </span>
                                         )}
-                                        <Tag style={{ marginLeft: 5 }} color='success'>{item.size}</Tag>
+                                        <Tag
+                                            style={{
+                                                marginLeft: 5,
+                                                background: 'rgba(82, 196, 26, 0.2)',
+                                                borderColor: '#52c41a',
+                                                color: '#52c41a',
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            {item.size}
+                                        </Tag>
                                         {item.progress < 1 && (
                                             <Progress
                                                 percent={Math.round(item.progress * 100)}
                                                 size="small"
                                                 style={{ width: 100, marginLeft: 10, display: 'inline-block' }}
+                                                strokeColor={{
+                                                    '0%': '#d4a852',
+                                                    '100%': '#e8c780',
+                                                }}
+                                                trailColor="rgba(255, 255, 255, 0.08)"
                                             />
                                         )}
                                     </span>
                                 )}
                                 description={(
                                     <div>
-                                        <div>{item.path}</div>
+                                        <div style={{ color: '#6a6a72', fontSize: '13px', marginTop: '4px' }}>
+                                            {item.path}
+                                        </div>
                                         {item.actors && item.actors.length > 0 && (
-                                            <div style={{ marginTop: 5 }}>
-                                                <UserOutlined style={{ marginRight: 5 }} />
+                                            <div style={{ marginTop: 8 }}>
+                                                <UserOutlined style={{ marginRight: 6, color: '#a0a0a8' }} />
                                                 {item.actors.map((actor: string, idx: number) => (
                                                     <React.Fragment key={actor}>
-                                                        <a onClick={() => handleActorClick(actor)}>{actor}</a>
+                                                        <a
+                                                            onClick={() => handleActorClick(actor)}
+                                                            style={{
+                                                                color: '#d4a852',
+                                                                fontWeight: 500,
+                                                                fontSize: '13px',
+                                                                transition: 'color 0.3s ease',
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.color = '#e8c780';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.color = '#d4a852';
+                                                            }}
+                                                        >
+                                                            {actor}
+                                                        </a>
                                                         {idx < item.actors.length - 1 && <span>, </span>}
                                                     </React.Fragment>
                                                 ))}
@@ -234,7 +339,7 @@ function Download() {
                     </Tooltip>
                     <Tooltip title={'标记为"整理成功"'}>
                         <IconButton onClick={() => {
-                            Modal.confirm({
+                            modal.confirm({
                                 title: '是否确认标记为完成',
                                 onOk: () => onComplete(torrent.hash)
                             })
@@ -244,7 +349,7 @@ function Download() {
                     </Tooltip>
                     <Tooltip title={'删除任务'}>
                         <IconButton onClick={() => {
-                            Modal.confirm({
+                            modal.confirm({
                                 title: '确认删除下载任务？',
                                 content: '此操作将删除下载任务，但不会删除已下载的文件',
                                 okText: '确认删除',
@@ -265,13 +370,29 @@ function Download() {
     return (
         <Card 
             title={
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>下载列表</span>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                }}>
+                    <span style={{
+                        color: '#f0f0f2',
+                        fontSize: '18px',
+                        fontWeight: 600,
+                    }}>
+                        下载列表
+                    </span>
                     <Space>
                         <Button
                             icon={<FilterOutlined />}
                             size="small"
                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                            style={{
+                                background: '#1a1a1d',
+                                borderColor: 'rgba(255, 255, 255, 0.08)',
+                                color: '#a0a0a8',
+                                transition: 'all 0.3s ease',
+                            }}
                         >
                             高级筛选 {showAdvancedFilters ? '▼' : '▶'}
                         </Button>
@@ -280,6 +401,13 @@ function Download() {
                             size="small"
                             onClick={refresh}
                             loading={loading}
+                            style={{
+                                background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
+                                borderColor: '#d4a852',
+                                color: '#0d0d0f',
+                                fontWeight: 600,
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
                         >
                             刷新
                         </Button>
@@ -287,64 +415,162 @@ function Download() {
                 </div>
             }
             loading={loading}
-            extra={<Input.Search value={keyword} onChange={e => setKeyword(e.target.value)} placeholder={'搜索'} />}>
+            extra={
+                <Space.Compact>
+                    <Input
+                        value={keyword}
+                        onChange={e => setKeyword(e.target.value)}
+                        placeholder={'搜索'}
+                        style={{
+                            background: '#1a1a1d',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            color: '#f0f0f2',
+                        }}
+                    />
+                    <Button
+                        icon={<SearchOutlined />}
+                        style={{
+                            background: '#1a1a1d',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            color: '#a0a0a8',
+                        }}
+                    />
+                </Space.Compact>
+            }
+            style={{
+                background: '#141416',
+                borderColor: 'rgba(255, 255, 255, 0.08)',
+            }}
+            styles={{
+                header: {
+                    background: '#0d0d0f',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                },
+                body: {
+                    background: '#141416',
+                }
+            }}>
             
             {/* 统计信息 */}
-            <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Row gutter={16} style={{ marginBottom: 20 }}>
                 <Col span={6}>
-                    <Statistic title="总任务数" value={data.length} />
+                    <Card
+                        size="small"
+                        style={{
+                            background: '#1a1a1d',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            borderRadius: '8px',
+                        }}
+                        styles={{
+                            body: { padding: '16px' }
+                        }}
+                    >
+                        <Statistic
+                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>总任务数</span>}
+                            value={data.length}
+                            valueStyle={{ color: '#f0f0f2', fontSize: '24px', fontWeight: 600 }}
+                        />
+                    </Card>
                 </Col>
                 <Col span={6}>
-                    <Statistic 
-                        title="进行中" 
-                        value={data.reduce((count: number, item: any) => 
-                            count + item.files.filter((f: any) => f.progress > 0 && f.progress < 1).length, 0
-                        )} 
-                        valueStyle={{ color: '#1890ff' }}
-                    />
+                    <Card
+                        size="small"
+                        style={{
+                            background: '#1a1a1d',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            borderRadius: '8px',
+                        }}
+                        styles={{
+                            body: { padding: '16px' }
+                        }}
+                    >
+                        <Statistic 
+                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>进行中</span>}
+                            value={data.reduce((count: number, item: any) => 
+                                count + item.files.filter((f: any) => f.progress > 0 && f.progress < 1).length, 0
+                            )} 
+                            valueStyle={{ color: '#4facfe', fontSize: '24px', fontWeight: 600 }}
+                        />
+                    </Card>
                 </Col>
                 <Col span={6}>
-                    <Statistic 
-                        title="已完成" 
-                        value={data.reduce((count: number, item: any) => 
-                            count + item.files.filter((f: any) => f.progress >= 1).length, 0
-                        )} 
-                        valueStyle={{ color: '#52c41a' }}
-                    />
+                    <Card
+                        size="small"
+                        style={{
+                            background: '#1a1a1d',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            borderRadius: '8px',
+                        }}
+                        styles={{
+                            body: { padding: '16px' }
+                        }}
+                    >
+                        <Statistic 
+                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>已完成</span>}
+                            value={data.reduce((count: number, item: any) => 
+                                count + item.files.filter((f: any) => f.progress >= 1).length, 0
+                            )} 
+                            valueStyle={{ color: '#52c41a', fontSize: '24px', fontWeight: 600 }}
+                        />
+                    </Card>
                 </Col>
                 <Col span={6}>
-                    <Statistic 
-                        title="失败/等待" 
-                        value={data.reduce((count: number, item: any) => 
-                            count + item.files.filter((f: any) => f.progress === 0).length, 0
-                        )} 
-                        valueStyle={{ color: '#ff4d4f' }}
-                    />
+                    <Card
+                        size="small"
+                        style={{
+                            background: '#1a1a1d',
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            borderRadius: '8px',
+                        }}
+                        styles={{
+                            body: { padding: '16px' }
+                        }}
+                    >
+                        <Statistic 
+                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>失败/等待</span>}
+                            value={data.reduce((count: number, item: any) => 
+                                count + item.files.filter((f: any) => f.progress === 0).length, 0
+                            )} 
+                            valueStyle={{ color: '#ff7875', fontSize: '24px', fontWeight: 600 }}
+                        />
+                    </Card>
                 </Col>
             </Row>
 
             <Divider />
 
             {/* 基础过滤选项 */}
-            <div style={{ marginBottom: 16 }}>
+            <div style={{
+                marginBottom: 16,
+                padding: '12px 16px',
+                background: '#1a1a1d',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '8px',
+            }}>
                 <Row gutter={16}>
                     <Col>
                         <Space>
-                            <span>显示已完成:</span>
+                            <span style={{ color: '#a0a0a8', fontSize: '14px' }}>显示已完成:</span>
                             <Switch 
                                 checked={includeSuccess} 
                                 onChange={setIncludeSuccess}
                                 size="small"
+                                style={{
+                                    background: includeSuccess ? '#d4a852' : 'rgba(255, 255, 255, 0.2)',
+                                }}
                             />
                         </Space>
                     </Col>
                     <Col>
                         <Space>
-                            <span>显示失败:</span>
+                            <span style={{ color: '#a0a0a8', fontSize: '14px' }}>显示失败:</span>
                             <Switch 
                                 checked={includeFailed} 
                                 onChange={setIncludeFailed}
                                 size="small"
+                                style={{
+                                    background: includeFailed ? '#d4a852' : 'rgba(255, 255, 255, 0.2)',
+                                }}
                             />
                         </Space>
                     </Col>
@@ -353,10 +579,31 @@ function Download() {
 
             {/* 高级过滤选项 */}
             {showAdvancedFilters && (
-                <Card size="small" style={{ marginBottom: 16 }}>
+                <Card
+                    size="small"
+                    style={{
+                        marginBottom: 16,
+                        background: '#1a1a1d',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        borderRadius: '8px',
+                    }}
+                    styles={{
+                        body: {
+                            padding: '16px',
+                            background: '#1a1a1d',
+                        }
+                    }}
+                >
                     <Row gutter={[16, 8]}>
                         <Col span={8}>
-                            <div style={{ marginBottom: 8 }}>状态筛选</div>
+                            <div style={{
+                                marginBottom: 8,
+                                color: '#a0a0a8',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                            }}>
+                                状态筛选
+                            </div>
                             <Select
                                 value={advancedFilters.status}
                                 onChange={(value) => setAdvancedFilters({
@@ -364,6 +611,10 @@ function Download() {
                                     status: value
                                 })}
                                 style={{ width: '100%' }}
+                                dropdownStyle={{
+                                    background: '#1a1a1d',
+                                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                                }}
                             >
                                 <Select.Option value="all">全部状态</Select.Option>
                                 <Select.Option value="downloading">下载中</Select.Option>
@@ -372,7 +623,14 @@ function Download() {
                             </Select>
                         </Col>
                         <Col span={8}>
-                            <div style={{ marginBottom: 8 }}>排序方式</div>
+                            <div style={{
+                                marginBottom: 8,
+                                color: '#a0a0a8',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                            }}>
+                                排序方式
+                            </div>
                             <Select
                                 value={`${advancedFilters.sortBy}-${advancedFilters.sortOrder}`}
                                 onChange={(value) => {
@@ -384,6 +642,10 @@ function Download() {
                                     });
                                 }}
                                 style={{ width: '100%' }}
+                                dropdownStyle={{
+                                    background: '#1a1a1d',
+                                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                                }}
                             >
                                 <Select.Option value="date-desc">添加时间 (新→旧)</Select.Option>
                                 <Select.Option value="date-asc">添加时间 (旧→新)</Select.Option>
@@ -394,7 +656,14 @@ function Download() {
                             </Select>
                         </Col>
                         <Col span={8}>
-                            <div style={{ marginBottom: 8 }}>快速操作</div>
+                            <div style={{
+                                marginBottom: 8,
+                                color: '#a0a0a8',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                            }}>
+                                快速操作
+                            </div>
                             <Space>
                                 <Button 
                                     size="small" 
@@ -408,6 +677,11 @@ function Download() {
                                         });
                                         setKeyword('');
                                     }}
+                                    style={{
+                                        background: '#1a1a1d',
+                                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                                        color: '#a0a0a8',
+                                    }}
                                 >
                                     重置筛选
                                 </Button>
@@ -420,10 +694,29 @@ function Download() {
             {realData.length > 0 ? (
                 <>
                     {realData.length !== data.length && (
-                        <div style={{ marginBottom: 16, padding: '8px 12px', background: '#f0f2f5', borderRadius: 4 }}>
+                        <div style={{
+                            marginBottom: 16,
+                            padding: '12px 16px',
+                            background: '#1a1a1d',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: 8,
+                        }}>
                             <Space>
-                                <Badge count={realData.length} style={{ backgroundColor: '#1890ff' }} />
-                                <span>筛选结果：{realData.length} / {data.length} 个任务</span>
+                                <Badge
+                                    count={realData.length}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
+                                        color: '#0d0d0f',
+                                        fontWeight: 600,
+                                        boxShadow: '0 2px 8px rgba(212, 168, 82, 0.3)',
+                                    }}
+                                />
+                                <span style={{
+                                    color: '#a0a0a8',
+                                    fontSize: '14px',
+                                }}>
+                                    筛选结果：{realData.length} / {data.length} 个任务
+                                </span>
                             </Space>
                         </div>
                     )}

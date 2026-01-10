@@ -1,17 +1,19 @@
-import {Button, Checkbox, Col, Form, Input, message, Modal, Row} from "antd";
+import {Button, Checkbox, Col, Form, Input, App, Modal, Row, Space} from "antd";
+import {SearchOutlined} from "@ant-design/icons";
 import * as api from "../../../../apis/video";
 import {useRequest} from "ahooks";
 import React from "react";
 import {FormModalProps} from "../../../../utils/useFormModal.ts";
 import VideoCoverEditor from "../../../../components/VideoCover/editor.tsx";
 import DatePicker from "../../../../components/DatePicker";
+import './modifyModal.css';
 
 interface Props extends FormModalProps {
     onDelete?: (id: number) => void
 }
 
 function ModifyModal(props: Props) {
-
+    const { message, modal } = App.useApp()
     const {form, onDelete, ...otherProps} = props
     const id = Form.useWatch('id', form)
 
@@ -35,7 +37,7 @@ function ModifyModal(props: Props) {
     }
 
     function handleDelete() {
-        Modal.confirm({
+        modal.confirm({
             title: '是否确认删除',
             onOk: () => {
                 onDelete?.(id)
@@ -44,13 +46,18 @@ function ModifyModal(props: Props) {
     }
 
     return (
-        <Modal {...otherProps} title={id ? '编辑订阅' : '新增订阅'} footer={[
-            id && <Button key={'delete'} danger onClick={handleDelete}>删除</Button>,
-            <Button key={'scrape'} onClick={props.onCancel}>取消</Button>,
-            <Button key={'save'} type={"primary"} loading={props.confirmLoading}
-                    onClick={props.onOk}>确定</Button>,
-        ]}>
-            <Form form={form} disabled={true} layout={'vertical'}>
+        <Modal
+            {...otherProps}
+            title={id ? '编辑订阅' : '新增订阅'}
+            className="subscribe-modify-modal"
+            footer={[
+                id && <Button key={'delete'} danger onClick={handleDelete} className="subscribe-delete-btn">删除</Button>,
+                <Button key={'scrape'} onClick={props.onCancel} className="subscribe-cancel-btn">取消</Button>,
+                <Button key={'save'} type={"primary"} loading={props.confirmLoading}
+                    onClick={props.onOk} className="subscribe-primary-btn">确定</Button>,
+            ]}
+        >
+            <Form form={form} disabled={true} layout={'vertical'} className="subscribe-modify-form">
                 <Form.Item noStyle name={'id'}>
                     <Input style={{display: 'none'}}/>
                 </Form.Item>
@@ -64,8 +71,14 @@ function ModifyModal(props: Props) {
                         <Row gutter={[15, 0]}>
                             <Col span={12}>
                                 <Form.Item label={'番号'} name={'num'}>
-                                    <Input.Search disabled={false} placeholder={'请输入番号'} enterButton
-                                                  onSearch={handleSearch} loading={onSearching}/>
+                                    <Space.Compact style={{width: '100%'}}>
+                                        <Input disabled={false} placeholder={'请输入番号'}
+                                               onPressEnter={handleSearch}
+                                               className="subscribe-input"/>
+                                        <Button icon={<SearchOutlined/>} onClick={handleSearch}
+                                                loading={onSearching}
+                                                className="subscribe-search-action-btn"/>
+                                    </Space.Compact>
                                 </Form.Item>
                             </Col>
                             <Col span={12}>
@@ -75,38 +88,38 @@ function ModifyModal(props: Props) {
                             </Col>
                             <Col span={24}>
                                 <Form.Item label={'标题'} name={'title'}>
-                                    <Input/>
+                                    <Input className="subscribe-input"/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
                                 <Form.Item label={'演员'} name={'actors'}>
-                                    <Input/>
+                                    <Input className="subscribe-input"/>
                                 </Form.Item>
                             </Col>
                             <Col span={12}>
                                 <Form.Item label={'包含关键字'} name={'include_keyword'} tooltip={'支持正则表达式'}>
-                                    <Input disabled={false}/>
+                                    <Input disabled={false} className="subscribe-input"/>
                                 </Form.Item>
                             </Col>
                             <Col span={12}>
                                 <Form.Item label={'排除关键字'} name={'exclude_keyword'} tooltip={'支持正则表达式'}>
-                                    <Input disabled={false}/>
+                                    <Input disabled={false} className="subscribe-input"/>
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
                                 <Form.Item label={'高清'} name={'is_hd'} valuePropName={'checked'} initialValue={true}>
-                                    <Checkbox disabled={false}/>
+                                    <Checkbox disabled={false} className="subscribe-checkbox"/>
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
                                 <Form.Item label={'中文'} name={'is_zh'} valuePropName={'checked'} initialValue={false}>
-                                    <Checkbox disabled={false}/>
+                                    <Checkbox disabled={false} className="subscribe-checkbox"/>
                                 </Form.Item>
                             </Col>
                             <Col span={8}>
                                 <Form.Item label={'无码'} name={'is_uncensored'} valuePropName={'checked'}
                                            initialValue={false}>
-                                    <Checkbox disabled={false}/>
+                                    <Checkbox disabled={false} className="subscribe-checkbox"/>
                                 </Form.Item>
                             </Col>
                         </Row>

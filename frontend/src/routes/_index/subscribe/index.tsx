@@ -1,4 +1,4 @@
-import { Card, Col, Empty, FloatButton, Input, App, Row, Skeleton, Space, Tag, Tooltip } from "antd";
+import { Button, Card, Col, Empty, FloatButton, Input, App, Row, Skeleton, Space, Tag, Tooltip } from "antd";
 import React, { useState } from "react";
 import * as api from "../../../apis/subscribe";
 import { useRequest } from "ahooks";
@@ -9,6 +9,7 @@ import VideoCover from "../../../components/VideoCover";
 import { useFormModal } from "../../../utils/useFormModal.ts";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import HistoryModal from "./-components/historyModal.tsx";
+import './styles.css';
 
 export const Route = createFileRoute('/_index/subscribe/')({
     component: Subscribe
@@ -20,6 +21,7 @@ function Subscribe() {
 
     const { data = [], loading, refresh } = useRequest(api.getSubscribes, {})
     const [filter, setFilter] = useState<string>()
+    const [searchValue, setSearchValue] = useState<string>('')
     const { setOpen, modalProps, form } = useFormModal({
         service: api.modifySubscribe,
         onOk: () => {
@@ -41,7 +43,7 @@ function Subscribe() {
 
     if (loading) {
         return (
-            <Card>
+            <Card className="subscribe-loading-card">
                 <Skeleton active />
             </Card>
         )
@@ -53,40 +55,61 @@ function Subscribe() {
     })
 
     return (
-        <div>
+        <div className="subscribe-container">
             <Row>
                 <Col span={24} lg={{
                     span: 6,
                     offset: 18,
                 }}>
-                    <Input.Search allowClear enterButton style={{ marginBottom: 15 }} onSearch={setFilter} />
+                    <Space.Compact className="subscribe-search-bar">
+                        <Input
+                            allowClear
+                            value={searchValue}
+                            onChange={e => setSearchValue(e.target.value)}
+                            onPressEnter={() => setFilter(searchValue)}
+                            placeholder="搜索番号或标题"
+                        />
+                        <Button
+                            icon={<SearchOutlined />}
+                            onClick={() => setFilter(searchValue)}
+                            className="subscribe-search-btn"
+                        />
+                    </Space.Compact>
                 </Col>
             </Row>
             <Row gutter={[15, 15]}>
                 {subscribes.length > 0 ? (
                     subscribes.map((subscribe: any) => (
                         <Col key={subscribe.id} span={24} md={12} lg={6}>
-                            <Card hoverable
+                            <Card
+                                hoverable
                                 size={"small"}
+                                className="subscribe-card"
                                 cover={(<VideoCover src={subscribe.cover} />)}
                                 onClick={() => setOpen(true, subscribe)}
                             >
-                                <Card.Meta title={subscribe.title || subscribe.num}
+                                <Card.Meta
+                                    title={
+                                        <div className="subscribe-card-title">
+                                            {subscribe.title || subscribe.num}
+                                        </div>
+                                    }
                                     description={(
                                         <div className={'flex'}>
                                             <Space size={[0, 'small']} wrap className={'flex-1'}>
                                                 {subscribe.premiered && (
-                                                    <Tag bordered={false}>{subscribe.premiered}</Tag>
+                                                    <Tag className="subscribe-tag subscribe-tag-date">{subscribe.premiered}</Tag>
                                                 )}
                                                 {subscribe.is_hd && (
-                                                    <Tag color={'red'} bordered={false}>高清</Tag>)}
+                                                    <Tag className="subscribe-tag subscribe-tag-hd">高清</Tag>)}
                                                 {subscribe.is_zh && (
-                                                    <Tag color={'blue'} bordered={false}>中文</Tag>)}
+                                                    <Tag className="subscribe-tag subscribe-tag-zh">中文</Tag>)}
                                                 {subscribe.is_uncensored && (
-                                                    <Tag color={'green'} bordered={false}>无码</Tag>)}
+                                                    <Tag className="subscribe-tag subscribe-tag-uncensored">无码</Tag>)}
                                             </Space>
                                             <Tooltip title={'搜索'}>
-                                                <div className={'px-2'} onClick={() => {
+                                                <div className="subscribe-search-icon" onClick={(e) => {
+                                                    e.stopPropagation();
                                                     return navigate({ to: '/search', search: { num: subscribe.num } })
                                                 }}>
                                                     <SearchOutlined />
@@ -100,8 +123,11 @@ function Subscribe() {
                     ))
                 ) : (
                     <Col span={24}>
-                        <Card>
-                            <Empty description={'无订阅'} />
+                        <Card className="subscribe-empty-card">
+                            <Empty
+                                description={'无订阅'}
+                                className="subscribe-empty"
+                            />
                         </Card>
                     </Col>
                 )}
@@ -120,8 +146,17 @@ function Subscribe() {
             <>
                 {createPortal((
                     <>
-                        <FloatButton icon={<PlusOutlined />} type={'primary'} onClick={() => setOpen(true)} />
-                        <FloatButton icon={<HistoryOutlined />} onClick={() => setHistoryModalOpen(true)} />
+                        <FloatButton
+                            icon={<PlusOutlined />}
+                            type={'primary'}
+                            onClick={() => setOpen(true)}
+                            className="subscribe-float-btn"
+                        />
+                        <FloatButton
+                            icon={<HistoryOutlined />}
+                            onClick={() => setHistoryModalOpen(true)}
+                            className="subscribe-float-btn"
+                        />
                     </>),
                     document.getElementsByClassName('index-float-button-group')[0]
                 )}

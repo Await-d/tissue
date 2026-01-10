@@ -1,0 +1,288 @@
+/* 下载规则页面 - 暗黑电影美学 */
+.rules-container {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 统计卡片 */
+.stats-row .stat-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-row .stat-card:hover {
+  border-color: rgba(212, 168, 82, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.1);
+  transform: translateY(-2px);
+}
+
+.stats-row .stat-card .ant-card-body {
+  padding: 16px;
+}
+
+/* 主要按钮 */
+.primary-btn {
+  background: linear-gradient(135deg, #d4a852 0%, #b08d3e 100%);
+  border: none;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(212, 168, 82, 0.25);
+  transition: all 0.3s;
+}
+
+.primary-btn:hover {
+  background: linear-gradient(135deg, #e8c780 0%, #d4a852 100%) !important;
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.35) !important;
+  transform: translateY(-2px);
+  color: #fff !important;
+}
+
+/* 次要按钮 */
+.secondary-btn {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #d4a852;
+  transition: all 0.3s;
+}
+
+.secondary-btn:hover {
+  border-color: rgba(212, 168, 82, 0.4) !important;
+  color: #e8c780 !important;
+  background: #222226 !important;
+}
+
+/* 表格样式 */
+.rules-table .ant-table {
+  background: transparent;
+}
+
+.rules-table .ant-table-thead > tr > th {
+  background: #1a1a1d;
+  color: #a0a0a8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500;
+  padding: 16px;
+}
+
+.dark-table-row {
+  background: #141416;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideIn 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.dark-table-row:nth-child(odd) { animation-delay: 0.05s; }
+.dark-table-row:nth-child(even) { animation-delay: 0.1s; }
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dark-table-row:hover {
+  background: #1a1a1d !important;
+  box-shadow: 0 0 0 1px rgba(212, 168, 82, 0.1) inset;
+}
+
+.rules-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #f0f0f2;
+  padding: 16px;
+}
+
+/* 状态指示点 */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.active {
+  background: #d4a852;
+  box-shadow: 0 0 8px rgba(212, 168, 82, 0.6);
+  animation: pulse 2s infinite;
+}
+
+.status-dot.inactive {
+  background: #6a6a72;
+  opacity: 0.6;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+}
+
+/* 操作按钮 */
+.action-btn {
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  color: #e8c780 !important;
+  transform: translateY(-1px);
+}
+
+/* 移动端卡片 */
+.rules-mobile-list .mobile-rule-item {
+  animation: slideIn 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.mobile-rule-card {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.mobile-rule-card:hover {
+  border-color: rgba(212, 168, 82, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 168, 82, 0.1);
+}
+
+.mobile-rule-card .ant-card-head {
+  background: #1a1a1d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-rule-card .ant-card-body {
+  background: #1a1a1d;
+}
+
+/* 分页 */
+.dark-pagination .ant-pagination-item {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-pagination .ant-pagination-item a {
+  color: #a0a0a8;
+}
+
+.dark-pagination .ant-pagination-item-active {
+  background: rgba(212, 168, 82, 0.1);
+  border-color: #d4a852;
+}
+
+.dark-pagination .ant-pagination-item-active a {
+  color: #d4a852;
+}
+
+.dark-pagination .ant-pagination-item:hover {
+  border-color: rgba(212, 168, 82, 0.4);
+}
+
+.dark-pagination .ant-select-selector {
+  background: #1a1a1d !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #a0a0a8 !important;
+}
+
+/* Modal样式 */
+.dark-modal .ant-modal-content {
+  background: #1a1a1d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-modal .ant-modal-header {
+  background: #1a1a1d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-modal .ant-modal-body {
+  background: #1a1a1d;
+}
+
+.dark-modal .ant-modal-footer {
+  background: #1a1a1d;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 表单输入 */
+.dark-input {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f0f0f2;
+}
+
+.dark-input:hover {
+  border-color: rgba(212, 168, 82, 0.4);
+}
+
+.dark-input:focus {
+  border-color: #d4a852;
+  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1);
+}
+
+.dark-input::placeholder {
+  color: #6a6a72;
+}
+
+.dark-input-number .ant-input-number-input {
+  background: #141416;
+  border: none;
+  color: #f0f0f2;
+}
+
+.dark-input-number {
+  background: #141416;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-input-number:hover {
+  border-color: rgba(212, 168, 82, 0.4);
+}
+
+.dark-input-number:focus-within {
+  border-color: #d4a852;
+  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1);
+}
+
+/* Select */
+.dark-select .ant-select-selector {
+  background: #141416 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #f0f0f2 !important;
+}
+
+.dark-select:hover .ant-select-selector {
+  border-color: rgba(212, 168, 82, 0.4) !important;
+}
+
+.dark-select .ant-select-arrow {
+  color: #a0a0a8;
+}
+
+/* Switch */
+.dark-switch.ant-switch-checked {
+  background: linear-gradient(135deg, #d4a852 0%, #b08d3e 100%);
+}
+
+.dark-switch {
+  background: rgba(255, 255, 255, 0.1);
+}

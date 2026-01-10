@@ -7,7 +7,7 @@ import {
   Input,
   Select,
   DatePicker,
-  message,
+  App,
   Popconfirm,
   Card,
   Row,
@@ -25,12 +25,13 @@ import {
   type AutoDownloadSubscription,
   type AutoDownloadRule
 } from '@/apis/autoDownload'
+import './subscriptions-style.css'
 
-const { Search } = Input
 const { Option } = Select
 const { RangePicker } = DatePicker
 
 function AutoDownloadSubscriptions() {
+  const { message } = App.useApp()
   const navigate = useNavigate()
   const [subscriptions, setSubscriptions] = useState<AutoDownloadSubscription[]>([])
   const [rules, setRules] = useState<AutoDownloadRule[]>([])
@@ -220,11 +221,22 @@ function AutoDownloadSubscriptions() {
             alt="封面"
             width={60}
             height={40}
-            style={{ objectFit: 'cover' }}
-            fallback="data:image/png;base64,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"
+            style={{ objectFit: 'cover', borderRadius: 4, border: '1px solid rgba(255, 255, 255, 0.08)' }}
+            fallback="data:image/png;base64,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"
           />
         ) : (
-          <div style={{ width: 60, height: 40, background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ 
+            width: 60, 
+            height: 40, 
+            background: '#222226', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            borderRadius: 4,
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            color: '#6a6a72',
+            fontSize: 12
+          }}>
             无图
           </div>
         )
@@ -235,27 +247,38 @@ function AutoDownloadSubscriptions() {
       dataIndex: 'num',
       key: 'num',
       width: 120,
-      ellipsis: true
+      ellipsis: true,
+      render: (value) => <span style={{ color: '#f0f0f2', fontWeight: 500 }}>{value}</span>
     },
     {
       title: '标题',
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      width: 200
+      width: 200,
+      render: (value) => <span style={{ color: '#a0a0a8' }}>{value}</span>
     },
     {
       title: '规则',
       dataIndex: 'rule_name',
       key: 'rule_name',
       width: 100,
-      ellipsis: true
+      ellipsis: true,
+      render: (value) => (
+        <Tag style={{
+          background: 'rgba(212, 168, 82, 0.12)',
+          border: '1px solid rgba(212, 168, 82, 0.25)',
+          color: '#e8c780'
+        }}>
+          {value}
+        </Tag>
+      )
     },
     {
       title: '评分/评论',
       key: 'rating_comments',
       render: (_, record) => (
-        <div style={{ fontSize: '12px', lineHeight: '1.2' }}>
+        <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#a0a0a8' }}>
           <div>评分: {record.rating || 'N/A'}</div>
           <div>评论: {record.comments_count || 0}</div>
         </div>
@@ -268,11 +291,35 @@ function AutoDownloadSubscriptions() {
       key: 'status',
       render: (status: string, record: AutoDownloadSubscription) => (
         <div>
-          <Tag color={getStatusColor(status)} style={{ fontSize: '12px' }}>
+          <Tag 
+            style={{
+              background: `rgba(${
+                status?.toLowerCase() === 'completed' ? '212, 168, 82' :
+                status?.toLowerCase() === 'downloading' ? '24, 144, 255' :
+                status?.toLowerCase() === 'failed' ? '255, 77, 79' :
+                '160, 160, 168'
+              }, 0.1)`,
+              border: `1px solid rgba(${
+                status?.toLowerCase() === 'completed' ? '212, 168, 82' :
+                status?.toLowerCase() === 'downloading' ? '24, 144, 255' :
+                status?.toLowerCase() === 'failed' ? '255, 77, 79' :
+                '160, 160, 168'
+              }, 0.3)`,
+              color: status?.toLowerCase() === 'completed' ? '#d4a852' :
+                     status?.toLowerCase() === 'downloading' ? '#1890ff' :
+                     status?.toLowerCase() === 'failed' ? '#ff4d4f' :
+                     '#a0a0a8',
+              fontSize: '12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6
+            }}
+          >
+            <span className={`status-dot ${status?.toLowerCase()}`}></span>
             {getStatusText(status)}
           </Tag>
           {status?.toLowerCase() === 'failed' && record.error_message && (
-            <div style={{ fontSize: '11px', color: '#ff4d4f', marginTop: '2px', maxWidth: '100px' }}>
+            <div style={{ fontSize: '11px', color: '#ff4d4f', marginTop: '4px', maxWidth: '100px' }}>
               {record.error_message}
             </div>
           )}
@@ -285,7 +332,7 @@ function AutoDownloadSubscriptions() {
       dataIndex: 'download_time',
       key: 'download_time',
       render: (time: string) => (
-        <div style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: '12px', whiteSpace: 'nowrap', color: '#a0a0a8' }}>
           {time ? new Date(time).toLocaleString('zh-CN', {
             month: '2-digit',
             day: '2-digit',
@@ -301,7 +348,7 @@ function AutoDownloadSubscriptions() {
       dataIndex: 'created_at',
       key: 'created_at',
       render: (time: string) => (
-        <div style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: '12px', whiteSpace: 'nowrap', color: '#a0a0a8' }}>
           {new Date(time).toLocaleString('zh-CN', {
             month: '2-digit',
             day: '2-digit',
@@ -322,7 +369,8 @@ function AutoDownloadSubscriptions() {
             size="small"
             icon={<EyeOutlined />}
             onClick={() => handleViewDetail(record)}
-            style={{ fontSize: '12px', padding: '0 4px' }}
+            style={{ fontSize: '12px', padding: '0 4px', color: '#d4a852' }}
+            className="action-btn"
           >
             查看
           </Button>
@@ -332,7 +380,8 @@ function AutoDownloadSubscriptions() {
               size="small"
               icon={<ReloadOutlined />}
               onClick={() => handleSingleRetry(record.id)}
-              style={{ fontSize: '12px', padding: '0 4px' }}
+              style={{ fontSize: '12px', padding: '0 4px', color: '#d4a852' }}
+              className="action-btn"
             >
               重试
             </Button>
@@ -347,7 +396,7 @@ function AutoDownloadSubscriptions() {
               size="small"
               danger
               icon={<DeleteOutlined />}
-              style={{ fontSize: '12px', padding: '0 4px' }}
+              style={{ fontSize: '12px', padding: '0 4px', color: '#ff4d4f' }}
             >
               删除
             </Button>
@@ -369,18 +418,27 @@ function AutoDownloadSubscriptions() {
   }
 
   return (
-    <div style={{ padding: '0 8px' }}>
+    <div className="subscriptions-container" style={{ padding: '0 8px' }}>
       {/* 筛选栏 */}
-      <Card size="small" style={{ marginBottom: 8 }}>
+      <Card size="small" style={{ marginBottom: 8 }} className="filter-card">
         <Row gutter={8}>
           <Col xs={24} sm={12} md={8} lg={6}>
-            <Input.Search
-              placeholder="搜索番号"
-              value={filters.num}
-              onChange={(e) => setFilters(prev => ({ ...prev, num: e.target.value }))}
-              onSearch={handleSearch}
-              size="small"
-            />
+            <Space.Compact style={{width: '100%'}}>
+              <Input
+                placeholder="搜索番号"
+                value={filters.num}
+                onChange={(e) => setFilters(prev => ({ ...prev, num: e.target.value }))}
+                onPressEnter={handleSearch}
+                size="small"
+                className="dark-input"
+              />
+              <Button 
+                icon={<SearchOutlined />} 
+                size="small" 
+                onClick={handleSearch}
+                className="search-btn"
+              />
+            </Space.Compact>
           </Col>
           <Col xs={24} sm={12} md={8} lg={6}>
             <Select
@@ -390,11 +448,12 @@ function AutoDownloadSubscriptions() {
               allowClear
               size="small"
               style={{ width: '100%' }}
+              className="dark-select"
             >
               {rules.map(rule => (
-                <Option key={rule.id} value={rule.id}>
+                <Select.Option key={rule.id} value={rule.id}>
                   {rule.name}
-                </Option>
+                </Select.Option>
               ))}
             </Select>
           </Col>
@@ -406,15 +465,16 @@ function AutoDownloadSubscriptions() {
               allowClear
               size="small"
               style={{ width: '100%' }}
+              className="dark-select"
             >
-              <Option value="pending">待处理</Option>
-              <Option value="downloading">下载中</Option>
-              <Option value="completed">已完成</Option>
-              <Option value="failed">失败</Option>
+              <Select.Option value="pending">待处理</Select.Option>
+              <Select.Option value="downloading">下载中</Select.Option>
+              <Select.Option value="completed">已完成</Select.Option>
+              <Select.Option value="failed">失败</Select.Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={8} lg={6}>
-            <RangePicker
+            <DatePicker.RangePicker
               size="small"
               style={{ width: '100%' }}
               onChange={(dates) => {
@@ -432,6 +492,7 @@ function AutoDownloadSubscriptions() {
                   }))
                 }
               }}
+              className="dark-date-picker"
             />
           </Col>
         </Row>
@@ -443,23 +504,31 @@ function AutoDownloadSubscriptions() {
                 size="small"
                 icon={<SearchOutlined />}
                 onClick={handleSearch}
+                className="primary-btn"
               >
                 搜索
               </Button>
-              <Button size="small" onClick={handleReset}>重置</Button>
+              <Button 
+                size="small" 
+                onClick={handleReset}
+                className="secondary-btn"
+              >
+                重置
+              </Button>
             </Space>
           </Col>
         </Row>
       </Card>
 
       {/* 批量操作栏 */}
-      <Card size="small" style={{ marginBottom: 8 }}>
+      <Card size="small" style={{ marginBottom: 8 }} className="action-card">
         <Space>
           <Button
             danger
             size="small"
             disabled={selectedRowKeys.length === 0}
             onClick={() => handleBatchOperation('delete')}
+            className="danger-btn"
           >
             批量删除
           </Button>
@@ -467,23 +536,26 @@ function AutoDownloadSubscriptions() {
             size="small"
             disabled={selectedRowKeys.length === 0}
             onClick={() => handleBatchOperation('retry')}
+            className="secondary-btn"
           >
             批量重试
           </Button>
-          <span style={{ fontSize: '12px', color: '#666' }}>
-            已选择 {selectedRowKeys.length} 项
+          <span style={{ fontSize: '12px', color: '#a0a0a8' }}>
+            已选择 <span style={{ color: '#d4a852' }}>{selectedRowKeys.length}</span> 项
           </span>
         </Space>
       </Card>
 
       {/* 数据表格 */}
-      <Card size="small">
+      <Card size="small" className="table-card">
         <Table
           columns={columns}
           dataSource={subscriptions}
           rowKey="id"
           loading={loading}
           rowSelection={rowSelection}
+          className="dark-table subscriptions-table"
+          rowClassName="dark-table-row"
           pagination={{
             ...pagination,
             showSizeChanger: true,
@@ -492,7 +564,8 @@ function AutoDownloadSubscriptions() {
               `${range[0]}-${range[1]} / ${total}`,
             size: 'small',
             pageSizeOptions: ['10', '20', '50', '100'],
-            showLessItems: true
+            showLessItems: true,
+            className: 'dark-pagination'
           }}
           onChange={handleTableChange}
           scroll={{ x: 800, y: window.innerHeight - 300 }}

@@ -1,0 +1,67 @@
+/* 智能下载页面 - 暗黑电影美学 */
+.auto-download-wrapper {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auto-download-card .ant-card-body {
+  background: #141416;
+}
+
+.page-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+}
+
+/* Tabs样式 */
+.dark-tabs .ant-tabs-nav {
+  margin-bottom: 0;
+}
+
+.dark-tabs .ant-tabs-nav::before {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-tabs .ant-tabs-tab {
+  color: #a0a0a8;
+  transition: all 0.3s;
+  padding: 12px 16px;
+}
+
+.dark-tabs .ant-tabs-tab:hover {
+  color: #e8c780;
+}
+
+.dark-tabs .ant-tabs-tab-active {
+  color: #d4a852 !important;
+}
+
+.dark-tabs .ant-tabs-tab-active .tab-label {
+  color: #d4a852;
+}
+
+.dark-tabs .ant-tabs-ink-bar {
+  background: linear-gradient(90deg, #d4a852 0%, #e8c780 100%);
+  height: 3px;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.dark-tabs .ant-tabs-content {
+  padding-top: 24px;
+}
