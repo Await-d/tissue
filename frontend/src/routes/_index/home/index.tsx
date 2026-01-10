@@ -550,7 +550,7 @@ function JavDB() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 padding: '100px 40px',
-                                background: `linear-gradient(135deg, ${colors.rgba('bgContainer', 0.8)} 0%, ${colors.rgba('bgElevated', 0.6)} 100%)`,
+                                background: `linear-gradient(135deg, ${colors.rgba('bgContainer', 0.8)} 0%, ${colors.rgba('black', 0.3)} 100%)`,
                                 backdropFilter: 'blur(20px)',
                                 borderRadius: '20px',
                                 border: `1px solid ${colors.borderPrimary}`,

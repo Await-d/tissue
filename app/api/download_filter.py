@@ -186,12 +186,88 @@ def reset_to_default_settings(service: DownloadFilterService = Depends(get_downl
     try:
         default_settings = service.get_default_filter_settings()
         settings = service.create_or_update_filter_settings(default_settings)
-        
+
         return R.ok({
             "id": settings.id,
             "message": "设置已重置为默认值"
         })
-        
+
     except Exception as e:
         logger.error(f"重置设置失败: {e}")
         return R.fail(f"重置失败: {str(e)}")
+
+
+@router.post("/cleanup-torrent/{torrent_hash}")
+def cleanup_torrent(
+    torrent_hash: str,
+    dry_run: bool = True,
+    service: DownloadFilterService = Depends(get_download_filter_service)
+):
+    """
+    清理指定种子中不需要的文件
+
+    Args:
+        torrent_hash: 种子hash
+        dry_run: 是否为模拟运行模式，True时仅返回将被删除的文件列表，不实际删除
+    """
+    try:
+        result = service.cleanup_torrent_files(torrent_hash, dry_run=dry_run)
+
+        if result["success"]:
+            return R.ok(result, message=result["message"])
+        else:
+            return R.fail(result["message"], data=result)
+
+    except Exception as e:
+        logger.error(f"清理种子文件失败: {e}")
+        return R.fail(f"清理失败: {str(e)}")
+
+
+@router.post("/cleanup-all")
+def cleanup_all_torrents(
+    category: str = None,
+    dry_run: bool = True,
+    service: DownloadFilterService = Depends(get_download_filter_service)
+):
+    """
+    批量清理所有种子（或指定分类）中不需要的文件
+
+    Args:
+        category: 种子分类，如果为None则处理所有种子
+        dry_run: 是否为模拟运行模式，True时仅返回将被删除的文件列表，不实际删除
+    """
+    try:
+        result = service.cleanup_all_torrents(category=category, dry_run=dry_run)
+
+        if result["success"]:
+            return R.ok(result, message=result["message"])
+        else:
+            return R.fail(result["message"], data=result)
+
+    except Exception as e:
+        logger.error(f"批量清理种子文件失败: {e}")
+        return R.fail(f"批量清理失败: {str(e)}")
+
+
+@router.get("/preview-cleanup/{torrent_hash}")
+def preview_cleanup(
+    torrent_hash: str,
+    service: DownloadFilterService = Depends(get_download_filter_service)
+):
+    """
+    预览指定种子的清理结果（仅返回将被删除的文件列表，不实际删除）
+
+    Args:
+        torrent_hash: 种子hash
+    """
+    try:
+        result = service.cleanup_torrent_files(torrent_hash, dry_run=True)
+
+        if result["success"]:
+            return R.ok(result, message=result["message"])
+        else:
+            return R.fail(result["message"], data=result)
+
+    except Exception as e:
+        logger.error(f"预览清理结果失败: {e}")
+        return R.fail(f"预览失败: {str(e)}")

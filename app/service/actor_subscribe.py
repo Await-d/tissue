@@ -77,17 +77,24 @@ class ActorSubscribeService(BaseService):
 
     @transaction
     def add_actor_subscription(self, param: schema.actor_subscribe.ActorSubscribeCreate):
+        # 调试日志：打印接收到的参数
+        logger.info(f"[DEBUG] 接收到订阅参数: actor_name={param.actor_name}")
+        logger.info(f"[DEBUG] min_rating={param.min_rating}, min_comments={param.min_comments}")
+        logger.info(f"[DEBUG] from_date={param.from_date}, is_hd={param.is_hd}, is_zh={param.is_zh}, is_uncensored={param.is_uncensored}")
+        
         # 先检查是否已存在该演员的订阅
         exist = self.get_actor_subscription_by_name(param.actor_name)
         if exist:
             # 如果已存在，则更新订阅设置
             exist_data = param.model_dump()
+            logger.info(f"[DEBUG] 更新已存在的订阅，数据: {exist_data}")
             exist.update(self.db, exist_data)
             return exist
         
         # 不存在则创建新订阅
         subscription = ActorSubscribe(**param.model_dump())
         subscription.add(self.db)
+        logger.info(f"[DEBUG] 创建新订阅成功")
         return subscription
 
     @transaction

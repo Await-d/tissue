@@ -61,10 +61,15 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
 
     const handleSubmit = () => {
         form.validateFields().then(values => {
-            subscribe({
+            const submitData = {
                 ...values,
                 from_date: values.from_date.format('YYYY-MM-DD')
-            });
+            };
+            // 调试日志：打印发送的数据
+            console.log('[DEBUG] 订阅表单数据:', submitData);
+            console.log('[DEBUG] min_rating:', submitData.min_rating, typeof submitData.min_rating);
+            console.log('[DEBUG] min_comments:', submitData.min_comments, typeof submitData.min_comments);
+            subscribe(submitData);
         });
     };
 

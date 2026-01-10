@@ -258,6 +258,32 @@ class QBittorent:
         )
 
     @auth
+    def recheck_torrent(self, torrent_hash: str):
+        """重新校验种子"""
+        host = self._get_host_with_scheme()
+        return self.session.post(
+            urljoin(host, "/api/v2/torrents/recheck"),
+            data={"hashes": torrent_hash},
+        )
+
+    @auth
+    def get_torrent_properties(self, torrent_hash: str):
+        """
+        获取种子详细属性
+
+        Args:
+            torrent_hash: 种子hash
+
+        Returns:
+            Response: 包含 save_path, seeding_time, ratio 等详细信息
+        """
+        host = self._get_host_with_scheme()
+        return self.session.get(
+            urljoin(host, "/api/v2/torrents/properties"),
+            params={"hash": torrent_hash},
+        )
+
+    @auth
     def get_trans_info(self):
         host = self._get_host_with_scheme()
         return self.session.get(urljoin(host, "/api/v2/transfer/info"))
