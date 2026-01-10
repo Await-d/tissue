@@ -5,6 +5,7 @@ from typing import Callable
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 from pydantic import BaseModel
 
 from app.schema import Setting
@@ -16,6 +17,7 @@ from app.service.actor_subscribe import ActorSubscribeService
 from app.service.auto_download import AutoDownloadService
 from app.service.video_cache import VideoCacheService
 from app.service.pending_torrent import PendingTorrentService
+from app.service.file_scan import run_scan_task
 
 
 class Job(BaseModel):
@@ -119,6 +121,20 @@ class Scheduler:
             id='cleanup_pending_torrents',
             replace_existing=True
         )
+
+        # 添加本地视频扫描任务（每天凌晨2点执行）
+        # 根据配置决定是否启用
+        if setting.app.enable_scheduled_scan:
+            logger.info("启用定时本地视频扫描任务（每天凌晨2点执行）")
+            self.scheduler.add_job(
+                run_scan_task,
+                trigger=CronTrigger(hour=2, minute=0),
+                id='file_scan_job',
+                name='定期扫描本地视频文件',
+                replace_existing=True
+            )
+        else:
+            logger.info("定时本地视频扫描任务已禁用（可在配置中启用）")
 
     def list(self):
         return self.scheduler.get_jobs()

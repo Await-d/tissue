@@ -128,10 +128,9 @@ class AutoDownloadService:
         for rule in rules:
             try:
                 logger.info(f"===== 执行规则 [{rule.name}] ID:{rule.id} =====" )
-                logger.info(f"规则条件: 评分>={rule.min_rating or '无限制'}, 评论>={rule.min_comments or '无限制'}")
-                logger.info(f"规则参数类型: min_rating={type(rule.min_rating)}, min_comments={type(rule.min_comments)}")
-                logger.info(f"规则参数值: min_rating={rule.min_rating}, min_comments={rule.min_comments}")
-                logger.info(f"规则条件: 高清={rule.is_hd}, 中文字幕={rule.is_zh}, 无码={rule.is_uncensored}")
+                logger.info(f"规则条件: 评分>={rule.min_rating or '无限制'}, 评论>={rule.min_comments or '无限制'}, 高清={rule.is_hd}, 中文字幕={rule.is_zh}, 无码={rule.is_uncensored}")
+                # 调试日志: 检查参数类型(用于排查 Decimal vs Float 问题)
+                logger.debug(f"规则参数类型: min_rating={type(rule.min_rating).__name__}, min_comments={type(rule.min_comments).__name__}")
 
                 # 计算时间范围
                 if not force:
@@ -148,7 +147,7 @@ class AutoDownloadService:
 
                 # 从缓存数据库查询视频（无需实时爬取，使用预抓取的数据）
                 videos = cache_service.query_videos(
-                    min_rating=rule.min_rating,
+                    min_rating=float(rule.min_rating) if rule.min_rating else None,
                     min_comments=rule.min_comments,
                     is_hd=rule.is_hd,
                     is_zh=rule.is_zh,

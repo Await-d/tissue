@@ -7,16 +7,18 @@
  */
 import Filter, { FilterField } from "./-components/filter.tsx";
 import React from "react";
-import { Col, message, Row, Button, Tooltip, Checkbox, App } from "antd";
-import { ReloadOutlined, InboxOutlined, CheckSquareOutlined, BorderOutlined } from "@ant-design/icons";
+import { Col, message, Row, Button, Tooltip, Checkbox, App, Modal, Statistic } from "antd";
+import { ReloadOutlined, InboxOutlined, CheckSquareOutlined, BorderOutlined, FolderOpenOutlined, ClockCircleOutlined, FileTextOutlined, PlusCircleOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import JavDBItem from "./-components/item.tsx";
 import Selector from "../../../components/Selector";
 import Slider from "../../../components/Slider";
 import * as api from "../../../apis/home.ts";
+import * as scanApi from "../../../apis/fileScan.ts";
 import { Await, createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { useBatchSelect, type BatchSelectVideo } from "@/hooks/useBatchSelect";
 import { BatchActionBar, BatchDownloadModal } from "@/components/BatchDownload";
 import { useThemeColors } from '../../../hooks/useThemeColors';
+import { useDownloadStatus } from '../../../hooks/useDownloadStatus';
 
 export const Route = createFileRoute('/_index/home/')({
     component: JavDB,
@@ -47,6 +49,31 @@ function JavDB() {
     const [batchDownloadModalVisible, setBatchDownloadModalVisible] = React.useState(false);
     const currentVideosRef = React.useRef<BatchSelectVideo[]>([]);
 
+    // 扫描相关状态
+    const [scanning, setScanning] = React.useState(false);
+    const [scanResultVisible, setScanResultVisible] = React.useState(false);
+    const [scanResult, setScanResult] = React.useState<scanApi.ScanResult | null>(null);
+
+    // 下载状态 Hook - 从 data 中获取视频列表
+    const [videos, setVideos] = React.useState<any[]>([]);
+    const { statusMap, error: downloadStatusError } = useDownloadStatus(videos);
+
+    // 当 data 加载完成后更新 videos
+    React.useEffect(() => {
+        if (data) {
+            data.then((loadedData) => {
+                setVideos(Array.isArray(loadedData) ? loadedData : []);
+            });
+        }
+    }, [data]);
+
+    // 监听下载状态检测错误
+    React.useEffect(() => {
+        if (downloadStatusError) {
+            message.warning(`下载状态检测失败: ${downloadStatusError.message}`);
+        }
+    }, [downloadStatusError]);
+
     // 手动刷新数据
     const handleRefresh = async () => {
         setRefreshing(true)
@@ -59,6 +86,35 @@ function JavDB() {
             setRefreshing(false)
         }
     }
+
+    // 触发文件扫描
+    const handleScan = async () => {
+        setScanning(true);
+        const hideLoading = message.loading('正在扫描本地视频文件...', 0);
+
+        try {
+            const result = await scanApi.triggerScan();
+            setScanResult(result);
+
+            if (result.status === 'success') {
+                message.success(`扫描完成！发现 ${result.new_found} 个新视频`);
+                setScanResultVisible(true);
+
+                // 扫描成功后刷新视频列表
+                if (result.new_found > 0) {
+                    await router.invalidate();
+                }
+            } else {
+                message.error(result.error_message || '扫描失败');
+            }
+        } catch (err: any) {
+            console.error('扫描失败:', err);
+            message.error(err.message || '扫描失败');
+        } finally {
+            hideLoading();
+            setScanning(false);
+        }
+    };
 
     const filterFields: FilterField[] = [
         {
@@ -178,11 +234,46 @@ function JavDB() {
                     </div>
 
                     {/* 操作按钮组 */}
-                    <div style={{ 
-                        display: 'flex', 
+                    <div style={{
+                        display: 'flex',
                         gap: '8px',
                         flexShrink: 0,
                     }}>
+                        {/* 扫描按钮 */}
+                        <Tooltip title="扫描本地视频文件" placement="bottom">
+                            <Button
+                                type="text"
+                                icon={<FolderOpenOutlined />}
+                                onClick={handleScan}
+                                loading={scanning}
+                                size="large"
+                                style={{
+                                    background: colors.rgba('bgContainer', 0.8),
+                                    border: `1px solid ${colors.borderPrimary}`,
+                                    borderRadius: '12px',
+                                    color: colors.textSecondary,
+                                    height: 44,
+                                    minWidth: 44,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = colors.rgba('gold', 0.12);
+                                    e.currentTarget.style.borderColor = colors.borderGold;
+                                    e.currentTarget.style.color = colors.goldPrimary;
+                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
+                                    e.currentTarget.style.borderColor = colors.borderPrimary;
+                                    e.currentTarget.style.color = colors.textSecondary;
+                                    e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                            />
+                        </Tooltip>
+
                         {/* 刷新按钮 */}
                         <Tooltip title="刷新数据" placement="bottom">
                             <Button
@@ -534,7 +625,10 @@ function JavDB() {
                                                 opacity: batchSelect.isBatchMode && !isSelected ? 0.6 : 1,
                                                 transform: isSelected ? 'scale(0.98)' : 'scale(1)',
                                             }}>
-                                                <JavDBItem item={item} />
+                                                <JavDBItem
+                                                    item={item}
+                                                    isDownloaded={statusMap[item.num] || false}
+                                                />
                                             </div>
                                         </div>
                                     </Col>
@@ -662,6 +756,269 @@ function JavDB() {
                     }
                 }}
             />
+
+            {/* 扫描结果弹窗 */}
+            <Modal
+                open={scanResultVisible}
+                onCancel={() => setScanResultVisible(false)}
+                footer={[
+                    <Button
+                        key="close"
+                        type="primary"
+                        onClick={() => setScanResultVisible(false)}
+                        style={{
+                            background: `linear-gradient(135deg, ${colors.goldPrimary} 0%, ${colors.rgba('gold', 0.8)} 100%)`,
+                            border: 'none',
+                            borderRadius: '8px',
+                            height: '40px',
+                            fontWeight: 500,
+                        }}
+                    >
+                        确定
+                    </Button>
+                ]}
+                width={600}
+                centered
+                style={{
+                    borderRadius: '16px',
+                }}
+                styles={{
+                    content: {
+                        background: colors.bgContainer,
+                        borderRadius: '16px',
+                        border: `1px solid ${colors.borderPrimary}`,
+                    },
+                    header: {
+                        background: `linear-gradient(135deg, ${colors.rgba('gold', 0.08)} 0%, ${colors.rgba('gold', 0.02)} 100%)`,
+                        borderBottom: `1px solid ${colors.borderSecondary}`,
+                        borderRadius: '16px 16px 0 0',
+                        padding: '20px 24px',
+                    },
+                    body: {
+                        padding: '32px 24px',
+                    }
+                }}
+                title={
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        fontSize: '18px',
+                        fontWeight: 600,
+                        color: colors.textPrimary,
+                    }}>
+                        <div style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '10px',
+                            background: colors.rgba('gold', 0.12),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <CheckCircleOutlined style={{
+                                fontSize: 20,
+                                color: colors.goldPrimary,
+                            }} />
+                        </div>
+                        扫描结果
+                    </div>
+                }
+            >
+                {scanResult && (
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '24px',
+                    }}>
+                        {/* 统计数据网格 */}
+                        <Row gutter={[16, 16]}>
+                            {/* 扫描时间 */}
+                            <Col span={12}>
+                                <div style={{
+                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    border: `1px solid ${colors.borderSecondary}`,
+                                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}>
+                                    <Statistic
+                                        title={
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                color: colors.textSecondary,
+                                                fontSize: '14px',
+                                            }}>
+                                                <ClockCircleOutlined />
+                                                扫描时间
+                                            </div>
+                                        }
+                                        value={new Date(scanResult.scan_time).toLocaleString('zh-CN')}
+                                        valueStyle={{
+                                            fontSize: '14px',
+                                            color: colors.textPrimary,
+                                            fontWeight: 500,
+                                        }}
+                                    />
+                                </div>
+                            </Col>
+
+                            {/* 扫描耗时 */}
+                            <Col span={12}>
+                                <div style={{
+                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    border: `1px solid ${colors.borderSecondary}`,
+                                }}>
+                                    <Statistic
+                                        title={
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                color: colors.textSecondary,
+                                                fontSize: '14px',
+                                            }}>
+                                                <ClockCircleOutlined />
+                                                扫描耗时
+                                            </div>
+                                        }
+                                        value={scanResult.scan_duration.toFixed(2)}
+                                        suffix="秒"
+                                        valueStyle={{
+                                            fontSize: '20px',
+                                            color: colors.textPrimary,
+                                            fontWeight: 600,
+                                        }}
+                                    />
+                                </div>
+                            </Col>
+
+                            {/* 扫描文件总数 */}
+                            <Col span={12}>
+                                <div style={{
+                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    border: `1px solid ${colors.borderSecondary}`,
+                                }}>
+                                    <Statistic
+                                        title={
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                color: colors.textSecondary,
+                                                fontSize: '14px',
+                                            }}>
+                                                <FileTextOutlined />
+                                                扫描文件总数
+                                            </div>
+                                        }
+                                        value={scanResult.total_files}
+                                        valueStyle={{
+                                            fontSize: '20px',
+                                            color: colors.textPrimary,
+                                            fontWeight: 600,
+                                        }}
+                                    />
+                                </div>
+                            </Col>
+
+                            {/* 新发现视频数 */}
+                            <Col span={12}>
+                                <div style={{
+                                    background: `linear-gradient(135deg, ${colors.rgba('gold', 0.08)} 0%, ${colors.rgba('gold', 0.02)} 100%)`,
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    border: `1px solid ${colors.borderGold}`,
+                                    boxShadow: `0 2px 8px ${colors.rgba('gold', 0.1)}`,
+                                }}>
+                                    <Statistic
+                                        title={
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                color: colors.textSecondary,
+                                                fontSize: '14px',
+                                            }}>
+                                                <PlusCircleOutlined />
+                                                新发现视频
+                                            </div>
+                                        }
+                                        value={scanResult.new_found}
+                                        valueStyle={{
+                                            fontSize: '28px',
+                                            color: colors.goldPrimary,
+                                            fontWeight: 700,
+                                        }}
+                                    />
+                                </div>
+                            </Col>
+
+                            {/* 已存在视频数 */}
+                            <Col span={24}>
+                                <div style={{
+                                    background: colors.rgba('bgSpotlight', 0.5),
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    border: `1px solid ${colors.borderSecondary}`,
+                                }}>
+                                    <Statistic
+                                        title={
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                color: colors.textSecondary,
+                                                fontSize: '14px',
+                                            }}>
+                                                <CheckCircleOutlined />
+                                                已存在视频
+                                            </div>
+                                        }
+                                        value={scanResult.already_exists}
+                                        valueStyle={{
+                                            fontSize: '20px',
+                                            color: colors.textPrimary,
+                                            fontWeight: 600,
+                                        }}
+                                    />
+                                </div>
+                            </Col>
+                        </Row>
+
+                        {/* 提示信息 */}
+                        {scanResult.new_videos > 0 && (
+                            <div style={{
+                                background: colors.rgba('gold', 0.05),
+                                border: `1px solid ${colors.borderGold}`,
+                                borderRadius: '10px',
+                                padding: '16px 20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                            }}>
+                                <CheckCircleOutlined style={{
+                                    fontSize: 18,
+                                    color: colors.goldPrimary,
+                                }} />
+                                <div style={{
+                                    flex: 1,
+                                    fontSize: '14px',
+                                    color: colors.textPrimary,
+                                }}>
+                                    新视频已自动添加到视频库，页面已刷新
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </Modal>
         </div>
     )
 }

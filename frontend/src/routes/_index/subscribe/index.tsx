@@ -1,5 +1,5 @@
-import { Button, Card, Col, Empty, FloatButton, Input, App, Row, Skeleton, Space, Tag, Tooltip } from "antd";
-import React, { useState } from "react";
+import { Badge, Button, Card, Col, Empty, FloatButton, Input, App, Row, Skeleton, Space, Tag, Tooltip } from "antd";
+import React, { useState, useEffect } from "react";
 import * as api from "../../../apis/subscribe";
 import { useRequest } from "ahooks";
 import ModifyModal from "./-components/modifyModal.tsx";
@@ -9,6 +9,7 @@ import VideoCover from "../../../components/VideoCover";
 import { useFormModal } from "../../../utils/useFormModal.ts";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import HistoryModal from "./-components/historyModal.tsx";
+import { useDownloadStatus } from "../../../hooks/useDownloadStatus";
 import './styles.css';
 
 export const Route = createFileRoute('/_index/subscribe/')({
@@ -54,6 +55,16 @@ function Subscribe() {
         return item.title.toUpperCase().includes(filter.toUpperCase()) || item.num.toUpperCase().includes(filter.toUpperCase())
     })
 
+    // 获取下载状态
+    const { statusMap, error: downloadStatusError } = useDownloadStatus(subscribes);
+
+    // 监听下载状态检测错误
+    useEffect(() => {
+        if (downloadStatusError) {
+            message.warning(`下载状态检测失败: ${downloadStatusError.message}`);
+        }
+    }, [downloadStatusError, message]);
+
     return (
         <div className="subscribe-container">
             <Row>
@@ -79,8 +90,10 @@ function Subscribe() {
             </Row>
             <Row gutter={[15, 15]}>
                 {subscribes.length > 0 ? (
-                    subscribes.map((subscribe: any) => (
-                        <Col key={subscribe.id} span={24} md={12} lg={6}>
+                    subscribes.map((subscribe: any) => {
+                        const isDownloaded = statusMap[subscribe.num] || false;
+
+                        const cardContent = (
                             <Card
                                 hoverable
                                 size={"small"}
@@ -119,8 +132,23 @@ function Subscribe() {
                                     )}
                                 />
                             </Card>
-                        </Col>
-                    ))
+                        );
+
+                        return (
+                            <Col key={subscribe.id} span={24} md={12} lg={6}>
+                                {isDownloaded ? (
+                                    <Badge.Ribbon
+                                        text="已下载"
+                                        color="green"
+                                    >
+                                        {cardContent}
+                                    </Badge.Ribbon>
+                                ) : (
+                                    cardContent
+                                )}
+                            </Col>
+                        );
+                    })
                 ) : (
                     <Col span={24}>
                         <Card className="subscribe-empty-card">

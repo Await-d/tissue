@@ -8,4 +8,7 @@ from .download_filter import *
 from .site_management import *
 from .search import *
 from .video_cache import *
+from .scan_record import ScanRecord
 from .pending_torrent import PendingTorrent, PendingTorrentStatus
+from .enums import SubscribeStatus, HistoryStatus
+from .actor_subscribe import ActorSubscribe, ActorSubscribeDownload

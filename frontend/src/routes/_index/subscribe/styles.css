@@ -3,6 +3,22 @@
   min-height: 100vh;
 }
 
+/* 已下载徽章 */
+.subscribe-container .ant-ribbon {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.4);
+  border: 1px solid rgba(82, 196, 26, 0.3);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 0 12px;
+  height: 24px;
+  line-height: 24px;
+}
+
+.subscribe-container .ant-ribbon-corner {
+  border-color: #389e0d transparent transparent #389e0d;
+}
+
 /* 加载状态卡片 */
 .subscribe-loading-card {
   background: var(--color-bg-container);

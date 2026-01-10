@@ -33,8 +33,24 @@ class CustomFormatter(logging.Formatter):
 
 class AsyncLoggerManager:
     """异步日志管理器，避免日志锁死"""
+    
+    # 单例模式,确保只有一个实例
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(AsyncLoggerManager, cls).__new__(cls)
+                    cls._instance._initialized = False
+        return cls._instance
 
     def __init__(self):
+        # 避免重复初始化
+        if self._initialized:
+            return
+            
         log_path = Path(f'{Path(__file__).cwd()}/config/app.log')
         self.log_queue = queue.Queue()
         self.logger = logging.getLogger(log_path.stem)
@@ -69,6 +85,9 @@ class AsyncLoggerManager:
         self.stop_event = threading.Event()
         self.log_thread = threading.Thread(target=self._log_worker, daemon=True)
         self.log_thread.start()
+        
+        # 标记初始化完成
+        self._initialized = True
 
     def _log_worker(self):
         """异步日志处理工作线程"""
@@ -89,19 +108,27 @@ class AsyncLoggerManager:
 
     def log(self, method: str, msg: str, *args, **kwargs):
         """记录日志"""
+        import time
         caller_name = self.__get_caller()
         
-        # 创建日志记录
+        # 创建日志记录,使用当前时间戳确保顺序正确
         level = getattr(logging, method.upper())
-        record = logging.LogRecord(
+        current_time = time.time()
+        record = self.logger.makeRecord(
             name=self.logger.name,
             level=level,
-            pathname="",
-            lineno=0,
+            fn="",
+            lno=0,
             msg=f"{caller_name} - {msg}",
             args=args,
-            exc_info=None
+            exc_info=None,
+            func=None,
+            extra=None,
+            sinfo=None
         )
+        # 确保时间戳在创建时就设置好
+        record.created = current_time
+        record.msecs = (current_time - int(current_time)) * 1000
         
         # 直接处理控制台输出
         if self.logger.isEnabledFor(level):
@@ -163,13 +190,33 @@ class AsyncLoggerManager:
         self.log_thread.join(timeout=5)
         self.file_handler.close()
 
+    @classmethod
+    def _reset_instance_for_testing(cls):
+        """重置单例实例（仅用于测试环境）
+        
+        警告: 此方法仅应在测试环境中使用，生产环境请勿调用！
+        """
+        with cls._lock:
+            if cls._instance is not None:
+                try:
+                    cls._instance.shutdown()
+                except Exception as e:
+                    print(f"关闭日志实例时出错: {e}")
+                cls._instance = None
+
 
 # 智能下载专用的简化日志记录器
 class SmartDownloadLogger:
     """智能下载专用日志记录器，减少日志输出量"""
     
+    # 使用全局共享的logger实例,避免多个实例导致日志顺序混乱
+    _shared_logger = None
+    
     def __init__(self):
-        self.main_logger = AsyncLoggerManager()
+        # 使用类级别的共享logger实例
+        if SmartDownloadLogger._shared_logger is None:
+            SmartDownloadLogger._shared_logger = AsyncLoggerManager()
+        self.main_logger = SmartDownloadLogger._shared_logger
         self.batch_logs = []
         self.batch_size = 10
         

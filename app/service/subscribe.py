@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import schema
 from app.db import get_db, SessionFactory
 from app.db.models import Subscribe, Torrent
+from app.db.models.enums import SubscribeStatus
 from app.db.transaction import transaction
 from app.exception import BizException
 from app.service.base import BaseService
@@ -31,10 +32,10 @@ class SubscribeService(BaseService):
         self.filter_service = DownloadFilterService(db)
 
     def get_subscribes(self):
-        return self.db.query(Subscribe).filter(Subscribe.status != 2).order_by(Subscribe.id.desc()).all()
+        return self.db.query(Subscribe).filter(Subscribe.status != SubscribeStatus.COMPLETED).order_by(Subscribe.id.desc()).all()
 
     def get_subscribe_histories(self):
-        return self.db.query(Subscribe).filter(Subscribe.status == 2).order_by(Subscribe.update_time.desc()).all()
+        return self.db.query(Subscribe).filter(Subscribe.status == SubscribeStatus.COMPLETED).order_by(Subscribe.update_time.desc()).all()
 
     @transaction
     def add_subscribe(self, param: schema.SubscribeCreate):
@@ -59,7 +60,7 @@ class SubscribeService(BaseService):
     def re_subscribe(self, subscribe_id: int):
         exist = Subscribe.get(self.db, subscribe_id)
         param = schema.SubscribeCreate(**exist.__dict__)
-        param.status = 1
+        param.status = SubscribeStatus.PENDING
         self.add_subscribe(param)
 
     @transaction
@@ -129,7 +130,7 @@ class SubscribeService(BaseService):
                         schema.SubscribeCreate.model_validate(subscribe), matched
                     )
                     logger.info(f"订阅《{subscribe.num}》已完成")
-                    subscribe.update(self.db, {'status': 2})
+                    subscribe.update(self.db, {'status': SubscribeStatus.COMPLETED})
                     self.db.commit()
                 except Exception as e:
                     self.db.rollback()

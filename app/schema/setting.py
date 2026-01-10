@@ -21,6 +21,9 @@ class SettingApp(BaseModel):
     # JavDB登录Cookie（排行榜等页面需要登录才能访问）
     javdb_cookie: Optional[str] = None
 
+    # 定时扫描配置
+    enable_scheduled_scan: bool = False
+
 
 class SettingFile(BaseModel):
     path: str = "/data/file"

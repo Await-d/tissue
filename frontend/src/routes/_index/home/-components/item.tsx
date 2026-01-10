@@ -16,8 +16,8 @@ import { PreviewModal } from "../../../../components/VideoPreview";
 import { useRequest } from "ahooks";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
 
-function JavDBItem(props: { item: any }) {
-    const { item } = props;
+function JavDBItem(props: { item: any; isDownloaded?: boolean }) {
+    const { item, isDownloaded = false } = props;
     const { message } = App.useApp();
     const colors = useThemeColors();
 
@@ -325,13 +325,42 @@ function JavDBItem(props: { item: any }) {
                             boxShadow: `0 4px 12px ${colors.rgba('gold', 0.3)}`,
                             border: `1px solid ${colors.rgba('gold', 0.3)}`,
                         }}>
-                            <span style={{ 
-                                fontSize: 15, 
-                                fontWeight: 700, 
+                            <span style={{
+                                fontSize: 15,
+                                fontWeight: 700,
                                 color: colors.bgBase,
                                 letterSpacing: '0.02em',
                             }}>
                                 ★ {item.rank?.toFixed(1)}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* 已下载徽章 */}
+                    {isDownloaded && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 14,
+                            right: 14,
+                            background: 'rgba(82, 196, 26, 0.95)',
+                            backdropFilter: 'blur(10px)',
+                            padding: '6px 12px',
+                            borderRadius: 10,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            boxShadow: '0 4px 12px rgba(82, 196, 26, 0.4)',
+                            border: '1px solid rgba(82, 196, 26, 0.5)',
+                            zIndex: 10,
+                        }}>
+                            <span style={{
+                                fontSize: 14,
+                                fontWeight: 600,
+                                color: '#fff',
+                                letterSpacing: '0.02em',
+                                lineHeight: 1,
+                            }}>
+                                ✓ 已下载
                             </span>
                         </div>
                     )}
