@@ -6,7 +6,7 @@ from datetime import datetime
 from lxml import etree
 from urllib.parse import urljoin, urlparse
 
-from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem, VideoPreview, VideoSiteActor
+from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem, VideoPreview
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
 from app.schema.home import JavDBRanking
@@ -115,8 +115,7 @@ class JavbusSpider(Spider):
             # 如果出错，返回正常请求
             return self.session.get(url, allow_redirects=True)
 
-    def get_info(self, num: str, url: str = None, include_downloads: bool = False,
-                 include_previews: bool = False, include_comments: bool = False):
+    def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
         if url is None:
             url = urljoin(self.host, num)
@@ -222,10 +221,9 @@ class JavbusSpider(Spider):
                     actor_url = element.get('href')
                     actor_code = actor_url.split("/")[-1]
                     actor_avatar = urljoin(self.host, f'/pics/actress/{actor_code}_a.jpg')
-                    actor = VideoActor(name=element.text, thumb=actor_avatar, code=actor_code)
+                    actor = VideoActor(name=element.text, thumb=actor_avatar)
                     actors.append(actor)
                 meta.actors = actors
-                meta.site_actors = [VideoSiteActor(website=self.name, items=actors)]
 
             cover_element = html.xpath("//a[@class='bigImage']")
             if cover_element:

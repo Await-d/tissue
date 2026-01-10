@@ -1,14 +1,12 @@
-import logging
 import re
 import time
+import logging
+import re
 from datetime import datetime
 from random import randint
 from urllib.parse import urljoin, urlparse
-
 from lxml import etree
-
-from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem, VideoPreview, VideoCommentItem, \
-    VideoComment, VideoSiteActor
+from app.schema import VideoDetail, VideoActor, VideoDownload, VideoPreviewItem, VideoPreview
 from app.schema.home import JavDBRanking
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
@@ -134,8 +132,7 @@ class JavdbSpider(Spider):
             resp = self.session.get(target, headers=headers) if headers else self.session.get(target)
         return resp
 
-    def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False,
-                 include_comments: bool = False):
+    def get_info(self, num: str, url: str = None, include_downloads=False, include_previews=False):
 
         searched = False
 
@@ -207,10 +204,9 @@ class JavdbSpider(Spider):
                 actor_url = actor_element.get('href')
                 actor_code = actor_url.split("/")[-1]
                 actor_avatar = urljoin(self.avatar_host, f'{actor_code[0:2].lower()}/{actor_code}.jpg')
-                actor = VideoActor(name=actor_element.text, thumb=actor_avatar, code=actor_code)
+                actor = VideoActor(name=actor_element.text, thumb=actor_avatar)
                 actors.append(actor)
             meta.actors = actors
-            meta.site_actors = [VideoSiteActor(website=self.name, items=actors)]
 
         cover_element = html.xpath("//img[@class='video-cover']")
         if cover_element:

@@ -1,13 +1,12 @@
-from datetime import date
-from typing import Optional, List
+from datetime import date, datetime
+from typing import Optional, List, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class VideoActor(BaseModel):
     name: Optional[str] = None
     thumb: Optional[str] = None
-    code: Optional[str] = None
 
 
 class WebActor(BaseModel):
@@ -65,25 +64,6 @@ class VideoPreview(BaseModel):
     items: List[VideoPreviewItem] = []
 
 
-class VideoCommentItem(BaseModel):
-    id: str
-    name: Optional[str] = None
-    score: Optional[float] = None
-    publish_date: Optional[date] = None
-    content: Optional[str] = None
-    likes: Optional[int] = None
-
-
-class VideoComment(BaseModel):
-    website: Optional[str] = None
-    items: List[VideoCommentItem] = []
-
-
-class VideoSiteActor(BaseModel):
-    website: Optional[str] = None
-    items: List[VideoActor] = []
-
-
 class VideoDetail(BaseModel):
     # 标题
     title: Optional[str] = None
@@ -129,10 +109,6 @@ class VideoDetail(BaseModel):
     downloads: Optional[List[VideoDownload]] = []
     # 预览列表
     previews: Optional[List[VideoPreview]] = []
-    # 评论
-    comments: Optional[List[VideoComment]] = []
-    # 站点演员
-    site_actors: Optional[List[VideoSiteActor]] = []
 
 
 class VideoNotify(VideoDetail):

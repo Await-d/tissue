@@ -6,12 +6,3 @@ export async function getFiles() {
     })
     return response.data.data
 }
-
-export async function batchParseFiles(paths: string[]) {
-    const response = await request.request({
-        url: '/file/batch/parse',
-        method: 'post',
-        data: paths
-    })
-    return response
-}
