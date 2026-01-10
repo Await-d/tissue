@@ -58,7 +58,7 @@ def get_auth_token() -> str:
         return ''
 
 
-def test_api_endpoint(method: str, endpoint: str, params: Dict = None, data: Dict = None, token: str = None) -> tuple:
+def call_api_endpoint(method: str, endpoint: str, params: Dict = None, data: Dict = None, token: str = None) -> tuple:
     """
     测试 API 端点
 
@@ -128,7 +128,7 @@ def test_backend_api():
         print(f"\n测试: {test['name']}")
         print(f"  请求: {test['method']} {test['endpoint']}")
 
-        success, response, status_code = test_api_endpoint(
+        success, response, status_code = call_api_endpoint(
             test['method'],
             test['endpoint'],
             params=test.get('params'),

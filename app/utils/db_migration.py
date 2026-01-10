@@ -2,11 +2,16 @@
 数据库自动迁移工具
 用于在程序启动时自动创建缺失的表和字段
 """
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import text, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db import engine
 from app.db.models.download_filter import DownloadFilterSettings
+from app.db.models.pending_torrent import PendingTorrent
 from app.utils.logger import logger
 
 
@@ -23,8 +28,14 @@ class DatabaseMigration:
         try:
             logger.info("开始检查数据库结构...")
             
+            # 运行 Alembic 升级（若配置文件存在）
+            self._run_alembic_upgrade()
+
             # 检查下载过滤设置表
             self._ensure_download_filter_table()
+
+            # 检查待处理种子表
+            self._ensure_pending_torrent_table()
             
             # 初始化默认设置
             self._init_default_filter_settings()
@@ -70,6 +81,23 @@ class DatabaseMigration:
         except Exception as e:
             logger.error(f"检查列是否存在时出错: {e}")
             return False
+
+    def _run_alembic_upgrade(self):
+        """
+        运行 Alembic 升级，将数据库迁移到最新版本
+        """
+        try:
+            config_path = Path("alembic.ini")
+            if not config_path.exists():
+                logger.warning("alembic.ini 不存在，跳过 Alembic 升级")
+                return
+
+            alembic_cfg = Config(str(config_path))
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Alembic 升级完成")
+        except Exception as e:
+            # 不阻塞后续检查，记录警告即可
+            logger.warning(f"Alembic 升级失败，继续执行后续检查: {e}")
     
     def _ensure_download_filter_table(self):
         """
@@ -91,6 +119,23 @@ class DatabaseMigration:
             
             # 检查是否需要添加新字段（这里可以扩展检查逻辑）
             self._check_and_add_columns(table_name)
+
+    def _ensure_pending_torrent_table(self):
+        """
+        确保待处理种子表存在
+        """
+        table_name = 'pending_torrent'
+
+        if not self._table_exists(table_name):
+            logger.info(f"创建表: {table_name}")
+            try:
+                PendingTorrent.__table__.create(self.engine, checkfirst=True)
+                logger.info(f"表 {table_name} 创建成功")
+            except SQLAlchemyError as e:
+                logger.error(f"创建表 {table_name} 失败: {e}")
+                raise
+        else:
+            logger.info(f"表 {table_name} 已存在")
     
     def _check_and_add_columns(self, table_name: str):
         """

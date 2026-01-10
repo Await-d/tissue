@@ -15,9 +15,10 @@ import DownloadListModal from "../../../_index/search/-components/downloadListMo
 import { PreviewModal } from "../../../../components/VideoPreview";
 import { useRequest } from "ahooks";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
+import type { DownloadStatus } from "../../../../types/downloadStatus";
 
-function JavDBItem(props: { item: any; isDownloaded?: boolean }) {
-    const { item, isDownloaded = false } = props;
+function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
+    const { item, downloadStatus = 'none' } = props;
     const { message } = App.useApp();
     const colors = useThemeColors();
 
@@ -336,8 +337,8 @@ function JavDBItem(props: { item: any; isDownloaded?: boolean }) {
                         </div>
                     )}
 
-                    {/* 已下载徽章 */}
-                    {isDownloaded && (
+                    {/* 下载状态徽章 */}
+                    {downloadStatus === 'downloaded' && (
                         <div style={{
                             position: 'absolute',
                             top: 14,
@@ -361,6 +362,33 @@ function JavDBItem(props: { item: any; isDownloaded?: boolean }) {
                                 lineHeight: 1,
                             }}>
                                 ✓ 已下载
+                            </span>
+                        </div>
+                    )}
+                    {downloadStatus === 'downloading' && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 14,
+                            right: 14,
+                            background: 'rgba(24, 144, 255, 0.95)',
+                            backdropFilter: 'blur(10px)',
+                            padding: '6px 12px',
+                            borderRadius: 10,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.4)',
+                            border: '1px solid rgba(24, 144, 255, 0.5)',
+                            zIndex: 10,
+                        }}>
+                            <span style={{
+                                fontSize: 14,
+                                fontWeight: 600,
+                                color: '#fff',
+                                letterSpacing: '0.02em',
+                                lineHeight: 1,
+                            }}>
+                                ⏳ 下载中
                             </span>
                         </div>
                     )}
