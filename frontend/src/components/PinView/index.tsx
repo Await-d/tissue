@@ -8,6 +8,7 @@ import { sha256 } from "js-sha256";
 import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Dispatch, RootState } from "../../models";
+import { useThemeColors } from "../../hooks/useThemeColors";
 
 const { useToken } = theme
 
@@ -26,6 +27,7 @@ function PinView(props: Props) {
 
     const { pin, mode, onClose } = props;
     const { token } = useToken()
+    const colors = useThemeColors()
     const [numbers, setNumbers] = useState<string[]>([])
     const [repeatNumbers, setRepeatNumbers] = useState<string[]>([])
     const [errorMessage, setErrorMessage] = useState<string>()
@@ -79,7 +81,7 @@ function PinView(props: Props) {
 
     function renderRemark() {
         return (mode === PinMode.setting) && (
-            <div className={'flex flex-col items-center mt-8 font-light text-xs'} style={{ color: '#6a6a72' }}>
+            <div className={'flex flex-col items-center mt-8 font-light text-xs'} style={{ color: colors.textTertiary }}>
                 <div style={{ marginBottom: '8px' }}>
                     密码仅当前设备有效，退出登录即可清空密码
                 </div>
@@ -95,15 +97,15 @@ function PinView(props: Props) {
             theme={{
                 components: {
                     Button: {
-                        colorPrimary: '#d4a852',
-                        colorPrimaryHover: '#e8c780',
-                        colorPrimaryActive: '#b08d3e',
-                        colorBgContainer: '#1a1a1d',
-                        colorBorder: 'rgba(255, 255, 255, 0.08)',
-                        colorText: '#f0f0f2',
-                        defaultBg: '#1a1a1d',
-                        defaultBorderColor: 'rgba(255, 255, 255, 0.08)',
-                        defaultColor: '#a0a0a8',
+                        colorPrimary: colors.goldPrimary,
+                        colorPrimaryHover: colors.goldLight,
+                        colorPrimaryActive: colors.goldDark,
+                        colorBgContainer: colors.bgContainer,
+                        colorBorder: colors.borderPrimary,
+                        colorText: colors.textPrimary,
+                        defaultBg: colors.bgContainer,
+                        defaultBorderColor: colors.borderPrimary,
+                        defaultColor: colors.textSecondary,
                     }
                 }
             }}
@@ -111,7 +113,7 @@ function PinView(props: Props) {
             <div
                 className={'fixed top-0 right-0 bottom-0 left-0 z-[1000]'}
                 style={{
-                    background: '#0d0d0f',
+                    background: colors.bgBase,
                     backdropFilter: 'blur(8px)'
                 }}
             >
@@ -120,7 +122,7 @@ function PinView(props: Props) {
                         <Col span={24} md={12}>
                             <div className={'h-full flex flex-col items-center justify-center'}>
                                 <img className={'h-20'} src={Logo} alt="" style={{ filter: 'drop-shadow(0 0 20px rgba(212, 168, 82, 0.3))' }} />
-                                <div style={{ color: '#f0f0f2', fontSize: '16px', marginTop: '24px', fontWeight: 500 }}>
+                                <div style={{ color: colors.textPrimary, fontSize: '16px', marginTop: '24px', fontWeight: 500 }}>
                                     {repeatNumbers.length > 0 ? (
                                         '请再次输入密码 '
                                     ) : (
@@ -135,9 +137,9 @@ function PinView(props: Props) {
                                             key={i}
                                             type={numbers.length > i ? 'primary' : 'default'}
                                             style={{
-                                                background: numbers.length > i ? '#d4a852' : '#1a1a1d',
-                                                borderColor: numbers.length > i ? '#d4a852' : 'rgba(255, 255, 255, 0.08)',
-                                                boxShadow: numbers.length > i ? '0 0 12px rgba(212, 168, 82, 0.4)' : 'none',
+                                                background: numbers.length > i ? colors.goldPrimary : colors.bgContainer,
+                                                borderColor: numbers.length > i ? colors.goldPrimary : colors.borderPrimary,
+                                                boxShadow: numbers.length > i ? `0 0 12px ${colors.rgba('gold', 0.4)}` : 'none',
                                                 transition: 'all 0.3s ease'
                                             }}
                                         />
@@ -146,9 +148,9 @@ function PinView(props: Props) {
                                 <div
                                     className={'h-14 flex items-center'}
                                     style={{
-                                        color: '#ff6b6b',
+                                        color: colors.error,
                                         fontWeight: 500,
-                                        textShadow: '0 0 8px rgba(255, 107, 107, 0.3)'
+                                        textShadow: `0 0 8px ${colors.rgba('black', 0.3)}`
                                     }}
                                 >
                                     {errorMessage}
@@ -178,9 +180,9 @@ function PinView(props: Props) {
                             icon={<CloseOutlined />}
                             onClick={() => onClose()}
                             style={{
-                                background: '#1a1a1d',
-                                borderColor: 'rgba(255, 255, 255, 0.08)',
-                                color: '#f0f0f2'
+                                background: colors.bgContainer,
+                                borderColor: colors.borderPrimary,
+                                color: colors.textPrimary
                             }}
                         />
                     ) : (
@@ -188,17 +190,17 @@ function PinView(props: Props) {
                             className={'mr-2'}
                             style={{
                                 fontSize: token.sizeLG,
-                                color: '#d4a852',
+                                color: colors.goldPrimary,
                                 cursor: 'pointer',
                                 transition: 'all 0.3s ease'
                             }}
                             onClick={() => dispatch.setGoodBoy(!goodBoy)}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.color = '#e8c780'
+                                e.currentTarget.style.color = colors.goldLight
                                 e.currentTarget.style.transform = 'scale(1.1)'
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.color = '#d4a852'
+                                e.currentTarget.style.color = colors.goldPrimary
                                 e.currentTarget.style.transform = 'scale(1)'
                             }}
                         >

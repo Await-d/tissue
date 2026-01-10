@@ -10,6 +10,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Card, Skeleton } from 'antd';
 import * as api from '../../../apis/video';
 import VideoDetail from '../../../components/VideoDetail';
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 export const Route = createFileRoute('/_index/video/$num')({
     component: VideoDetailPage,
@@ -33,6 +34,7 @@ export const Route = createFileRoute('/_index/video/$num')({
 });
 
 function VideoDetailPage() {
+    const colors = useThemeColors()
     const navigate = useNavigate();
     const { num } = Route.useParams();
     const data = Route.useLoaderData();

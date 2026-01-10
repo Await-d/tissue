@@ -4,29 +4,9 @@ import { useResponsive } from "ahooks";
 import React from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { HomeOutlined, SearchOutlined, UserOutlined, StarOutlined, HeartOutlined, ClockCircleOutlined, FileOutlined, SettingOutlined, HistoryOutlined, DownloadOutlined, InfoCircleOutlined, RobotOutlined } from "@ant-design/icons";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 const { useToken } = theme
-
-// 设计系统色彩变量
-const colors = {
-    bg: {
-        base: '#0d0d0f',
-        elevated: '#141416',
-        container: '#1a1a1d',
-        spotlight: '#222226'
-    },
-    gold: {
-        primary: '#d4a852',
-        light: '#e8c780',
-        dark: '#b08d3e'
-    },
-    text: {
-        primary: '#f0f0f2',
-        secondary: '#a0a0a8',
-        tertiary: '#6a6a72'
-    },
-    border: 'rgba(255, 255, 255, 0.08)'
-}
 
 export const Route = createFileRoute('/_index/menu/')({
     component: Menu,
@@ -50,6 +30,7 @@ function Menu() {
 
     const { token } = useToken();
     const responsive = useResponsive()
+    const colors = useThemeColors();
 
     // 添加演员订阅菜单项
     const menuItems: MenuItem[] = [
@@ -157,15 +138,15 @@ function Menu() {
                     animation: `menuFadeIn 0.4s ease-out ${index * 0.1}s both`
                 }}
             >
-                <Divider 
-                    style={{ 
-                        borderColor: colors.border,
+                <Divider
+                    style={{
+                        borderColor: colors.borderPrimary,
                         marginTop: index === 0 ? '0' : '24px',
                         marginBottom: '20px'
                     }}
                 >
-                    <span style={{ 
-                        color: colors.gold.primary,
+                    <span style={{
+                        color: colors.goldPrimary,
                         fontSize: '13px',
                         fontWeight: 600,
                         letterSpacing: '0.5px',
@@ -179,7 +160,7 @@ function Menu() {
                         const item = getItemByKey(itemKey);
                         return item ? (
                             <Col key={item.key} span={6}>
-                                {renderMenuItem(item, index, itemIndex)}
+                                <MenuItemCard item={item} groupIndex={index} itemIndex={itemIndex} />
                             </Col>
                         ) : null;
                     })}
@@ -188,44 +169,45 @@ function Menu() {
         ));
     }
 
-    function renderMenuItem(item: MenuItem, groupIndex: number, itemIndex: number) {
+    // MenuItem 组件 - 使用组件以支持 React Hooks
+    const MenuItemCard: React.FC<{ item: MenuItem; groupIndex: number; itemIndex: number }> = ({ item, groupIndex, itemIndex }) => {
         const [isHovered, setIsHovered] = React.useState(false);
-        
+
         return (
             <Link to={item.path} style={{ textDecoration: 'none' }}>
-                <div 
+                <div
                     className={'p-3 flex flex-col items-center'}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                     style={{
-                        background: isHovered ? colors.bg.spotlight : colors.bg.container,
+                        background: isHovered ? colors.bgSpotlight : colors.bgContainer,
                         borderRadius: '12px',
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        border: `1px solid ${isHovered ? colors.gold.dark : colors.border}`,
+                        border: `1px solid ${isHovered ? colors.goldDark : colors.borderPrimary}`,
                         height: '100%',
                         cursor: 'pointer',
-                        boxShadow: isHovered 
-                            ? `0 8px 24px rgba(212, 168, 82, 0.12), 0 0 0 1px ${colors.gold.dark}` 
+                        boxShadow: isHovered
+                            ? `0 8px 24px rgba(212, 168, 82, 0.12), 0 0 0 1px ${colors.goldDark}`
                             : '0 2px 8px rgba(0, 0, 0, 0.15)',
                         transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
                         animation: `menuItemFadeIn 0.3s ease-out ${groupIndex * 0.1 + itemIndex * 0.05}s both`
                     }}>
-                    <div 
-                        className={'text-3xl'} 
-                        style={{ 
-                            color: isHovered ? colors.gold.light : colors.gold.primary,
+                    <div
+                        className={'text-3xl'}
+                        style={{
+                            color: isHovered ? colors.goldLight : colors.goldPrimary,
                             transition: 'all 0.3s ease',
-                            filter: isHovered ? `drop-shadow(0 0 8px ${colors.gold.primary})` : 'none',
+                            filter: isHovered ? `drop-shadow(0 0 8px ${colors.goldPrimary})` : 'none',
                             transform: isHovered ? 'scale(1.1)' : 'scale(1)'
                         }}
                     >
                         {item.icon}
                     </div>
-                    <div 
-                        className={'mt-2 text-center'} 
-                        style={{ 
+                    <div
+                        className={'mt-2 text-center'}
+                        style={{
                             fontSize: '12px',
-                            color: isHovered ? colors.text.primary : colors.text.secondary,
+                            color: isHovered ? colors.textPrimary : colors.textSecondary,
                             transition: 'color 0.3s ease',
                             fontWeight: isHovered ? 500 : 400
                         }}
@@ -268,10 +250,10 @@ function Menu() {
                     }
                 `}
             </style>
-            <Card 
+            <Card
                 title={
-                    <span style={{ 
-                        color: colors.gold.primary,
+                    <span style={{
+                        color: colors.goldPrimary,
                         fontSize: '18px',
                         fontWeight: 600
                     }}>
@@ -280,16 +262,16 @@ function Menu() {
                 }
                 variant="borderless"
                 style={{
-                    background: colors.bg.elevated,
+                    background: colors.bgElevated,
                     borderRadius: '16px'
                 }}
                 styles={{
                     header: {
-                        borderBottom: `1px solid ${colors.border}`,
-                        background: colors.bg.base
+                        borderBottom: `1px solid ${colors.borderPrimary}`,
+                        background: colors.bgBase
                     },
                     body: {
-                        background: colors.bg.elevated
+                        background: colors.bgElevated
                     }
                 }}
             >

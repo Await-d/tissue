@@ -6,6 +6,7 @@ import * as api from '../../../apis/video';
 import * as subscribeApi from '../../../apis/subscribe';
 import { useRequest } from 'ahooks';
 import { createPortal } from 'react-dom';
+import { useThemeColors } from '../../../hooks/useThemeColors';
 import EditSubscribeModal from './-components/EditSubscribeModal';
 import AllDownloadsModal from './-components/AllDownloadsModal';
 import LoadingComponent from '@/components/Loading';
@@ -20,6 +21,7 @@ export const Route = createFileRoute('/_index/actor-subscribe/')({
 function ActorSubscribe() {
     const { message, modal } = App.useApp();
     const navigate = useNavigate();
+    const colors = useThemeColors();
     const [selectedActor, setSelectedActor] = useState<any>(null);
     const [downloadsVisible, setDownloadsVisible] = useState(false);
     const [actorDownloads, setActorDownloads] = useState<any[]>([]);
@@ -114,7 +116,7 @@ function ActorSubscribe() {
                         >
                             同时删除已下载的资源（包括文件和下载任务）
                         </Checkbox>
-                        <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                        <div style={{ fontSize: '12px', color: colors.textTertiary, marginTop: '4px' }}>
                             选中此项将从qBittorrent中删除该演员的所有下载任务和文件
                         </div>
                     </div>
@@ -268,13 +270,13 @@ className="actor-subscribe-cover-img"
                                                 {item.is_paused ? (
                                                     <PlaySquareOutlined
                                                         key="resume"
-                                                        style={{ color: '#52c41a' }}
+                                                        style={{ color: colors.success }}
                                                         onClick={() => updateSubscriptionStatus(item.id, false)}
                                                     />
                                                 ) : (
                                                     <PauseOutlined
                                                         key="pause"
-                                                        style={{ color: '#faad14' }}
+                                                        style={{ color: colors.warning }}
                                                         onClick={() => updateSubscriptionStatus(item.id, true)}
                                                     />
                                                 )}
@@ -394,13 +396,13 @@ open={downloadsVisible}
                                                 <div style={{
                                                     width: '100%',
                                                     height: '80px',
-                                                    background: '#f0f0f0',
+                                                    background: colors.bgSpotlight,
                                                     display: 'flex',
                                                     justifyContent: 'center',
                                                     alignItems: 'center',
                                                     borderRadius: '4px'
                                                 }}>
-                                                    <FileOutlined style={{ fontSize: 24, color: '#999' }} />
+                                                    <FileOutlined style={{ fontSize: 24, color: colors.textTertiary }} />
                                                 </div>
                                             )}
                                         </Col>

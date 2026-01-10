@@ -4,6 +4,7 @@ import {Dispatch, RootState} from "../../../../models";
 import {useEffect} from "react";
 import {useRequest} from "ahooks";
 import * as api from "../../../../apis/user";
+import { useThemeColors } from '../../../../hooks/useThemeColors';
 
 
 function UserInfo() {
@@ -11,6 +12,7 @@ function UserInfo() {
     const [form] = Form.useForm()
     const {userInfo} = useSelector((state: RootState) => state.auth)
     const {getInfo} = useDispatch<Dispatch>().auth
+    const colors = useThemeColors()
 
 
     const {run: onSubmit, loading: onSubmitting} = useRequest(api.modifyUser, {
@@ -38,48 +40,48 @@ function UserInfo() {
         <>
             <style>{`
                 .user-info-card .ant-card {
-                    background: #1a1a1d;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                    background: ${colors.bgContainer};
+                    border: 1px solid ${colors.borderPrimary};
+                    box-shadow: ${colors.shadowSm};
                 }
 
                 .user-info-card .ant-card-head {
-                    background: #222226;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    background: ${colors.bgSpotlight};
+                    border-bottom: 1px solid ${colors.borderPrimary};
                 }
 
                 .user-info-card .ant-card-head-title {
-                    color: #f0f0f2;
+                    color: ${colors.textPrimary};
                     font-weight: 600;
                 }
 
                 .user-info-card .ant-form-item-label > label {
-                    color: #f0f0f2;
+                    color: ${colors.textPrimary};
                     font-weight: 500;
                 }
 
                 .user-info-card .ant-input,
                 .user-info-card .ant-input-password {
-                    background: #141416;
-                    border: 1px solid rgba(255, 255, 255, 0.12);
-                    color: #f0f0f2;
+                    background: ${colors.bgElevated};
+                    border: 1px solid ${colors.borderPrimary};
+                    color: ${colors.textPrimary};
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
 
                 .user-info-card .ant-input:hover,
                 .user-info-card .ant-input-password:hover {
-                    border-color: rgba(212, 168, 82, 0.4);
+                    border-color: ${colors.rgba('gold', 0.4)};
                 }
 
                 .user-info-card .ant-input:focus,
                 .user-info-card .ant-input-password:focus,
                 .user-info-card .ant-input-focused {
-                    border-color: #d4a852;
-                    box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
+                    border-color: ${colors.goldPrimary};
+                    box-shadow: 0 0 0 2px ${colors.rgba('gold', 0.15)};
                 }
 
                 .user-info-card .ant-input::placeholder {
-                    color: #6a6a72;
+                    color: ${colors.textTertiary};
                 }
 
                 .user-info-card .ant-input-password .ant-input {
@@ -88,24 +90,24 @@ function UserInfo() {
                 }
 
                 .user-info-card .ant-input-suffix {
-                    color: #a0a0a8;
+                    color: ${colors.textSecondary};
                 }
 
                 .user-info-card .ant-btn-primary {
-                    background: #d4a852;
-                    border-color: #d4a852;
-                    color: #0d0d0f;
+                    background: ${colors.goldPrimary};
+                    border-color: ${colors.goldPrimary};
+                    color: ${colors.bgBase};
                     font-weight: 600;
                     height: 40px;
                     padding: 0 32px;
-                    box-shadow: 0 2px 8px rgba(212, 168, 82, 0.3);
+                    box-shadow: ${colors.shadowGold};
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
 
                 .user-info-card .ant-btn-primary:hover {
-                    background: #e8c780 !important;
-                    border-color: #e8c780 !important;
-                    box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4) !important;
+                    background: ${colors.goldLight} !important;
+                    border-color: ${colors.goldLight} !important;
+                    box-shadow: 0 4px 12px ${colors.rgba('gold', 0.4)} !important;
                     transform: translateY(-2px);
                 }
 
@@ -114,22 +116,22 @@ function UserInfo() {
                 }
 
                 .user-info-card .ant-form-item-explain-error {
-                    color: #ff4d4f;
+                    color: ${colors.error};
                 }
             `}</style>
-            <Card 
+            <Card
                 title={'用户信息'}
                 className="user-info-card"
                 style={{
-                    background: '#1a1a1d',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                    background: colors.bgContainer,
+                    border: `1px solid ${colors.borderPrimary}`,
+                    boxShadow: colors.shadowSm
                 }}
                 styles={{
                     header: {
-                        background: '#222226',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                        color: '#f0f0f2'
+                        background: colors.bgSpotlight,
+                        borderBottom: `1px solid ${colors.borderPrimary}`,
+                        color: colors.textPrimary
                     }
                 }}
             >

@@ -929,3 +929,15 @@ frontend/src/routeTree.gen.ts
 
 # Serena memories
 .serena/
+
+# Database
+*.db
+app.db
+
+# Data files
+data/
+
+# Shell scripts (temporary) - exclude start scripts
+*.sh
+!start.sh
+!start_with_log.sh

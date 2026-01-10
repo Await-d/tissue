@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FloatButton, Badge, ConfigProvider } from 'antd';
 import { MonitorOutlined } from '@ant-design/icons';
 import ProgressMonitor, { ProgressManager } from '../ProgressMonitor';
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface ProgressFloatButtonProps {
     style?: React.CSSProperties;
@@ -10,6 +11,7 @@ interface ProgressFloatButtonProps {
 const ProgressFloatButton: React.FC<ProgressFloatButtonProps> = ({ style }) => {
     const [visible, setVisible] = useState(false);
     const [activeCount, setActiveCount] = useState(0);
+    const colors = useThemeColors();
 
     useEffect(() => {
         const progressManager = ProgressManager.getInstance();
@@ -27,15 +29,15 @@ const ProgressFloatButton: React.FC<ProgressFloatButtonProps> = ({ style }) => {
             theme={{
                 components: {
                     FloatButton: {
-                        colorPrimary: '#d4a852',
-                        colorPrimaryHover: '#e8c780',
-                        colorBgElevated: '#1a1a1d',
-                        colorText: '#f0f0f2',
-                        colorBorder: 'rgba(255, 255, 255, 0.08)',
+                        colorPrimary: colors.goldPrimary,
+                        colorPrimaryHover: colors.goldLight,
+                        colorBgElevated: colors.bgContainer,
+                        colorText: colors.textPrimary,
+                        colorBorder: colors.borderPrimary,
                     },
                     Badge: {
-                        colorError: '#d4a852',
-                        colorBgContainer: '#0d0d0f',
+                        colorError: colors.goldPrimary,
+                        colorBgContainer: colors.bgBase,
                     }
                 }
             }}
@@ -49,16 +51,16 @@ const ProgressFloatButton: React.FC<ProgressFloatButtonProps> = ({ style }) => {
                     style={{
                         bottom: 120,
                         right: 24,
-                        background: activeCount > 0 ? '#d4a852' : '#1a1a1d',
-                        color: activeCount > 0 ? '#0d0d0f' : '#f0f0f2',
-                        border: `1px solid ${activeCount > 0 ? '#d4a852' : 'rgba(255, 255, 255, 0.08)'}`,
-                        boxShadow: activeCount > 0 ? '0 0 20px rgba(212, 168, 82, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.3)',
+                        background: activeCount > 0 ? colors.goldPrimary : colors.bgContainer,
+                        color: activeCount > 0 ? colors.bgBase : colors.textPrimary,
+                        border: `1px solid ${activeCount > 0 ? colors.goldPrimary : colors.borderPrimary}`,
+                        boxShadow: activeCount > 0 ? `0 0 20px ${colors.rgba('gold', 0.4)}` : colors.shadowMd,
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         ...style
                     }}
                 />
             </Badge>
-            
+
             <ProgressMonitor
                 visible={visible}
                 onClose={() => setVisible(false)}

@@ -32,7 +32,7 @@
 .subscribe-search-bar .ant-input:focus {
   border-color: var(--color-gold-primary);
   background: var(--color-bg-spotlight);
-  box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.15);
+  box-shadow: 0 0 0 2px var(--color-gold-glow);
 }
 
 .subscribe-search-bar .ant-input::placeholder {
@@ -97,7 +97,7 @@
 
 /* 标签 */
 .subscribe-tag {
-  background: rgba(212, 168, 82, 0.12);
+  background: var(--color-gold-glow);
   border: 1px solid var(--color-border-gold);
   color: var(--color-gold-light);
   border-radius: 4px;
@@ -107,32 +107,32 @@
 }
 
 .subscribe-tag:hover {
-  background: rgba(212, 168, 82, 0.2);
+  background: var(--color-gold-glow-strong);
   border-color: var(--color-gold-primary);
 }
 
 .subscribe-tag-date {
-  background: rgba(160, 160, 168, 0.12);
-  border-color: rgba(160, 160, 168, 0.3);
+  background: var(--color-tag-date-bg);
+  border-color: var(--color-tag-date-border);
   color: var(--color-text-secondary);
 }
 
 .subscribe-tag-hd {
-  background: rgba(212, 168, 82, 0.12);
+  background: var(--color-gold-glow);
   border-color: var(--color-border-gold);
   color: var(--color-gold-light);
 }
 
 .subscribe-tag-zh {
-  background: rgba(82, 196, 212, 0.12);
-  border-color: rgba(82, 196, 212, 0.3);
-  color: #80d9e8;
+  background: var(--color-tag-cyan-bg);
+  border-color: var(--color-tag-cyan-border);
+  color: var(--color-tag-cyan);
 }
 
 .subscribe-tag-uncensored {
-  background: rgba(212, 82, 82, 0.12);
-  border-color: rgba(212, 82, 82, 0.3);
-  color: #e88080;
+  background: var(--color-tag-red-bg);
+  border-color: var(--color-tag-red-border);
+  color: var(--color-tag-red);
 }
 
 /* 搜索图标 */
@@ -146,7 +146,7 @@
 
 .subscribe-search-icon:hover {
   color: var(--color-gold-primary);
-  background: rgba(212, 168, 82, 0.12);
+  background: var(--color-gold-glow);
 }
 
 /* 空状态卡片 */

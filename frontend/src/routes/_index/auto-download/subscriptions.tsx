@@ -25,6 +25,7 @@ import {
   type AutoDownloadSubscription,
   type AutoDownloadRule
 } from '@/apis/autoDownload'
+import { useThemeColors } from '../../../hooks/useThemeColors'
 import './subscriptions-style.css'
 
 const { Option } = Select
@@ -33,6 +34,7 @@ const { RangePicker } = DatePicker
 function AutoDownloadSubscriptions() {
   const { message } = App.useApp()
   const navigate = useNavigate()
+  const colors = useThemeColors()
   const [subscriptions, setSubscriptions] = useState<AutoDownloadSubscription[]>([])
   const [rules, setRules] = useState<AutoDownloadRule[]>([])
   const [loading, setLoading] = useState(false)
@@ -221,20 +223,20 @@ function AutoDownloadSubscriptions() {
             alt="封面"
             width={60}
             height={40}
-            style={{ objectFit: 'cover', borderRadius: 4, border: '1px solid rgba(255, 255, 255, 0.08)' }}
+            style={{ objectFit: 'cover', borderRadius: 4, border: `1px solid ${colors.borderPrimary}` }}
             fallback="data:image/png;base64,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"
           />
         ) : (
-          <div style={{ 
-            width: 60, 
-            height: 40, 
-            background: '#222226', 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            width: 60,
+            height: 40,
+            background: colors.bgSpotlight,
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 4,
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            color: '#6a6a72',
+            border: `1px solid ${colors.borderPrimary}`,
+            color: colors.textTertiary,
             fontSize: 12
           }}>
             无图
@@ -248,7 +250,7 @@ function AutoDownloadSubscriptions() {
       key: 'num',
       width: 120,
       ellipsis: true,
-      render: (value) => <span style={{ color: '#f0f0f2', fontWeight: 500 }}>{value}</span>
+      render: (value) => <span style={{ color: colors.textPrimary, fontWeight: 500 }}>{value}</span>
     },
     {
       title: '标题',
@@ -256,7 +258,7 @@ function AutoDownloadSubscriptions() {
       key: 'title',
       ellipsis: true,
       width: 200,
-      render: (value) => <span style={{ color: '#a0a0a8' }}>{value}</span>
+      render: (value) => <span style={{ color: colors.textSecondary }}>{value}</span>
     },
     {
       title: '规则',
@@ -266,9 +268,9 @@ function AutoDownloadSubscriptions() {
       ellipsis: true,
       render: (value) => (
         <Tag style={{
-          background: 'rgba(212, 168, 82, 0.12)',
-          border: '1px solid rgba(212, 168, 82, 0.25)',
-          color: '#e8c780'
+          background: colors.goldGlow,
+          border: `1px solid ${colors.borderGold}`,
+          color: colors.goldLight
         }}>
           {value}
         </Tag>
@@ -278,7 +280,7 @@ function AutoDownloadSubscriptions() {
       title: '评分/评论',
       key: 'rating_comments',
       render: (_, record) => (
-        <div style={{ fontSize: '12px', lineHeight: '1.6', color: '#a0a0a8' }}>
+        <div style={{ fontSize: '12px', lineHeight: '1.6', color: colors.textSecondary }}>
           <div>评分: {record.rating || 'N/A'}</div>
           <div>评论: {record.comments_count || 0}</div>
         </div>
@@ -291,24 +293,24 @@ function AutoDownloadSubscriptions() {
       key: 'status',
       render: (status: string, record: AutoDownloadSubscription) => (
         <div>
-          <Tag 
+          <Tag
             style={{
               background: `rgba(${
-                status?.toLowerCase() === 'completed' ? '212, 168, 82' :
-                status?.toLowerCase() === 'downloading' ? '24, 144, 255' :
-                status?.toLowerCase() === 'failed' ? '255, 77, 79' :
-                '160, 160, 168'
-              }, 0.1)`,
+                status?.toLowerCase() === 'completed' ? colors.rgba('gold', 0.1) :
+                status?.toLowerCase() === 'downloading' ? colors.rgba('white', 0.06) :
+                status?.toLowerCase() === 'failed' ? colors.rgba('white', 0.06) :
+                colors.rgba('white', 0.04)
+              })`,
               border: `1px solid rgba(${
                 status?.toLowerCase() === 'completed' ? '212, 168, 82' :
-                status?.toLowerCase() === 'downloading' ? '24, 144, 255' :
-                status?.toLowerCase() === 'failed' ? '255, 77, 79' :
+                status?.toLowerCase() === 'downloading' ? '255, 255, 255' :
+                status?.toLowerCase() === 'failed' ? '255, 255, 255' :
                 '160, 160, 168'
-              }, 0.3)`,
-              color: status?.toLowerCase() === 'completed' ? '#d4a852' :
-                     status?.toLowerCase() === 'downloading' ? '#1890ff' :
-                     status?.toLowerCase() === 'failed' ? '#ff4d4f' :
-                     '#a0a0a8',
+              }, 0.15)`,
+              color: status?.toLowerCase() === 'completed' ? colors.goldPrimary :
+                     status?.toLowerCase() === 'downloading' ? colors.info :
+                     status?.toLowerCase() === 'failed' ? colors.error :
+                     colors.textSecondary,
               fontSize: '12px',
               display: 'inline-flex',
               alignItems: 'center',
@@ -319,7 +321,7 @@ function AutoDownloadSubscriptions() {
             {getStatusText(status)}
           </Tag>
           {status?.toLowerCase() === 'failed' && record.error_message && (
-            <div style={{ fontSize: '11px', color: '#ff4d4f', marginTop: '4px', maxWidth: '100px' }}>
+            <div style={{ fontSize: '11px', color: colors.error, marginTop: '4px', maxWidth: '100px' }}>
               {record.error_message}
             </div>
           )}
@@ -332,7 +334,7 @@ function AutoDownloadSubscriptions() {
       dataIndex: 'download_time',
       key: 'download_time',
       render: (time: string) => (
-        <div style={{ fontSize: '12px', whiteSpace: 'nowrap', color: '#a0a0a8' }}>
+        <div style={{ fontSize: '12px', whiteSpace: 'nowrap', color: colors.textSecondary }}>
           {time ? new Date(time).toLocaleString('zh-CN', {
             month: '2-digit',
             day: '2-digit',
@@ -348,7 +350,7 @@ function AutoDownloadSubscriptions() {
       dataIndex: 'created_at',
       key: 'created_at',
       render: (time: string) => (
-        <div style={{ fontSize: '12px', whiteSpace: 'nowrap', color: '#a0a0a8' }}>
+        <div style={{ fontSize: '12px', whiteSpace: 'nowrap', color: colors.textSecondary }}>
           {new Date(time).toLocaleString('zh-CN', {
             month: '2-digit',
             day: '2-digit',
@@ -369,7 +371,7 @@ function AutoDownloadSubscriptions() {
             size="small"
             icon={<EyeOutlined />}
             onClick={() => handleViewDetail(record)}
-            style={{ fontSize: '12px', padding: '0 4px', color: '#d4a852' }}
+            style={{ fontSize: '12px', padding: '0 4px', color: colors.textGold }}
             className="action-btn"
           >
             查看
@@ -380,7 +382,7 @@ function AutoDownloadSubscriptions() {
               size="small"
               icon={<ReloadOutlined />}
               onClick={() => handleSingleRetry(record.id)}
-              style={{ fontSize: '12px', padding: '0 4px', color: '#d4a852' }}
+              style={{ fontSize: '12px', padding: '0 4px', color: colors.textGold }}
               className="action-btn"
             >
               重试
@@ -396,7 +398,7 @@ function AutoDownloadSubscriptions() {
               size="small"
               danger
               icon={<DeleteOutlined />}
-              style={{ fontSize: '12px', padding: '0 4px', color: '#ff4d4f' }}
+              style={{ fontSize: '12px', padding: '0 4px', color: colors.error }}
             >
               删除
             </Button>
@@ -540,8 +542,8 @@ function AutoDownloadSubscriptions() {
           >
             批量重试
           </Button>
-          <span style={{ fontSize: '12px', color: '#a0a0a8' }}>
-            已选择 <span style={{ color: '#d4a852' }}>{selectedRowKeys.length}</span> 项
+          <span style={{ fontSize: '12px', color: colors.textSecondary }}>
+            已选择 <span style={{ color: colors.textGold }}>{selectedRowKeys.length}</span> 项
           </span>
         </Space>
       </Card>

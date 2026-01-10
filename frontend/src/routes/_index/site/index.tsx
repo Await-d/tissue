@@ -7,6 +7,7 @@ import {useRequest} from "ahooks";
 import {createPortal} from "react-dom";
 import {RedoOutlined} from "@ant-design/icons";
 import React from "react";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 
 export const Route = createFileRoute('/_index/site/')({
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_index/site/')({
 
 function Site() {
 
+    const colors = useThemeColors();
     const {token} = theme.useToken()
 
     const {data, refresh, loading} = useRequest(api.getSites, {})
@@ -39,7 +41,7 @@ function Site() {
             <List.Item>
                 <Badge.Ribbon
                     text={item.status ? '启用' : '停用'}
-                    color={item.status ? '#d4a852' : '#6a6a72'}
+                    color={item.status ? colors.goldPrimary : colors.textTertiary}
                     style={{
                         fontSize: '12px',
                         fontWeight: 500
@@ -52,9 +54,9 @@ function Site() {
                                 <Tag
                                     variant="borderless"
                                     style={{
-                                        background: 'rgba(212, 168, 82, 0.15)',
-                                        color: '#d4a852',
-                                        border: '1px solid rgba(212, 168, 82, 0.3)',
+                                        background: colors.rgba('gold', 0.15),
+                                        color: colors.goldPrimary,
+                                        border: `1px solid ${colors.borderGold}`,
                                         fontWeight: 600,
                                         minWidth: '32px',
                                         textAlign: 'center'
@@ -62,22 +64,22 @@ function Site() {
                                 >
                                     {item.priority}
                                 </Tag>
-                                <div style={{color: '#f0f0f2', fontWeight: 500}}>{item.name}</div>
+                                <div style={{color: colors.textPrimary, fontWeight: 500}}>{item.name}</div>
                             </div>
                         )}
                         className={'cursor-pointer site-card'}
                         onClick={() => setOpen(true, item)}
                         style={{
-                            background: '#1a1a1d',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                            background: colors.bgContainer,
+                            border: `1px solid ${colors.borderPrimary}`,
+                            boxShadow: `0 2px 8px ${colors.rgba('black', 0.3)}`,
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                             overflow: 'hidden'
                         }}
                         styles={{
                             header: {
-                                background: '#222226',
-                                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                background: colors.bgSpotlight,
+                                borderBottom: `1px solid ${colors.borderPrimary}`,
                                 padding: '12px 16px'
                             },
                             body: {
@@ -87,7 +89,7 @@ function Site() {
                     >
                         <Space direction={"vertical"} size={'large'} style={{width: '100%'}}>
                             <div style={{
-                                color: '#a0a0a8',
+                                color: colors.textSecondary,
                                 fontSize: '13px',
                                 lineHeight: '1.5'
                             }}>
@@ -130,8 +132,8 @@ function Site() {
         return (
             <Card
                 style={{
-                    background: '#1a1a1d',
-                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                    background: colors.bgContainer,
+                    border: `1px solid ${colors.borderPrimary}`
                 }}
             >
                 <Skeleton active/>
@@ -144,8 +146,8 @@ function Site() {
             <style>{`
                 .site-card:hover {
                     transform: translateY(-4px);
-                    border-color: rgba(212, 168, 82, 0.4) !important;
-                    box-shadow: 0 8px 24px rgba(212, 168, 82, 0.15), 0 0 0 1px rgba(212, 168, 82, 0.2) !important;
+                    border-color: ${colors.rgba('gold', 0.4)} !important;
+                    box-shadow: 0 8px 24px ${colors.rgba('gold', 0.15)}, 0 0 0 1px ${colors.rgba('gold', 0.2)} !important;
                 }
 
                 .site-card .ant-card-head-title {
@@ -161,27 +163,27 @@ function Site() {
                 <Card
                     title={'站点'}
                     style={{
-                        background: '#1a1a1d',
-                        border: '1px solid rgba(255, 255, 255, 0.08)'
+                        background: colors.bgContainer,
+                        border: `1px solid ${colors.borderPrimary}`
                     }}
                     styles={{
                         header: {
-                            background: '#222226',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                            color: '#f0f0f2'
+                            background: colors.bgSpotlight,
+                            borderBottom: `1px solid ${colors.borderPrimary}`,
+                            color: colors.textPrimary
                         }
                     }}
                 >
                     <Empty
                         description={(
-                            <div style={{color: '#a0a0a8'}}>
+                            <div style={{color: colors.textSecondary}}>
                                 <div>无可用站点</div>
                                 <div>
                                     请检查网络连接后{' '}
                                     <a
                                         onClick={() => onTesting()}
                                         style={{
-                                            color: '#d4a852',
+                                            color: colors.goldPrimary,
                                             textDecoration: 'underline',
                                             cursor: 'pointer'
                                         }}
@@ -201,8 +203,8 @@ function Site() {
                             icon={<RedoOutlined/>}
                             onClick={() => onTesting()}
                             style={{
-                                background: '#d4a852',
-                                boxShadow: '0 4px 12px rgba(212, 168, 82, 0.3)'
+                                background: colors.goldPrimary,
+                                boxShadow: `0 4px 12px ${colors.rgba('gold', 0.3)}`
                             }}
                         />
                     </>

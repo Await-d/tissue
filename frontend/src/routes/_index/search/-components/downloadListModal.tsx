@@ -1,6 +1,7 @@
 import { List, Modal, ModalProps, Space, Tag, Button, Input, Typography, Card, Row, Col, Divider, Badge, Tooltip } from "antd";
 import React, { useEffect, useState } from "react";
 import { CloudDownloadOutlined, CheckCircleOutlined, CalendarOutlined, GlobalOutlined, FileOutlined, SettingOutlined } from "@ant-design/icons";
+import { useThemeColors } from '../../../../hooks/useThemeColors';
 
 interface Props extends ModalProps {
     video?: any;
@@ -13,6 +14,7 @@ function DownloadListModal(props: Props) {
     const { video, downloads, onDownload, confirmLoading, ...otherProps } = props;
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [savePath, setSavePath] = useState<string>("");
+    const colors = useThemeColors()
 
     useEffect(() => {
         // 重置选择状态和保存路径
@@ -56,11 +58,11 @@ function DownloadListModal(props: Props) {
         <Modal
             title={
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <CloudDownloadOutlined style={{ marginRight: 10, color: '#d4a852', fontSize: 22 }} />
-                    <span style={{ color: '#e8c780', fontWeight: 600 }}>选择下载资源</span>
+                    <CloudDownloadOutlined style={{ marginRight: 10, color: colors.goldPrimary, fontSize: 22 }} />
+                    <span style={{ color: colors.goldLight, fontWeight: 600 }}>选择下载资源</span>
                     {video && video.title &&
                         <Tooltip title={video.title}>
-                            <span style={{ marginLeft: 10, fontSize: '14px', color: '#6a6a72', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ marginLeft: 10, fontSize: '14px', color: colors.textTertiary, maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 - {video.num}
                             </span>
                         </Tooltip>
@@ -69,13 +71,13 @@ function DownloadListModal(props: Props) {
             }
             {...otherProps}
             footer={[
-                <Button 
-                    key="cancel" 
+                <Button
+                    key="cancel"
                     onClick={props.onCancel}
                     style={{
-                        background: '#1a1a1d',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        color: '#a0a0a8'
+                        background: colors.bgContainer,
+                        border: `1px solid ${colors.borderPrimary}`,
+                        color: colors.textSecondary
                     }}
                 >
                     取消
@@ -88,9 +90,9 @@ function DownloadListModal(props: Props) {
                     icon={<CloudDownloadOutlined />}
                     onClick={handleDownload}
                     style={{
-                        background: selectedItem ? 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)' : '#222226',
+                        background: selectedItem ? colors.goldGradientHover : colors.bgSpotlight,
                         border: 'none',
-                        color: selectedItem ? '#0d0d0f' : '#6a6a72',
+                        color: selectedItem ? colors.bgBase : colors.textTertiary,
                         fontWeight: 600
                     }}
                 >
@@ -99,33 +101,33 @@ function DownloadListModal(props: Props) {
             ]}
             width={700}
             centered
-            styles={{ 
-                mask: { backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.6)' },
-                content: { 
-                    background: '#141416',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+            styles={{
+                mask: { backdropFilter: 'blur(8px)', background: colors.modalOverlay },
+                content: {
+                    background: colors.modalBg,
+                    border: `1px solid ${colors.borderPrimary}`,
                     boxShadow: '0 12px 48px rgba(0, 0, 0, 0.6)'
                 },
                 body: { maxHeight: '60vh', overflowY: 'auto', padding: '12px 24px' }
             }}
         >
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography.Text style={{ color: '#f0f0f2' }}>
-                    共找到 <Typography.Text strong style={{ color: '#e8c780' }}>{downloads?.length || 0}</Typography.Text> 个下载资源:
+                <Typography.Text style={{ color: colors.textPrimary }}>
+                    共找到 <Typography.Text strong style={{ color: colors.goldLight }}>{downloads?.length || 0}</Typography.Text> 个下载资源:
                 </Typography.Text>
 
                 <Space>
-                    <Tag 
-                        icon={<FileOutlined />} 
-                        style={{ background: '#222226', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                    <Tag
+                        icon={<FileOutlined />}
+                        style={{ background: colors.bgSpotlight, border: `1px solid ${colors.borderPrimary}`, color: colors.textSecondary }}
                     >文件大小</Tag>
-                    <Tag 
-                        icon={<CalendarOutlined />} 
-                        style={{ background: '#222226', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                    <Tag
+                        icon={<CalendarOutlined />}
+                        style={{ background: colors.bgSpotlight, border: `1px solid ${colors.borderPrimary}`, color: colors.textSecondary }}
                     >发布日期</Tag>
-                    <Tag 
-                        icon={<SettingOutlined />} 
-                        style={{ background: '#222226', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                    <Tag
+                        icon={<SettingOutlined />}
+                        style={{ background: colors.bgSpotlight, border: `1px solid ${colors.borderPrimary}`, color: colors.textSecondary }}
                     >资源特性</Tag>
                 </Space>
             </div>
@@ -144,23 +146,23 @@ function DownloadListModal(props: Props) {
                             hoverable
                             style={{
                                 marginBottom: 16,
-                                borderColor: selectedItem === item ? '#d4a852' : 'rgba(255, 255, 255, 0.08)',
-                                backgroundColor: selectedItem === item ? '#222226' : '#1a1a1d',
+                                borderColor: selectedItem === item ? colors.goldPrimary : colors.borderPrimary,
+                                backgroundColor: selectedItem === item ? colors.bgSpotlight : colors.bgContainer,
                                 transition: 'all 0.3s',
                                 cursor: 'pointer',
-                                boxShadow: selectedItem === item ? '0 4px 16px rgba(212, 168, 82, 0.2)' : 'none'
+                                boxShadow: selectedItem === item ? colors.shadowGold : 'none'
                             }}
                             styles={{ body: { padding: 16 } }}
                             onClick={() => handleSelectItem(item)}
                             onMouseEnter={(e) => {
                                 if (selectedItem !== item) {
-                                    e.currentTarget.style.borderColor = '#d4a852';
+                                    e.currentTarget.style.borderColor = colors.goldPrimary;
                                     e.currentTarget.style.transform = 'translateY(-2px)';
                                 }
                             }}
                             onMouseLeave={(e) => {
                                 if (selectedItem !== item) {
-                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                    e.currentTarget.style.borderColor = colors.borderPrimary;
                                     e.currentTarget.style.transform = 'translateY(0)';
                                 }
                             }}
@@ -171,26 +173,26 @@ function DownloadListModal(props: Props) {
                                         <CloudDownloadOutlined style={{
                                             fontSize: 20,
                                             marginRight: 12,
-                                            color: selectedItem === item ? '#d4a852' : '#6a6a72'
+                                            color: selectedItem === item ? colors.goldPrimary : colors.textTertiary
                                         }} />
-                                        <Typography.Title level={5} style={{ margin: 0, color: '#f0f0f2' }}>
+                                        <Typography.Title level={5} style={{ margin: 0, color: colors.textPrimary }}>
                                             {item.name}
                                             {selectedItem === item &&
-                                                <CheckCircleOutlined style={{ color: '#d4a852', marginLeft: 8, fontSize: 16 }} />
+                                                <CheckCircleOutlined style={{ color: colors.goldPrimary, marginLeft: 8, fontSize: 16 }} />
                                             }
                                         </Typography.Title>
                                     </div>
 
                                     <div style={{ marginTop: 8, marginLeft: 32 }}>
                                         <Space wrap>
-                                            <Tag 
-                                                icon={<GlobalOutlined />} 
-                                                style={{ background: '#0d0d0f', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                                            <Tag
+                                                icon={<GlobalOutlined />}
+                                                style={{ background: colors.bgBase, border: `1px solid ${colors.borderPrimary}`, color: colors.textSecondary }}
                                             >{item.website}</Tag>
                                             {item.publish_date &&
-                                                <Tag 
-                                                    icon={<CalendarOutlined />} 
-                                                    style={{ background: '#0d0d0f', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#a0a0a8' }}
+                                                <Tag
+                                                    icon={<CalendarOutlined />}
+                                                    style={{ background: colors.bgBase, border: `1px solid ${colors.borderPrimary}`, color: colors.textSecondary }}
                                                 >{item.publish_date}</Tag>
                                             }
                                         </Space>
@@ -199,19 +201,19 @@ function DownloadListModal(props: Props) {
 
                                 <Col span={8}>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' }}>
-                                        <Tag 
-                                            style={{ 
-                                                minWidth: 60, 
+                                        <Tag
+                                            style={{
+                                                minWidth: 60,
                                                 textAlign: 'center',
-                                                background: '#222226',
-                                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                                color: '#e8c780',
+                                                background: colors.bgSpotlight,
+                                                border: `1px solid ${colors.borderPrimary}`,
+                                                color: colors.goldLight,
                                                 fontWeight: 600
                                             }}
                                         >{item.size}</Tag>
-                                        {item.is_hd && <Tag style={{ background: '#d4a85220', border: '1px solid #d4a852', color: '#e8c780' }}>高清</Tag>}
-                                        {item.is_zh && <Tag style={{ background: '#d4a85220', border: '1px solid #d4a852', color: '#e8c780' }}>中文</Tag>}
-                                        {item.is_uncensored && <Tag style={{ background: '#d4a85220', border: '1px solid #d4a852', color: '#e8c780' }}>无码</Tag>}
+                                        {item.is_hd && <Tag style={{ background: colors.goldGlow, border: `1px solid ${colors.goldPrimary}`, color: colors.goldLight }}>高清</Tag>}
+                                        {item.is_zh && <Tag style={{ background: colors.goldGlow, border: `1px solid ${colors.goldPrimary}`, color: colors.goldLight }}>中文</Tag>}
+                                        {item.is_uncensored && <Tag style={{ background: colors.goldGlow, border: `1px solid ${colors.goldPrimary}`, color: colors.goldLight }}>无码</Tag>}
                                     </div>
                                 </Col>
                             </Row>
@@ -221,24 +223,24 @@ function DownloadListModal(props: Props) {
             />
 
             {selectedItem && (
-                <div style={{ 
-                    marginTop: 16, 
-                    padding: '16px', 
-                    backgroundColor: '#0d0d0f', 
+                <div style={{
+                    marginTop: 16,
+                    padding: '16px',
+                    backgroundColor: colors.bgBase,
                     borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                    border: `1px solid ${colors.borderPrimary}`
                 }}>
-                    <Typography.Text strong style={{ display: 'block', marginBottom: 8, color: '#e8c780' }}>
+                    <Typography.Text strong style={{ display: 'block', marginBottom: 8, color: colors.goldLight }}>
                         下载设置
                     </Typography.Text>
                     <Space.Compact style={{ width: '100%' }}>
-                        <Button 
-                            disabled 
+                        <Button
+                            disabled
                             icon={<SettingOutlined />}
                             style={{
-                                background: '#1a1a1d',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                color: '#6a6a72'
+                                background: colors.bgContainer,
+                                border: `1px solid ${colors.borderPrimary}`,
+                                color: colors.textTertiary
                             }}
                         />
                         <Input
@@ -247,16 +249,16 @@ function DownloadListModal(props: Props) {
                             onChange={(e) => setSavePath(e.target.value)}
                             allowClear
                             style={{
-                                background: '#141416',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                color: '#f0f0f2'
+                                background: colors.bgElevated,
+                                border: `1px solid ${colors.borderPrimary}`,
+                                color: colors.textPrimary
                             }}
                             onFocus={(e) => {
-                                e.currentTarget.style.borderColor = '#d4a852';
-                                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(212, 168, 82, 0.1)';
+                                e.currentTarget.style.borderColor = colors.goldPrimary;
+                                e.currentTarget.style.boxShadow = colors.rgba('gold', 0.1);
                             }}
                             onBlur={(e) => {
-                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                e.currentTarget.style.borderColor = colors.borderPrimary;
                                 e.currentTarget.style.boxShadow = 'none';
                             }}
                         />

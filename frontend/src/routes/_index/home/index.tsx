@@ -16,6 +16,7 @@ import * as api from "../../../apis/home.ts";
 import { Await, createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { useBatchSelect, type BatchSelectVideo } from "@/hooks/useBatchSelect";
 import { BatchActionBar, BatchDownloadModal } from "@/components/BatchDownload";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 export const Route = createFileRoute('/_index/home/')({
     component: JavDB,
@@ -34,6 +35,7 @@ export const Route = createFileRoute('/_index/home/')({
 })
 
 function JavDB() {
+    const colors = useThemeColors();
     const { data } = Route.useLoaderData()
     const filter = Route.useSearch<any>()
     const navigate = useNavigate()
@@ -43,7 +45,7 @@ function JavDB() {
     // 批量选择相关状态
     const batchSelect = useBatchSelect();
     const [batchDownloadModalVisible, setBatchDownloadModalVisible] = React.useState(false);
-    const [currentVideos, setCurrentVideos] = React.useState<BatchSelectVideo[]>([]);
+    const currentVideosRef = React.useRef<BatchSelectVideo[]>([]);
 
     // 手动刷新数据
     const handleRefresh = async () => {
@@ -151,48 +153,48 @@ function JavDB() {
                 <Tooltip title="刷新数据">
                     <Button
                         type="text"
-                        icon={<ReloadOutlined spin={refreshing} style={{ color: '#d4a852' }} />}
+                        icon={<ReloadOutlined spin={refreshing} style={{ color: colors.goldPrimary }} />}
                         onClick={handleRefresh}
                         loading={refreshing}
                         style={{
                             marginLeft: '8px',
                             marginTop: '4px',
-                            background: 'rgba(26, 26, 29, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            background: colors.rgba('bgContainer', 0.6),
+                            border: `1px solid ${colors.borderPrimary}`,
                             borderRadius: '10px',
                             transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(212, 168, 82, 0.15)';
-                            e.currentTarget.style.borderColor = 'rgba(212, 168, 82, 0.3)';
+                            e.currentTarget.style.background = colors.rgba('gold', 0.15);
+                            e.currentTarget.style.borderColor = colors.borderGold;
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(26, 26, 29, 0.6)';
-                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                            e.currentTarget.style.background = colors.rgba('bgContainer', 0.6);
+                            e.currentTarget.style.borderColor = colors.borderPrimary;
                         }}
                     />
                 </Tooltip>
                 <Tooltip title={batchSelect.isBatchMode ? "退出批量选择" : "批量选择"}>
                     <Button
                         type="text"
-                        icon={batchSelect.isBatchMode ? <CheckSquareOutlined style={{ color: '#d4a852' }} /> : <BorderOutlined style={{ color: '#d4a852' }} />}
+                        icon={batchSelect.isBatchMode ? <CheckSquareOutlined style={{ color: colors.goldPrimary }} /> : <BorderOutlined style={{ color: colors.goldPrimary }} />}
                         onClick={batchSelect.toggleBatchMode}
                         style={{
                             marginLeft: '8px',
                             marginTop: '4px',
-                            background: batchSelect.isBatchMode ? 'rgba(212, 168, 82, 0.15)' : 'rgba(26, 26, 29, 0.6)',
-                            border: batchSelect.isBatchMode ? '1px solid rgba(212, 168, 82, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)',
+                            background: batchSelect.isBatchMode ? colors.rgba('gold', 0.15) : colors.rgba('bgContainer', 0.6),
+                            border: batchSelect.isBatchMode ? `1px solid ${colors.borderGold}` : `1px solid ${colors.borderPrimary}`,
                             borderRadius: '10px',
                             transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(212, 168, 82, 0.15)';
-                            e.currentTarget.style.borderColor = 'rgba(212, 168, 82, 0.3)';
+                            e.currentTarget.style.background = colors.rgba('gold', 0.15);
+                            e.currentTarget.style.borderColor = colors.borderGold;
                         }}
                         onMouseLeave={(e) => {
                             if (!batchSelect.isBatchMode) {
-                                e.currentTarget.style.background = 'rgba(26, 26, 29, 0.6)';
-                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                e.currentTarget.style.background = colors.rgba('bgContainer', 0.6);
+                                e.currentTarget.style.borderColor = colors.borderPrimary;
                             }
                         }}
                     />
@@ -203,15 +205,15 @@ function JavDB() {
                     {[...Array(8)].map((_, index) => (
                         <Col key={index} span={24} md={12} lg={6} className={`tissue-animate-in tissue-stagger-${(index % 8) + 1}`}>
                             <div style={{
-                                background: '#1a1a1d',
+                                background: colors.bgContainer,
                                 borderRadius: '14px',
                                 overflow: 'hidden',
-                                border: '1px solid rgba(255, 255, 255, 0.06)',
-                                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+                                border: `1px solid ${colors.borderSecondary}`,
+                                boxShadow: `0 4px 16px ${colors.rgba('black', 0.4)}`,
                             }}>
                                 <div style={{
                                     aspectRatio: '16/10',
-                                    background: 'linear-gradient(90deg, #222226 25%, #2a2a2e 50%, #222226 75%)',
+                                    background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
                                     backgroundSize: '200% 100%',
                                     animation: 'tissue-shimmer 1.5s infinite',
                                 }} />
@@ -219,7 +221,7 @@ function JavDB() {
                                     <div style={{
                                         width: '60%',
                                         height: '12px',
-                                        background: 'linear-gradient(90deg, #222226 25%, #2a2a2e 50%, #222226 75%)',
+                                        background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
                                         backgroundSize: '200% 100%',
                                         animation: 'tissue-shimmer 1.5s infinite',
                                         borderRadius: '6px',
@@ -228,7 +230,7 @@ function JavDB() {
                                     <div style={{
                                         width: '90%',
                                         height: '14px',
-                                        background: 'linear-gradient(90deg, #222226 25%, #2a2a2e 50%, #222226 75%)',
+                                        background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
                                         backgroundSize: '200% 100%',
                                         animation: 'tissue-shimmer 1.5s infinite',
                                         borderRadius: '6px',
@@ -237,7 +239,7 @@ function JavDB() {
                                     <div style={{
                                         width: '75%',
                                         height: '14px',
-                                        background: 'linear-gradient(90deg, #222226 25%, #2a2a2e 50%, #222226 75%)',
+                                        background: `linear-gradient(90deg, ${colors.bgSpotlight} 25%, #2a2a2e 50%, ${colors.bgSpotlight} 75%)`,
                                         backgroundSize: '200% 100%',
                                         animation: 'tissue-shimmer 1.5s infinite',
                                         borderRadius: '6px',
@@ -269,9 +271,7 @@ function JavDB() {
                     }));
 
                     // 更新当前视频列表（用于全选）
-                    React.useEffect(() => {
-                        setCurrentVideos(batchVideos);
-                    }, [sortedVideos.length]);
+                    currentVideosRef.current = batchVideos;
 
                     return sortedVideos.length > 0 ? (
                         <Row className={'mt-2 cursor-pointer'} gutter={[12, 12]}>
@@ -318,7 +318,7 @@ function JavDB() {
                                             <div style={{
                                                 borderRadius: '14px',
                                                 overflow: 'hidden',
-                                                border: isSelected ? '2px solid #d4a852' : '2px solid transparent',
+                                                border: isSelected ? `2px solid ${colors.goldPrimary}` : '2px solid transparent',
                                                 transition: 'all 0.2s ease',
                                                 opacity: batchSelect.isBatchMode && !isSelected ? 0.7 : 1,
                                             }}>
@@ -338,21 +338,21 @@ function JavDB() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 padding: '80px 20px',
-                                background: 'rgba(26, 26, 29, 0.6)',
+                                background: colors.rgba('bgContainer', 0.6),
                                 borderRadius: '14px',
-                                border: '1px solid rgba(255, 255, 255, 0.06)',
+                                border: `1px solid ${colors.borderSecondary}`,
                                 marginTop: '40px',
                             }}
                         >
                             <InboxOutlined style={{
                                 fontSize: '64px',
-                                color: 'rgba(212, 168, 82, 0.3)',
+                                color: colors.rgba('gold', 0.3),
                                 marginBottom: '20px',
                             }} />
                             <div style={{
                                 fontSize: '18px',
                                 fontWeight: 500,
-                                color: '#a0a0a8',
+                                color: colors.textSecondary,
                                 marginBottom: '8px',
                                 letterSpacing: '0.02em',
                             }}>
@@ -360,7 +360,7 @@ function JavDB() {
                             </div>
                             <div style={{
                                 fontSize: '14px',
-                                color: '#6a6a72',
+                                color: colors.textTertiary,
                                 textAlign: 'center',
                                 lineHeight: '1.6',
                             }}>
@@ -375,8 +375,8 @@ function JavDB() {
             <BatchActionBar
                 visible={batchSelect.isBatchMode}
                 selectedCount={batchSelect.selectedCount}
-                totalCount={currentVideos.length}
-                onSelectAll={() => batchSelect.selectAll(currentVideos)}
+                totalCount={currentVideosRef.current.length}
+                onSelectAll={() => batchSelect.selectAll(currentVideosRef.current)}
                 onUnselectAll={batchSelect.unselectAll}
                 onBatchDownload={() => setBatchDownloadModalVisible(true)}
                 onExit={batchSelect.exitBatchMode}

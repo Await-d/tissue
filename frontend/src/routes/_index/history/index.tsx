@@ -9,12 +9,14 @@ import More from "../../../components/More";
 import {createFileRoute} from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
 import {TransModeOptions} from "../../../utils/constants.ts";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 export const Route = createFileRoute('/_index/history/')({
     component: History,
 })
 
 function History() {
+    const colors = useThemeColors();
     const { message, modal } = App.useApp()
     const {data = [], loading, refresh} = useRequest(api.getHistories, {})
     const [selected, setSelected] = useState<any | undefined>()
@@ -44,19 +46,19 @@ function History() {
             dataIndex: 'status',
             render: (value) => (
                 value ? (
-                    <Tag 
+                    <Tag
                         style={{
-                            background: 'rgba(212, 168, 82, 0.1)',
-                            border: '1px solid rgba(212, 168, 82, 0.3)',
-                            color: '#d4a852'
+                            background: colors.rgba('gold', 0.1),
+                            border: `1px solid ${colors.borderGold}`,
+                            color: colors.goldPrimary
                         }}
                     >
                         成功
                     </Tag>
                 ) : (
-                    <Tag 
+                    <Tag
                         style={{
-                            background: 'rgba(255, 77, 79, 0.1)',
+                            background: colors.rgba('red', 0.1),
                             border: '1px solid rgba(255, 77, 79, 0.3)',
                             color: '#ff4d4f'
                         }}
@@ -71,14 +73,14 @@ function History() {
             dataIndex: 'num',
             render: (value, record: any) => (
                 <div>
-                    <b style={{ color: '#f0f0f2' }}>{value}</b>
+                    <b style={{ color: colors.textPrimary }}>{value}</b>
                     <div style={{ marginTop: 4 }}>
                         {record.is_zh && (
-                            <Tag 
+                            <Tag
                                 style={{
-                                    background: 'rgba(212, 168, 82, 0.12)',
-                                    border: '1px solid rgba(212, 168, 82, 0.25)',
-                                    color: '#e8c780',
+                                    background: colors.rgba('gold', 0.12),
+                                    border: `1px solid ${colors.rgba('gold', 0.25)}`,
+                                    color: colors.goldLight,
                                     marginRight: 4
                                 }}
                             >
@@ -86,11 +88,11 @@ function History() {
                             </Tag>
                         )}
                         {record.is_uncensored && (
-                            <Tag 
+                            <Tag
                                 style={{
-                                    background: 'rgba(212, 168, 82, 0.12)',
-                                    border: '1px solid rgba(212, 168, 82, 0.25)',
-                                    color: '#e8c780'
+                                    background: colors.rgba('gold', 0.12),
+                                    border: `1px solid ${colors.rgba('gold', 0.25)}`,
+                                    color: colors.goldLight
                                 }}
                             >
                                 无码
@@ -104,20 +106,20 @@ function History() {
             title: '路径',
             dataIndex: 'path',
             render: (_, record: any) => (
-                <div 
+                <div
                     style={{
-                        WebkitTextSizeAdjust: '100%', 
-                        fontSize: 13, 
+                        WebkitTextSizeAdjust: '100%',
+                        fontSize: 13,
                         maxWidth: 680,
-                        color: '#a0a0a8',
+                        color: colors.textSecondary,
                         lineHeight: '1.6'
                     }}
                 >
                     <div style={{ marginBottom: 4 }}>{record.source_path}</div>
-                    <div style={{ 
-                        color: '#d4a852', 
+                    <div style={{
+                        color: colors.goldPrimary,
                         fontSize: 12,
-                        margin: '6px 0' 
+                        margin: '6px 0'
                     }}>
                         ⟹
                     </div>
@@ -131,11 +133,11 @@ function History() {
             render: (value: string) => {
                 const method = TransModeOptions.find((i: any) => i.value === value)
                 return (
-                    <Tag 
+                    <Tag
                         style={{
-                            background: 'rgba(212, 168, 82, 0.1)',
-                            border: '1px solid rgba(212, 168, 82, 0.3)',
-                            color: '#d4a852'
+                            background: colors.rgba('gold', 0.1),
+                            border: `1px solid ${colors.borderGold}`,
+                            color: colors.goldPrimary
                         }}
                     >
                         {method?.name}
@@ -147,7 +149,7 @@ function History() {
             title: '时间',
             dataIndex: 'create_time',
             render: (value) => (
-                <span style={{ color: '#a0a0a8', fontSize: 13 }}>
+                <span style={{ color: colors.textSecondary, fontSize: 13 }}>
                     {dayjs(value).format('lll')}
                 </span>
             )
@@ -193,33 +195,33 @@ function History() {
 
     return (
         <div className="history-page-wrapper animate-fade-in">
-            <Card 
-                title={<span style={{ color: '#f0f0f2', fontSize: 18, fontWeight: 500 }}>历史记录</span>}
+            <Card
+                title={<span style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 500 }}>历史记录</span>}
                 className="dark-card"
                 style={{
-                    background: '#141416',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: colors.bgElevated,
+                    border: `1px solid ${colors.borderPrimary}`,
                     borderRadius: 8
                 }}
                 extra={(
                     <Space.Compact>
-                        <Input 
-                            value={keyword} 
-                            onChange={e => setKeyword(e.target.value)} 
+                        <Input
+                            value={keyword}
+                            onChange={e => setKeyword(e.target.value)}
                             placeholder={'搜索番号或路径'}
                             style={{
-                                background: '#1a1a1d',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                color: '#f0f0f2'
+                                background: colors.bgContainer,
+                                border: `1px solid ${colors.borderPrimary}`,
+                                color: colors.textPrimary
                             }}
                             className="dark-input"
                         />
-                        <Button 
+                        <Button
                             icon={<SearchOutlined/>}
                             style={{
-                                background: '#1a1a1d',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                color: '#d4a852'
+                                background: colors.bgContainer,
+                                border: `1px solid ${colors.borderPrimary}`,
+                                color: colors.goldPrimary
                             }}
                         />
                     </Space.Compact>

@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Dispatch, RootState } from "../../models";
 import Logo from "../../assets/logo.svg";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useThemeColors } from "../../hooks/useThemeColors";
 
 export const Route = createFileRoute('/login/')({
     component: Login,
@@ -29,30 +30,31 @@ function Login() {
     const [form] = Form.useForm()
     const { logging } = useSelector((state: RootState) => state.auth)
     const { login } = useDispatch<Dispatch>().auth
+    const colors = useThemeColors()
 
     useEffect(() => {
-        document.body.style.backgroundColor = '#0d0d0f'
-    }, [])
+        document.body.style.backgroundColor = colors.bgBase
+    }, [colors])
 
     return (
         <div
             className="h-dvh flex flex-col justify-center items-center relative overflow-hidden"
             style={{
-                background: 'linear-gradient(135deg, #0d0d0f 0%, #141416 50%, #0d0d0f 100%)',
+                background: `linear-gradient(135deg, ${colors.bgBase} 0%, ${colors.bgElevated} 50%, ${colors.bgBase} 100%)`,
             }}
         >
             {/* 背景装饰 - 金色光晕 */}
             <div
                 className="absolute top-1/4 -left-32 w-96 h-96 rounded-full opacity-5 blur-3xl"
                 style={{
-                    background: 'radial-gradient(circle, #d4a852 0%, transparent 70%)',
+                    background: `radial-gradient(circle, ${colors.goldPrimary} 0%, transparent 70%)`,
                     animation: 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                 }}
             />
             <div
                 className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full opacity-5 blur-3xl"
                 style={{
-                    background: 'radial-gradient(circle, #e8c780 0%, transparent 70%)',
+                    background: `radial-gradient(circle, ${colors.goldLight} 0%, transparent 70%)`,
                     animation: 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite 2s'
                 }}
             />
@@ -68,7 +70,7 @@ function Login() {
                 <div
                     className="absolute inset-0 blur-2xl opacity-40"
                     style={{
-                        background: 'radial-gradient(circle, #d4a852 0%, transparent 70%)',
+                        background: `radial-gradient(circle, ${colors.goldPrimary} 0%, transparent 70%)`,
                     }}
                 />
                 <img
@@ -76,7 +78,7 @@ function Login() {
                     src={Logo}
                     alt="TISSUE+"
                     style={{
-                        filter: 'drop-shadow(0 0 20px rgba(212, 168, 82, 0.3))'
+                        filter: `drop-shadow(0 0 20px ${colors.rgba('gold', 0.3)})`
                     }}
                 />
             </div>
@@ -92,18 +94,18 @@ function Login() {
                 <div
                     className="p-8 rounded-2xl relative overflow-hidden"
                     style={{
-                        background: 'rgba(26, 26, 29, 0.6)',
+                        background: colors.rgba('black', 0.6),
                         backdropFilter: 'blur(40px) saturate(180%)',
                         WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                        border: `1px solid ${colors.borderPrimary}`,
+                        boxShadow: `0 8px 32px ${colors.rgba('black', 0.4)}, inset 0 1px 0 ${colors.rgba('white', 0.05)}`
                     }}
                 >
                     {/* 顶部微光 */}
                     <div
                         className="absolute top-0 left-0 right-0 h-px"
                         style={{
-                            background: 'linear-gradient(90deg, transparent 0%, rgba(212, 168, 82, 0.3) 50%, transparent 100%)'
+                            background: `linear-gradient(90deg, transparent 0%, ${colors.rgba('gold', 0.3)} 50%, transparent 100%)`
                         }}
                     />
 
@@ -112,11 +114,11 @@ function Login() {
                         form={form}
                         onFinish={(values) => login(values)}
                         style={{
-                            '--ant-color-bg-container': '#1a1a1d',
-                            '--ant-color-border': 'rgba(255, 255, 255, 0.08)',
-                            '--ant-color-primary': '#d4a852',
-                            '--ant-color-text': '#f0f0f2',
-                            '--ant-color-text-placeholder': '#6a6a72',
+                            '--ant-color-bg-container': colors.bgContainer,
+                            '--ant-color-border': colors.borderPrimary,
+                            '--ant-color-primary': colors.goldPrimary,
+                            '--ant-color-text': colors.textPrimary,
+                            '--ant-color-text-placeholder': colors.textTertiary,
                         } as React.CSSProperties}
                     >
                         {/* 用户名输入框 */}
@@ -125,7 +127,7 @@ function Login() {
                                 prefix={
                                     <UserOutlined
                                         style={{
-                                            color: '#6a6a72',
+                                            color: colors.textTertiary,
                                             fontSize: '16px'
                                         }}
                                     />
@@ -133,21 +135,21 @@ function Login() {
                                 placeholder="用户名"
                                 style={{
                                     height: '48px',
-                                    backgroundColor: '#141416',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    backgroundColor: colors.bgElevated,
+                                    border: `1px solid ${colors.borderPrimary}`,
                                     borderRadius: '10px',
-                                    color: '#f0f0f2',
+                                    color: colors.textPrimary,
                                     fontSize: '15px',
                                     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
                                 }}
                                 onFocus={(e) => {
-                                    e.target.style.backgroundColor = '#1a1a1d'
-                                    e.target.style.borderColor = '#d4a852'
-                                    e.target.style.boxShadow = '0 0 0 2px rgba(212, 168, 82, 0.1)'
+                                    e.target.style.backgroundColor = colors.bgContainer
+                                    e.target.style.borderColor = colors.goldPrimary
+                                    e.target.style.boxShadow = `0 0 0 2px ${colors.rgba('gold', 0.1)}`
                                 }}
                                 onBlur={(e) => {
-                                    e.target.style.backgroundColor = '#141416'
-                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+                                    e.target.style.backgroundColor = colors.bgElevated
+                                    e.target.style.borderColor = colors.borderPrimary
                                     e.target.style.boxShadow = 'none'
                                 }}
                             />
@@ -159,7 +161,7 @@ function Login() {
                                 prefix={
                                     <LockOutlined
                                         style={{
-                                            color: '#6a6a72',
+                                            color: colors.textTertiary,
                                             fontSize: '16px'
                                         }}
                                     />
@@ -167,21 +169,21 @@ function Login() {
                                 placeholder="密码"
                                 style={{
                                     height: '48px',
-                                    backgroundColor: '#141416',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    backgroundColor: colors.bgElevated,
+                                    border: `1px solid ${colors.borderPrimary}`,
                                     borderRadius: '10px',
-                                    color: '#f0f0f2',
+                                    color: colors.textPrimary,
                                     fontSize: '15px',
                                     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
                                 }}
                                 onFocus={(e) => {
-                                    e.target.parentElement!.style.backgroundColor = '#1a1a1d'
-                                    e.target.parentElement!.style.borderColor = '#d4a852'
-                                    e.target.parentElement!.style.boxShadow = '0 0 0 2px rgba(212, 168, 82, 0.1)'
+                                    e.target.parentElement!.style.backgroundColor = colors.bgContainer
+                                    e.target.parentElement!.style.borderColor = colors.goldPrimary
+                                    e.target.parentElement!.style.boxShadow = `0 0 0 2px ${colors.rgba('gold', 0.1)}`
                                 }}
                                 onBlur={(e) => {
-                                    e.target.parentElement!.style.backgroundColor = '#141416'
-                                    e.target.parentElement!.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+                                    e.target.parentElement!.style.backgroundColor = colors.bgElevated
+                                    e.target.parentElement!.style.borderColor = colors.borderPrimary
                                     e.target.parentElement!.style.boxShadow = 'none'
                                 }}
                             />
@@ -196,7 +198,7 @@ function Login() {
                             <Checkbox
                                 style={{
                                     marginBottom: 24,
-                                    color: '#a0a0a8',
+                                    color: colors.textSecondary,
                                     fontSize: '14px'
                                 }}
                             >
@@ -212,27 +214,27 @@ function Login() {
                             style={{
                                 width: '100%',
                                 height: '48px',
-                                background: 'linear-gradient(135deg, #d4a852 0%, #b08d3e 100%)',
+                                background: colors.goldGradient,
                                 border: 'none',
                                 borderRadius: '10px',
                                 fontSize: '16px',
                                 fontWeight: 600,
-                                color: '#0d0d0f',
-                                boxShadow: '0 4px 16px rgba(212, 168, 82, 0.25)',
+                                color: colors.bgBase,
+                                boxShadow: `0 4px 16px ${colors.rgba('gold', 0.25)}`,
                                 transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                                 cursor: logging ? 'not-allowed' : 'pointer'
                             }}
                             onMouseEnter={(e) => {
                                 if (!logging) {
-                                    e.currentTarget.style.background = 'linear-gradient(135deg, #e8c780 0%, #d4a852 100%)'
-                                    e.currentTarget.style.boxShadow = '0 0 24px rgba(212, 168, 82, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
+                                    e.currentTarget.style.background = colors.goldGradientHover
+                                    e.currentTarget.style.boxShadow = `0 0 24px ${colors.rgba('gold', 0.4)}, 0 8px 24px ${colors.rgba('black', 0.3)}`
                                     e.currentTarget.style.transform = 'translateY(-2px)'
                                 }
                             }}
                             onMouseLeave={(e) => {
                                 if (!logging) {
-                                    e.currentTarget.style.background = 'linear-gradient(135deg, #d4a852 0%, #b08d3e 100%)'
-                                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(212, 168, 82, 0.25)'
+                                    e.currentTarget.style.background = colors.goldGradient
+                                    e.currentTarget.style.boxShadow = `0 4px 16px ${colors.rgba('gold', 0.25)}`
                                     e.currentTarget.style.transform = 'translateY(0)'
                                 }
                             }}
@@ -256,7 +258,7 @@ function Login() {
                 <div
                     className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-20 blur-3xl opacity-20 pointer-events-none"
                     style={{
-                        background: 'radial-gradient(ellipse, #d4a852 0%, transparent 70%)',
+                        background: `radial-gradient(ellipse, ${colors.goldPrimary} 0%, transparent 70%)`,
                     }}
                 />
             </div>
@@ -265,7 +267,7 @@ function Login() {
             <div
                 className="absolute bottom-8 text-center"
                 style={{
-                    color: '#6a6a72',
+                    color: colors.textTertiary,
                     fontSize: '13px',
                     animation: 'tissueFadeIn 1s ease-out 0.4s forwards',
                     opacity: 0
@@ -321,14 +323,14 @@ function Login() {
                 /* Ant Design 输入框样式覆盖 */
                 .ant-input,
                 .ant-input-password {
-                    background-color: #141416 !important;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-                    color: #f0f0f2 !important;
+                    background-color: ${colors.bgElevated} !important;
+                    border: 1px solid ${colors.borderPrimary} !important;
+                    color: ${colors.textPrimary} !important;
                 }
 
                 .ant-input::placeholder,
                 .ant-input-password input::placeholder {
-                    color: #6a6a72 !important;
+                    color: ${colors.textTertiary} !important;
                 }
 
                 .ant-input:focus,
@@ -336,9 +338,9 @@ function Login() {
                 .ant-input-password-focused,
                 .ant-input:hover,
                 .ant-input-password:hover {
-                    background-color: #1a1a1d !important;
-                    border-color: #d4a852 !important;
-                    box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1) !important;
+                    background-color: ${colors.bgContainer} !important;
+                    border-color: ${colors.goldPrimary} !important;
+                    box-shadow: 0 0 0 2px ${colors.rgba('gold', 0.1)} !important;
                 }
 
                 .ant-input-password .ant-input {
@@ -347,25 +349,25 @@ function Login() {
                 }
 
                 .ant-input-suffix {
-                    color: #6a6a72 !important;
+                    color: ${colors.textTertiary} !important;
                 }
 
                 .ant-checkbox-wrapper {
-                    color: #a0a0a8 !important;
+                    color: ${colors.textSecondary} !important;
                 }
 
                 .ant-checkbox-inner {
-                    background-color: #141416 !important;
-                    border-color: rgba(255, 255, 255, 0.08) !important;
+                    background-color: ${colors.bgElevated} !important;
+                    border-color: ${colors.borderPrimary} !important;
                 }
 
                 .ant-checkbox-checked .ant-checkbox-inner {
-                    background-color: #d4a852 !important;
-                    border-color: #d4a852 !important;
+                    background-color: ${colors.goldPrimary} !important;
+                    border-color: ${colors.goldPrimary} !important;
                 }
 
                 .ant-checkbox:hover .ant-checkbox-inner {
-                    border-color: #d4a852 !important;
+                    border-color: ${colors.goldPrimary} !important;
                 }
 
                 .ant-form-item {
@@ -373,7 +375,7 @@ function Login() {
                 }
 
                 .ant-form-item-explain-error {
-                    color: #ff4d4f !important;
+                    color: ${colors.error} !important;
                     font-size: 13px;
                     margin-top: 4px;
                 }

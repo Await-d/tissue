@@ -9,6 +9,7 @@ import React from "react";
 import { Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { createFileRoute, useSearch, Link } from "@tanstack/react-router";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 import WebActorSearch from '../../../components/ActorSearch/WebActorSearch';
 import './styles.css';
 
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/_index/actor/')({
 
 export function ActorSearch() {
     const search: any = useSearch({ from: '/_index/actor/' });
+    const colors = useThemeColors();
 
     return (
         <div className="actor-page-container">

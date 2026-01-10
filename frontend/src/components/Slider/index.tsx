@@ -1,10 +1,12 @@
 import {GetProps, Input, InputNumber, Slider as AntSlider, ConfigProvider} from "antd";
 import {useEffect, useState} from "react";
+import {useThemeColors} from "../../hooks/useThemeColors";
 
 type SliderProps = GetProps<typeof AntSlider>
 
 function Slider(props: SliderProps) {
 
+    const colors = useThemeColors()
     const {onChange, value, ...otherProps} = props
     const [sliderValue, setSliderValue] = useState<number>(0)
     const [inputValue, setInputValue] = useState(props.value?.toString());
@@ -18,22 +20,22 @@ function Slider(props: SliderProps) {
             theme={{
                 components: {
                     Slider: {
-                        railBg: '#1a1a1d',
-                        railHoverBg: '#222226',
-                        trackBg: '#d4a852',
-                        trackHoverBg: '#e8c780',
-                        handleColor: '#d4a852',
-                        handleActiveColor: '#e8c780',
-                        dotActiveBorderColor: '#d4a852',
-                        colorPrimaryBorderHover: '#d4a852',
+                        railBg: colors.bgContainer,
+                        railHoverBg: colors.bgSpotlight,
+                        trackBg: colors.goldPrimary,
+                        trackHoverBg: colors.goldLight,
+                        handleColor: colors.goldPrimary,
+                        handleActiveColor: colors.goldLight,
+                        dotActiveBorderColor: colors.goldPrimary,
+                        colorPrimaryBorderHover: colors.goldPrimary,
                     },
                     Input: {
-                        colorBgContainer: '#1a1a1d',
-                        colorBorder: 'rgba(255, 255, 255, 0.08)',
-                        colorText: '#f0f0f2',
-                        colorTextPlaceholder: '#6a6a72',
-                        activeBorderColor: '#d4a852',
-                        hoverBorderColor: 'rgba(212, 168, 82, 0.3)',
+                        colorBgContainer: colors.bgContainer,
+                        colorBorder: colors.borderPrimary,
+                        colorText: colors.textPrimary,
+                        colorTextPlaceholder: colors.textTertiary,
+                        activeBorderColor: colors.goldPrimary,
+                        hoverBorderColor: colors.borderGold,
                     }
                 }
             }}
@@ -54,10 +56,10 @@ function Slider(props: SliderProps) {
                     }}
                     styles={{
                         track: {
-                            background: '#d4a852',
+                            background: colors.goldPrimary,
                         },
                         tracks: {
-                            background: '#d4a852',
+                            background: colors.goldPrimary,
                         }
                     }}
                 />
@@ -71,9 +73,9 @@ function Slider(props: SliderProps) {
                     }}
                     className={'w-12 ml-2'}
                     style={{
-                        background: '#1a1a1d',
-                        borderColor: 'rgba(255, 255, 255, 0.08)',
-                        color: '#f0f0f2'
+                        background: colors.bgContainer,
+                        borderColor: colors.borderPrimary,
+                        color: colors.textPrimary
                     }}
                 />
             </div>

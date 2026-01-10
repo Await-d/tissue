@@ -1,5 +1,6 @@
 import {Button, Checkbox, Form, Input, Modal, ModalProps, Space} from "antd";
 import {FilterOutlined} from "@ant-design/icons";
+import {useThemeColors} from "../../../../hooks/useThemeColors";
 
 export interface FilterParams {
     title?: string
@@ -14,6 +15,7 @@ interface Props extends ModalProps {
 
 function VideoFilterModal(props: Props) {
 
+    const colors = useThemeColors()
     const {onFilter, actors = [], initialValues, ...otherProps} = props
     const [form] = Form.useForm()
 
@@ -37,12 +39,12 @@ function VideoFilterModal(props: Props) {
                 <div style={{
                     fontSize: '18px',
                     fontWeight: 600,
-                    color: 'var(--color-text-primary)',
+                    color: colors.textPrimary,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
                 }}>
-                    <FilterOutlined style={{ color: 'var(--color-gold-primary)' }} />
+                    <FilterOutlined style={{ color: colors.goldPrimary }} />
                     <span className="tissue-text-gold">影片过滤</span>
                 </div>
             }
@@ -53,19 +55,19 @@ function VideoFilterModal(props: Props) {
                     <Button
                         onClick={handleRest}
                         style={{
-                            background: 'var(--color-bg-spotlight)',
-                            border: '1px solid var(--color-border-primary)',
-                            color: 'var(--color-text-primary)',
+                            background: colors.bgSpotlight,
+                            border: `1px solid ${colors.borderPrimary}`,
+                            color: colors.textPrimary,
                             fontWeight: 500,
                             transition: 'all var(--transition-fast)',
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--color-border-gold)';
-                            e.currentTarget.style.color = 'var(--color-gold-light)';
+                            e.currentTarget.style.borderColor = colors.borderGold;
+                            e.currentTarget.style.color = colors.goldLight;
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--color-border-primary)';
-                            e.currentTarget.style.color = 'var(--color-text-primary)';
+                            e.currentTarget.style.borderColor = colors.borderPrimary;
+                            e.currentTarget.style.color = colors.textPrimary;
                         }}
                     >
                         重 制
@@ -75,21 +77,21 @@ function VideoFilterModal(props: Props) {
                         onClick={onOk}
                         className="tissue-btn-gold"
                         style={{
-                            background: 'linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%)',
+                            background: colors.goldGradient,
                             border: 'none',
-                            color: 'var(--color-bg-base)',
+                            color: colors.bgBase,
                             fontWeight: 600,
-                            boxShadow: 'var(--shadow-sm)',
+                            boxShadow: colors.shadowSm,
                             transition: 'all var(--transition-base)',
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-gold-light) 0%, var(--color-gold-primary) 100%)';
-                            e.currentTarget.style.boxShadow = '0 0 20px rgba(212, 168, 82, 0.3), 0 4px 16px rgba(0, 0, 0, 0.4)';
+                            e.currentTarget.style.background = colors.goldGradientHover;
+                            e.currentTarget.style.boxShadow = `0 0 20px ${colors.rgba('gold', 0.3)}, 0 4px 16px ${colors.rgba('black', 0.4)}`;
                             e.currentTarget.style.transform = 'translateY(-1px)';
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%)';
-                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                            e.currentTarget.style.background = colors.goldGradient;
+                            e.currentTarget.style.boxShadow = colors.shadowSm;
                             e.currentTarget.style.transform = 'translateY(0)';
                         }}
                     >
@@ -99,13 +101,13 @@ function VideoFilterModal(props: Props) {
             }
             styles={{
                 content: {
-                    background: 'var(--color-bg-container)',
-                    border: '1px solid var(--color-border-primary)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                    background: colors.bgContainer,
+                    border: `1px solid ${colors.borderPrimary}`,
+                    boxShadow: colors.shadowLg,
                 },
                 header: {
                     background: 'transparent',
-                    borderBottom: '1px solid var(--color-border-primary)',
+                    borderBottom: `1px solid ${colors.borderPrimary}`,
                     paddingBottom: '16px',
                 },
                 body: {
@@ -125,7 +127,7 @@ function VideoFilterModal(props: Props) {
                     name="title"
                     label={
                         <span style={{
-                            color: 'var(--color-text-primary)',
+                            color: colors.textPrimary,
                             fontWeight: 500,
                             fontSize: '14px',
                         }}>
@@ -137,18 +139,18 @@ function VideoFilterModal(props: Props) {
                         allowClear
                         placeholder="输入标题关键词..."
                         style={{
-                            background: 'var(--color-bg-elevated)',
-                            border: '1px solid var(--color-border-primary)',
-                            color: 'var(--color-text-primary)',
+                            background: colors.bgElevated,
+                            border: `1px solid ${colors.borderPrimary}`,
+                            color: colors.textPrimary,
                             borderRadius: 'var(--radius-md)',
                             transition: 'all var(--transition-fast)',
                         }}
                         onFocus={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--color-border-gold)';
-                            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(212, 168, 82, 0.1)';
+                            e.currentTarget.style.borderColor = colors.borderGold;
+                            e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.rgba('gold', 0.1)}`;
                         }}
                         onBlur={(e) => {
-                            e.currentTarget.style.borderColor = 'var(--color-border-primary)';
+                            e.currentTarget.style.borderColor = colors.borderPrimary;
                             e.currentTarget.style.boxShadow = 'none';
                         }}
                     />
@@ -157,7 +159,7 @@ function VideoFilterModal(props: Props) {
                     name="actors"
                     label={
                         <span style={{
-                            color: 'var(--color-text-primary)',
+                            color: colors.textPrimary,
                             fontWeight: 500,
                             fontSize: '14px',
                         }}>
@@ -173,10 +175,10 @@ function VideoFilterModal(props: Props) {
                                 alignItems: 'center',
                                 padding: '8px 12px',
                                 margin: '4px',
-                                background: 'var(--color-bg-elevated)',
-                                border: '1px solid var(--color-border-primary)',
+                                background: colors.bgElevated,
+                                border: `1px solid ${colors.borderPrimary}`,
                                 borderRadius: 'var(--radius-sm)',
-                                color: 'var(--color-text-primary)',
+                                color: colors.textPrimary,
                                 transition: 'all var(--transition-fast)',
                                 cursor: 'pointer',
                                 userSelect: 'none',
@@ -189,9 +191,9 @@ function VideoFilterModal(props: Props) {
                             maxHeight: '320px',
                             overflowY: 'auto',
                             padding: '8px',
-                            background: 'var(--color-bg-base)',
+                            background: colors.bgBase,
                             borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--color-border-secondary)',
+                            border: `1px solid ${colors.borderSecondary}`,
                         }}
                     />
                 </Form.Item>

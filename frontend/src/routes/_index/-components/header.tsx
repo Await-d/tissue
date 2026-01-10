@@ -21,6 +21,7 @@ import Logo from "../../../assets/logo.svg";
 import { useResponsive } from "ahooks";
 import PinView, { PinMode } from "../../../components/PinView";
 import { Link, useRouter } from "@tanstack/react-router";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 
 const { useToken } = theme
@@ -32,6 +33,7 @@ interface Props {
 
 function Header(props: Props) {
 
+    const colors = useThemeColors()
     const responsive = useResponsive()
     const { history } = useRouter()
     const menuIconRef = useRef(null)
@@ -101,27 +103,27 @@ function Header(props: Props) {
     function renderDropdown(menu: any) {
         return (
             <div style={{
-                backgroundColor: '#1a1a1d',
+                backgroundColor: colors.bgContainer,
                 borderRadius: 14,
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: colors.shadowLg,
+                border: `1px solid ${colors.borderPrimary}`,
                 overflow: 'hidden',
             }}>
                 {/* 用户信息头部 */}
                 <div style={{
                     padding: '16px 20px',
-                    background: 'linear-gradient(135deg, rgba(212, 168, 82, 0.08) 0%, transparent 100%)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: `linear-gradient(135deg, ${colors.rgba('gold', 0.08)} 0%, transparent 100%)`,
+                    borderBottom: `1px solid ${colors.borderSecondary}`,
                 }}>
                     <div style={{
                         fontSize: 15,
                         fontWeight: 600,
-                        color: '#f0f0f2',
+                        color: colors.textPrimary,
                         marginBottom: 4,
                     }}>{userInfo.name}</div>
                     <div style={{
                         fontSize: 12,
-                        color: '#6a6a72',
+                        color: colors.textTertiary,
                     }}>{userInfo.username}</div>
                 </div>
                 {menu}
@@ -135,13 +137,13 @@ function Header(props: Props) {
             <div className={'cursor-pointer flex items-center'} onClick={() => props.onCollapse?.()}>
                 {props.collapsible && (
                     <IconButton ref={menuIconRef}>
-                        <MenuOutlined style={{ color: '#a0a0a8', fontSize: 18 }} />
+                        <MenuOutlined style={{ color: colors.textSecondary, fontSize: 18 }} />
                     </IconButton>
                 )}
                 {!props.collapsible && (
                     (canBack && !responsive.lg) ? (
                         <IconButton ref={backIconRef} onClick={() => history.go(-1)}>
-                            <ArrowLeftOutlined style={{ fontSize: 18, color: '#a0a0a8' }} />
+                            <ArrowLeftOutlined style={{ fontSize: 18, color: colors.textSecondary }} />
                         </IconButton>
                     ) : (
                         <Link to={'/'}
@@ -162,21 +164,21 @@ function Header(props: Props) {
                         ref={eyeIconRef}
                         onClick={() => onGoodBoyChange()}
                         style={{
-                            background: isGoodBoy ? 'rgba(212, 168, 82, 0.1)' : 'transparent',
-                            border: isGoodBoy ? '1px solid rgba(212, 168, 82, 0.3)' : '1px solid transparent',
+                            background: isGoodBoy ? colors.rgba('gold', 0.1) : 'transparent',
+                            border: isGoodBoy ? `1px solid ${colors.borderGold}` : '1px solid transparent',
                         }}
                     >
                         {isGoodBoy ? (
-                            <EyeInvisibleOutlined style={{ fontSize: 18, color: '#d4a852' }} />
+                            <EyeInvisibleOutlined style={{ fontSize: 18, color: colors.goldPrimary }} />
                         ) : (
-                            <EyeOutlined style={{ fontSize: 18, color: '#a0a0a8' }} />
+                            <EyeOutlined style={{ fontSize: 18, color: colors.textSecondary }} />
                         )}
                     </IconButton>
 
                     {/* 主题切换按钮 */}
                     <Dropdown menu={{ items: themeItems, onClick: onThemeClick }} arrow placement="bottomRight">
                         <IconButton ref={themeIconRef}>
-                            <CurrentTheme.icon style={{ fontSize: 18, color: '#a0a0a8' }} />
+                            <CurrentTheme.icon style={{ fontSize: 18, color: colors.textSecondary }} />
                         </IconButton>
                     </Dropdown>
 
@@ -185,11 +187,11 @@ function Header(props: Props) {
                         <IconButton
                             ref={userIconRef}
                             style={{
-                                background: 'linear-gradient(135deg, rgba(212, 168, 82, 0.15) 0%, rgba(212, 168, 82, 0.05) 100%)',
-                                border: '1px solid rgba(212, 168, 82, 0.2)',
+                                background: `linear-gradient(135deg, ${colors.rgba('gold', 0.15)} 0%, ${colors.rgba('gold', 0.05)} 100%)`,
+                                border: `1px solid ${colors.borderGold}`,
                             }}
                         >
-                            <UserOutlined style={{ fontSize: 18, color: '#d4a852' }} />
+                            <UserOutlined style={{ fontSize: 18, color: colors.goldPrimary }} />
                         </IconButton>
                     </Dropdown>
                 </Space>
@@ -204,13 +206,13 @@ function Header(props: Props) {
                 centered
                 styles={{
                     content: {
-                        background: '#1a1a1d',
+                        background: colors.bgContainer,
                         borderRadius: 14,
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        border: `1px solid ${colors.borderPrimary}`,
                     },
                     header: {
                         background: 'transparent',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                        borderBottom: `1px solid ${colors.borderSecondary}`,
                         paddingBottom: 16,
                     },
                 }}

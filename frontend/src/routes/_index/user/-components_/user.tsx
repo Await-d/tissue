@@ -15,6 +15,7 @@ import { useAntdTable } from "ahooks";
 import More from "../../../../components/More";
 import IconButton from "../../../../components/IconButton";
 import { useFormModal } from "../../../../utils/useFormModal.ts";
+import { useThemeColors } from '../../../../hooks/useThemeColors';
 
 function UserList() {
     const { message } = App.useApp();
@@ -27,6 +28,7 @@ function UserList() {
             refresh()
         }
     })
+    const colors = useThemeColors()
 
     const columns: ColumnsType<any> = [
         {
@@ -64,18 +66,18 @@ function UserList() {
         <>
             <style>{`
                 .user-list-card .ant-card {
-                    background: #1a1a1d;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                    background: ${colors.bgContainer};
+                    border: 1px solid ${colors.borderPrimary};
+                    box-shadow: ${colors.shadowSm};
                 }
 
                 .user-list-card .ant-card-head {
-                    background: #222226;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    background: ${colors.bgSpotlight};
+                    border-bottom: 1px solid ${colors.borderPrimary};
                 }
 
                 .user-list-card .ant-card-head-title {
-                    color: #f0f0f2;
+                    color: ${colors.textPrimary};
                     font-weight: 600;
                 }
 
@@ -88,9 +90,9 @@ function UserList() {
                 }
 
                 .user-list-card .ant-table-thead > tr > th {
-                    background: #222226;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                    color: #f0f0f2;
+                    background: ${colors.bgSpotlight};
+                    border-bottom: 1px solid ${colors.borderPrimary};
+                    color: ${colors.textPrimary};
                     font-weight: 600;
                     padding: 16px;
                 }
@@ -101,18 +103,18 @@ function UserList() {
                 }
 
                 .user-list-card .ant-table-tbody > tr > td {
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-                    color: #a0a0a8;
+                    border-bottom: 1px solid ${colors.borderSecondary};
+                    color: ${colors.textSecondary};
                     padding: 16px;
                 }
 
                 .user-list-card .ant-table-tbody > tr:hover {
-                    background: rgba(212, 168, 82, 0.08) !important;
+                    background: ${colors.rgba('gold', 0.08)} !important;
                 }
 
                 .user-list-card .ant-table-tbody > tr:hover > td {
-                    color: #f0f0f2;
-                    border-bottom-color: rgba(212, 168, 82, 0.15);
+                    color: ${colors.textPrimary};
+                    border-bottom-color: ${colors.rgba('gold', 0.15)};
                 }
 
                 .user-list-card .ant-table-tbody > tr:last-child > td {
@@ -126,17 +128,17 @@ function UserList() {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: #d4a852;
-                    color: #0d0d0f;
+                    background: ${colors.goldPrimary};
+                    color: ${colors.bgBase};
                     border: none;
                     cursor: pointer;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    box-shadow: 0 2px 6px rgba(212, 168, 82, 0.3);
+                    box-shadow: 0 2px 6px ${colors.rgba('gold', 0.3)};
                 }
 
                 .user-list-card .icon-button:hover {
-                    background: #e8c780;
-                    box-shadow: 0 4px 12px rgba(212, 168, 82, 0.4);
+                    background: ${colors.goldLight};
+                    box-shadow: 0 4px 12px ${colors.rgba('gold', 0.4)};
                     transform: translateY(-2px);
                 }
 
@@ -150,11 +152,11 @@ function UserList() {
                 }
 
                 .user-list-card .ant-empty-description {
-                    color: #6a6a72;
+                    color: ${colors.textTertiary};
                 }
             `}</style>
-            <Card 
-                title={'用户管理'} 
+            <Card
+                title={'用户管理'}
                 extra={(
                     <IconButton onClick={() => setOpen(true)}>
                         <PlusOutlined />
@@ -162,15 +164,15 @@ function UserList() {
                 )}
                 className="user-list-card"
                 style={{
-                    background: '#1a1a1d',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                    background: colors.bgContainer,
+                    border: `1px solid ${colors.borderPrimary}`,
+                    boxShadow: colors.shadowSm
                 }}
                 styles={{
                     header: {
-                        background: '#222226',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-                        color: '#f0f0f2'
+                        background: colors.bgSpotlight,
+                        borderBottom: `1px solid ${colors.borderPrimary}`,
+                        color: colors.textPrimary
                     },
                     body: {
                         padding: 0

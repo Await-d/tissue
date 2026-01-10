@@ -8,6 +8,7 @@ import {FilterOutlined, RedoOutlined} from "@ant-design/icons";
 import VideoFilterModal, {FilterParams} from "./-components/filter.tsx";
 import {createFileRoute, Link} from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
+import {useThemeColors} from "../../../hooks/useThemeColors";
 
 export const Route = createFileRoute('/_index/video/')({
     component: Video,
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_index/video/')({
 
 function Video() {
 
+    const colors = useThemeColors()
     const {data = [], loading, run, refresh} = useRequest(api.getVideos)
     const [selected, setSelected] = useState<string | undefined>()
     const [filterOpen, setFilterOpen] = useState(false)
@@ -59,8 +61,8 @@ function Video() {
                     <Col key={index} span={24} md={12} lg={6} className="tissue-animate-in" style={{ animationDelay: `${index * 50}ms` }}>
                         <Card
                             style={{
-                                background: 'var(--color-bg-container)',
-                                border: '1px solid var(--color-border-primary)',
+                                background: colors.bgContainer,
+                                border: `1px solid ${colors.borderPrimary}`,
                                 borderRadius: 'var(--radius-lg)',
                             }}
                         >
@@ -94,8 +96,8 @@ function Video() {
                             }
                             onClick={() => setSelected(video.path)}
                             style={{
-                                background: 'var(--color-bg-container)',
-                                border: '1px solid var(--color-border-primary)',
+                                background: colors.bgContainer,
+                                border: `1px solid ${colors.borderPrimary}`,
                                 borderRadius: 'var(--radius-lg)',
                                 overflow: 'hidden',
                                 transition: 'all var(--transition-base)',
@@ -105,13 +107,13 @@ function Video() {
                             className="tissue-glow-border"
                             onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-6px)';
-                                e.currentTarget.style.boxShadow = '0 0 24px rgba(212, 168, 82, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5)';
-                                e.currentTarget.style.borderColor = 'var(--color-border-gold)';
+                                e.currentTarget.style.boxShadow = `0 0 24px ${colors.rgba('gold', 0.2)}, 0 8px 32px ${colors.rgba('black', 0.5)}`;
+                                e.currentTarget.style.borderColor = colors.borderGold;
                             }}
                             onMouseLeave={(e) => {
                                 e.currentTarget.style.transform = 'translateY(0)';
                                 e.currentTarget.style.boxShadow = '';
-                                e.currentTarget.style.borderColor = 'var(--color-border-primary)';
+                                e.currentTarget.style.borderColor = colors.borderPrimary;
                             }}
                         >
                             <div style={{
@@ -133,14 +135,14 @@ function Video() {
                                         minHeight: '3em',
                                         fontSize: '14px',
                                         fontWeight: 600,
-                                        color: 'var(--color-text-primary)',
+                                        color: colors.textPrimary,
                                         transition: 'color var(--transition-fast)',
                                     }}
                                     onMouseEnter={(e) => {
-                                        e.currentTarget.style.color = 'var(--color-gold-light)';
+                                        e.currentTarget.style.color = colors.goldLight;
                                     }}
                                     onMouseLeave={(e) => {
-                                        e.currentTarget.style.color = 'var(--color-text-primary)';
+                                        e.currentTarget.style.color = colors.textPrimary;
                                     }}
                                     >
                                         {video.title}
@@ -157,9 +159,9 @@ function Video() {
                                             <Tag
                                                 variant="borderless"
                                                 style={{
-                                                    background: 'rgba(24, 144, 255, 0.15)',
+                                                    background: colors.rgba('white', 0.08),
                                                     color: '#4ea8ff',
-                                                    border: '1px solid rgba(24, 144, 255, 0.3)',
+                                                    border: `1px solid ${colors.rgba('white', 0.3)}`,
                                                     borderRadius: 'var(--radius-sm)',
                                                     fontWeight: 500,
                                                     fontSize: '12px',
@@ -174,9 +176,9 @@ function Video() {
                                             <Tag
                                                 variant="borderless"
                                                 style={{
-                                                    background: 'rgba(82, 196, 26, 0.15)',
+                                                    background: colors.rgba('white', 0.08),
                                                     color: '#73d13d',
-                                                    border: '1px solid rgba(82, 196, 26, 0.3)',
+                                                    border: `1px solid ${colors.rgba('white', 0.3)}`,
                                                     borderRadius: 'var(--radius-sm)',
                                                     fontWeight: 500,
                                                     fontSize: '12px',
@@ -192,9 +194,9 @@ function Video() {
                                                 key={actor.name}
                                                 variant="borderless"
                                                 style={{
-                                                    background: 'var(--color-gold-glow)',
-                                                    color: 'var(--color-gold-primary)',
-                                                    border: '1px solid var(--color-border-gold)',
+                                                    background: colors.goldGlow,
+                                                    color: colors.goldPrimary,
+                                                    border: `1px solid ${colors.borderGold}`,
                                                     borderRadius: 'var(--radius-sm)',
                                                     fontWeight: 500,
                                                     fontSize: '12px',
@@ -203,11 +205,11 @@ function Video() {
                                                     transition: 'all var(--transition-fast)',
                                                 }}
                                                 onMouseEnter={(e) => {
-                                                    e.currentTarget.style.background = 'rgba(212, 168, 82, 0.25)';
+                                                    e.currentTarget.style.background = colors.rgba('gold', 0.25);
                                                     e.currentTarget.style.transform = 'translateY(-1px)';
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.currentTarget.style.background = 'var(--color-gold-glow)';
+                                                    e.currentTarget.style.background = colors.goldGlow;
                                                     e.currentTarget.style.transform = 'translateY(0)';
                                                 }}
                                             >
@@ -218,9 +220,9 @@ function Video() {
                                             <Tag
                                                 variant="borderless"
                                                 style={{
-                                                    background: 'var(--color-bg-spotlight)',
-                                                    color: 'var(--color-text-tertiary)',
-                                                    border: '1px solid var(--color-border-primary)',
+                                                    background: colors.bgSpotlight,
+                                                    color: colors.textTertiary,
+                                                    border: `1px solid ${colors.borderPrimary}`,
                                                     borderRadius: 'var(--radius-sm)',
                                                     fontWeight: 500,
                                                     fontSize: '12px',
@@ -242,7 +244,7 @@ function Video() {
                     <Card
                         title={
                             <span style={{
-                                color: 'var(--color-text-primary)',
+                                color: colors.textPrimary,
                                 fontSize: '16px',
                                 fontWeight: 600,
                             }}>
@@ -250,8 +252,8 @@ function Video() {
                             </span>
                         }
                         style={{
-                            background: 'var(--color-bg-container)',
-                            border: '1px solid var(--color-border-primary)',
+                            background: colors.bgContainer,
+                            border: `1px solid ${colors.borderPrimary}`,
                             borderRadius: 'var(--radius-lg)',
                         }}
                     >
@@ -262,14 +264,14 @@ function Video() {
                                     <div style={{
                                         fontSize: '16px',
                                         marginBottom: '12px',
-                                        color: 'var(--color-text-primary)',
+                                        color: colors.textPrimary,
                                         fontWeight: 500,
                                     }}>
                                         {hasFilter ? '没有找到符合条件的视频' : '暂无视频'}
                                     </div>
                                     <div style={{
                                         fontSize: '14px',
-                                        color: 'var(--color-text-secondary)',
+                                        color: colors.textSecondary,
                                         lineHeight: '1.6',
                                     }}>
                                         {hasFilter
@@ -282,15 +284,15 @@ function Video() {
                                                         hash={'video'}
                                                         style={{
                                                             fontWeight: 500,
-                                                            color: 'var(--color-gold-primary)',
+                                                            color: colors.goldPrimary,
                                                             textDecoration: 'none',
                                                             transition: 'color var(--transition-fast)',
                                                         }}
                                                         onMouseEnter={(e) => {
-                                                            e.currentTarget.style.color = 'var(--color-gold-light)';
+                                                            e.currentTarget.style.color = colors.goldLight;
                                                         }}
                                                         onMouseLeave={(e) => {
-                                                            e.currentTarget.style.color = 'var(--color-gold-primary)';
+                                                            e.currentTarget.style.color = colors.goldPrimary;
                                                         }}
                                                     >
                                                         配置视频路径
@@ -332,8 +334,8 @@ function Video() {
                                 icon={<RedoOutlined/>}
                                 onClick={() => run(true)}
                                 style={{
-                                    background: 'var(--color-bg-spotlight)',
-                                    border: '1px solid var(--color-border-primary)',
+                                    background: colors.bgSpotlight,
+                                    border: `1px solid ${colors.borderPrimary}`,
                                 }}
                             />
                             <FloatButton
@@ -342,11 +344,11 @@ function Video() {
                                 onClick={() => setFilterOpen(true)}
                                 style={{
                                     ...(hasFilter ? {
-                                        background: 'linear-gradient(135deg, var(--color-gold-primary) 0%, var(--color-gold-dark) 100%)',
-                                        boxShadow: 'var(--shadow-gold)',
+                                        background: colors.goldGradient,
+                                        boxShadow: colors.shadowGold,
                                     } : {
-                                        background: 'var(--color-bg-spotlight)',
-                                        border: '1px solid var(--color-border-primary)',
+                                        background: colors.bgSpotlight,
+                                        border: `1px solid ${colors.borderPrimary}`,
                                     })
                                 }}
                             />

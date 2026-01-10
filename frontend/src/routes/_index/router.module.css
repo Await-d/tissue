@@ -96,10 +96,10 @@
 /* 移动端优化 */
 @media (max-width: 768px) {
     .header {
-        background: rgba(13, 13, 15, 0.92);
+        background: var(--color-bg-base-translucent, rgba(13, 13, 15, 0.92));
     }
 
     .footer {
-        background: rgba(13, 13, 15, 0.95);
+        background: var(--color-bg-base-translucent-heavy, rgba(13, 13, 15, 0.95));
     }
 }

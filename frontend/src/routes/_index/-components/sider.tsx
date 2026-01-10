@@ -10,6 +10,7 @@ import { Menu } from "antd";
 import routes from "../../../routes";
 import Logo from "../../../assets/logo.svg";
 import { Link, useMatches, useNavigate } from "@tanstack/react-router";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 interface Props {
     onSelect?: () => void
@@ -18,6 +19,7 @@ interface Props {
 
 function Sider(props: Props) {
 
+    const colors = useThemeColors()
     const { showLogo = true } = props
     const matches = useMatches()
     const selected = matches.slice(2).map((item) => {
@@ -83,13 +85,13 @@ function Sider(props: Props) {
             <div
                 className="px-6 py-4 mt-auto"
                 style={{
-                    borderTop: '1px solid rgba(255, 255, 255, 0.04)',
-                    background: 'linear-gradient(180deg, transparent 0%, rgba(212, 168, 82, 0.02) 100%)',
+                    borderTop: `1px solid ${colors.borderSecondary}`,
+                    background: `linear-gradient(180deg, transparent 0%, ${colors.rgba('gold', 0.02)} 100%)`,
                 }}
             >
                 <div
                     className="text-xs"
-                    style={{ color: '#4a4a52' }}
+                    style={{ color: colors.textTertiary }}
                 >
                     TISSUE+
                 </div>

@@ -14,10 +14,12 @@ import * as subscribeApi from "../../../../apis/subscribe";
 import DownloadListModal from "../../../_index/search/-components/downloadListModal";
 import { PreviewModal } from "../../../../components/VideoPreview";
 import { useRequest } from "ahooks";
+import { useThemeColors } from "../../../../hooks/useThemeColors";
 
 function JavDBItem(props: { item: any }) {
     const { item } = props;
     const { message } = App.useApp();
+    const colors = useThemeColors();
 
     const [loadingVideoId, setLoadingVideoId] = useState<string | null>(null);
     const [selectedVideo, setSelectedVideo] = useState<any>(null);
@@ -130,22 +132,22 @@ function JavDBItem(props: { item: any }) {
             <div
                 className="tissue-card group"
                 style={{
-                    background: '#1a1a1d',
+                    background: colors.bgContainer,
                     borderRadius: 14,
                     overflow: 'hidden',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    border: `1px solid ${colors.borderPrimary}`,
                     cursor: 'pointer',
                     transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
                 onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-6px) scale(1.01)';
-                    e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 168, 82, 0.2)';
-                    e.currentTarget.style.borderColor = 'rgba(212, 168, 82, 0.3)';
+                    e.currentTarget.style.boxShadow = `0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px ${colors.borderGold}`;
+                    e.currentTarget.style.borderColor = colors.borderGold;
                 }}
                 onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0) scale(1)';
                     e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                    e.currentTarget.style.borderColor = colors.borderPrimary;
                 }}
             >
                 {/* 封面区域 */}
@@ -178,7 +180,7 @@ function JavDBItem(props: { item: any }) {
                     >
                         <PlayCircleOutlined style={{
                             fontSize: 56,
-                            color: 'rgba(255, 255, 255, 0.9)',
+                            color: colors.textPrimary,
                             filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))',
                         }} />
                     </div>
@@ -196,15 +198,15 @@ function JavDBItem(props: { item: any }) {
                             <Button
                                 type="default"
                                 shape="circle"
-                                icon={<EyeOutlined style={{ color: '#f0f0f2' }} />}
+                                icon={<EyeOutlined style={{ color: colors.textPrimary }} />}
                                 size="middle"
                                 loading={loadingPreview}
                                 onClick={handlePreviewClick}
                                 style={{
-                                    background: 'rgba(26, 26, 29, 0.9)',
+                                    background: `rgba(${colors.rgba('black', 0.1)})`,
                                     backdropFilter: 'blur(10px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                                    border: `1px solid ${colors.borderPrimary}`,
+                                    boxShadow: colors.shadowMd,
                                 }}
                             />
                         </Tooltip>
@@ -217,9 +219,9 @@ function JavDBItem(props: { item: any }) {
                                 loading={!!loadingVideoId}
                                 onClick={handleVideoDownload}
                                 style={{
-                                    background: 'linear-gradient(135deg, #d4a852 0%, #b08d3e 100%)',
+                                    background: colors.goldGradient,
                                     border: 'none',
-                                    boxShadow: '0 4px 12px rgba(212, 168, 82, 0.4)',
+                                    boxShadow: colors.shadowGold,
                                 }}
                             />
                         </Tooltip>
@@ -231,15 +233,15 @@ function JavDBItem(props: { item: any }) {
                             position: 'absolute',
                             top: 12,
                             left: 12,
-                            background: 'linear-gradient(135deg, rgba(212, 168, 82, 0.95) 0%, rgba(176, 141, 62, 0.95) 100%)',
+                            background: colors.goldGradient,
                             padding: '4px 10px',
                             borderRadius: 8,
                             display: 'flex',
                             alignItems: 'center',
                             gap: 4,
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                            boxShadow: colors.shadowSm,
                         }}>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: '#0d0d0f' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: colors.bgBase }}>
                                 {item.rank?.toFixed(1)}
                             </span>
                         </div>
@@ -252,7 +254,7 @@ function JavDBItem(props: { item: any }) {
                     <div style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: '#d4a852',
+                        color: colors.textGold,
                         letterSpacing: '0.05em',
                         marginBottom: 6,
                         textTransform: 'uppercase',
@@ -265,7 +267,7 @@ function JavDBItem(props: { item: any }) {
                         <div style={{
                             fontSize: 14,
                             fontWeight: 500,
-                            color: '#f0f0f2',
+                            color: colors.textPrimary,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             display: '-webkit-box',
@@ -285,7 +287,7 @@ function JavDBItem(props: { item: any }) {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         paddingTop: 10,
-                        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                        borderTop: `1px solid ${colors.borderPrimary}`,
                     }}>
                         <Space size={6} align="center">
                             <Rate
@@ -296,14 +298,14 @@ function JavDBItem(props: { item: any }) {
                             />
                             <span style={{
                                 fontSize: 12,
-                                color: '#6a6a72',
+                                color: colors.textTertiary,
                             }}>
                                 {item.rank_count || 0} 评论
                             </span>
                         </Space>
                         <span style={{
                             fontSize: 11,
-                            color: '#4a4a52',
+                            color: colors.textTertiary,
                         }}>
                             {item.publish_date || ''}
                         </span>
@@ -341,8 +343,8 @@ function JavDBItem(props: { item: any }) {
             <Badge.Ribbon
                 text={'中文'}
                 style={{
-                    background: 'linear-gradient(135deg, #d4a852 0%, #b08d3e 100%)',
-                    boxShadow: '0 2px 8px rgba(212, 168, 82, 0.3)',
+                    background: colors.goldGradient,
+                    boxShadow: colors.shadowGold,
                 }}
             >
                 {render()}

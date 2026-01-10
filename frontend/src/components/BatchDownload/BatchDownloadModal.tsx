@@ -15,6 +15,7 @@ import {
     CloudDownloadOutlined
 } from '@ant-design/icons';
 import type { BatchSelectVideo } from '@/hooks/useBatchSelect';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import * as videoApi from '@/apis/video';
 import * as subscribeApi from '@/apis/subscribe';
 import './BatchDownloadModal.css';
@@ -45,6 +46,7 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
     onComplete,
 }) => {
     const { message } = App.useApp();
+    const colors = useThemeColors();
     const [downloading, setDownloading] = useState(false);
     const [paused, setPaused] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(-1);
@@ -233,23 +235,23 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
     const renderStatusIcon = (status: DownloadStatus['status']) => {
         switch (status) {
             case 'success':
-                return <CheckCircleFilled style={{ color: '#52c41a', fontSize: 18 }} />;
+                return <CheckCircleFilled style={{ color: colors.success, fontSize: 18 }} />;
             case 'error':
-                return <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 18 }} />;
+                return <CloseCircleFilled style={{ color: colors.error, fontSize: 18 }} />;
             case 'loading':
-                return <LoadingOutlined style={{ color: '#d4a852', fontSize: 18 }} spin />;
+                return <LoadingOutlined style={{ color: colors.goldPrimary, fontSize: 18 }} spin />;
             case 'skipped':
-                return <ClockCircleOutlined style={{ color: '#faad14', fontSize: 18 }} />;
+                return <ClockCircleOutlined style={{ color: colors.warning, fontSize: 18 }} />;
             default:
-                return <ClockCircleOutlined style={{ color: '#6a6a72', fontSize: 18 }} />;
+                return <ClockCircleOutlined style={{ color: colors.textTertiary, fontSize: 18 }} />;
         }
     };
 
     return (
         <Modal
             title={
-                <span style={{ color: '#f0f0f2', fontSize: 18, fontWeight: 600 }}>
-                    <CloudDownloadOutlined style={{ marginRight: 8, color: '#d4a852' }} />
+                <span style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 600 }}>
+                    <CloudDownloadOutlined style={{ marginRight: 8, color: colors.goldPrimary }} />
                     批量下载
                 </span>
             }
@@ -278,7 +280,7 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
             {/* 下载偏好设置 */}
             {!downloading && completedCount === 0 && (
                 <div className="download-preferences">
-                    <h4 style={{ color: '#a0a0a8', marginBottom: 12 }}>下载偏好</h4>
+                    <h4 style={{ color: colors.textSecondary, marginBottom: 12 }}>下载偏好</h4>
                     <Space size="large">
                         <div className="preference-item">
                             <Switch
@@ -315,22 +317,22 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
                         percent={progress}
                         status={downloading ? 'active' : (errorCount > 0 ? 'exception' : 'success')}
                         strokeColor={{
-                            '0%': '#d4a852',
-                            '100%': '#e8c780',
+                            '0%': colors.goldPrimary,
+                            '100%': colors.goldLight,
                         }}
-                        trailColor="rgba(255, 255, 255, 0.08)"
+                        trailColor={colors.rgba('white', 0.08)}
                     />
                     <div className="progress-stats">
                         <span>
-                            <CheckCircleFilled style={{ color: '#52c41a', marginRight: 4 }} />
+                            <CheckCircleFilled style={{ color: colors.success, marginRight: 4 }} />
                             成功: {successCount}
                         </span>
                         <span>
-                            <CloseCircleFilled style={{ color: '#ff4d4f', marginRight: 4 }} />
+                            <CloseCircleFilled style={{ color: colors.error, marginRight: 4 }} />
                             失败: {errorCount}
                         </span>
                         <span>
-                            <ClockCircleOutlined style={{ color: '#faad14', marginRight: 4 }} />
+                            <ClockCircleOutlined style={{ color: colors.warning, marginRight: 4 }} />
                             跳过: {skippedCount}
                         </span>
                     </div>
@@ -358,7 +360,7 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
                                             shape="square"
                                             size={48}
                                             src={video.cover ? videoApi.getVideoCover(video.cover) : undefined}
-                                            style={{ background: '#222226' }}
+                                            style={{ background: colors.bgSpotlight }}
                                         >
                                             {video.num?.substring(0, 2)}
                                         </Avatar>

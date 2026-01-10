@@ -2,8 +2,12 @@
  * 批量下载弹窗样式 - 电影美学主题
  */
 
+.batch-download-modal .ant-modal-mask {
+    background: var(--color-modal-overlay);
+}
+
 .batch-download-modal .ant-modal-content {
-    background: var(--color-bg-container) !important;
+    background: var(--color-modal-bg) !important;
     border: 1px solid var(--color-border-primary);
     border-radius: 16px;
 }

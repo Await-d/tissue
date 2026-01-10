@@ -6,6 +6,7 @@ import {useRequest} from "ahooks";
 import React from "react";
 import {createFileRoute} from "@tanstack/react-router";
 import {PlayCircleOutlined} from "@ant-design/icons";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 import './style.css';
 
 export const Route = createFileRoute('/_index/schedule/')({
@@ -13,6 +14,7 @@ export const Route = createFileRoute('/_index/schedule/')({
 })
 
 function Schedule() {
+    const colors = useThemeColors()
 
     const {data = [], loading, refresh} = useRequest(api.getSchedules, {})
     const {run: onFire, loading: onFiring} = useRequest(api.fireSchedule, {
@@ -28,7 +30,7 @@ function Schedule() {
             title: '任务名称',
             dataIndex: 'name',
             render: (value) => (
-                <span style={{ color: '#f0f0f2', fontWeight: 500 }}>{value}</span>
+                <span style={{ color: colors.textPrimary, fontWeight: 500 }}>{value}</span>
             )
         },
         {
@@ -36,11 +38,11 @@ function Schedule() {
             dataIndex: 'status',
             render: (value) => (
                 value ? (
-                    <Tag 
+                    <Tag
                         style={{
-                            background: 'rgba(212, 168, 82, 0.1)',
-                            border: '1px solid rgba(212, 168, 82, 0.3)',
-                            color: '#d4a852',
+                            background: colors.rgba('gold', 0.1),
+                            border: `1px solid ${colors.borderGold}`,
+                            color: colors.textGold,
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 6
@@ -50,11 +52,11 @@ function Schedule() {
                         运行中
                     </Tag>
                 ) : (
-                    <Tag 
+                    <Tag
                         style={{
-                            background: 'rgba(160, 160, 168, 0.1)',
-                            border: '1px solid rgba(160, 160, 168, 0.3)',
-                            color: '#a0a0a8',
+                            background: colors.rgba('white', 0.1),
+                            border: `1px solid ${colors.borderSecondary}`,
+                            color: colors.textSecondary,
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 6
@@ -70,7 +72,7 @@ function Schedule() {
             title: '下次执行时间',
             dataIndex: 'next_run_time',
             render: (value) => (
-                <span style={{ color: '#a0a0a8', fontSize: 13 }}>
+                <span style={{ color: colors.textSecondary, fontSize: 13 }}>
                     {dayjs(value).format('lll')}
                 </span>
             )
@@ -79,15 +81,15 @@ function Schedule() {
             title: '操作',
             dataIndex: 'operations',
             render: (_, record: any) => (
-                <Button 
-                    type={'primary'} 
-                    onClick={() => onFire(record.key)} 
+                <Button
+                    type={'primary'}
+                    onClick={() => onFire(record.key)}
                     loading={onFiring}
                     icon={<PlayCircleOutlined />}
                     style={{
-                        background: 'linear-gradient(135deg, #d4a852 0%, #b08d3e 100%)',
+                        background: colors.goldGradient,
                         border: 'none',
-                        boxShadow: '0 2px 8px rgba(212, 168, 82, 0.25)',
+                        boxShadow: colors.shadowGold,
                         transition: 'all 0.3s'
                     }}
                     className="execute-btn"
@@ -100,12 +102,12 @@ function Schedule() {
 
     return (
         <div className="schedule-page-wrapper animate-fade-in">
-            <Card 
-                title={<span style={{ color: '#f0f0f2', fontSize: 18, fontWeight: 500 }}>任务调度</span>}
+            <Card
+                title={<span style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 500 }}>任务调度</span>}
                 className="dark-card"
                 style={{
-                    background: '#141416',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: colors.bgElevated,
+                    border: `1px solid ${colors.borderPrimary}`,
                     borderRadius: 8
                 }}
             >

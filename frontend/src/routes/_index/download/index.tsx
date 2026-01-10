@@ -6,6 +6,7 @@ import React, { useMemo, useState } from "react";
 import IconButton from "../../../components/IconButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
+import { useThemeColors } from "../../../hooks/useThemeColors";
 
 const { useToken } = theme
 
@@ -16,6 +17,7 @@ export const Route = createFileRoute('/_index/download/')({
 function Download() {
     const { message, modal } = App.useApp()
     const { token } = useToken()
+    const colors = useThemeColors()
     const navigate = useNavigate()
     const [selected, setSelected] = useState<string | undefined>()
     const [keyword, setKeyword] = useState<string>()
@@ -143,7 +145,7 @@ function Download() {
                     width: '100%',
                 }}>
                     <span style={{
-                        color: '#f0f0f2',
+                        color: colors.textPrimary,
                         fontWeight: 500,
                         fontSize: '14px',
                     }}>
@@ -163,18 +165,18 @@ function Download() {
                                             background: completedFiles === totalFiles
                                                 ? 'rgba(82, 196, 26, 0.2)'
                                                 : downloadingFiles > 0
-                                                ? 'rgba(212, 168, 82, 0.2)'
-                                                : 'rgba(255, 255, 255, 0.08)',
+                                                ? colors.rgba('gold', 0.2)
+                                                : colors.borderPrimary,
                                             borderColor: completedFiles === totalFiles
                                                 ? '#52c41a'
                                                 : downloadingFiles > 0
-                                                ? '#d4a852'
-                                                : 'rgba(255, 255, 255, 0.08)',
+                                                ? colors.goldPrimary
+                                                : colors.borderPrimary,
                                             color: completedFiles === totalFiles
                                                 ? '#52c41a'
                                                 : downloadingFiles > 0
-                                                ? '#e8c780'
-                                                : '#a0a0a8',
+                                                ? colors.goldLight
+                                                : colors.textSecondary,
                                             fontWeight: 500,
                                         }}
                                     >
@@ -185,8 +187,8 @@ function Download() {
                                         size="small" 
                                         style={{ width: 80 }}
                                         strokeColor={completedFiles === totalFiles ? '#52c41a' : {
-                                            '0%': '#d4a852',
-                                            '100%': '#e8c780',
+                                            '0%': colors.goldPrimary,
+                                            '100%': colors.goldLight,
                                         }}
                                         trailColor="rgba(255, 255, 255, 0.08)"
                                     />
@@ -201,14 +203,14 @@ function Download() {
                     itemLayout="horizontal"
                     dataSource={torrent.files}
                     style={{
-                        background: '#0d0d0f',
+                        background: colors.bgBase,
                         borderRadius: '8px',
                         padding: '12px',
                     }}
                     renderItem={(item: any, index) => (
                         <List.Item
                             style={{
-                                background: '#141416',
+                                background: colors.bgElevated,
                                 borderRadius: '8px',
                                 padding: '12px 16px',
                                 marginBottom: '8px',
@@ -216,12 +218,12 @@ function Download() {
                                 transition: 'all 0.3s ease',
                             }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.borderColor = '#d4a852';
-                                e.currentTarget.style.background = '#1a1a1d';
+                                e.currentTarget.style.borderColor = colors.goldPrimary;
+                                e.currentTarget.style.background = colors.bgContainer;
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                                e.currentTarget.style.background = '#141416';
+                                e.currentTarget.style.borderColor = colors.borderPrimary;
+                                e.currentTarget.style.background = colors.bgElevated;
                             }}
                             actions={[
                             <Tooltip title={'整理'}>
@@ -239,21 +241,21 @@ function Download() {
                                             <a
                                                 onClick={() => handleVideoClick(item.num)}
                                                 style={{
-                                                    color: '#d4a852',
+                                                    color: colors.goldPrimary,
                                                     fontWeight: 500,
                                                     transition: 'color 0.3s ease',
                                                 }}
                                                 onMouseEnter={(e) => {
-                                                    e.currentTarget.style.color = '#e8c780';
+                                                    e.currentTarget.style.color = colors.goldLight;
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.currentTarget.style.color = '#d4a852';
+                                                    e.currentTarget.style.color = colors.goldPrimary;
                                                 }}
                                             >
                                                 {item.name}
                                             </a>
                                         ) : (
-                                            <span style={{ color: '#f0f0f2', fontWeight: 500 }}>
+                                            <span style={{ color: colors.textPrimary, fontWeight: 500 }}>
                                                 {item.name}
                                             </span>
                                         )}
@@ -274,8 +276,8 @@ function Download() {
                                                 size="small"
                                                 style={{ width: 100, marginLeft: 10, display: 'inline-block' }}
                                                 strokeColor={{
-                                                    '0%': '#d4a852',
-                                                    '100%': '#e8c780',
+                                                    '0%': colors.goldPrimary,
+                                                    '100%': colors.goldLight,
                                                 }}
                                                 trailColor="rgba(255, 255, 255, 0.08)"
                                             />
@@ -284,27 +286,27 @@ function Download() {
                                 )}
                                 description={(
                                     <div>
-                                        <div style={{ color: '#6a6a72', fontSize: '13px', marginTop: '4px' }}>
+                                        <div style={{ color: colors.textTertiary, fontSize: '13px', marginTop: '4px' }}>
                                             {item.path}
                                         </div>
                                         {item.actors && item.actors.length > 0 && (
                                             <div style={{ marginTop: 8 }}>
-                                                <UserOutlined style={{ marginRight: 6, color: '#a0a0a8' }} />
+                                                <UserOutlined style={{ marginRight: 6, color: colors.textSecondary }} />
                                                 {item.actors.map((actor: string, idx: number) => (
                                                     <React.Fragment key={actor}>
                                                         <a
                                                             onClick={() => handleActorClick(actor)}
                                                             style={{
-                                                                color: '#d4a852',
+                                                                color: colors.goldPrimary,
                                                                 fontWeight: 500,
                                                                 fontSize: '13px',
                                                                 transition: 'color 0.3s ease',
                                                             }}
                                                             onMouseEnter={(e) => {
-                                                                e.currentTarget.style.color = '#e8c780';
+                                                                e.currentTarget.style.color = colors.goldLight;
                                                             }}
                                                             onMouseLeave={(e) => {
-                                                                e.currentTarget.style.color = '#d4a852';
+                                                                e.currentTarget.style.color = colors.goldPrimary;
                                                             }}
                                                         >
                                                             {actor}
@@ -376,7 +378,7 @@ function Download() {
                     justifyContent: 'space-between',
                 }}>
                     <span style={{
-                        color: '#f0f0f2',
+                        color: colors.textPrimary,
                         fontSize: '18px',
                         fontWeight: 600,
                     }}>
@@ -388,9 +390,9 @@ function Download() {
                             size="small"
                             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                             style={{
-                                background: '#1a1a1d',
-                                borderColor: 'rgba(255, 255, 255, 0.08)',
-                                color: '#a0a0a8',
+                                background: colors.bgContainer,
+                                borderColor: colors.borderPrimary,
+                                color: colors.textSecondary,
                                 transition: 'all 0.3s ease',
                             }}
                         >
@@ -403,8 +405,8 @@ function Download() {
                             loading={loading}
                             style={{
                                 background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
-                                borderColor: '#d4a852',
-                                color: '#0d0d0f',
+                                borderColor: colors.goldPrimary,
+                                color: colors.bgBase,
                                 fontWeight: 600,
                                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                             }}
@@ -422,32 +424,32 @@ function Download() {
                         onChange={e => setKeyword(e.target.value)}
                         placeholder={'搜索'}
                         style={{
-                            background: '#1a1a1d',
-                            borderColor: 'rgba(255, 255, 255, 0.08)',
-                            color: '#f0f0f2',
+                            background: colors.bgContainer,
+                            borderColor: colors.borderPrimary,
+                            color: colors.textPrimary,
                         }}
                     />
                     <Button
                         icon={<SearchOutlined />}
                         style={{
-                            background: '#1a1a1d',
-                            borderColor: 'rgba(255, 255, 255, 0.08)',
-                            color: '#a0a0a8',
+                            background: colors.bgContainer,
+                            borderColor: colors.borderPrimary,
+                            color: colors.textSecondary,
                         }}
                     />
                 </Space.Compact>
             }
             style={{
-                background: '#141416',
-                borderColor: 'rgba(255, 255, 255, 0.08)',
+                background: colors.bgElevated,
+                borderColor: colors.borderPrimary,
             }}
             styles={{
                 header: {
-                    background: '#0d0d0f',
+                    background: colors.bgBase,
                     borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                 },
                 body: {
-                    background: '#141416',
+                    background: colors.bgElevated,
                 }
             }}>
             
@@ -457,8 +459,8 @@ function Download() {
                     <Card
                         size="small"
                         style={{
-                            background: '#1a1a1d',
-                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            background: colors.bgContainer,
+                            borderColor: colors.borderPrimary,
                             borderRadius: '8px',
                         }}
                         styles={{
@@ -466,9 +468,9 @@ function Download() {
                         }}
                     >
                         <Statistic
-                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>总任务数</span>}
+                            title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>总任务数</span>}
                             value={data.length}
-                            valueStyle={{ color: '#f0f0f2', fontSize: '24px', fontWeight: 600 }}
+                            valueStyle={{ color: colors.textPrimary, fontSize: '24px', fontWeight: 600 }}
                         />
                     </Card>
                 </Col>
@@ -476,8 +478,8 @@ function Download() {
                     <Card
                         size="small"
                         style={{
-                            background: '#1a1a1d',
-                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            background: colors.bgContainer,
+                            borderColor: colors.borderPrimary,
                             borderRadius: '8px',
                         }}
                         styles={{
@@ -485,7 +487,7 @@ function Download() {
                         }}
                     >
                         <Statistic 
-                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>进行中</span>}
+                            title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>进行中</span>}
                             value={data.reduce((count: number, item: any) => 
                                 count + item.files.filter((f: any) => f.progress > 0 && f.progress < 1).length, 0
                             )} 
@@ -497,8 +499,8 @@ function Download() {
                     <Card
                         size="small"
                         style={{
-                            background: '#1a1a1d',
-                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            background: colors.bgContainer,
+                            borderColor: colors.borderPrimary,
                             borderRadius: '8px',
                         }}
                         styles={{
@@ -506,7 +508,7 @@ function Download() {
                         }}
                     >
                         <Statistic 
-                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>已完成</span>}
+                            title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>已完成</span>}
                             value={data.reduce((count: number, item: any) => 
                                 count + item.files.filter((f: any) => f.progress >= 1).length, 0
                             )} 
@@ -518,8 +520,8 @@ function Download() {
                     <Card
                         size="small"
                         style={{
-                            background: '#1a1a1d',
-                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            background: colors.bgContainer,
+                            borderColor: colors.borderPrimary,
                             borderRadius: '8px',
                         }}
                         styles={{
@@ -527,7 +529,7 @@ function Download() {
                         }}
                     >
                         <Statistic 
-                            title={<span style={{ color: '#a0a0a8', fontSize: '14px' }}>失败/等待</span>}
+                            title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>失败/等待</span>}
                             value={data.reduce((count: number, item: any) => 
                                 count + item.files.filter((f: any) => f.progress === 0).length, 0
                             )} 
@@ -543,33 +545,33 @@ function Download() {
             <div style={{
                 marginBottom: 16,
                 padding: '12px 16px',
-                background: '#1a1a1d',
+                background: colors.bgContainer,
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '8px',
             }}>
                 <Row gutter={16}>
                     <Col>
                         <Space>
-                            <span style={{ color: '#a0a0a8', fontSize: '14px' }}>显示已完成:</span>
+                            <span style={{ color: colors.textSecondary, fontSize: '14px' }}>显示已完成:</span>
                             <Switch 
                                 checked={includeSuccess} 
                                 onChange={setIncludeSuccess}
                                 size="small"
                                 style={{
-                                    background: includeSuccess ? '#d4a852' : 'rgba(255, 255, 255, 0.2)',
+                                    background: includeSuccess ? colors.goldPrimary : 'rgba(255, 255, 255, 0.2)',
                                 }}
                             />
                         </Space>
                     </Col>
                     <Col>
                         <Space>
-                            <span style={{ color: '#a0a0a8', fontSize: '14px' }}>显示失败:</span>
+                            <span style={{ color: colors.textSecondary, fontSize: '14px' }}>显示失败:</span>
                             <Switch 
                                 checked={includeFailed} 
                                 onChange={setIncludeFailed}
                                 size="small"
                                 style={{
-                                    background: includeFailed ? '#d4a852' : 'rgba(255, 255, 255, 0.2)',
+                                    background: includeFailed ? colors.goldPrimary : 'rgba(255, 255, 255, 0.2)',
                                 }}
                             />
                         </Space>
@@ -583,14 +585,14 @@ function Download() {
                     size="small"
                     style={{
                         marginBottom: 16,
-                        background: '#1a1a1d',
-                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        background: colors.bgContainer,
+                        borderColor: colors.borderPrimary,
                         borderRadius: '8px',
                     }}
                     styles={{
                         body: {
                             padding: '16px',
-                            background: '#1a1a1d',
+                            background: colors.bgContainer,
                         }
                     }}
                 >
@@ -598,7 +600,7 @@ function Download() {
                         <Col span={8}>
                             <div style={{
                                 marginBottom: 8,
-                                color: '#a0a0a8',
+                                color: colors.textSecondary,
                                 fontSize: '14px',
                                 fontWeight: 500,
                             }}>
@@ -612,8 +614,8 @@ function Download() {
                                 })}
                                 style={{ width: '100%' }}
                                 dropdownStyle={{
-                                    background: '#1a1a1d',
-                                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                                    background: colors.bgContainer,
+                                    borderColor: colors.borderPrimary,
                                 }}
                             >
                                 <Select.Option value="all">全部状态</Select.Option>
@@ -625,7 +627,7 @@ function Download() {
                         <Col span={8}>
                             <div style={{
                                 marginBottom: 8,
-                                color: '#a0a0a8',
+                                color: colors.textSecondary,
                                 fontSize: '14px',
                                 fontWeight: 500,
                             }}>
@@ -643,8 +645,8 @@ function Download() {
                                 }}
                                 style={{ width: '100%' }}
                                 dropdownStyle={{
-                                    background: '#1a1a1d',
-                                    borderColor: 'rgba(255, 255, 255, 0.08)',
+                                    background: colors.bgContainer,
+                                    borderColor: colors.borderPrimary,
                                 }}
                             >
                                 <Select.Option value="date-desc">添加时间 (新→旧)</Select.Option>
@@ -658,7 +660,7 @@ function Download() {
                         <Col span={8}>
                             <div style={{
                                 marginBottom: 8,
-                                color: '#a0a0a8',
+                                color: colors.textSecondary,
                                 fontSize: '14px',
                                 fontWeight: 500,
                             }}>
@@ -678,9 +680,9 @@ function Download() {
                                         setKeyword('');
                                     }}
                                     style={{
-                                        background: '#1a1a1d',
-                                        borderColor: 'rgba(255, 255, 255, 0.08)',
-                                        color: '#a0a0a8',
+                                        background: colors.bgContainer,
+                                        borderColor: colors.borderPrimary,
+                                        color: colors.textSecondary,
                                     }}
                                 >
                                     重置筛选
@@ -697,7 +699,7 @@ function Download() {
                         <div style={{
                             marginBottom: 16,
                             padding: '12px 16px',
-                            background: '#1a1a1d',
+                            background: colors.bgContainer,
                             border: '1px solid rgba(255, 255, 255, 0.08)',
                             borderRadius: 8,
                         }}>
@@ -706,13 +708,13 @@ function Download() {
                                     count={realData.length}
                                     style={{
                                         background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
-                                        color: '#0d0d0f',
+                                        color: colors.bgBase,
                                         fontWeight: 600,
                                         boxShadow: '0 2px 8px rgba(212, 168, 82, 0.3)',
                                     }}
                                 />
                                 <span style={{
-                                    color: '#a0a0a8',
+                                    color: colors.textSecondary,
                                     fontSize: '14px',
                                 }}>
                                     筛选结果：{realData.length} / {data.length} 个任务

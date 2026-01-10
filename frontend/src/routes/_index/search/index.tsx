@@ -48,6 +48,7 @@ import DownloadListModal from "./-components/downloadListModal.tsx";
 import HistoryModal from "./-components/historyModal.tsx";
 import Comment from "./-components/comment.tsx";
 import ActorsModal from "./-components/actorsModal.tsx";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 const cacheHistoryKey = 'search_video_histories'
 const cacheLastSearchKey = 'search_video_last_search'
@@ -82,6 +83,7 @@ export const Route = createFileRoute('/_index/search/')({
 
 
 export function Search() {
+    const colors = useThemeColors();
     const { message } = App.useApp();
     const router = useRouter()
     const navigate = useNavigate()
@@ -364,10 +366,10 @@ export function Search() {
                                     <div style={{
                                         marginBottom: '16px',
                                         padding: '16px',
-                                        background: '#1a1a1d',
+                                        background: colors.bgContainer,
                                         borderRadius: '12px',
-                                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+                                        border: `1px solid ${colors.borderPrimary}`,
+                                        boxShadow: `0 4px 16px ${colors.rgba('black', 0.3)}`
                                     }}>
                                         <Space.Compact style={{width: '100%'}}>
                                             <Input
@@ -380,17 +382,17 @@ export function Search() {
                                                     router.navigate({ search: { num: searchInput } as any, replace: true })
                                                 }}
                                                 style={{
-                                                    background: '#0d0d0f',
-                                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                                    color: '#f0f0f2',
+                                                    background: colors.bgBase,
+                                                    border: `1px solid ${colors.borderPrimary}`,
+                                                    color: colors.textPrimary,
                                                     transition: 'all 0.3s'
                                                 }}
                                                 onFocus={(e) => {
-                                                    e.currentTarget.style.borderColor = '#d4a852';
-                                                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(212, 168, 82, 0.1)';
+                                                    e.currentTarget.style.borderColor = colors.goldPrimary;
+                                                    e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.rgba('gold', 0.1)}`;
                                                 }}
                                                 onBlur={(e) => {
-                                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                                    e.currentTarget.style.borderColor = colors.borderPrimary;
                                                     e.currentTarget.style.boxShadow = 'none';
                                                 }}
                                             />
@@ -402,18 +404,18 @@ export function Search() {
                                                     router.navigate({ search: { num: searchInput } as any, replace: true })
                                                 }}
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
+                                                    background: colors.goldGradient,
                                                     border: 'none',
-                                                    color: '#0d0d0f',
+                                                    color: colors.bgBase,
                                                     fontWeight: 600,
                                                     transition: 'all 0.3s'
                                                 }}
                                                 onMouseEnter={(e) => {
-                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #e8c780 0%, #d4a852 100%)';
+                                                    e.currentTarget.style.background = colors.goldGradientHover;
                                                     e.currentTarget.style.transform = 'scale(1.05)';
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)';
+                                                    e.currentTarget.style.background = colors.goldGradient;
                                                     e.currentTarget.style.transform = 'scale(1)';
                                                 }}
                                             />
@@ -583,9 +585,9 @@ export function Search() {
                                         size="small"
                                         style={{
                                             marginBottom: 16,
-                                            background: '#1a1a1d',
-                                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                            background: colors.bgContainer,
+                                            border: `1px solid ${colors.borderPrimary}`,
+                                            boxShadow: `0 4px 12px ${colors.rgba('black', 0.3)}`
                                         }}
                                     >
                                         <Row gutter={[16, 8]}>
@@ -737,10 +739,10 @@ export function Search() {
                                                     <div style={{
                                                         marginBottom: 16,
                                                         padding: '12px 16px',
-                                                        background: '#222226',
+                                                        background: colors.bgSpotlight,
                                                         borderRadius: 8,
-                                                        border: '1px solid #d4a852',
-                                                        boxShadow: '0 2px 8px rgba(212, 168, 82, 0.2)'
+                                                        border: `1px solid ${colors.goldPrimary}`,
+                                                        boxShadow: `0 2px 8px ${colors.rgba('gold', 0.2)}`
                                                     }}>
                                                         <Space>
                                                             <Badge
@@ -785,22 +787,22 @@ export function Search() {
                                                             marginBottom: '12px',
                                                             padding: '16px',
                                                             borderRadius: '12px',
-                                                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                                                            background: '#1a1a1d',
+                                                            border: `1px solid ${colors.borderPrimary}`,
+                                                            background: colors.bgContainer,
                                                             transition: 'all 0.3s',
                                                             cursor: 'pointer'
                                                         }}
                                                         onMouseEnter={(e) => {
-                                                            e.currentTarget.style.boxShadow = '0 8px 24px rgba(212, 168, 82, 0.15)';
-                                                            e.currentTarget.style.borderColor = '#d4a852';
+                                                            e.currentTarget.style.boxShadow = `0 8px 24px ${colors.rgba('gold', 0.15)}`;
+                                                            e.currentTarget.style.borderColor = colors.goldPrimary;
                                                             e.currentTarget.style.transform = 'translateY(-2px)';
-                                                            e.currentTarget.style.background = '#222226';
+                                                            e.currentTarget.style.background = colors.bgSpotlight;
                                                         }}
                                                         onMouseLeave={(e) => {
                                                             e.currentTarget.style.boxShadow = 'none';
-                                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                                            e.currentTarget.style.borderColor = colors.borderPrimary;
                                                             e.currentTarget.style.transform = 'translateY(0)';
-                                                            e.currentTarget.style.background = '#1a1a1d';
+                                                            e.currentTarget.style.background = colors.bgContainer;
                                                         }}
                                                     >
                                                         <List.Item

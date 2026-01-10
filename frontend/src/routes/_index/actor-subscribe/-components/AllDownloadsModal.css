@@ -1,17 +1,21 @@
 /* 全部下载弹窗 - 暗黑电影美学 */
+.all-downloads-modal .ant-modal-mask {
+  background: var(--color-modal-overlay);
+}
+
 .all-downloads-modal .ant-modal-content {
-  background: var(--color-bg-container);
+  background: var(--color-modal-bg);
   border: 1px solid var(--color-border-primary);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .all-downloads-modal .ant-modal-header {
-  background: var(--color-bg-container);
+  background: transparent;
   border-bottom: 1px solid var(--color-border-primary);
 }
 
 .all-downloads-modal .ant-modal-body {
-  background: var(--color-bg-container);
+  background: transparent;
   max-height: 70vh;
   overflow-y: auto;
 }

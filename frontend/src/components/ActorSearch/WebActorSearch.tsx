@@ -14,6 +14,7 @@ import ActorSubscribeModal from '../../routes/_index/actor-subscribe/-components
 import LoadingComponent from '@/components/Loading';
 import { useBatchSelect, type BatchSelectVideo } from '@/hooks/useBatchSelect';
 import { BatchActionBar, BatchDownloadModal } from '@/components/BatchDownload';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import './actorSearchStyles.css';
 import './webActorSearch.css';
 
@@ -54,6 +55,7 @@ interface SavedState {
 
 const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultSearchValue }) => {
     const { message } = App.useApp();
+    const colors = useThemeColors();
     // 尝试从localStorage获取保存的状态
     const getSavedState = (): SavedState | null => {
         try {
@@ -452,14 +454,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                         icon={<UserOutlined />}
                                         src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
                                         style={{
-                                            border: '3px solid #141416',
-                                            background: '#222226'
+                                            border: `3px solid ${colors.bgTertiary}`,
+                                            background: colors.bgSecondary
                                         }}
                                     />
                                 </div>
                                 <div style={{
                                     marginTop: 12,
-                                    color: '#f0f0f2',
+                                    color: colors.text,
                                     fontWeight: 500,
                                     fontSize: '14px',
                                     whiteSpace: 'nowrap',
@@ -518,14 +520,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                         icon={<UserOutlined />}
                                         src={actor.thumb ? api.getVideoCover(actor.thumb) : undefined}
                                         style={{
-                                            border: '3px solid #141416',
-                                            background: '#222226'
+                                            border: `3px solid ${colors.bgTertiary}`,
+                                            background: colors.bgSecondary
                                         }}
                                     />
                                 </div>
                                 <div style={{
                                     marginTop: 12,
-                                    color: '#f0f0f2',
+                                    color: colors.text,
                                     fontWeight: 500,
                                     fontSize: '14px',
                                     whiteSpace: 'nowrap',
@@ -629,7 +631,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                     <Input
                         size="large"
                         placeholder={`在 ${sourceType.toUpperCase()} 搜索演员...`}
-                        prefix={<SearchOutlined style={{ color: '#a0a0a8', fontSize: '16px' }} />}
+                        prefix={<SearchOutlined style={{ color: colors.textSecondary, fontSize: '16px' }} />}
                         onPressEnter={(e) => {
                             const value = (e.target as HTMLInputElement).value;
                             if (value.trim()) {
@@ -648,14 +650,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                     }
                                 }}
                                 style={{
-                                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
-                                    borderColor: '#d4a852',
+                                    background: `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldLight} 100%)`,
+                                    borderColor: colors.gold,
                                     transition: 'all 0.3s ease',
                                     height: '32px',
                                     padding: '0 16px',
                                     borderRadius: '6px',
                                     fontWeight: 600,
-                                    color: '#0d0d0f'
+                                    color: colors.dark
                                 }}
                             />
                         }
@@ -674,14 +676,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                 icon={<UserOutlined />}
                                 src={selectedActor.thumb ? api.getVideoCover(selectedActor.thumb) : undefined}
                                 style={{
-                                    border: '4px solid #141416',
-                                    background: '#222226'
+                                    border: `4px solid ${colors.bgTertiary}`,
+                                    background: colors.bgSecondary
                                 }}
                             />
                         </div>
                         <h2 style={{
                             marginTop: 20,
-                            color: '#f0f0f2',
+                            color: colors.text,
                             fontSize: '28px',
                             fontWeight: 600,
                             letterSpacing: '1px',
@@ -739,9 +741,9 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                             size="large"
                             className="web-actor-subscribe-btn"
                             style={isSubscribed ? {
-                                background: '#1a1a1d',
-                                borderColor: 'rgba(255, 255, 255, 0.08)',
-                                color: '#a0a0a8',
+                                background: colors.bgSecondary,
+                                borderColor: colors.borderColor,
+                                color: colors.textSecondary,
                                 fontWeight: 600,
                             } : {}}
                             onClick={() => setSubscribeModalVisible(true)}
@@ -763,9 +765,9 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                 icon={<FilterOutlined />}
                                 onClick={() => setShowFilters(!showFilters)}
                                 style={{
-                                    background: showFilters ? 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)' : '#1a1a1d',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                    color: showFilters ? '#0d0d0f' : '#d4a852',
+                                    background: showFilters ? `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldLight} 100%)` : colors.bgSecondary,
+                                    border: `1px solid ${colors.borderColor}`,
+                                    color: showFilters ? colors.dark : colors.gold,
                                     fontWeight: showFilters ? 600 : 500,
                                     height: '36px',
                                     borderRadius: '8px',
@@ -776,14 +778,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                             </Button>
                             {actorVideos.length > 0 && (
                                 <span style={{
-                                    color: '#a0a0a8',
+                                    color: colors.textSecondary,
                                     fontSize: '14px',
-                                    background: '#1a1a1d',
+                                    background: colors.bgSecondary,
                                     padding: '6px 16px',
                                     borderRadius: '8px',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                                    border: `1px solid ${colors.borderColor}`
                                 }}>
-                                    共 <span style={{ color: '#d4a852', fontWeight: 600 }}>{actorVideos.length}</span> 个作品
+                                    共 <span style={{ color: colors.gold, fontWeight: 600 }}>{actorVideos.length}</span> 个作品
                                 </span>
                             )}
                         </div>
@@ -799,9 +801,9 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                     }
                                 }}
                                 style={{
-                                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
-                                    borderColor: '#d4a852',
-                                    color: '#0d0d0f',
+                                    background: `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldLight} 100%)`,
+                                    borderColor: colors.gold,
+                                    color: colors.dark,
                                     fontWeight: 600,
                                     height: '36px',
                                     borderRadius: '8px'
@@ -815,9 +817,9 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                 icon={batchSelect.isBatchMode ? <CheckSquareOutlined /> : <BorderOutlined />}
                                 onClick={batchSelect.toggleBatchMode}
                                 style={{
-                                    background: batchSelect.isBatchMode ? 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)' : '#1a1a1d',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                    color: batchSelect.isBatchMode ? '#0d0d0f' : '#d4a852',
+                                    background: batchSelect.isBatchMode ? `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldLight} 100%)` : colors.bgSecondary,
+                                    border: `1px solid ${colors.borderColor}`,
+                                    color: batchSelect.isBatchMode ? colors.dark : colors.gold,
                                     fontWeight: batchSelect.isBatchMode ? 600 : 500,
                                     height: '36px',
                                     borderRadius: '8px',
@@ -835,8 +837,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                             className="web-actor-filter-card"
                             style={{
                                 marginBottom: 20,
-                                background: '#1a1a1d',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                background: colors.bgSecondary,
+                                border: `1px solid ${colors.borderColor}`,
                                 borderRadius: '12px'
                             }}
                             styles={{
@@ -1011,15 +1013,15 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                 {filteredVideos.length !== actorVideos.length && (
                                     <div style={{
                                         marginBottom: 16,
-                                        color: '#a0a0a8',
+                                        color: colors.textSecondary,
                                         fontSize: '13px',
-                                        background: '#1a1a1d',
+                                        background: colors.bgSecondary,
                                         padding: '10px 16px',
                                         borderRadius: '8px',
-                                        border: '1px solid rgba(255, 255, 255, 0.08)'
+                                        border: `1px solid ${colors.borderColor}`
                                     }}>
                                         筛选结果：
-                                        <span style={{ color: '#d4a852', fontWeight: 600, margin: '0 4px' }}>
+                                        <span style={{ color: colors.gold, fontWeight: 600, margin: '0 4px' }}>
                                             {filteredVideos.length}
                                         </span>
                                         / {actorVideos.length} 个作品
@@ -1067,7 +1069,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                             <div style={{
                                                 borderRadius: '14px',
                                                 overflow: 'hidden',
-                                                border: isSelected ? '2px solid #d4a852' : '2px solid transparent',
+                                                border: isSelected ? `2px solid ${colors.gold}` : '2px solid transparent',
                                                 transition: 'all 0.2s ease',
                                                 opacity: batchSelect.isBatchMode && !isSelected ? 0.7 : 1,
                                             }}>
@@ -1077,7 +1079,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                             styles={{
                                                 body: {
                                                     padding: '16px',
-                                                    background: '#141416',
+                                                    background: colors.bgTertiary,
                                                 }
                                             }}
                                             cover={
@@ -1125,7 +1127,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                         WebkitLineClamp: 2,
                                                         WebkitBoxOrient: 'vertical',
                                                         lineHeight: '1.4',
-                                                        color: '#f0f0f2',
+                                                        color: colors.text,
                                                         fontWeight: 600,
                                                         fontSize: '14px',
                                                         minHeight: '40px',
@@ -1136,7 +1138,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                 description={
                                                     <div>
                                                         <div style={{
-                                                            color: '#d4a852',
+                                                            color: colors.gold,
                                                             fontWeight: 600,
                                                             fontSize: '13px',
                                                             marginBottom: '8px',
@@ -1151,14 +1153,14 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                                     value={video.rank}
                                                                     style={{
                                                                         fontSize: 12,
-                                                                        color: '#d4a852',
+                                                                        color: colors.gold,
                                                                     }}
                                                                 />
-                                                                <div className={'mx-1'} style={{ color: '#e8c780', fontWeight: 600 }}>
+                                                                <div className={'mx-1'} style={{ color: colors.goldLight, fontWeight: 600 }}>
                                                                     {video.rank}分
                                                                 </div>
                                                                 {video.rank_count && (
-                                                                    <div style={{ color: '#6a6a72', fontSize: '12px' }}>
+                                                                    <div style={{ color: colors.textTertiary, fontSize: '12px' }}>
                                                                         由{video.rank_count}人评价
                                                                     </div>
                                                                 )}
@@ -1182,7 +1184,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                         {video.publish_date && (
                                                             <div style={{
                                                                 marginTop: 8,
-                                                                color: '#6a6a72',
+                                                                color: colors.textTertiary,
                                                                 fontSize: '12px',
                                                             }}>
                                                                 发行日期: {video.publish_date}

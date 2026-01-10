@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {Col, GetProp, Row, theme} from "antd";
+import { useThemeColors } from "../../../../hooks/useThemeColors";
 
 const { useToken } = theme;
 
@@ -23,6 +24,7 @@ function Filter(props: FilterProps) {
     const {fields, initialValues = {}, onChange, ...others} = props
     const [values, setValues] = useState<any>(initialValues)
     const { token } = useToken();
+    const colors = useThemeColors();
 
     function renderFields(field: FilterField) {
 
@@ -39,7 +41,7 @@ function Filter(props: FilterProps) {
             <Col key={field.dataIndex} {...field.span} className={'flex items-center h-12'}>
                 <div className={'mr-3'} style={{
                     fontWeight: 600,
-                    color: '#d4a852',
+                    color: colors.textGold,
                     minWidth: '3.5em',
                     fontSize: '13px',
                     letterSpacing: '0.02em',
@@ -56,23 +58,23 @@ function Filter(props: FilterProps) {
         <div
             className="tissue-glass tissue-animate-in"
             style={{
-                background: 'rgba(26, 26, 29, 0.85)',
+                background: colors.rgba('black', 0.15),
                 backdropFilter: 'blur(20px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                 padding: '20px',
                 borderRadius: '14px',
                 marginBottom: '20px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                border: `1px solid ${colors.borderPrimary}`,
+                boxShadow: `${colors.shadowMd}, inset 0 1px 0 ${colors.rgba('white', 0.05)}`,
                 transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
             }}
             onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(212, 168, 82, 0.2)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 168, 82, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)';
+                e.currentTarget.style.borderColor = colors.borderGold;
+                e.currentTarget.style.boxShadow = `0 4px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${colors.rgba('gold', 0.1)}, inset 0 1px 0 ${colors.rgba('white', 0.05)}`;
             }}
             onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)';
+                e.currentTarget.style.borderColor = colors.borderPrimary;
+                e.currentTarget.style.boxShadow = `${colors.shadowMd}, inset 0 1px 0 ${colors.rgba('white', 0.05)}`;
             }}
         >
             <Row {...others} gutter={[12, 12]}>

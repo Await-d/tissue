@@ -6,6 +6,7 @@ import {FolderViewOutlined, SearchOutlined} from "@ant-design/icons";
 import IconButton from "../../../components/IconButton";
 import {createFileRoute, Link} from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 import './style.css';
 
 const {useToken} = theme
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_index/file/')({
 function File() {
 
     const {token} = useToken()
+    const colors = useThemeColors()
     const {data = [], loading, refresh} = useRequest(api.getFiles)
     const [selected, setSelected] = useState<string | undefined>()
     const [keyword, setKeyword] = useState<string>()
@@ -32,34 +34,34 @@ function File() {
 
     return (
         <div className="file-page-wrapper animate-fade-in">
-            <Card 
-                title={<span style={{ color: '#f0f0f2', fontSize: 18, fontWeight: 500 }}>文件列表</span>}
+            <Card
+                title={<span style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 500 }}>文件列表</span>}
                 loading={loading}
                 className="dark-card"
                 style={{
-                    background: '#141416',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: colors.bgElevated,
+                    border: `1px solid ${colors.borderPrimary}`,
                     borderRadius: 8
                 }}
                 extra={(
                     <Space.Compact>
-                        <Input 
-                            value={keyword} 
-                            onChange={e => setKeyword(e.target.value)} 
+                        <Input
+                            value={keyword}
+                            onChange={e => setKeyword(e.target.value)}
                             placeholder={'搜索文件名或路径'}
                             style={{
-                                background: '#1a1a1d',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                color: '#f0f0f2'
+                                background: colors.bgContainer,
+                                border: `1px solid ${colors.borderPrimary}`,
+                                color: colors.textPrimary
                             }}
                             className="dark-input"
                         />
-                        <Button 
+                        <Button
                             icon={<SearchOutlined/>}
                             style={{
-                                background: '#1a1a1d',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                color: '#d4a852'
+                                background: colors.bgContainer,
+                                border: `1px solid ${colors.borderPrimary}`,
+                                color: colors.goldPrimary
                             }}
                         />
                     </Space.Compact>
@@ -75,10 +77,10 @@ function File() {
                                 className="dark-file-item"
                                 actions={[
                                     <Tooltip title={'整理'}>
-                                        <IconButton 
+                                        <IconButton
                                             onClick={() => setSelected(`${item.path}/${item.name}`)}
                                             style={{
-                                                color: '#d4a852',
+                                                color: colors.goldPrimary,
                                                 transition: 'all 0.3s'
                                             }}
                                             className="file-action-btn"
@@ -91,12 +93,12 @@ function File() {
                                 <List.Item.Meta
                                     title={(
                                         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <span style={{ color: '#f0f0f2', fontWeight: 500 }}>{item.name}</span>
-                                            <Tag 
+                                            <span style={{ color: colors.textPrimary, fontWeight: 500 }}>{item.name}</span>
+                                            <Tag
                                                 style={{
-                                                    background: 'rgba(212, 168, 82, 0.12)',
-                                                    border: '1px solid rgba(212, 168, 82, 0.25)',
-                                                    color: '#e8c780',
+                                                    background: colors.rgba('gold', 0.12),
+                                                    border: `1px solid ${colors.rgba('gold', 0.25)}`,
+                                                    color: colors.goldLight,
                                                     margin: 0
                                                 }}
                                             >
@@ -105,20 +107,20 @@ function File() {
                                         </span>
                                     )}
                                     description={(
-                                        <span style={{ color: '#a0a0a8', fontSize: 13 }}>{item.path}</span>
+                                        <span style={{ color: colors.textSecondary, fontSize: 13 }}>{item.path}</span>
                                     )}
                                 />
                             </List.Item>
                         )}
                     />
                 ) : (
-                    <Empty 
+                    <Empty
                         description={(
-                            <span style={{ color: '#a0a0a8' }}>
+                            <span style={{ color: colors.textSecondary }}>
                                 无文件，
-                                <Link 
+                                <Link
                                     to={'/setting/file'}
-                                    style={{ color: '#d4a852' }}
+                                    style={{ color: colors.goldPrimary }}
                                 >
                                     配置文件
                                 </Link>

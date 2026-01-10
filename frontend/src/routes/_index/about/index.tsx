@@ -6,29 +6,9 @@ import { RootState } from "../../../models";
 import { DockerOutlined, GithubOutlined } from "@ant-design/icons";
 import { createFileRoute } from "@tanstack/react-router";
 import React from "react";
+import { useThemeColors } from '../../../hooks/useThemeColors';
 
 const { Paragraph, Link } = Typography;
-
-// 设计系统色彩变量
-const colors = {
-    bg: {
-        base: '#0d0d0f',
-        elevated: '#141416',
-        container: '#1a1a1d',
-        spotlight: '#222226'
-    },
-    gold: {
-        primary: '#d4a852',
-        light: '#e8c780',
-        dark: '#b08d3e'
-    },
-    text: {
-        primary: '#f0f0f2',
-        secondary: '#a0a0a8',
-        tertiary: '#6a6a72'
-    },
-    border: 'rgba(255, 255, 255, 0.08)'
-}
 
 export const Route = createFileRoute('/_index/about/')({
     component: About
@@ -37,8 +17,30 @@ export const Route = createFileRoute('/_index/about/')({
 function About() {
 
     const responsive = useResponsive()
+    const themeColors = useThemeColors()
     const { versions } = useSelector((state: RootState) => state.auth)
     const [hoveredIcon, setHoveredIcon] = React.useState<string | null>(null);
+
+    // 兼容旧结构的颜色对象
+    const colors = {
+        bg: {
+            base: themeColors.bgBase,
+            elevated: themeColors.bgElevated,
+            container: themeColors.bgContainer,
+            spotlight: themeColors.bgSpotlight
+        },
+        gold: {
+            primary: themeColors.goldPrimary,
+            light: themeColors.goldLight,
+            dark: themeColors.goldDark
+        },
+        text: {
+            primary: themeColors.textPrimary,
+            secondary: themeColors.textSecondary,
+            tertiary: themeColors.textTertiary
+        },
+        border: themeColors.borderPrimary
+    }
 
     return (
         <>

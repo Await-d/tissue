@@ -3,6 +3,7 @@ import PreviewImage from "./previewImage.tsx";
 import React, {useState} from "react";
 import Lightbox from "yet-another-react-lightbox";
 import * as api from "../../../../apis/video.ts";
+import { useThemeColors } from '../../../../hooks/useThemeColors';
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/counter.css";
 import {Counter, Zoom} from "yet-another-react-lightbox/plugins";
@@ -12,6 +13,7 @@ function Preview(props: { data: any }) {
     const {data} = props
     const [openPreview, setOpenPreview] = useState(false);
     const [previewIndex, setPreviewIndex] = useState(0);
+    const colors = useThemeColors()
 
     const slides = data.map((item: any) => (
         item.type === "video" ? (

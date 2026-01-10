@@ -2,6 +2,7 @@ import { Button, Form, Input, Modal, ModalProps, Avatar, Space, message } from "
 import { UserOutlined } from "@ant-design/icons";
 import React, { useEffect, useState } from "react";
 import * as api from "../../apis/video";
+import { useThemeColors } from '../../hooks/useThemeColors';
 
 interface Props extends ModalProps {
     data?: any,
@@ -12,6 +13,7 @@ interface Props extends ModalProps {
 
 function ModifyModal(props: Props) {
     const { data, onOk, onDelete, onCancel, ...otherProps } = props;
+    const colors = useThemeColors();
     const [form] = Form.useForm();
     const [previewThumb, setPreviewThumb] = useState<string | undefined>(data?.thumb);
 
@@ -41,38 +43,41 @@ function ModifyModal(props: Props) {
     // 样式定义 - 暗黑电影美学
     const styles = {
         modal: {
+            '.ant-modal-mask': {
+                background: colors.modalOverlay,
+            },
             '.ant-modal-content': {
-                background: 'linear-gradient(145deg, #141416 0%, #1a1a1d 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow: '0 24px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(212, 168, 82, 0.1)',
+                background: colors.modalBg,
+                border: `1px solid ${colors.rgba('white', 0.08)}`,
+                boxShadow: `0 24px 48px ${colors.rgba('black', 0.8)}, 0 0 0 1px ${colors.rgba('gold', 0.1)}`,
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
             },
             '.ant-modal-header': {
                 background: 'transparent',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                borderBottom: `1px solid ${colors.rgba('white', 0.08)}`,
                 padding: '20px 24px',
             },
             '.ant-modal-title': {
-                color: '#f0f0f2',
+                color: colors.text,
                 fontSize: '18px',
                 fontWeight: '600',
                 letterSpacing: '0.5px',
             },
             '.ant-modal-close': {
-                color: '#a0a0a8',
+                color: colors.secondaryText,
                 transition: 'all 0.3s ease',
             },
             '.ant-modal-close:hover': {
-                color: '#d4a852',
+                color: colors.gold,
             },
             '.ant-modal-body': {
                 padding: '24px',
             },
             '.ant-modal-footer': {
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                borderTop: `1px solid ${colors.rgba('white', 0.08)}`,
                 padding: '16px 24px',
-                background: 'rgba(13, 13, 15, 0.5)',
+                background: colors.rgba('black', 0.5),
             },
         } as React.CSSProperties,
 
@@ -83,9 +88,9 @@ function ModifyModal(props: Props) {
             alignItems: 'center',
             marginBottom: 32,
             padding: '24px 0',
-            background: 'linear-gradient(135deg, rgba(212, 168, 82, 0.05) 0%, transparent 100%)',
+            background: `linear-gradient(135deg, ${colors.rgba('gold', 0.05)} 0%, transparent 100%)`,
             borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.04)',
+            border: `1px solid ${colors.rgba('white', 0.04)}`,
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         },
 
@@ -95,32 +100,32 @@ function ModifyModal(props: Props) {
         },
 
         avatar: {
-            border: '3px solid rgba(212, 168, 82, 0.3)',
+            border: `3px solid ${colors.rgba('gold', 0.3)}`,
             boxShadow: `
-                0 0 0 4px rgba(212, 168, 82, 0.1),
-                0 0 24px rgba(212, 168, 82, 0.3),
-                0 8px 32px rgba(0, 0, 0, 0.6)
+                0 0 0 4px ${colors.rgba('gold', 0.1)},
+                0 0 24px ${colors.rgba('gold', 0.3)},
+                0 8px 32px ${colors.rgba('black', 0.6)}
             `,
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            background: 'linear-gradient(135deg, #222226 0%, #1a1a1d 100%)',
+            background: `linear-gradient(135deg, ${colors.bgDark} 0%, ${colors.bgDarker} 100%)`,
         },
 
         avatarIcon: {
-            color: '#d4a852',
+            color: colors.gold,
         },
 
         avatarLabel: {
             fontSize: 13,
-            color: '#6a6a72',
+            color: colors.tertiaryText,
             marginTop: 12,
             letterSpacing: '0.3px',
             transition: 'color 0.3s ease',
         },
 
         input: {
-            background: 'rgba(34, 34, 38, 0.6)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            color: '#f0f0f2',
+            background: colors.rgba('black', 0.6),
+            border: `1px solid ${colors.rgba('white', 0.08)}`,
+            color: colors.text,
             borderRadius: '8px',
             padding: '10px 14px',
             fontSize: '14px',
@@ -128,9 +133,9 @@ function ModifyModal(props: Props) {
         } as React.CSSProperties,
 
         buttonDelete: {
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#ef4444',
+            background: colors.rgba('red', 0.1),
+            border: `1px solid ${colors.rgba('red', 0.3)}`,
+            color: colors.red,
             borderRadius: '8px',
             height: '38px',
             padding: '0 20px',
@@ -139,9 +144,9 @@ function ModifyModal(props: Props) {
         } as React.CSSProperties,
 
         buttonCancel: {
-            background: 'rgba(160, 160, 168, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            color: '#a0a0a8',
+            background: colors.rgba('white', 0.1),
+            border: `1px solid ${colors.rgba('white', 0.08)}`,
+            color: colors.secondaryText,
             borderRadius: '8px',
             height: '38px',
             padding: '0 20px',
@@ -150,14 +155,14 @@ function ModifyModal(props: Props) {
         } as React.CSSProperties,
 
         buttonPrimary: {
-            background: 'linear-gradient(135deg, #d4a852 0%, #b08d3e 100%)',
+            background: `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldAlt} 100%)`,
             border: 'none',
-            color: '#0d0d0f',
+            color: colors.background,
             borderRadius: '8px',
             height: '38px',
             padding: '0 24px',
             fontWeight: '600',
-            boxShadow: '0 4px 12px rgba(212, 168, 82, 0.3)',
+            boxShadow: `0 4px 12px ${colors.rgba('gold', 0.3)}`,
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         } as React.CSSProperties,
     };
@@ -203,59 +208,59 @@ function ModifyModal(props: Props) {
             <style>
                 {`
                     .actor-modal-btn-delete:hover {
-                        background: rgba(239, 68, 68, 0.2) !important;
-                        border-color: rgba(239, 68, 68, 0.5) !important;
-                        color: #f87171 !important;
+                        background: ${colors.rgba('red', 0.2)} !important;
+                        border-color: ${colors.rgba('red', 0.5)} !important;
+                        color: ${colors.redLight} !important;
                         transform: translateY(-1px);
-                        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                        box-shadow: 0 4px 12px ${colors.rgba('red', 0.3)};
                     }
 
                     .actor-modal-btn-cancel:hover {
-                        background: rgba(160, 160, 168, 0.15) !important;
-                        border-color: rgba(255, 255, 255, 0.12) !important;
-                        color: #f0f0f2 !important;
+                        background: ${colors.rgba('white', 0.15)} !important;
+                        border-color: ${colors.rgba('white', 0.12)} !important;
+                        color: ${colors.text} !important;
                         transform: translateY(-1px);
                     }
 
                     .actor-modal-btn-primary:hover {
-                        background: linear-gradient(135deg, #e8c780 0%, #d4a852 100%) !important;
+                        background: linear-gradient(135deg, ${colors.goldLight} 0%, ${colors.gold} 100%) !important;
                         transform: translateY(-2px);
-                        box-shadow: 0 8px 20px rgba(212, 168, 82, 0.4) !important;
+                        box-shadow: 0 8px 20px ${colors.rgba('gold', 0.4)} !important;
                     }
 
                     .actor-avatar-wrapper:hover .ant-avatar {
                         transform: scale(1.05);
-                        border-color: rgba(212, 168, 82, 0.6);
+                        border-color: ${colors.rgba('gold', 0.6)};
                         box-shadow:
-                            0 0 0 4px rgba(212, 168, 82, 0.2),
-                            0 0 32px rgba(212, 168, 82, 0.5),
-                            0 12px 40px rgba(0, 0, 0, 0.7);
+                            0 0 0 4px ${colors.rgba('gold', 0.2)},
+                            0 0 32px ${colors.rgba('gold', 0.5)},
+                            0 12px 40px ${colors.rgba('black', 0.7)};
                     }
 
                     .ant-input:hover,
                     .ant-input:focus {
-                        background: rgba(34, 34, 38, 0.8) !important;
-                        border-color: rgba(212, 168, 82, 0.4) !important;
-                        box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1) !important;
+                        background: ${colors.rgba('black', 0.8)} !important;
+                        border-color: ${colors.rgba('gold', 0.4)} !important;
+                        box-shadow: 0 0 0 2px ${colors.rgba('gold', 0.1)} !important;
                     }
 
                     .ant-input::placeholder {
-                        color: #6a6a72;
+                        color: ${colors.tertiaryText};
                     }
 
                     .ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before {
-                        color: #d4a852 !important;
+                        color: ${colors.gold} !important;
                     }
 
                     .ant-form-item-label > label {
-                        color: #a0a0a8 !important;
+                        color: ${colors.secondaryText} !important;
                         font-size: 14px !important;
                         font-weight: 500 !important;
                         letter-spacing: 0.3px !important;
                     }
 
                     .ant-form-item-extra {
-                        color: #6a6a72 !important;
+                        color: ${colors.tertiaryText} !important;
                         font-size: 12px !important;
                     }
                 `}

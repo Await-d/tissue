@@ -5,6 +5,7 @@ import * as api from '../../apis/video';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useRequest } from 'ahooks';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import './actorSearchStyles.css';
 
 interface Actor {
@@ -27,6 +28,7 @@ interface ActorSearchProps {
 
 const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
     const { message } = App.useApp();
+    const colors = useThemeColors();
     const [searchValue, setSearchValue] = useState('');
     const [searchResults, setSearchResults] = useState<Video[]>([]);
     const [searching, setSearching] = useState(false);
@@ -146,7 +148,7 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                     <Input
                         size="large"
                         placeholder="搜索本地演员..."
-                        prefix={<SearchOutlined style={{ color: '#a0a0a8', fontSize: '16px' }} />}
+                        prefix={<SearchOutlined style={{ color: colors.textSecondary, fontSize: '16px' }} />}
                         onPressEnter={() => performSearch(searchValue)}
                         allowClear
                         suffix={
@@ -156,14 +158,14 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                                 icon={<SearchOutlined />}
                                 onClick={() => performSearch(searchValue)}
                                 style={{
-                                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
-                                    borderColor: '#d4a852',
+                                    background: `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldLight} 100%)`,
+                                    borderColor: colors.gold,
                                     transition: 'all 0.3s ease',
                                     height: '32px',
                                     padding: '0 16px',
                                     borderRadius: '6px',
                                     fontWeight: 600,
-                                    color: '#0d0d0f'
+                                    color: colors.dark
                                 }}
                             />
                         }
@@ -175,9 +177,9 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                     onClick={handleReload}
                     size="large"
                     style={{
-                        background: '#1a1a1d',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        color: '#d4a852',
+                        background: colors.bgSecondary,
+                        border: `1px solid ${colors.borderColor}`,
+                        color: colors.gold,
                         transition: 'all 0.3s ease',
                         borderRadius: '10px',
                         width: '52px'
@@ -195,14 +197,14 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                             icon={<UserOutlined />}
                             src={selectedActor.thumb ? api.getVideoCover(selectedActor.thumb) : undefined}
                             style={{
-                                border: '4px solid #141416',
-                                background: '#222226'
+                                border: `4px solid ${colors.bgTertiary}`,
+                                background: colors.bgSecondary
                             }}
                         />
                     </div>
                     <h2 style={{
                         marginTop: 16,
-                        color: '#f0f0f2',
+                        color: colors.text,
                         fontSize: '24px',
                         fontWeight: 600,
                         letterSpacing: '0.5px'
@@ -233,7 +235,7 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
             {/* 加载状态 */}
             {searching ? (
                 <div className="web-actor-loading">
-                    <Spin tip={<span style={{ color: '#a0a0a8', marginTop: '12px', display: 'block' }}>搜索中...</span>} />
+                    <Spin tip={<span style={{ color: colors.textSecondary, marginTop: '12px', display: 'block' }}>搜索中...</span>} />
                 </div>
             ) : searchResults.length > 0 ? (
                 <List
@@ -249,7 +251,7 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                                         <div style={{
                                             height: 200,
                                             overflow: 'hidden',
-                                            background: '#0d0d0f',
+                                            background: colors.dark,
                                             position: 'relative'
                                         }}>
                                             <LazyLoadImage
@@ -267,11 +269,11 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                                     ) : (
                                         <div style={{
                                             height: 200,
-                                            background: '#0d0d0f',
+                                            background: colors.dark,
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            color: '#6a6a72'
+                                            color: colors.textTertiary
                                         }}>
                                             无封面
                                         </div>
@@ -279,15 +281,15 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                                 }
                                 onClick={() => onVideoSelect && onVideoSelect(video)}
                                 style={{
-                                    background: '#1a1a1d',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    background: colors.bgSecondary,
+                                    border: `1px solid ${colors.borderColor}`,
                                     borderRadius: '16px',
                                     overflow: 'hidden',
                                     transition: 'all 0.3s ease'
                                 }}
                             >
                                 <Card.Meta
-                                    title={<span style={{ color: '#f0f0f2', fontSize: '14px' }}>{video.title}</span>}
+                                    title={<span style={{ color: colors.text, fontSize: '14px' }}>{video.title}</span>}
                                     description={
                                         <div style={{ marginTop: '8px' }}>
                                             {video.is_zh && (
@@ -303,7 +305,7 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                                         </div>
                                     }
                                     style={{
-                                        background: '#1a1a1d'
+                                        background: colors.bgSecondary
                                     }}
                                 />
                             </Card>
@@ -312,7 +314,7 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                 />
             ) : selectedActor && (
                 <div className="web-actor-empty">
-                    <Empty description={<span style={{ color: '#a0a0a8' }}>没有找到相关视频</span>} />
+                    <Empty description={<span style={{ color: colors.textSecondary }}>没有找到相关视频</span>} />
                 </div>
             )}
 
@@ -323,8 +325,8 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
                 style={{
                     right: 24,
                     bottom: 24,
-                    background: 'linear-gradient(135deg, #d4a852 0%, #e8c780 100%)',
-                    color: '#0d0d0f'
+                    background: `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldLight} 100%)`,
+                    color: colors.dark
                 }}
             />
         </div>
