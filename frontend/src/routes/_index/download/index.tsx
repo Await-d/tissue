@@ -7,8 +7,8 @@ import IconButton from "../../../components/IconButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
 import { useThemeColors } from "../../../hooks/useThemeColors";
-import { cleanupTorrent, previewCleanup } from "@/apis/downloadFilter";
-import type { CleanupPreviewData } from "@/types/cleanup";
+import { cleanupTorrent, previewCleanup, cleanupAllTorrents } from "@/apis/downloadFilter";
+import type { CleanupPreviewData, CleanupResultData } from "@/types/cleanup";
 
 const { useToken } = theme
 
@@ -45,6 +45,11 @@ function Download() {
     const [cleanupPreview, setCleanupPreview] = useState<CleanupPreviewData | null>(null)
     const [selectedTorrentHash, setSelectedTorrentHash] = useState<string>('')
     const [cleanupLoading, setCleanupLoading] = useState(false)
+
+    // 批量清理状态
+    const [batchCleanupModalVisible, setBatchCleanupModalVisible] = useState(false)
+    const [batchCleanupResult, setBatchCleanupResult] = useState<CleanupResultData | null>(null)
+    const [batchCleanupLoading, setBatchCleanupLoading] = useState(false)
 
     const { data = [], loading, refresh } = useRequest(
         () => api.getDownloads({
@@ -154,6 +159,48 @@ function Download() {
         setCleanupModalVisible(false)
         setCleanupPreview(null)
         setSelectedTorrentHash('')
+    }
+
+    // 批量清理处理函数
+    const handleBatchCleanupClick = async () => {
+        try {
+            setBatchCleanupLoading(true)
+            const result = await cleanupAllTorrents(undefined, true)
+            if (result.success && result.data) {
+                setBatchCleanupResult(result.data)
+                setBatchCleanupModalVisible(true)
+            } else {
+                message.error(result.message || '获取批量清理预览失败')
+            }
+        } catch (error: any) {
+            message.error(error?.message || '获取批量清理预览失败')
+        } finally {
+            setBatchCleanupLoading(false)
+        }
+    }
+
+    const handleBatchCleanupConfirm = async () => {
+        try {
+            setBatchCleanupLoading(true)
+            const result = await cleanupAllTorrents(undefined, false)
+            if (result.success) {
+                message.success(`批量清理成功，共清理 ${result.data?.files_deleted || 0} 个文件`)
+                setBatchCleanupModalVisible(false)
+                setBatchCleanupResult(null)
+                refresh()
+            } else {
+                message.error(result.message || '批量清理失败')
+            }
+        } catch (error: any) {
+            message.error(error?.message || '批量清理失败')
+        } finally {
+            setBatchCleanupLoading(false)
+        }
+    }
+
+    const handleBatchCleanupCancel = () => {
+        setBatchCleanupModalVisible(false)
+        setBatchCleanupResult(null)
     }
 
     // 跳转到视频详情页面
@@ -443,6 +490,20 @@ function Download() {
                         下载列表
                     </span>
                     <Space>
+                        <Button
+                            icon={<ClearOutlined />}
+                            size="small"
+                            onClick={handleBatchCleanupClick}
+                            loading={batchCleanupLoading}
+                            style={{
+                                background: colors.bgContainer,
+                                borderColor: colors.warning,
+                                color: colors.warning,
+                                transition: 'all 0.3s ease',
+                            }}
+                        >
+                            批量清理
+                        </Button>
                         <Button
                             icon={<FilterOutlined />}
                             size="small"
@@ -900,6 +961,152 @@ function Download() {
                         ) : (
                             <Empty
                                 description="没有需要清理的文件"
+                                style={{ color: colors.textSecondary }}
+                            />
+                        )}
+                    </div>
+                )}
+            </Modal>
+
+            {/* 批量清理预览 Modal */}
+            <Modal
+                title="批量清理预览"
+                open={batchCleanupModalVisible}
+                onOk={handleBatchCleanupConfirm}
+                onCancel={handleBatchCleanupCancel}
+                okText="确认批量清理"
+                cancelText="取消"
+                okButtonProps={{
+                    danger: true,
+                    loading: batchCleanupLoading
+                }}
+                width={900}
+                styles={{
+                    body: {
+                        background: colors.bgBase,
+                        maxHeight: '600px',
+                        overflowY: 'auto'
+                    }
+                }}
+            >
+                {batchCleanupResult && (
+                    <div style={{ color: colors.textPrimary }}>
+                        {/* 总览统计 */}
+                        <div style={{
+                            marginBottom: 16,
+                            padding: '16px',
+                            background: colors.bgContainer,
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255, 255, 255, 0.08)'
+                        }}>
+                            <Row gutter={16}>
+                                <Col span={8}>
+                                    <Statistic
+                                        title={<span style={{ color: colors.textSecondary }}>将要清理的种子数</span>}
+                                        value={batchCleanupResult.torrents_processed || 0}
+                                        valueStyle={{ color: colors.goldPrimary, fontWeight: 600 }}
+                                    />
+                                </Col>
+                                <Col span={8}>
+                                    <Statistic
+                                        title={<span style={{ color: colors.textSecondary }}>总共要删除的文件数</span>}
+                                        value={batchCleanupResult.files_deleted || 0}
+                                        valueStyle={{ color: '#ff4d4f', fontWeight: 600 }}
+                                    />
+                                </Col>
+                                <Col span={8}>
+                                    <Statistic
+                                        title={<span style={{ color: colors.textSecondary }}>预计释放空间</span>}
+                                        value={(batchCleanupResult.space_freed_mb || 0) / 1024}
+                                        precision={2}
+                                        suffix="GB"
+                                        valueStyle={{ color: '#52c41a', fontWeight: 600 }}
+                                    />
+                                </Col>
+                            </Row>
+                        </div>
+
+                        {/* 每个种子的详细清理信息 */}
+                        {batchCleanupResult.details && batchCleanupResult.details.length > 0 ? (
+                            <div>
+                                <div style={{
+                                    marginBottom: 12,
+                                    color: colors.textSecondary,
+                                    fontSize: '14px',
+                                    fontWeight: 500
+                                }}>
+                                    详细清理列表：
+                                </div>
+                                <List
+                                    dataSource={batchCleanupResult.details}
+                                    renderItem={(item: any, index: number) => (
+                                        <List.Item
+                                            style={{
+                                                background: colors.bgElevated,
+                                                borderRadius: '8px',
+                                                padding: '12px 16px',
+                                                marginBottom: '8px',
+                                                border: '1px solid rgba(255, 255, 255, 0.08)'
+                                            }}
+                                        >
+                                            <div style={{ width: '100%' }}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    marginBottom: 8
+                                                }}>
+                                                    <Badge
+                                                        count={index + 1}
+                                                        style={{
+                                                            background: colors.goldPrimary,
+                                                            marginRight: 8
+                                                        }}
+                                                    />
+                                                    <span style={{
+                                                        color: colors.textPrimary,
+                                                        fontWeight: 500,
+                                                        fontSize: '14px'
+                                                    }}>
+                                                        {item.torrent_name || '未知种子'}
+                                                    </span>
+                                                    <Tag
+                                                        style={{
+                                                            marginLeft: 'auto',
+                                                            background: 'rgba(255, 77, 79, 0.2)',
+                                                            borderColor: '#ff4d4f',
+                                                            color: '#ff4d4f'
+                                                        }}
+                                                    >
+                                                        {item.files_removed?.length || 0} 个文件
+                                                    </Tag>
+                                                </div>
+                                                {item.files_removed && item.files_removed.length > 0 && (
+                                                    <div style={{
+                                                        paddingLeft: 32,
+                                                        color: colors.textTertiary,
+                                                        fontSize: '13px'
+                                                    }}>
+                                                        {item.files_removed.map((file: string, idx: number) => (
+                                                            <div
+                                                                key={idx}
+                                                                style={{
+                                                                    padding: '4px 0',
+                                                                    borderBottom: idx < item.files_removed.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none'
+                                                                }}
+                                                            >
+                                                                {file}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </List.Item>
+                                    )}
+                                />
+                            </div>
+                        ) : (
+                            <Empty
+                                description="没有需要批量清理的文件"
                                 style={{ color: colors.textSecondary }}
                             />
                         )}
