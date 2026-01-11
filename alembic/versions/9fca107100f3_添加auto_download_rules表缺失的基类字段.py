@@ -19,47 +19,41 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 为auto_download_rules表添加缺失的基类字段
-    try:
+    # 检查列是否已存在，避免重复添加
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    
+    # 获取 auto_download_rules 表的列信息
+    rules_columns = [col['name'] for col in inspector.get_columns('auto_download_rules')]
+    
+    # 为 auto_download_rules 表添加缺失的基类字段
+    if 'create_by' not in rules_columns:
         op.add_column('auto_download_rules', sa.Column('create_by', sa.Integer(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
     
-    try:
+    if 'create_time' not in rules_columns:
         op.add_column('auto_download_rules', sa.Column('create_time', sa.DateTime(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
     
-    try:
+    if 'update_by' not in rules_columns:
         op.add_column('auto_download_rules', sa.Column('update_by', sa.Integer(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
     
-    try:
+    if 'update_time' not in rules_columns:
         op.add_column('auto_download_rules', sa.Column('update_time', sa.DateTime(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
     
-    # 为auto_download_subscriptions表添加缺失的基类字段
-    try:
+    # 获取 auto_download_subscriptions 表的列信息
+    subscriptions_columns = [col['name'] for col in inspector.get_columns('auto_download_subscriptions')]
+    
+    # 为 auto_download_subscriptions 表添加缺失的基类字段
+    if 'create_by' not in subscriptions_columns:
         op.add_column('auto_download_subscriptions', sa.Column('create_by', sa.Integer(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
     
-    try:
+    if 'create_time' not in subscriptions_columns:
         op.add_column('auto_download_subscriptions', sa.Column('create_time', sa.DateTime(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
     
-    try:
+    if 'update_by' not in subscriptions_columns:
         op.add_column('auto_download_subscriptions', sa.Column('update_by', sa.Integer(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
     
-    try:
-        op.add_column('auto_download_subscriptions', sa.Column('update_time', sa.DateTime(), nullable=True))
-    except Exception:
-        pass  # 字段可能已存在
+    if 'update_time' not in subscriptions_columns:
+        op.add_column('auto_download_subscriptions', sa.Column('update_time', sa.DateTime(), nullable=True))  # 字段可能已存在
 
 
 def downgrade() -> None:
