@@ -581,51 +581,56 @@ function DownloadFilterSettings() {
           {cleanupResult && (
             <>
               <Row gutter={16} className="mb-4">
-                <Col span={8}>
+                <Col span={6}>
                   <div className="p-4 rounded-lg border" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
-                    <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>处理种子数</div>
+                    <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>总种子数</div>
                     <div className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-                      {cleanupResult.torrents_processed || 0}
+                      {cleanupResult.total_torrents || 0}
                     </div>
                   </div>
                 </Col>
-                <Col span={8}>
+                <Col span={6}>
+                  <div className="p-4 rounded-lg border" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
+                    <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>处理成功</div>
+                    <div className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                      {cleanupResult.processed_torrents || 0}
+                    </div>
+                  </div>
+                </Col>
+                <Col span={6}>
                   <div className="p-4 rounded-lg border" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
                     <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>删除文件数</div>
                     <div className="text-2xl font-bold" style={{ color: colors.goldPrimary }}>
-                      {cleanupResult.files_deleted || 0}
+                      {cleanupResult.total_deleted_files || 0}
                     </div>
                   </div>
                 </Col>
-                <Col span={8}>
+                <Col span={6}>
                   <div className="p-4 rounded-lg border" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
                     <div className="text-xs mb-1" style={{ color: colors.textTertiary }}>释放空间</div>
                     <div className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-                      {cleanupResult.space_freed_mb ? `${cleanupResult.space_freed_mb} MB` : '0 MB'}
+                      {cleanupResult.total_deleted_size_gb ? `${cleanupResult.total_deleted_size_gb} GB` : '0 GB'}
                     </div>
                   </div>
                 </Col>
               </Row>
 
-              {cleanupResult.details && cleanupResult.details.length > 0 && (
+              {cleanupResult.torrent_results && cleanupResult.torrent_results.length > 0 && (
                 <div className="rounded-lg border p-4" style={{ backgroundColor: colors.bgContainer, borderColor: colors.borderPrimary }}>
                   <div className="font-semibold mb-3" style={{ color: colors.goldLight }}>清理详情</div>
                   <div className="max-h-96 overflow-y-auto">
-                    {cleanupResult.details.map((detail: any, index: number) => (
+                    {cleanupResult.torrent_results
+                      .filter(item => item.deleted_files > 0)
+                      .map((item, index) => (
                       <div key={index} className="mb-3 p-3 rounded border" style={{ backgroundColor: colors.bgElevated, borderColor: colors.borderPrimary }}>
-                        <div className="font-medium mb-2" style={{ color: colors.textPrimary }}>
-                          {detail.torrent_name || `种子 ${index + 1}`}
-                        </div>
-                        {detail.files_removed && detail.files_removed.length > 0 && (
-                          <div className="ml-4">
-                            <div className="text-xs mb-1" style={{ color: colors.textSecondary }}>删除的文件:</div>
-                            {detail.files_removed.map((file: string, fileIndex: number) => (
-                              <div key={fileIndex} className="text-xs py-1" style={{ color: colors.textTertiary }}>
-                                {file}
-                              </div>
-                            ))}
+                        <div className="flex justify-between items-center">
+                          <div className="font-medium" style={{ color: colors.textPrimary }}>
+                            {item.name}
                           </div>
-                        )}
+                          <div className="text-sm" style={{ color: colors.textSecondary }}>
+                            删除 {item.deleted_files} 个文件，释放 {item.deleted_size_mb} MB
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

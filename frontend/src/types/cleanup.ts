@@ -26,15 +26,32 @@ export interface CleanupPreviewData {
 }
 
 /**
+ * 单个种子清理结果
+ */
+export interface TorrentCleanupResult {
+  hash: string
+  name: string
+  success: boolean
+  deleted_files: number
+  deleted_size_mb: number
+  message: string
+}
+
+/**
  * 清理结果数据
  */
 export interface CleanupResultData {
   success: boolean
-  torrents_processed?: number
-  files_deleted?: number
-  space_freed_mb?: number
-  details?: Array<{
-    torrent_name?: string
-    files_removed?: string[]
-  }>
+  message?: string
+  dry_run?: boolean
+  category?: string
+  total_torrents?: number
+  processed_torrents?: number
+  failed_torrents?: number
+  total_deleted_files?: number
+  total_deleted_size_bytes?: number
+  total_deleted_size_mb?: number
+  total_deleted_size_gb?: number
+  torrent_results?: TorrentCleanupResult[]
+  errors?: string[]
 }
