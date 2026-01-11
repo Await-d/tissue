@@ -32,7 +32,7 @@ class AutoDownloadRule(Base):
     name = Column(String(255), nullable=False, comment="规则名称")
     min_rating = Column(DECIMAL(3, 1), nullable=True, default=0.0, comment="最低评分")
     min_comments = Column(Integer, nullable=True, default=0, comment="最低评论数")
-    time_range_type = Column(Enum(TimeRangeType), nullable=True, default=TimeRangeType.WEEK, comment="时间范围类型")
+    time_range_type = Column(Enum(TimeRangeType, values_callable=lambda x: [e.value for e in x]), nullable=True, default=TimeRangeType.WEEK, comment="时间范围类型")
     time_range_value = Column(Integer, nullable=True, default=1, comment="时间范围值")
     is_hd = Column(Boolean, nullable=False, default=True, comment="是否高清")
     is_zh = Column(Boolean, nullable=False, default=False, comment="是否中文")
