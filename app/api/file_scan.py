@@ -38,7 +38,7 @@ _current_scan_id: Optional[int] = None
 
 @router.post("/trigger", response_model=R[schema.ScanResultResponse])
 async def trigger_scan(
-    request: schema.ScanTriggerRequest,
+    request: Optional[schema.ScanTriggerRequest] = None,
     service: FileScanService = Depends(get_file_scan_service),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -98,7 +98,7 @@ async def trigger_scan(
             _is_scanning = True
             _current_scan_id = None
 
-            logger.info(f"收到扫描触发请求，force_rescan={request.force_rescan}")
+            logger.info(f"收到扫描触发请求，force_rescan={request.force_rescan if request else False}")
 
             # 记录开始时间
             start_time = time.time()
