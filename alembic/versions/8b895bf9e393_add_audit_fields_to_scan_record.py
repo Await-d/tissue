@@ -14,6 +14,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
@@ -23,24 +24,48 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def get_existing_columns(table_name):
+    """获取指定表的列名列表"""
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    try:
+        return [col['name'] for col in inspector.get_columns(table_name)]
+    except Exception:
+        return []
+
+
+def safe_add_column(table_name, column):
+    """安全添加列（如果不存在）"""
+    existing_columns = get_existing_columns(table_name)
+    if column.name not in existing_columns:
+        op.add_column(table_name, column)
+
+
+def safe_drop_column(table_name, column_name):
+    """安全删除列（如果存在）"""
+    existing_columns = get_existing_columns(table_name)
+    if column_name in existing_columns:
+        op.drop_column(table_name, column_name)
+
+
 def upgrade() -> None:
     """添加审计字段到 scan_record 表"""
     # 添加 create_by 字段
-    op.add_column('scan_record', sa.Column('create_by', sa.Integer(), nullable=True))
+    safe_add_column('scan_record', sa.Column('create_by', sa.Integer(), nullable=True))
 
     # 添加 create_time 字段
-    op.add_column('scan_record', sa.Column('create_time', sa.DateTime(timezone=True), nullable=True))
+    safe_add_column('scan_record', sa.Column('create_time', sa.DateTime(timezone=True), nullable=True))
 
     # 添加 update_by 字段
-    op.add_column('scan_record', sa.Column('update_by', sa.Integer(), nullable=True))
+    safe_add_column('scan_record', sa.Column('update_by', sa.Integer(), nullable=True))
 
     # 添加 update_time 字段
-    op.add_column('scan_record', sa.Column('update_time', sa.DateTime(timezone=True), nullable=True))
+    safe_add_column('scan_record', sa.Column('update_time', sa.DateTime(timezone=True), nullable=True))
 
 
 def downgrade() -> None:
     """移除审计字段"""
-    op.drop_column('scan_record', 'update_time')
-    op.drop_column('scan_record', 'update_by')
-    op.drop_column('scan_record', 'create_time')
-    op.drop_column('scan_record', 'create_by')
+    safe_drop_column('scan_record', 'update_time')
+    safe_drop_column('scan_record', 'update_by')
+    safe_drop_column('scan_record', 'create_time')
+    safe_drop_column('scan_record', 'create_by')
