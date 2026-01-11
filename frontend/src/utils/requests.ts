@@ -16,7 +16,7 @@ request.interceptors.request.use(request => {
     return request
 })
 
-request.interceptors.response.use(response => response, error => {
+request.interceptors.response.use(response => response.data, error => {
     if (!error.response) {
         console.error('网络错误:', error.message);
         message.error(`网络错误: ${error.message}`);
