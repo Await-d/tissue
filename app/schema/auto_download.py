@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field, validator
 
 class TimeRangeType(str, Enum):
     """时间范围类型枚举"""
-    DAY = "DAY"
-    WEEK = "WEEK"
-    MONTH = "MONTH"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
 
 
 class DownloadStatus(str, Enum):
@@ -47,17 +47,17 @@ class AutoDownloadRuleBase(BaseModel):
         if isinstance(v, TimeRangeType):
             return v
             
-        # 如果是字符串，转换为大写并检查有效性
+        # 如果是字符串，转换为小写并检查有效性
         if isinstance(v, str):
-            v = v.upper()
+            v = v.lower()
             try:
                 return TimeRangeType(v)
             except ValueError:
                 # 尝试通过名称匹配
                 try:
-                    return getattr(TimeRangeType, v)
+                    return getattr(TimeRangeType, v.upper())
                 except AttributeError:
-                    raise ValueError(f"'{v}' 不是有效的时间范围类型。可用值: DAY, WEEK, MONTH")
+                    raise ValueError(f"'{v}' 不是有效的时间范围类型。可用值: day, week, month")
                     
         # 其他类型，尝试转换为字符串后处理
         return cls.normalize_time_range_type(str(v))
@@ -92,17 +92,17 @@ class AutoDownloadRuleUpdate(BaseModel):
         if isinstance(v, TimeRangeType):
             return v
             
-        # 如果是字符串，转换为大写并检查有效性
+        # 如果是字符串，转换为小写并检查有效性
         if isinstance(v, str):
-            v = v.upper()
+            v = v.lower()
             try:
                 return TimeRangeType(v)
             except ValueError:
                 # 尝试通过名称匹配
                 try:
-                    return getattr(TimeRangeType, v)
+                    return getattr(TimeRangeType, v.upper())
                 except AttributeError:
-                    raise ValueError(f"'{v}' 不是有效的时间范围类型。可用值: DAY, WEEK, MONTH")
+                    raise ValueError(f"'{v}' 不是有效的时间范围类型。可用值: day, week, month")
                     
         # 其他类型，尝试转换为字符串后处理
         return cls.normalize_time_range_type(str(v))
