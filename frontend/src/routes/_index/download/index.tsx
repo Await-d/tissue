@@ -1003,21 +1003,21 @@ function Download() {
                                 <Col span={8}>
                                     <Statistic
                                         title={<span style={{ color: colors.textSecondary }}>将要清理的种子数</span>}
-                                        value={batchCleanupResult.torrents_processed || 0}
+                                        value={batchCleanupResult.processed_torrents || 0}
                                         valueStyle={{ color: colors.goldPrimary, fontWeight: 600 }}
                                     />
                                 </Col>
                                 <Col span={8}>
                                     <Statistic
                                         title={<span style={{ color: colors.textSecondary }}>总共要删除的文件数</span>}
-                                        value={batchCleanupResult.files_deleted || 0}
+                                        value={batchCleanupResult.total_deleted_files || 0}
                                         valueStyle={{ color: '#ff4d4f', fontWeight: 600 }}
                                     />
                                 </Col>
                                 <Col span={8}>
                                     <Statistic
                                         title={<span style={{ color: colors.textSecondary }}>预计释放空间</span>}
-                                        value={(batchCleanupResult.space_freed_mb || 0) / 1024}
+                                        value={(batchCleanupResult.total_deleted_size_mb || 0) / 1024}
                                         precision={2}
                                         suffix="GB"
                                         valueStyle={{ color: '#52c41a', fontWeight: 600 }}
@@ -1027,7 +1027,7 @@ function Download() {
                         </div>
 
                         {/* 每个种子的详细清理信息 */}
-                        {batchCleanupResult.details && batchCleanupResult.details.length > 0 ? (
+                        {batchCleanupResult.torrent_results && batchCleanupResult.torrent_results.length > 0 ? (
                             <div>
                                 <div style={{
                                     marginBottom: 12,
@@ -1038,7 +1038,7 @@ function Download() {
                                     详细清理列表：
                                 </div>
                                 <List
-                                    dataSource={batchCleanupResult.details}
+                                    dataSource={batchCleanupResult.torrent_results}
                                     renderItem={(item: any, index: number) => (
                                         <List.Item
                                             style={{

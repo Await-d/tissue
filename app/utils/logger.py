@@ -1,81 +1,107 @@
 import inspect
 import logging
+import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Dict, Any
+from datetime import datetime
 
 import click
 
 # 日志级别颜色
-level_name_colors = {
-    logging.DEBUG: lambda level_name: click.style(str(level_name), fg="cyan"),
-    logging.INFO: lambda level_name: click.style(str(level_name), fg="green"),
-    logging.WARNING: lambda level_name: click.style(str(level_name), fg="yellow"),
-    logging.ERROR: lambda level_name: click.style(str(level_name), fg="red"),
-    logging.CRITICAL: lambda level_name: click.style(
-        str(level_name), fg="bright_red"
-    ),
+level_colors = {
+    'DEBUG': 'cyan',
+    'INFO': 'green',
+    'WARNING': 'yellow',
+    'ERROR': 'red',
+    'CRITICAL': 'bright_red',
 }
 
 
 class CustomFormatter(logging.Formatter):
     def format(self, record):
         seperator = " " * (8 - len(record.levelname))
-        record.leveltext = level_name_colors[record.levelno](record.levelname + ":") + seperator
+        record.leveltext = click.style(record.levelname + ":", fg=level_colors.get(record.levelname, 'white')) + seperator
         return super().format(record)
+
+
+# 文件 logger - 使用模块级别的单例
+_file_logger = None
+_logger_manager = None
+
+
+def _get_file_logger():
+    """获取文件 logger（单例）"""
+    global _file_logger
+    if _file_logger is None:
+        log_path = Path(f'{Path(__file__).cwd()}/config/app.log')
+        
+        _file_logger = logging.getLogger("tissue_file")
+        _file_logger.setLevel(logging.INFO)
+        _file_logger.propagate = False
+        
+        # 只在没有 handler 时添加
+        if not _file_logger.handlers:
+            file_handler = RotatingFileHandler(
+                filename=log_path,
+                mode='a',
+                maxBytes=10 * 1024 * 1024,
+                backupCount=5,
+                encoding='utf-8'
+            )
+            file_handler.setLevel(logging.INFO)
+            file_formatter = logging.Formatter("【%(levelname)s】%(asctime)s - %(message)s")
+            file_handler.setFormatter(file_formatter)
+            _file_logger.addHandler(file_handler)
+    
+    return _file_logger
 
 
 class LoggerManager:
 
     def __init__(self):
-        log_path = Path(f'{Path(__file__).cwd()}/config/app.log')
+        self.file_logger = _get_file_logger()
 
-        self.logger = logging.getLogger(log_path.stem)
-        self.logger.setLevel(logging.INFO)
-        # 防止日志向上传播到根logger，避免重复输出
-        self.logger.propagate = False
-
-        # 终端日志
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
-        console_formatter = CustomFormatter(f"%(leveltext)s%(message)s")
-        console_handler.setFormatter(console_formatter)
-        self.logger.addHandler(console_handler)
-
-        file_handler = RotatingFileHandler(filename=log_path,
-                                           mode='a',  # 改为追加模式，避免覆盖
-                                           maxBytes=10 * 1024 * 1024,  # 增大文件大小
-                                           backupCount=5,  # 增加备份数量
-                                           encoding='utf-8')
-        file_handler.setLevel(logging.INFO)
-        console_formatter = CustomFormatter(f"【%(levelname)s】%(asctime)s - %(message)s")
-        file_handler.setFormatter(console_formatter)
-        self.logger.addHandler(file_handler)
-
-    def log(self, method: str, msg: str, *args, **kwargs):
-        caller_name = self.__get_caller()
-        method = getattr(self.logger, method)
-        method(f"{caller_name} - {msg}", *args, **kwargs)
+    def log(self, level: str, msg: str, *args, **kwargs):
+        try:
+            caller_name = self.__get_caller()
+        except Exception:
+            caller_name = "app"
+        
+        full_msg = f"{caller_name} - {msg}"
+        
+        # 终端输出 - 直接用 print
+        level_upper = level.upper()
+        color = level_colors.get(level_upper, 'white')
+        separator = " " * (8 - len(level_upper))
+        colored_level = click.style(f"{level_upper}:", fg=color)
+        print(f"{colored_level}{separator}{full_msg}", file=sys.stderr, flush=True)
+        
+        # 文件输出
+        log_method = getattr(self.file_logger, level.lower(), self.file_logger.info)
+        log_method(full_msg, *args, **kwargs)
 
     @staticmethod
     def __get_caller():
-        caller_name = None
-        for i in inspect.stack()[3:]:
-            filepath = Path(i.filename)
-            parts = filepath.parts
-            if not caller_name:
-                if parts[-1] == "__init__.py":
-                    caller_name = parts[-2]
-                else:
-                    caller_name = parts[-1]
-            if "app" in parts:
-                if "main.py" in parts:
+        try:
+            caller_name = None
+            for i in inspect.stack()[3:]:
+                filepath = Path(i.filename)
+                parts = filepath.parts
+                if not caller_name:
+                    if parts[-1] == "__init__.py":
+                        caller_name = parts[-2]
+                    else:
+                        caller_name = parts[-1]
+                if "app" in parts:
+                    if "main.py" in parts:
+                        break
+                elif len(parts) != 1:
                     break
-            elif len(parts) != 1:
-                break
-        if caller_name and caller_name.endswith('.py'):
-            caller_name = caller_name[:-3]
-        return caller_name or "loger"
+            if caller_name and caller_name.endswith('.py'):
+                caller_name = caller_name[:-3]
+            return caller_name or "app"
+        except Exception:
+            return "app"
 
     def info(self, msg: str, *args, **kwargs):
         self.log("info", msg, *args, **kwargs)
@@ -96,5 +122,11 @@ class LoggerManager:
         self.log("critical", msg, *args, **kwargs)
 
 
-# 初始化公共日志
-logger = LoggerManager()
+# 初始化公共日志 - 使用函数确保单例
+def get_logger():
+    global _logger_manager
+    if _logger_manager is None:
+        _logger_manager = LoggerManager()
+    return _logger_manager
+
+logger = get_logger()

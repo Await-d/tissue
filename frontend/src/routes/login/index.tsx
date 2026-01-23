@@ -133,25 +133,7 @@ function Login() {
                                     />
                                 }
                                 placeholder="用户名"
-                                style={{
-                                    height: '48px',
-                                    backgroundColor: colors.bgElevated,
-                                    border: `1px solid ${colors.borderPrimary}`,
-                                    borderRadius: '10px',
-                                    color: colors.textPrimary,
-                                    fontSize: '15px',
-                                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.backgroundColor = colors.bgContainer
-                                    e.target.style.borderColor = colors.goldPrimary
-                                    e.target.style.boxShadow = `0 0 0 2px ${colors.rgba('gold', 0.1)}`
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.backgroundColor = colors.bgElevated
-                                    e.target.style.borderColor = colors.borderPrimary
-                                    e.target.style.boxShadow = 'none'
-                                }}
+                                className="login-input"
                             />
                         </Form.Item>
 
@@ -167,25 +149,7 @@ function Login() {
                                     />
                                 }
                                 placeholder="密码"
-                                style={{
-                                    height: '48px',
-                                    backgroundColor: colors.bgElevated,
-                                    border: `1px solid ${colors.borderPrimary}`,
-                                    borderRadius: '10px',
-                                    color: colors.textPrimary,
-                                    fontSize: '15px',
-                                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
-                                }}
-                                onFocus={(e) => {
-                                    e.target.parentElement!.style.backgroundColor = colors.bgContainer
-                                    e.target.parentElement!.style.borderColor = colors.goldPrimary
-                                    e.target.parentElement!.style.boxShadow = `0 0 0 2px ${colors.rgba('gold', 0.1)}`
-                                }}
-                                onBlur={(e) => {
-                                    e.target.parentElement!.style.backgroundColor = colors.bgElevated
-                                    e.target.parentElement!.style.borderColor = colors.borderPrimary
-                                    e.target.parentElement!.style.boxShadow = 'none'
-                                }}
+                                className="login-input"
                             />
                         </Form.Item>
 
@@ -320,35 +284,45 @@ function Login() {
                     }
                 }
 
-                /* Ant Design 输入框样式覆盖 */
-                .ant-input,
-                .ant-input-password {
+                /* 登录页输入框统一样式 */
+                .login-input,
+                .login-input.ant-input-affix-wrapper {
+                    height: 48px !important;
                     background-color: ${colors.bgElevated} !important;
                     border: 1px solid ${colors.borderPrimary} !important;
+                    border-radius: 10px !important;
                     color: ${colors.textPrimary} !important;
+                    font-size: 15px !important;
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    padding: 0 11px !important;
                 }
 
-                .ant-input::placeholder,
-                .ant-input-password input::placeholder {
-                    color: ${colors.textTertiary} !important;
+                .login-input:hover,
+                .login-input.ant-input-affix-wrapper:hover {
+                    background-color: ${colors.bgContainer} !important;
+                    border-color: ${colors.goldPrimary} !important;
                 }
 
-                .ant-input:focus,
-                .ant-input-password:focus,
-                .ant-input-password-focused,
-                .ant-input:hover,
-                .ant-input-password:hover {
+                .login-input:focus,
+                .login-input.ant-input-affix-wrapper-focused {
                     background-color: ${colors.bgContainer} !important;
                     border-color: ${colors.goldPrimary} !important;
                     box-shadow: 0 0 0 2px ${colors.rgba('gold', 0.1)} !important;
                 }
 
-                .ant-input-password .ant-input {
+                .login-input input,
+                .login-input.ant-input-affix-wrapper input {
                     background-color: transparent !important;
-                    border: none !important;
+                    color: ${colors.textPrimary} !important;
+                    font-size: 15px !important;
                 }
 
-                .ant-input-suffix {
+                .login-input input::placeholder,
+                .login-input.ant-input-affix-wrapper input::placeholder {
+                    color: ${colors.textTertiary} !important;
+                }
+
+                .login-input .ant-input-suffix {
                     color: ${colors.textTertiary} !important;
                 }
 

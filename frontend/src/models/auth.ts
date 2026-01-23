@@ -60,8 +60,10 @@ export const auth = createModel<RootModel>()({
         },
         async getVersions() {
             const response = await api.getVersions()
-            const versions = response.data.data
-            versions.hasNew = compare(versions.latest, versions.current, '>')
+            const versions = response.data?.data
+            if (versions?.latest && versions?.current) {
+                versions.hasNew = compare(versions.latest, versions.current, '>')
+            }
             dispatch.auth.setVersions(versions)
         }
     })

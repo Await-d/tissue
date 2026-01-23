@@ -120,11 +120,11 @@ function Header(props: Props) {
                         fontWeight: 600,
                         color: colors.textPrimary,
                         marginBottom: 4,
-                    }}>{userInfo.name}</div>
+                    }}>{userInfo?.name}</div>
                     <div style={{
                         fontSize: 12,
                         color: colors.textTertiary,
-                    }}>{userInfo.username}</div>
+                    }}>{userInfo?.username}</div>
                 </div>
                 {menu}
             </div>
