@@ -5,7 +5,7 @@ export async function getSchedules() {
         url: '/schedule/',
         method: 'get'
     })
-    return response.data.data
+    return response.data
 }
 
 export function fireSchedule(key: string) {

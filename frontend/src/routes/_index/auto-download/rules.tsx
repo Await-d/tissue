@@ -67,8 +67,8 @@ function AutoDownloadRules() {
       })
       console.log('接收到的规则数据:', response)
       
-      // API返回的数据在response.data中
-      const { items = [], total = 0 } = response.data || {};
+      // API返回的数据直接在response中
+      const { items = [], total = 0 } = response || {};
       
       setRules(items)
       setPagination({

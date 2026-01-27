@@ -21,5 +21,5 @@ export async function checkDownloadStatusBatch(nums: string[]): Promise<Record<s
         method: 'post',
         data: { nums }
     });
-    return response.data.data;
+    return response.data;
 }

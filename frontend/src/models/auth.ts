@@ -38,8 +38,7 @@ export const auth = createModel<RootModel>()({
         async login(params: { username: string, password: string, remember: boolean }) {
             try {
                 dispatch.auth.setLogging(true)
-                const response = await api.login(params)
-                const token = response.data.data
+                const token = await api.login(params)
                 Cookies.set('userToken', token, params.remember ? {expires: 365} : {})
                 dispatch.auth.setToken(token)
                 await router.invalidate()
@@ -55,12 +54,11 @@ export const auth = createModel<RootModel>()({
             await router.invalidate()
         },
         async getInfo() {
-            const response = await api.getInfo()
-            dispatch.auth.setInfo(response.data.data)
+            const info = await api.getInfo()
+            dispatch.auth.setInfo(info)
         },
         async getVersions() {
-            const response = await api.getVersions()
-            const versions = response.data?.data
+            const versions = await api.getVersions()
             if (versions?.latest && versions?.current) {
                 versions.hasNew = compare(versions.latest, versions.current, '>')
             }

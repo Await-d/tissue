@@ -46,7 +46,7 @@ export async function triggerScan(): Promise<ScanResult> {
         url: '/file-scan/trigger',
         method: 'post'
     });
-    return response.data.data;
+    return response.data;
 }
 
 /**
@@ -64,7 +64,7 @@ export async function getScanRecords(
         method: 'get',
         params: { page, page_size: pageSize }
     });
-    return response.data.data;
+    return response.data;
 }
 
 /**
@@ -76,7 +76,7 @@ export async function getLatestScan(): Promise<ScanResult | null> {
         url: '/file-scan/latest',
         method: 'get'
     });
-    return response.data.data;
+    return response.data;
 }
 
 /**
@@ -91,5 +91,5 @@ export async function getScanStatus(): Promise<{
         url: '/file-scan/status',
         method: 'get'
     });
-    return response.data.data;
+    return response.data;
 }

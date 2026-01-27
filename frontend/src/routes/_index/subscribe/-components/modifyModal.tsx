@@ -20,7 +20,7 @@ function ModifyModal(props: Props) {
     const {run: onSearch, loading: onSearching} = useRequest(api.scrapeVideo, {
         manual: true,
         onSuccess: (response) => {
-            const result = response.data.data
+            const result = response
             form?.setFieldsValue({
                 cover: result.cover,
                 title: result.title,

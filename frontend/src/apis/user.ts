@@ -7,7 +7,7 @@ export async function getUsers(params: any, extra: any) {
         params: {...params, ...extra}
     });
     return ({
-        list: response.data.data,
+        list: response.data,
         total: 0
     });
 }

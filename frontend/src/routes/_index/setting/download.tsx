@@ -3,7 +3,6 @@ import * as api from "../../../apis/setting.ts";
 import { useRequest } from "ahooks";
 import { createFileRoute } from "@tanstack/react-router";
 import { TransModeOptions } from "../../../utils/constants.ts";
-import { AxiosResponse } from "axios";
 import { useThemeColors } from "../../../hooks/useThemeColors";
 
 export const Route = createFileRoute('/_index/setting/download')({
@@ -31,18 +30,14 @@ function SettingDownload() {
     // 测试qBittorrent连接
     const { run: testConnection, loading: testing } = useRequest(api.testQBittorrentConnection, {
         manual: true,
-        onSuccess: (res: AxiosResponse<any>) => {
+        onSuccess: (res) => {
             console.log("测试连接响应:", res);
+            const result = res.data;
 
-            // 检查各种可能的数据格式
-            if (res.data?.data?.status) {
-                message.success(res.data.data.message);
-            } else if (res.data?.status) {
-                message.success(res.data.message);
-            } else if (res.data?.success === false) {
-                message.error(res.data.details || "连接失败");
+            if (res.success) {
+                message.success(result?.message || "连接成功");
             } else {
-                message.error("连接测试失败，请检查设置");
+                message.error(res.details || result?.message || "连接失败");
             }
         },
         onError: (err) => {

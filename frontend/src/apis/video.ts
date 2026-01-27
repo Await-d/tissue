@@ -14,7 +14,7 @@ export async function getVideos(force: boolean = false) {
         method: 'get',
         params: { force }
     })
-    return response.data.data
+    return response.data
 }
 
 export async function getVideoDetail(path: string, source?: string, url?: string) {
@@ -28,7 +28,7 @@ export async function getVideoDetail(path: string, source?: string, url?: string
                 url: url
             }
         });
-        return response.data;
+        return response;
     }
 
     const response = await request.request({
@@ -36,7 +36,7 @@ export async function getVideoDetail(path: string, source?: string, url?: string
         method: 'get',
         params: { path }
     });
-    return response.data.data;
+    return response.data;
 }
 
 export async function parseVideoNum(path: string) {
@@ -45,7 +45,7 @@ export async function parseVideoNum(path: string) {
         method: 'get',
         params: { path }
     })
-    return response.data.data
+    return response.data
 }
 
 export function getVideoCover(url: string) {
@@ -56,12 +56,13 @@ export function getVideoTrailer(url: string) {
     return configs.BASE_API + '/common/trailer?url=' + encodeURIComponent(url)
 }
 
-export function scrapeVideo(num: string) {
-    return request.request({
+export async function scrapeVideo(num: string) {
+    const response = await request.request({
         url: '/video/scrape',
         method: 'get',
         params: { num }
     })
+    return response.data
 }
 
 export function saveVideo(data: any, mode?: string, transMode?: string) {
@@ -87,7 +88,7 @@ export async function getAllActors(force: boolean = false) {
         method: 'get',
         params: { force }
     })
-    return response.data.data
+    return response.data
 }
 
 export async function searchVideosByActor(actorName: string, force: boolean = false) {
@@ -96,7 +97,7 @@ export async function searchVideosByActor(actorName: string, force: boolean = fa
         method: 'get',
         params: { actor_name: actorName, force }
     })
-    return response.data.data
+    return response.data
 }
 
 export async function getWebActors(source: string = 'javdb') {
@@ -105,7 +106,7 @@ export async function getWebActors(source: string = 'javdb') {
         method: 'get',
         params: { source }
     })
-    return response.data.data
+    return response.data
 }
 
 export async function searchWebActor(actorName: string, source: string = 'javdb') {
@@ -114,7 +115,7 @@ export async function searchWebActor(actorName: string, source: string = 'javdb'
         method: 'get',
         params: { actor_name: actorName, source }
     })
-    return response.data.data
+    return response.data
 }
 
 export async function getWebActorVideos(actorName: string, source: string = 'javdb') {
@@ -123,7 +124,7 @@ export async function getWebActorVideos(actorName: string, source: string = 'jav
         method: 'get',
         params: { actor_name: actorName, source }
     })
-    return response.data.data
+    return response.data
 }
 
 export async function getVideoDownloads(num: string, source: string = 'javdb', url?: string) {
@@ -136,5 +137,5 @@ export async function getVideoDownloads(num: string, source: string = 'javdb', u
             url: url
         }
     })
-    return response.data
+    return response
 }

@@ -25,7 +25,7 @@ function BatchModal(props: Props) {
     const {run, loading} = useRequest(api.batchParseFiles, {
         manual: true,
         onSuccess: (res) => {
-            setData(res.data.data)
+            setData(res)
         }
     })
 
@@ -58,10 +58,11 @@ function BatchModal(props: Props) {
         setData([...data])
         try {
             const response = await videoApi.scrapeVideo(video.num)
-            delete response.data.data.is_zh
-            delete response.data.data.is_uncensored
-            delete response.data.data.path
-            const item = {...video, ...response.data.data}
+            const scraped = { ...response }
+            delete scraped.is_zh
+            delete scraped.is_uncensored
+            delete scraped.path
+            const item = {...video, ...scraped}
             await videoApi.saveVideo(item, 'file')
             video.processStatus = 2
         } catch (err) {

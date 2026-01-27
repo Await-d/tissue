@@ -9,7 +9,7 @@ export async function getDownloads(params?: {
         method: 'get',
         params
     })
-    return response.data.data
+    return response.data
 }
 
 export function completeDownload(hash: string) {

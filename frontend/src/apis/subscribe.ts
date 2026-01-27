@@ -12,7 +12,7 @@ export async function getSubscribes() {
         url: '/subscribe/',
         method: 'get'
     })
-    return response.data.data
+    return response.data
 }
 
 export async function getSubscribeHistories() {
@@ -20,7 +20,7 @@ export async function getSubscribeHistories() {
         url: '/subscribe/history',
         method: 'get'
     })
-    return response.data.data
+    return response.data
 }
 
 export function modifySubscribe(data: any) {
@@ -53,7 +53,7 @@ export async function searchVideo(param: any) {
         method: 'get',
         params: param
     })
-    return response.data.data
+    return response.data
 }
 
 export async function downloadVideos(video: any, link: any) {
@@ -75,7 +75,7 @@ export async function downloadVideos(video: any, link: any) {
             link
         }
     })
-    return response.data.data
+    return response.data
 }
 
 // 演员订阅相关API
@@ -85,7 +85,7 @@ export async function getActorSubscriptions() {
         url: '/actor-subscribe/',
         method: 'get'
     })
-    return response.data.data
+    return response.data
 }
 
 export function subscribeActor(data: any) {
@@ -129,7 +129,7 @@ export async function getActorSubscriptionDownloads(actorId: number) {
         method: 'get',
         params: { actor_id: actorId }
     })
-    return response.data.data
+    return response.data
 }
 
 export async function getAllSubscriptionDownloads() {
@@ -138,7 +138,7 @@ export async function getAllSubscriptionDownloads() {
             url: '/actor-subscribe/all-downloads',
             method: 'get'
         });
-        return response.data.data;
+        return response.data;
     } catch (error) {
         console.error('获取所有下载记录失败:', error);
         return [];

@@ -61,23 +61,13 @@ export interface ApiResponse<T = any> {
   data?: T
 }
 
-// 新增：包装了ListResponse的API响应类型
-export interface WrappedListResponse<T> {
-  data: ListResponse<T>
-  status: number
-  statusText: string
-  headers: any
-  config: any
-  request: any
-}
-
 // 规则管理API
 export const getRules = (params: {
   page?: number
   page_size?: number
   is_enabled?: boolean
   name?: string
-}): Promise<WrappedListResponse<AutoDownloadRule>> => {
+}): Promise<ListResponse<AutoDownloadRule>> => {
   return request.get('/auto-download/rules', { params })
 }
 
@@ -108,7 +98,7 @@ export const getSubscriptions = (params: {
   num?: string
   start_date?: string
   end_date?: string
-}): Promise<WrappedListResponse<AutoDownloadSubscription>> => {
+}): Promise<ListResponse<AutoDownloadSubscription>> => {
   return request.get('/auto-download/subscriptions', { params })
 }
 
@@ -125,7 +115,7 @@ export const batchOperation = (data: {
 
 // 统计和管理API
 export const getStatistics = (): Promise<AutoDownloadStatistics> => {
-  return request.get('/auto-download/statistics').then(response => response.data)
+  return request.get('/auto-download/statistics')
 }
 
 export const triggerAutoDownload = (data: {

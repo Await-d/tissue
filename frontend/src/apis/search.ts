@@ -38,82 +38,95 @@ export interface SearchHistoryRequest {
 }
 
 // 统一搜索接口
-export const unifiedSearch = (data: SearchRequest) => {
-  return request.post('/search/unified', data)
+export const unifiedSearch = async (data: SearchRequest) => {
+  const response = await request.post('/search/unified', data)
+  return response.data
 }
 
 // 快速搜索接口（仅本地搜索）
-export const quickSearch = (data: QuickSearchRequest) => {
-  return request.post('/search/quick', data)
+export const quickSearch = async (data: QuickSearchRequest) => {
+  const response = await request.post('/search/quick', data)
+  return response.data
 }
 
 // 获取搜索建议
-export const getSearchSuggestions = (query: string, limit: number = 10) => {
-  return request.get(`/search/suggestions?query=${encodeURIComponent(query)}&limit=${limit}`)
+export const getSearchSuggestions = async (query: string, limit: number = 10) => {
+  const response = await request.get(`/search/suggestions?query=${encodeURIComponent(query)}&limit=${limit}`)
+  return response.data
 }
 
 // 获取搜索历史
-export const getSearchHistory = (limit: number = 50, searchType?: string) => {
+export const getSearchHistory = async (limit: number = 50, searchType?: string) => {
   const params = new URLSearchParams({ limit: limit.toString() })
   if (searchType) {
     params.append('search_type', searchType)
   }
-  return request.get(`/search/history?${params}`)
+  const response = await request.get(`/search/history?${params}`)
+  return response.data
 }
 
 // 清除搜索历史
-export const clearSearchHistory = () => {
-  return request.delete('/search/history')
+export const clearSearchHistory = async () => {
+  const response = await request.delete('/search/history')
+  return response.data
 }
 
 // 获取热门搜索
-export const getHotSearches = (limit: number = 10) => {
-  return request.get(`/search/hot?limit=${limit}`)
+export const getHotSearches = async (limit: number = 10) => {
+  const response = await request.get(`/search/hot?limit=${limit}`)
+  return response.data
 }
 
 // 获取搜索统计
-export const getSearchStatistics = () => {
-  return request.get('/search/statistics')
+export const getSearchStatistics = async () => {
+  const response = await request.get('/search/statistics')
+  return response.data
 }
 
 // 兼容性接口：演员搜索
-export const searchActor = (actorName: string, force: boolean = true) => {
-  return request.get(`/search/actor?actor_name=${encodeURIComponent(actorName)}&force=${force}`)
+export const searchActor = async (actorName: string, force: boolean = true) => {
+  const response = await request.get(`/search/actor?actor_name=${encodeURIComponent(actorName)}&force=${force}`)
+  return response.data
 }
 
 // 兼容性接口：视频搜索
-export const searchVideo = (num: string) => {
-  return request.get(`/search/video?num=${encodeURIComponent(num)}`)
+export const searchVideo = async (num: string) => {
+  const response = await request.get(`/search/video?num=${encodeURIComponent(num)}`)
+  return response.data
 }
 
 // 增强演员搜索
-export const searchActorsEnhanced = (
+export const searchActorsEnhanced = async (
   query: string,
   source: string = 'local',
   page: number = 1,
   pageSize: number = 20
 ) => {
-  return request.get(`/search/actors/search?query=${encodeURIComponent(query)}&source=${source}&page=${page}&page_size=${pageSize}`)
+  const response = await request.get(`/search/actors/search?query=${encodeURIComponent(query)}&source=${source}&page=${page}&page_size=${pageSize}`)
+  return response.data
 }
 
 // 获取所有演员列表（增强版）
-export const getAllActorsEnhanced = (
+export const getAllActorsEnhanced = async (
   force: boolean = false,
   page: number = 1,
   pageSize: number = 50
 ) => {
-  return request.get(`/search/actors/all?force=${force}&page=${page}&page_size=${pageSize}`)
+  const response = await request.get(`/search/actors/all?force=${force}&page=${page}&page_size=${pageSize}`)
+  return response.data
 }
 
 // 获取缓存信息
-export const getCacheInfo = () => {
-  return request.get('/search/cache/info')
+export const getCacheInfo = async () => {
+  const response = await request.get('/search/cache/info')
+  return response.data
 }
 
 // 清除搜索缓存
-export const clearSearchCache = (cacheType?: string) => {
+export const clearSearchCache = async (cacheType?: string) => {
   const params = cacheType ? `?cache_type=${cacheType}` : ''
-  return request.delete(`/search/cache${params}`)
+  const response = await request.delete(`/search/cache${params}`)
+  return response.data
 }
 
 // 搜索建议相关

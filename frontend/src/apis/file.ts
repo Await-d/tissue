@@ -4,7 +4,7 @@ export async function getFiles() {
     const response = await request.request({
         url: '/file/',
     })
-    return response.data.data
+    return response.data
 }
 
 export async function batchParseFiles(paths: string[]) {
@@ -13,5 +13,5 @@ export async function batchParseFiles(paths: string[]) {
         method: 'post',
         data: paths
     })
-    return response
+    return response.data
 }

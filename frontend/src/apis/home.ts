@@ -6,7 +6,7 @@ export async function getRankings(params: any) {
         method: 'get',
         params: params
     })
-    return response.data
+    return response
 }
 
 
@@ -16,5 +16,5 @@ export async function getRankingDetail(params: any) {
         method: 'get',
         params: params
     })
-    return response.data
+    return response
 }

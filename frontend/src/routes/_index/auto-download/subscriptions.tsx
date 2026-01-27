@@ -62,7 +62,7 @@ function AutoDownloadSubscriptions() {
         ...filters
       }
       const response = await getSubscriptions(params)
-      const { items = [], total = 0 } = response.data || {}
+      const { items = [], total = 0 } = response || {}
 
       setSubscriptions(items)
       setPagination({
@@ -82,7 +82,7 @@ function AutoDownloadSubscriptions() {
   const loadRules = async () => {
     try {
       const response = await getRules({ page: 1, page_size: 100 })
-      const { items = [] } = response.data || {}
+      const { items = [] } = response || {}
       setRules(items)
     } catch (error) {
       message.error('加载规则列表失败')
@@ -582,4 +582,3 @@ export const Route = createFileRoute('/_index/auto-download/subscriptions')({
 })
 
 export default AutoDownloadSubscriptions
-

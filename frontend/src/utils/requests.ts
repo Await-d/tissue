@@ -1,12 +1,21 @@
-import Axios from "axios";
+import Axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 import configs from "../configs";
 import { message } from "antd";
 import { store } from "../models";
 
 
+interface RequestInstance extends AxiosInstance {
+    request<T = any, R = T, D = any>(config: AxiosRequestConfig<D>): Promise<R>
+    get<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>
+    delete<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>
+    post<T = any, R = T, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>
+    put<T = any, R = T, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>
+    patch<T = any, R = T, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<R>
+}
+
 export const request = Axios.create({
     baseURL: configs.BASE_API
-})
+}) as RequestInstance
 
 request.interceptors.request.use(request => {
     const token = store.getState().auth?.userToken

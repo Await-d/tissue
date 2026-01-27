@@ -4,7 +4,7 @@ export async function getSettings() {
     const response = await request.request({
         url: '/setting/',
     })
-    return response.data.data
+    return response.data
 }
 
 export function saveSetting(section: string, data: any) {

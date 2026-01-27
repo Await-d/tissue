@@ -41,26 +41,27 @@ function VideoDetail(props: Props) {
     const {run: onScrape, loading: onScraping} = useRequest(api.scrapeVideo, {
         manual: true,
         onSuccess: (response) => {
-            delete response.data.data.is_zh
-            delete response.data.data.is_uncensored
-            form.setFieldsValue(response.data.data)
+            const scraped = { ...response }
+            delete scraped.is_zh
+            delete scraped.is_uncensored
+            form.setFieldsValue(scraped)
             message.success("刮削成功")
         }
     })
 
     const {run: onSave, loading: onSaving} = useRequest(api.saveVideo, {
         manual: true,
-        onSuccess: (response) => {
+        onSuccess: () => {
             message.success('保存成功')
-            onOk?.(response.request.data)
+            onOk?.(undefined as any)
         }
     })
 
     const {run: onDelete, loading: onDeleting} = useRequest(api.deleteVideo, {
         manual: true,
-        onSuccess: (response) => {
+        onSuccess: () => {
             message.success('删除成功')
-            onOk?.(response.request.data)
+            onOk?.(undefined as any)
         }
     })
 
