@@ -490,6 +490,22 @@ function Download() {
                         下载列表
                     </span>
                     <Space>
+                        <Tooltip title="检查不符合过滤规则的文件">
+                            <Button
+                                icon={<SearchOutlined />}
+                                size="small"
+                                onClick={handleBatchCleanupClick}
+                                loading={batchCleanupLoading}
+                                style={{
+                                    background: colors.bgContainer,
+                                    borderColor: colors.goldPrimary,
+                                    color: colors.goldPrimary,
+                                    transition: 'all 0.3s ease',
+                                }}
+                            >
+                                快速检查
+                            </Button>
+                        </Tooltip>
                         <Button
                             icon={<ClearOutlined />}
                             size="small"
@@ -970,11 +986,11 @@ function Download() {
 
             {/* 批量清理预览 Modal */}
             <Modal
-                title="批量清理预览"
+                title="不符合过滤规则的文件预览"
                 open={batchCleanupModalVisible}
                 onOk={handleBatchCleanupConfirm}
                 onCancel={handleBatchCleanupCancel}
-                okText="确认批量清理"
+                okText="确认清理"
                 cancelText="取消"
                 okButtonProps={{
                     danger: true,
@@ -1116,4 +1132,3 @@ function Download() {
         </Card>
     )
 }
-
