@@ -5,7 +5,7 @@
 
 import json
 import os
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
@@ -430,10 +430,18 @@ class DownloadFilterService(BaseService):
                 if hasattr(qb_files_response, "json")
                 else qb_files_response
             )
+            if not isinstance(qb_files, list):
+                result["message"] = "无法获取种子文件列表"
+                logger.error(f"种子 {torrent_hash}: 无法获取文件列表")
+                return result
+
+            qb_files = [qb_file for qb_file in qb_files if isinstance(qb_file, dict)]
             if not qb_files:
                 result["message"] = "无法获取种子文件列表"
                 logger.error(f"种子 {torrent_hash}: 无法获取文件列表")
                 return result
+
+            qb_files = cast(List[Dict[str, Any]], qb_files)
 
             # 解析文件列表
             files = torrent_parser.parse_qbittorrent_files(qb_files)
@@ -466,6 +474,40 @@ class DownloadFilterService(BaseService):
 
             # 如果不是模拟运行，实际删除文件
             if not dry_run and files_to_delete:
+                delete_paths = {file.path for file in files_to_delete}
+                skip_ids: List[int] = []
+
+                for position, qb_file in enumerate(qb_files):
+                    if not isinstance(qb_file, dict):
+                        logger.warning(
+                            f"种子 {torrent_hash}: 文件信息格式异常，跳过优先级设置"
+                        )
+                        continue
+
+                    file_path = qb_file.get("name") or qb_file.get("path") or ""
+                    if file_path not in delete_paths:
+                        continue
+
+                    file_index = qb_file.get("index")
+                    if file_index is None:
+                        logger.warning(
+                            f"种子 {torrent_hash}: 文件缺少 index 字段，使用数组位置作为 id"
+                        )
+                        file_index = position
+
+                    skip_ids.append(file_index)
+
+                if skip_ids:
+                    try:
+                        self.qb.set_file_priority(torrent_hash, skip_ids, 0)
+                        logger.info(
+                            f"种子 {torrent_hash}: 已将 {len(skip_ids)} 个文件设置为不下载"
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            f"种子 {torrent_hash}: 设置文件优先级失败，继续删除文件: {e}"
+                        )
+
                 deleted_count = 0
                 for file in files_to_delete:
                     full_path = os.path.join(save_path, file.path)
