@@ -13,6 +13,29 @@ from app.utils.spider.javdb import JavdbSpider
 from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
 
+def _normalize_cover_url(url: str):
+    normalized = (url or '').strip()
+    if normalized.startswith('//'):
+        normalized = 'https:' + normalized
+    return normalized
+
+
+def _is_image_binary(content: bytes):
+    if not content:
+        return False
+
+    if content.startswith(b'\xff\xd8\xff'):  # jpeg
+        return True
+    if content.startswith(b'\x89PNG\r\n\x1a\n'):  # png
+        return True
+    if content.startswith((b'GIF87a', b'GIF89a')):  # gif
+        return True
+    if content.startswith(b'RIFF') and content[8:12] == b'WEBP':  # webp
+        return True
+    if len(content) >= 12 and content[4:8] == b'ftyp' and content[8:12] in (b'avif', b'mif1'):  # avif/heif
+        return True
+    return False
+
 
 def get_web_actor_videos(actor_name: str, source: str = 'javdb'):
     """获取演员的视频列表，这是一个辅助函数，用于避免循环导入"""
@@ -22,22 +45,34 @@ def get_web_actor_videos(actor_name: str, source: str = 'javdb'):
 
 
 def get_video_cover(url: str):
-    component = urlparse(url)
+    normalized_url = _normalize_cover_url(url)
+    component = urlparse(normalized_url)
 
-    cached = cache.get_cache_file('cover', url)
+    if component.scheme not in ('http', 'https') or not component.netloc:
+        logger.warning(f'封面地址格式无效: {url}')
+        return None
+
+    cached = cache.get_cache_file('cover', normalized_url)
     if cached is not None:
-        return cached
+        if _is_image_binary(cached):
+            return cached
+        logger.warning(f'封面缓存内容非图片，清理并重新抓取: {normalized_url}')
+        cache.clean_cache_file('cover', normalized_url)
 
     hostname = component.hostname
-    if hostname == 'www.javbus.com':
-        response = JavbusSpider.get_cover(url)
-    elif hostname == 'c0.jdbstatic.com':
-        response = JavdbSpider.get_cover(url)
+    if hostname in ('www.javbus.com', 'javbus.com'):
+        response = JavbusSpider.get_cover(normalized_url)
+    elif hostname in ('c0.jdbstatic.com', 'jdbstatic.com'):
+        response = JavdbSpider.get_cover(normalized_url)
     else:
-        response = Spider.get_cover(url)
+        response = Spider.get_cover(normalized_url)
+
+    if not _is_image_binary(response):
+        logger.warning(f'封面抓取结果不是图片内容: {normalized_url}')
+        return None
 
     if response:
-        cache.cache_file('cover', url, response)
+        cache.cache_file('cover', normalized_url, response)
     return response
 
 

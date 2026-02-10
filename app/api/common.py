@@ -7,11 +7,13 @@ Description: 请填写简介
 '''
 import hashlib
 import re
+import mimetypes
+from urllib.parse import urlparse
 
 import httpx
 import requests
 from cachetools import cached, TTLCache
-from fastapi import APIRouter, Response, Request
+from fastapi import APIRouter, Response, Request, HTTPException
 from fastapi.responses import StreamingResponse
 
 from app.schema.r import R
@@ -21,21 +23,44 @@ from version import APP_VERSION
 router = APIRouter()
 
 
+def _normalize_cover_url(url: str):
+    normalized = (url or '').strip()
+    if not normalized:
+        raise HTTPException(status_code=422, detail='封面地址为空')
+
+    if normalized.startswith('//'):
+        normalized = 'https:' + normalized
+
+    parsed = urlparse(normalized)
+    if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+        raise HTTPException(status_code=422, detail='封面地址格式无效，仅支持 http/https')
+
+    return normalized
+
+
+def _guess_image_media_type(url: str):
+    mime_type, _ = mimetypes.guess_type(urlparse(url).path)
+    if mime_type and mime_type.startswith('image/'):
+        return mime_type
+    return 'image/jpeg'
+
+
 @router.get("/cover")
 def proxy_video_cover(url: str):
-    cover = spider.get_video_cover(url)
+    normalized_url = _normalize_cover_url(url)
+    cover = spider.get_video_cover(normalized_url)
+    if not cover:
+        raise HTTPException(status_code=502, detail='封面读取失败')
+
     headers = {
         'Cache-Control': 'public, max-age=31536000',
-        'ETag': hashlib.md5(url.encode()).hexdigest(),
+        'ETag': hashlib.md5(normalized_url.encode()).hexdigest(),
     }
-    return Response(content=cover, media_type="image", headers=headers)
+    return Response(content=cover, media_type=_guess_image_media_type(normalized_url), headers=headers)
 
 
 @router.get("/trailer")
 async def proxy_video_trailer(url: str, request: Request):
-    from urllib.parse import urlparse
-    from fastapi import HTTPException
-    
     headers = {
         "Range": request.headers.get("Range", ""),
         "User-Agent": request.headers.get("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"),
