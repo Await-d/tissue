@@ -1,10 +1,6 @@
-import React, {useEffect, useState} from "react";
-import {Col, GetProp, Row, theme} from "antd";
+import React, { useState } from "react";
+import { Col, Row } from "antd";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
-
-const { useToken } = theme;
-
-type ColSpan = GetProp<typeof Col, 'span'>
 
 export interface FilterField {
     dataIndex: string,
@@ -17,14 +13,17 @@ interface FilterProps extends React.ComponentProps<any> {
     fields: FilterField[]
     initialValues: object
     onChange: (values: object, filed?: string) => void
+    compact?: boolean
 }
 
 function Filter(props: FilterProps) {
 
-    const {fields, initialValues = {}, onChange, ...others} = props
+    const {fields, initialValues = {}, onChange, compact = false, ...others} = props
     const [values, setValues] = useState<any>(initialValues)
-    const { token } = useToken();
     const colors = useThemeColors();
+    const fieldMinHeight = compact ? 38 : 48
+    const labelMinWidth = compact ? '3em' : '3.5em'
+    const labelFontSize = compact ? '12px' : '13px'
 
     function renderFields(field: FilterField) {
 
@@ -38,12 +37,12 @@ function Filter(props: FilterProps) {
         })
 
         return (
-            <Col key={field.dataIndex} {...field.span} className={'flex items-center h-12'}>
-                <div className={'mr-3'} style={{
+            <Col key={field.dataIndex} {...field.span} className={'flex items-center'} style={{ minHeight: fieldMinHeight }}>
+                <div className={compact ? 'mr-2' : 'mr-3'} style={{
                     fontWeight: 600,
                     color: colors.textGold,
-                    minWidth: '3.5em',
-                    fontSize: '13px',
+                    minWidth: labelMinWidth,
+                    fontSize: labelFontSize,
                     letterSpacing: '0.02em',
                     textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
                 }}>{field.label}</div>
@@ -61,23 +60,15 @@ function Filter(props: FilterProps) {
                 background: colors.rgba('black', 0.15),
                 backdropFilter: 'blur(20px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                padding: '20px',
-                borderRadius: '14px',
-                marginBottom: '20px',
+                padding: compact ? '12px' : '20px',
+                borderRadius: compact ? '12px' : '14px',
+                marginBottom: compact ? '8px' : '20px',
                 border: `1px solid ${colors.borderPrimary}`,
                 boxShadow: `${colors.shadowMd}, inset 0 1px 0 ${colors.rgba('white', 0.05)}`,
                 transition: 'all 250ms cubic-bezier(0.4, 0, 0.2, 1)',
             }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = colors.borderGold;
-                e.currentTarget.style.boxShadow = `0 4px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${colors.rgba('gold', 0.1)}, inset 0 1px 0 ${colors.rgba('white', 0.05)}`;
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = colors.borderPrimary;
-                e.currentTarget.style.boxShadow = `${colors.shadowMd}, inset 0 1px 0 ${colors.rgba('white', 0.05)}`;
-            }}
         >
-            <Row {...others} gutter={[12, 12]}>
+            <Row {...others} gutter={compact ? [8, 8] : [12, 12]}>
                 {fields.map(field => renderFields(field))}
             </Row>
         </div>
