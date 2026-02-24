@@ -32,7 +32,7 @@ class Jav321Spider(Spider):
                 meta.outline = outline.text.replace("\n", "")
                 brs = outline.xpath('./br')
                 if brs:
-                    extra_outline = "".join(map(lambda i: i.tail, brs))
+                    extra_outline = "".join(i.tail for i in brs if i.tail)
                     hr_index = extra_outline.find("----------------------")
                     if hr_index != -1:
                         meta.outline += (extra_outline[0:hr_index])

@@ -237,7 +237,7 @@ class JavbusSpider(Spider):
             if include_downloads:
                 meta.downloads = self.get_downloads(url, response.text)
 
-            if include_downloads:
+            if include_previews:
                 meta.previews = self.get_previews(html)
 
             return meta
@@ -255,7 +255,10 @@ class JavbusSpider(Spider):
 
         images = html.xpath("//a[@class='sample-box']")
         for image in images:
-            thumb = image.xpath("./div/img")[0]
+            img_elements = image.xpath("./div/img")
+            if not img_elements:
+                continue
+            thumb = img_elements[0]
             preview = VideoPreviewItem(type='image', thumb=urljoin(self.host, thumb.get('src')), url=image.get('href'))
             result.append(preview)
 

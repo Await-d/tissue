@@ -442,7 +442,7 @@ class JavdbSpider(Spider):
     def get_previews(self, html: etree.HTML):
         result = []
 
-        videos = html.xpath("//div[contains(@class,'preview-images')]/a[@class='preview-video-container']")
+        videos = html.xpath("//div[contains(@class,'preview-images')]/a[contains(@class,'preview-video-container')]")
         for video in videos:
             href = video.get('href')
             # 跳过指向登录页面的链接（未登录用户）
@@ -454,16 +454,38 @@ class JavdbSpider(Spider):
             thumb = thumb_elements[0]
             video_sources = html.xpath(f"//video[@id='{href[1:]}']/source")
             if video_sources:
-                preview = VideoPreviewItem(type='video', thumb=thumb.get('src'), url=video_sources[0].get('src'))
+                thumb_src = thumb.get('src') or ''
+                video_src = video_sources[0].get('src') or ''
+                # 确保 URL 是绝对路径
+                if thumb_src.startswith('//'):
+                    thumb_src = 'https:' + thumb_src
+                elif thumb_src and not thumb_src.startswith('http'):
+                    thumb_src = urljoin(self.host, thumb_src)
+                if video_src.startswith('//'):
+                    video_src = 'https:' + video_src
+                elif video_src and not video_src.startswith('http'):
+                    video_src = urljoin(self.host, video_src)
+                preview = VideoPreviewItem(type='video', thumb=thumb_src, url=video_src)
                 result.append(preview)
 
-        images = html.xpath("//div[contains(@class,'preview-images')]/a[@class='tile-item']")
+        images = html.xpath("//div[contains(@class,'preview-images')]/a[contains(@class,'tile-item')]")
         for image in images:
             thumb_elements = image.xpath('./img')
             if not thumb_elements:
                 continue
             thumb = thumb_elements[0]
-            preview = VideoPreviewItem(type='image', thumb=thumb.get('src'), url=image.get('href'))
+            thumb_src = thumb.get('src') or ''
+            image_href = image.get('href') or ''
+            # 确保 URL 是绝对路径
+            if thumb_src.startswith('//'):
+                thumb_src = 'https:' + thumb_src
+            elif thumb_src and not thumb_src.startswith('http'):
+                thumb_src = urljoin(self.host, thumb_src)
+            if image_href.startswith('//'):
+                image_href = 'https:' + image_href
+            elif image_href and not image_href.startswith('http'):
+                image_href = urljoin(self.host, image_href)
+            preview = VideoPreviewItem(type='image', thumb=thumb_src, url=image_href)
             result.append(preview)
 
         return [VideoPreview(website=self.name, items=result)]
@@ -824,9 +846,9 @@ class JavdbSpider(Spider):
                 tag_elements = video.xpath('./div[contains(@class, "tags")]/span/text()')
                 if tag_elements:
                     tag_str = ' '.join(tag_elements)
-                    ranking.isZh = ('中字' in tag_str or 'CnSub' in tag_str)
+                    ranking.is_zh = ('中字' in tag_str or 'CnSub' in tag_str)
                 else:
-                    ranking.isZh = False
+                    ranking.is_zh = False
 
                 result.append(ranking)
             except Exception as e:
@@ -911,9 +933,9 @@ class JavdbSpider(Spider):
                     tag_elements = video.xpath('.//div[contains(@class, "tags")]/span/text()')
                     if tag_elements:
                         tag_str = ' '.join(tag_elements)
-                        ranking.isZh = ('中字' in tag_str or 'CnSub' in tag_str)
+                        ranking.is_zh = ('中字' in tag_str or 'CnSub' in tag_str)
                     else:
-                        ranking.isZh = False
+                        ranking.is_zh = False
                     
                     # 使用 video_type 参数设置是否无码
                     ranking.is_uncensored = (video_type == 'uncensored')
@@ -968,16 +990,23 @@ class JavdbSpider(Spider):
             self._set_age_cookies()
             
             response = self._get(url, headers=headers)
+            # 检测是否被重定向到登录页（无码排行榜需要登录）
+            if '/login' in str(response.url) or b'\xe7\x99\xbb\xe5\x85\xa5' in response.content[:1000]:
+                logger.warning(
+                    f"排行榜页面需要登录 ({video_type} {cycle})，请在设置中配置JavDB登录Cookie才能获取无码排行榜数据"
+                )
+                return []
             html = etree.HTML(response.content, parser=etree.HTMLParser(encoding='utf-8'))
             
-            # 保存页面HTML用于调试
-            debug_filename = f"javdb_{page_type}_debug.html"
-            try:
-                with open(debug_filename, "wb") as f:
-                    f.write(response.content)
-                logger.info(f"已保存调试页面到 {debug_filename}")
-            except:
-                pass
+            # 仅在 DEBUG 级别日志启用时写入调试文件，避免生产环境磁盘写入
+            if logger.isEnabledFor(10):  # logging.DEBUG == 10
+                debug_filename = f"javdb_{page_type}_debug.html"
+                try:
+                    with open(debug_filename, "wb") as f:
+                        f.write(response.content)
+                    logger.debug(f"已保存调试页面到 {debug_filename}")
+                except Exception:
+                    pass
             
             # 根据页面类型使用不同的解析策略
             if page_type == 'uncensored_ranking':
@@ -1012,7 +1041,7 @@ class JavdbSpider(Spider):
         videos = []
         
         # 排行榜页面使用movie-list结构
-        video_elements = html.xpath("//div[@class='movie-list']//div[@class='item']")
+        video_elements = html.xpath("//div[contains(@class, 'movie-list')]//div[@class='item']")
         logger.info(f"{page_type}第 {page} 页找到 {len(video_elements)} 个视频元素")
         
         # 如果没找到，尝试其他可能的选择器
@@ -1093,10 +1122,23 @@ class JavdbSpider(Spider):
                 video_info['comments'] = comments
                 video_info['comments_count'] = comments
                 
+                # 获取发布日期
+                meta_elements = element.xpath(".//div[contains(@class, 'meta')]")
+                if meta_elements:
+                    date_text = ''.join(meta_elements[0].itertext()).strip()
+                    if date_text:
+                        parsed_date = self._parse_date(date_text)
+                        video_info['release_date'] = parsed_date.strftime('%Y-%m-%d') if parsed_date else None
+
                 # 设置质量标签
                 video_info['is_uncensored'] = (page_type == 'uncensored_ranking')
                 video_info['is_hd'] = False  # 排行榜数据默认不标记为高清，避免影响筛选
-                video_info['is_zh'] = False
+
+                # 检查中文字幕: cnsub标签（封面区域）或含中字的tags
+                cnsub_elements = element.xpath(".//span[contains(@class, 'cnsub')]")
+                tag_texts = ' '.join(element.xpath(".//div[contains(@class, 'tags')]//span/text()"))
+                video_info['is_zh'] = bool(cnsub_elements) or '中字' in tag_texts or 'CnSub' in tag_texts
+
                 video_info['website'] = self.name
                 
                 videos.append(video_info)
@@ -1354,7 +1396,7 @@ class JavdbSpider(Spider):
                     
                     # 检查中文字幕和无码标签
                     cnsub_element = box.xpath('.//span[contains(@class, "cnsub")]')
-                    item.isZh = len(cnsub_element) > 0
+                    item.is_zh = len(cnsub_element) > 0
                     
                     uncensored_element = box.xpath('.//span[contains(@class, "uncensored")]')
                     item.is_uncensored = len(uncensored_element) > 0

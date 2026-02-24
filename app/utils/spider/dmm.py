@@ -59,10 +59,10 @@ class DmmSpider(Spider):
             meta.tags = [genres['name'] for genres in content['genres']]
         if content.get('series'):
             meta.series = content.get('series').get('name')
-        meta.cover = content['packageImage']['largeUrl']
+        meta.cover = (content.get('packageImage') or {}).get('largeUrl')
 
         actors = []
-        for actor in content['actresses']:
+        for actor in (content.get('actresses') or []):
             actors.append(
                 VideoActor(name=actor['name'], thumb=actor['imageUrl'])
             )
@@ -85,7 +85,7 @@ class DmmSpider(Spider):
 
         results = re.findall(r'\"yesButtonLink\":\"(.+?)\"', response.text)
         if not results:
-            raise Exception("找不到年龄确认按钮")
+            raise SpiderException('找不到年龄确认按钮')
         return results[0], code
 
     def get_previews(self, content: dict):
@@ -98,9 +98,12 @@ class DmmSpider(Spider):
 
         video = content.get('sample2DMovie')
         if video:
-            thumb = content.get('packageImage').get('largeUrl')
-            result.insert(
-                0,
-                VideoPreviewItem(type='video', thumb=thumb, url=video['highestMovieUrl'])
-            )
+            package_image = content.get('packageImage') or {}
+            thumb = package_image.get('largeUrl')
+            video_url = video.get('highestMovieUrl')
+            if video_url:
+                result.insert(
+                    0,
+                    VideoPreviewItem(type='video', thumb=thumb, url=video_url)
+                )
         return [VideoPreview(website=self.name, items=result)]
