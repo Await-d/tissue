@@ -11,7 +11,7 @@ class JavDBRanking(BaseModel):
     publish_date: Optional[date] = None
     rank: Optional[float] = None
     rank_count: Optional[int] = None
-    isZh: Optional[bool] = False
+    is_zh: Optional[bool] = False
     is_uncensored: Optional[bool] = False
     url: Optional[str] = None
     rating: Optional[str] = None

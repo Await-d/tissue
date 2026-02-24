@@ -71,9 +71,12 @@ class VideoCache(Base):
             'cover': self.cover,
             'url': self.url,
             'rating': self.rating,
+            'rank': self.rating,              # 兼容 JavDBRanking.rank（前端用）
             'comments': self.comments_count,  # 兼容旧字段名
             'comments_count': self.comments_count,
+            'rank_count': self.comments_count, # 兼容 JavDBRanking.rank_count（前端用）
             'release_date': self.release_date,
+            'publish_date': self.release_date, # 兼容 JavDBRanking.publish_date（前端用）
             'is_hd': self.is_hd,
             'is_zh': self.is_zh,
             'is_uncensored': self.is_uncensored,
