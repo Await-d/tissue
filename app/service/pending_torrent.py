@@ -273,13 +273,16 @@ class PendingTorrentService(BaseService):
 
             # 5. 根据过滤结果更新状态
             if filter_result.get('success'):
-                # 过滤成功，恢复下载
-                self.qb.resume_torrent(torrent_hash)
+                # 过滤成功：先更新状态，再恢复下载（避免 resume 失败导致 COMPLETED 无法写入）
                 self.update_status(
                     torrent_hash,
                     PendingTorrentStatus.COMPLETED,
                     filter_result=filter_result
                 )
+                try:
+                    self.qb.resume_torrent(torrent_hash)
+                except Exception as resume_err:
+                    logger.warning(f"恢复种子下载失败（状态已标记COMPLETED）: {torrent_hash}, {resume_err}")
                 logger.info(f"种子过滤完成并开始下载: {torrent_hash}, {filter_result.get('message', '')}")
             else:
                 # 过滤失败，删除种子
@@ -303,6 +306,10 @@ class PendingTorrentService(BaseService):
             logger.error(f"处理待处理种子时出错: {torrent_hash}, 错误: {e}")
             import traceback
             logger.debug(traceback.format_exc())
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
             return False
 
     def process_pending_torrents(self) -> Dict:

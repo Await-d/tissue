@@ -105,7 +105,8 @@ class DownloadService(BaseService):
                 continue
                 
             # 使用新的过滤系统处理文件列表
-            filter_result = self.filter_service.filter_torrent_files(info['hash'])
+            # 使用只读过滤系统处理文件列表（不修改 qBittorrent 文件优先级，避免重复写入）
+            filter_result = self.filter_service.filter_torrent_files_readonly(info['hash'], files)
             if filter_result['success']:
                 # 获取过滤后的文件列表
                 filtered_files = filter_result['files']

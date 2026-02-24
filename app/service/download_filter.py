@@ -674,3 +674,47 @@ class DownloadFilterService(BaseService):
             result["errors"].append(str(e))
 
         return result
+
+    def filter_torrent_files_readonly(self, torrent_hash: str, qb_files: List[Dict]) -> Dict:
+        """
+        对已存在的种子应用过滤规则（只读版本，不修改 qBittorrent 文件优先级）
+        用于展示下载列表时的文件过滤，避免重复写入 qBittorrent。
+
+        Args:
+            torrent_hash: 种子hash（仅用于日志）
+            qb_files: 已从 qBittorrent 获取的文件列表
+
+        Returns:
+            Dict: 过滤结果，与 filter_torrent_files 格式兼容
+        """
+        result = {
+            "success": False,
+            "message": "",
+            "original_files": 0,
+            "filtered_files": 0,
+            "filtered_size_mb": 0,
+            "files": [],
+        }
+
+        try:
+            filter_settings = self.get_filter_settings()
+            if not filter_settings:
+                from types import SimpleNamespace
+                filter_settings = SimpleNamespace(**self.get_default_filter_settings())
+
+            files = torrent_parser.parse_qbittorrent_files(qb_files)
+            result["original_files"] = len(files)
+
+            filtered_files = self._apply_filter_rules(files, filter_settings)
+            result["filtered_files"] = len(filtered_files)
+            result["filtered_size_mb"] = sum(f.size for f in filtered_files) / (1024 * 1024)
+            result["files"] = [self._file_to_dict(f) for f in filtered_files]
+
+            result["success"] = True
+            result["message"] = f"过滤完成，保留{len(filtered_files)}/{len(files)}个文件"
+
+        except Exception as e:
+            logger.error(f"只读过滤种子文件时出错: {e}")
+            result["message"] = f"过滤时发生错误: {str(e)}"
+
+        return result
