@@ -497,7 +497,7 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
     }
 
     return (
-        item.isZh ? (
+        item.is_zh ? (
             <Badge.Ribbon
                 text={'中文'}
                 style={{

@@ -23,6 +23,7 @@ function Preview(props: { data: any }) {
                 sources: [
                     {
                         src: api.getVideoTrailer(item.url),
+                        type: "video/mp4",
                     },
                 ],
             }
