@@ -127,6 +127,49 @@ function SettingApp() {
                                             placeholder="30"
                                         />
                                     </Form.Item>
+                                    <Form.Item
+                                        label={<span style={{ color: colors.text }}>HTTP 代理</span>}
+                                        name={'proxy'}
+                                        tooltip={'服务器IP被目标站点封锁时，可通过代理访问。格式: http://host:port 或 socks5://user:pass@host:port'}
+                                    >
+                                        <Input
+                                            style={{
+                                                background: colors.bgDark,
+                                                borderColor: colors.border,
+                                                color: colors.text
+                                            }}
+                                            className="hover:border-opacity-50 focus:shadow-sm"
+                                            placeholder="http://127.0.0.1:7890"
+                                            allowClear
+                                        />
+                                    </Form.Item>
+                                </div>
+                            </div>
+
+                            {/* JavDB 设置 */}
+                            <div className="mb-8 pt-8 border-t" style={{ borderColor: colors.border }}>
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: colors.goldLight }}>
+                                    <span className="w-1 h-5 rounded-full" style={{ background: colors.gold }}></span>
+                                    JavDB 设置
+                                </h3>
+                                <div className="space-y-4">
+                                    <Form.Item
+                                        label={<span style={{ color: colors.text }}>JavDB Cookie</span>}
+                                        name={'javdb_cookie'}
+                                        tooltip={'登录 JavDB 后，从浏览器开发者工具复制 Cookie，用于访问排行榜等需要登录的页面。格式: key1=val1; key2=val2'}
+                                    >
+                                        <Input.TextArea
+                                            style={{
+                                                background: colors.bgDark,
+                                                borderColor: colors.border,
+                                                color: colors.text
+                                            }}
+                                            className="hover:border-opacity-50 focus:shadow-sm"
+                                            placeholder="_jdb_session=xxx; remember_me_token=yyy"
+                                            rows={3}
+                                            allowClear
+                                        />
+                                    </Form.Item>
                                 </div>
                             </div>
 

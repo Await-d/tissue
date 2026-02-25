@@ -86,6 +86,15 @@ class Spider:
         user_agent = getattr(self.setting, 'user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
         self.session.headers = {'User-Agent': user_agent, 'Referer': self.host}
         self.session.timeout = (5, self.session.timeout)
+
+        # 应用HTTP代理（设置了proxy时，所有请求包括选择内容阵时的请求均会经过代理）
+        proxy = getattr(self.setting, 'proxy', None) or ''
+        if proxy.strip():
+            self.session.proxies = {
+                'http': proxy.strip(),
+                'https': proxy.strip(),
+            }
+            logger.info(f"应用HTTP代理: {proxy.strip()}")
         logger.info(f"初始化爬虫: {self.name}, 域名: {self.host}")
 
     @abstractmethod

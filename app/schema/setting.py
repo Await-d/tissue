@@ -21,6 +21,9 @@ class SettingApp(BaseModel):
     # JavDB登录Cookie（排行榜等页面需要登录才能访问）
     javdb_cookie: Optional[str] = None
 
+    # HTTP代理配置（格式: http://host:port 或 socks5://host:port）
+    # 服务器IP被目标站点屏蔽时，可通过代理访问
+    proxy: Optional[str] = None
     # 定时扫描配置
     enable_scheduled_scan: bool = False
 
