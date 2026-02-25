@@ -60,7 +60,16 @@ export const Route = createFileRoute('/_index/search/')({
         return {
             data: deps.num ? (
                 api.searchVideo(deps).then(data => {
-                    const res = { ...data, actors: data.actors.map((i: any) => i.name).join(", ") }
+                    const actorNames = Array.isArray(data?.actors)
+                        ? data.actors
+                            .map((i: any) => (typeof i === 'string' ? i : i?.name))
+                            .filter((name: any) => typeof name === 'string' && name)
+                            .join(", ")
+                        : (typeof data?.actors === 'string' ? data.actors : '');
+                    const res = { ...data, actors: actorNames }
+                    if (!res?.num) {
+                        return res
+                    }
                     const histories: any[] = JSON.parse(localStorage.getItem(cacheHistoryKey) || '[]')
                         .filter((i: any) => i.num.toUpperCase() !== res.num.toUpperCase())
                     const history = { num: res.num, actors: res.actors, title: res.title, cover: res.cover }
@@ -70,8 +79,9 @@ export const Route = createFileRoute('/_index/search/')({
                     localStorage.setItem(cacheLastSearchKey, res.num)
 
                     return res
-                }).catch(() => {
-
+                }).catch((error) => {
+                    console.error('搜索视频失败:', error)
+                    return undefined
                 })
             ) : (
                 Promise.resolve()
@@ -501,8 +511,12 @@ export function Search() {
                         <Col span={24} lg={16} md={12}>
                             <Await promise={loaderData}>
                                 {(video) => {
-                                    if (video?.previews) {
-                                        const previews = video.previews.find((i: any) => i.website === previewSelected) || video.previews[0]
+                                    const previewGroups = Array.isArray(video?.previews)
+                                        ? video.previews.filter((group: any) => group && Array.isArray(group.items) && group.items.length > 0)
+                                        : []
+
+                                    if (previewGroups.length > 0) {
+                                        const previews = previewGroups.find((i: any) => i.website === previewSelected) || previewGroups[0]
                                         return (
                                             <Card
                                                 title={'预览'}
@@ -510,14 +524,18 @@ export function Search() {
                                                 extra={(
                                                     <Segmented
                                                         onChange={(value: string) => setPreviewSelected(value)}
-                                                        options={video.previews.map((i: any) => i.website)}
+                                                        options={previewGroups.map((i: any) => i.website)}
                                                     />
                                                 )}>
                                                 <Preview data={previews.items} />
                                             </Card>
                                         )
                                     } else {
-                                        return <div></div>
+                                        return (
+                                            <Card title={'预览'} className={'mb-4'}>
+                                                <Empty description={'暂无可用预览'} />
+                                            </Card>
+                                        )
                                     }
                                 }}
                             </Await>

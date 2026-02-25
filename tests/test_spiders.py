@@ -774,6 +774,118 @@ class TestDmmKeyErrorFixes:
 
 
 # ──────────────────────────────────────────────
+# get_video 预览保留回归测试
+# ──────────────────────────────────────────────
+
+
+class TestGetVideoPreviewRetention:
+    def _build_meta(
+        self, num: str, website: str, with_download: bool, with_preview: bool
+    ):
+        from app.schema.video import (
+            VideoDetail,
+            VideoDownload,
+            VideoPreview,
+            VideoPreviewItem,
+        )
+
+        meta = VideoDetail(num=num, title=f"{num} title")
+        meta.website = [f"https://{website}.example/{num}"]
+        meta.downloads = (
+            [
+                VideoDownload(
+                    website=website,
+                    name=f"{num} download",
+                    magnet=f"magnet:?xt=urn:btih:{num}",
+                )
+            ]
+            if with_download
+            else []
+        )
+        meta.previews = (
+            [
+                VideoPreview(
+                    website=website,
+                    items=[
+                        VideoPreviewItem(
+                            type="video",
+                            thumb=f"https://{website}.example/{num}.jpg",
+                            url=f"https://{website}.example/{num}.mp4",
+                        )
+                    ],
+                )
+            ]
+            if with_preview
+            else []
+        )
+        return meta
+
+    def test_keep_preview_even_when_source_has_no_downloads(self):
+        """有预览但无下载的站点结果不能被丢弃。"""
+        from app.utils import spider as spider_module
+
+        javbus_meta = self._build_meta(
+            "TEST-001", "javbus", with_download=False, with_preview=True
+        )
+        javdb_meta = self._build_meta(
+            "TEST-001", "javdb", with_download=True, with_preview=False
+        )
+
+        fake_javbus = MagicMock()
+        fake_javbus.downloadable = True
+        fake_javbus.name = "JavBus"
+        fake_javbus.get_info.return_value = javbus_meta
+
+        fake_javdb = MagicMock()
+        fake_javdb.downloadable = True
+        fake_javdb.name = "JavDB"
+        fake_javdb.get_info.return_value = javdb_meta
+
+        with (
+            patch.object(spider_module, "JavbusSpider", return_value=fake_javbus),
+            patch.object(spider_module, "JavdbSpider", return_value=fake_javdb),
+        ):
+            result = spider_module.get_video("TEST-001")
+
+        assert result is not None
+        assert result.previews is not None
+        assert len(result.previews) == 1
+        assert result.previews[0].items[0].type == "video"
+
+    def test_return_meta_when_no_downloads_but_has_previews(self):
+        """即使所有站点都没有下载资源，只要有预览/元数据也应返回结果。"""
+        from app.utils import spider as spider_module
+
+        javbus_meta = self._build_meta(
+            "TEST-002", "javbus", with_download=False, with_preview=True
+        )
+        javdb_meta = self._build_meta(
+            "TEST-002", "javdb", with_download=False, with_preview=False
+        )
+
+        fake_javbus = MagicMock()
+        fake_javbus.downloadable = True
+        fake_javbus.name = "JavBus"
+        fake_javbus.get_info.return_value = javbus_meta
+
+        fake_javdb = MagicMock()
+        fake_javdb.downloadable = True
+        fake_javdb.name = "JavDB"
+        fake_javdb.get_info.return_value = javdb_meta
+
+        with (
+            patch.object(spider_module, "JavbusSpider", return_value=fake_javbus),
+            patch.object(spider_module, "JavdbSpider", return_value=fake_javdb),
+        ):
+            result = spider_module.get_video("TEST-002")
+
+        assert result is not None
+        assert result.num == "TEST-002"
+        assert result.previews is not None
+        assert len(result.previews) == 1
+
+
+# ──────────────────────────────────────────────
 # 在线网络集成测试（需手动启用）
 # ──────────────────────────────────────────────
 

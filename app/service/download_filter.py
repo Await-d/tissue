@@ -5,7 +5,7 @@
 
 import json
 import os
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 from sqlalchemy.orm import Session
 from fastapi import Depends
 
@@ -123,7 +123,7 @@ class DownloadFilterService(BaseService):
 
             # 检查种子是否已存在于qBittorrent中
             if self.qb.is_magnet_exists(magnet_url):
-                logger.info(f"种子已存在，尝试获取文件列表进行过滤分析")
+                logger.info("种子已存在，尝试获取文件列表进行过滤分析")
 
                 # 获取种子hash
                 torrent_hash = magnet_info["hash"]
@@ -270,7 +270,7 @@ class DownloadFilterService(BaseService):
                 filter_params["allowed_extensions"] = json.loads(
                     filter_settings.allowed_extensions
                 )
-            except:
+            except Exception:
                 pass
 
         if filter_settings.blocked_extensions:
@@ -278,7 +278,7 @@ class DownloadFilterService(BaseService):
                 filter_params["blocked_extensions"] = json.loads(
                     filter_settings.blocked_extensions
                 )
-            except:
+            except Exception:
                 pass
 
         # 应用过滤
@@ -355,6 +355,57 @@ class DownloadFilterService(BaseService):
             "is_subtitle": file.is_subtitle,
         }
 
+    def _normalize_torrent_path(self, file_path: str) -> str:
+        normalized = (file_path or "").replace("\\", "/").strip()
+        normalized = normalized.lstrip("/")
+        normalized = os.path.normpath(normalized) if normalized else ""
+        if normalized in ("", ".", os.curdir):
+            return ""
+        return normalized.replace("\\", "/")
+
+    def _resolve_torrent_file_full_path(
+        self, save_path: str, file_path: str
+    ) -> Tuple[Optional[str], str]:
+        normalized_rel_path = self._normalize_torrent_path(file_path)
+        if not normalized_rel_path:
+            return None, normalized_rel_path
+
+        abs_save_path = os.path.abspath(save_path)
+        abs_full_path = os.path.abspath(
+            os.path.join(abs_save_path, normalized_rel_path)
+        )
+
+        if not (
+            abs_full_path == abs_save_path
+            or abs_full_path.startswith(abs_save_path + os.sep)
+        ):
+            return None, normalized_rel_path
+
+        return abs_full_path, normalized_rel_path
+
+    def _map_download_path(self, path: str) -> str:
+        setting = Setting().download
+        download_path = (getattr(setting, "download_path", "") or "").strip()
+        mapping_path = (getattr(setting, "mapping_path", "") or "").strip()
+
+        if not download_path or not path.startswith(download_path):
+            return path
+
+        if not mapping_path:
+            logger.warning(f"下载路径映射为空，保持原路径: {path}")
+            return path
+
+        mapped_path = path.replace(download_path, mapping_path, 1)
+
+        if os.path.exists(mapped_path):
+            return mapped_path
+
+        if os.path.exists(path):
+            logger.warning(f"映射后路径不存在，回退原路径: {path} -> {mapped_path}")
+            return path
+
+        return mapped_path
+
     def get_filter_statistics(self) -> Dict:
         """
         获取过滤统计信息
@@ -407,6 +458,7 @@ class DownloadFilterService(BaseService):
 
             props = props_response.json()
             save_path = props.get("save_path", "")
+            save_path = self._map_download_path(save_path)
             result["save_path"] = save_path
             result["torrent_name"] = props.get("name", "")
 
@@ -450,32 +502,76 @@ class DownloadFilterService(BaseService):
 
             # 应用过滤规则，获取需要保留的文件
             keep_files = self._apply_filter_rules(files, filter_settings)
-            keep_paths = {f.path for f in keep_files}
+            keep_paths = {self._normalize_torrent_path(f.path) for f in keep_files}
+
+            qb_priority_by_path: Dict[str, int] = {}
+            for qb_file in qb_files:
+                if not isinstance(qb_file, dict):
+                    continue
+                raw_path = cast(str, qb_file.get("name") or qb_file.get("path") or "")
+                normalized_path = self._normalize_torrent_path(raw_path)
+                if not normalized_path:
+                    continue
+                try:
+                    qb_priority_by_path[normalized_path] = int(
+                        qb_file.get("priority", 1)
+                    )
+                except Exception:
+                    qb_priority_by_path[normalized_path] = 1
 
             result["kept_files"] = len(keep_files)
             result["files_to_keep"] = [self._file_to_dict(f) for f in keep_files]
 
             # 识别需要删除的文件
-            files_to_delete = []
+            files_to_delete: List[TorrentFile] = []
             for file in files:
-                if file.path not in keep_paths:
-                    files_to_delete.append(file)
+                normalized_path = self._normalize_torrent_path(file.path)
+                if not normalized_path:
+                    continue
+                if normalized_path in keep_paths:
+                    continue
+                if qb_priority_by_path.get(normalized_path, 1) == 0:
+                    continue
+                files_to_delete.append(file)
 
-            result["deleted_files"] = len(files_to_delete)
-            result["files_to_delete"] = [self._file_to_dict(f) for f in files_to_delete]
-            result["deleted_size_bytes"] = sum(f.size for f in files_to_delete)
+            existing_candidates: List[TorrentFile] = []
+            missing_candidates: List[TorrentFile] = []
+            existing_candidate_paths: Dict[str, str] = {}
+            for file in files_to_delete:
+                full_path, normalized_path = self._resolve_torrent_file_full_path(
+                    save_path, file.path
+                )
+                if not full_path:
+                    logger.error(f"检测到非法路径，可能是路径遍历攻击: {file.path}")
+                    result["errors"].append(f"非法路径: {file.path}")
+                    continue
+                if os.path.exists(full_path):
+                    existing_candidates.append(file)
+                    existing_candidate_paths[normalized_path] = full_path
+                else:
+                    missing_candidates.append(file)
+
+            result["deleted_files"] = len(existing_candidates)
+            result["files_to_delete"] = [
+                self._file_to_dict(f) for f in existing_candidates
+            ]
+            result["deleted_size_bytes"] = sum(f.size for f in existing_candidates)
             result["deleted_size_mb"] = round(
                 result["deleted_size_bytes"] / (1024 * 1024), 2
             )
+            result["missing_files"] = len(missing_candidates)
 
             logger.info(
                 f"种子 {torrent_hash}: 总文件数={len(files)}, 保留={len(keep_files)}, "
-                f"待删除={len(files_to_delete)}, 可释放空间={result['deleted_size_mb']}MB, dry_run={dry_run}"
+                f"待删除={len(existing_candidates)}, 缺失={len(missing_candidates)}, 可释放空间={result['deleted_size_mb']}MB, dry_run={dry_run}"
             )
 
             # 如果不是模拟运行，实际删除文件
-            if not dry_run and files_to_delete:
-                delete_paths = {file.path for file in files_to_delete}
+            if not dry_run and existing_candidates:
+                delete_paths = {
+                    self._normalize_torrent_path(file.path)
+                    for file in existing_candidates
+                }
                 skip_ids: List[int] = []
 
                 for position, qb_file in enumerate(qb_files):
@@ -485,7 +581,10 @@ class DownloadFilterService(BaseService):
                         )
                         continue
 
-                    file_path = qb_file.get("name") or qb_file.get("path") or ""
+                    raw_file_path = cast(
+                        str, qb_file.get("name") or qb_file.get("path") or ""
+                    )
+                    file_path = self._normalize_torrent_path(raw_file_path)
                     if file_path not in delete_paths:
                         continue
 
@@ -500,35 +599,43 @@ class DownloadFilterService(BaseService):
 
                 if skip_ids:
                     try:
-                        self.qb.set_file_priority(torrent_hash, skip_ids, 0)
-                        logger.info(
-                            f"种子 {torrent_hash}: 已将 {len(skip_ids)} 个文件设置为不下载"
+                        priority_response = self.qb.set_file_priority(
+                            torrent_hash, skip_ids, 0
                         )
+                        if priority_response and priority_response.status_code == 200:
+                            logger.info(
+                                f"种子 {torrent_hash}: 已将 {len(skip_ids)} 个文件设置为不下载"
+                            )
+                        else:
+                            logger.warning(
+                                f"种子 {torrent_hash}: 设置文件优先级返回异常状态"
+                            )
                     except Exception as e:
                         logger.warning(
                             f"种子 {torrent_hash}: 设置文件优先级失败，继续删除文件: {e}"
                         )
 
                 deleted_count = 0
-                for file in files_to_delete:
-                    full_path = os.path.join(save_path, file.path)
-
-                    # 安全检查：确保路径在预期的 save_path 内，防止路径遍历攻击
-                    abs_full_path = os.path.abspath(full_path)
-                    abs_save_path = os.path.abspath(save_path)
-                    if not abs_full_path.startswith(abs_save_path):
-                        logger.error(f"检测到非法路径，可能是路径遍历攻击: {file.path}")
-                        result["errors"].append(f"非法路径: {file.path}")
+                deleted_size_bytes_actual = 0
+                for file in existing_candidates:
+                    _, normalized_path = self._resolve_torrent_file_full_path(
+                        save_path, file.path
+                    )
+                    full_path = existing_candidate_paths.get(normalized_path)
+                    if not full_path:
+                        result["errors"].append(f"文件路径解析失败: {file.path}")
                         continue
 
                     try:
-                        if os.path.exists(full_path):
-                            os.remove(full_path)
-                            deleted_count += 1
-                            logger.info(f"已删除文件: {full_path}")
-                        else:
+                        if not os.path.exists(full_path):
                             logger.warning(f"文件不存在，跳过: {full_path}")
                             result["errors"].append(f"文件不存在: {file.path}")
+                            continue
+
+                        os.remove(full_path)
+                        deleted_count += 1
+                        deleted_size_bytes_actual += file.size
+                        logger.info(f"已删除文件: {full_path}")
                     except PermissionError as e:
                         error_msg = f"权限不足，无法删除: {file.path}"
                         logger.error(f"{error_msg}: {e}")
@@ -550,10 +657,26 @@ class DownloadFilterService(BaseService):
                         logger.error(f"种子 {torrent_hash}: 触发重新校验失败: {e}")
                         result["errors"].append(f"触发重新校验失败: {str(e)}")
 
-                result["message"] = f"清理完成，删除了 {deleted_count} 个文件"
+                if deleted_count != result["deleted_files"]:
+                    result["deleted_files"] = deleted_count
+                    result["deleted_size_bytes"] = deleted_size_bytes_actual
+                    result["deleted_size_mb"] = round(
+                        deleted_size_bytes_actual / (1024 * 1024), 2
+                    )
+
+                result["message"] = f"清理完成，删除了 {deleted_count} 个文件" + (
+                    f"，跳过 {len(missing_candidates)} 个缺失文件"
+                    if missing_candidates
+                    else ""
+                )
             else:
                 result["message"] = (
-                    f"模拟运行完成，将删除 {len(files_to_delete)} 个文件，释放 {result['deleted_size_mb']}MB"
+                    f"模拟运行完成，将删除 {len(existing_candidates)} 个文件，释放 {result['deleted_size_mb']}MB"
+                    + (
+                        f"，已跳过 {len(missing_candidates)} 个缺失文件"
+                        if missing_candidates
+                        else ""
+                    )
                 )
 
             result["success"] = True
@@ -567,7 +690,7 @@ class DownloadFilterService(BaseService):
 
     def cleanup_all_torrents(
         self,
-        category: str = None,
+        category: Optional[str] = None,
         dry_run: bool = True,
         include_success: bool = True,
         include_failed: bool = True,

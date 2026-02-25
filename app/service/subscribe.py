@@ -20,6 +20,7 @@ from app.utils import spider, notify
 from app.utils.logger import logger
 from app.utils.qbittorent import qbittorent
 from app.utils.spider import JavdbSpider
+from app.schema.setting import Setting
 
 
 def get_subscribe_service(db: Session = Depends(get_db)):
@@ -88,6 +89,15 @@ class SubscribeService(BaseService):
         video = spider.get_video(num)
         if not video:
             raise BizException("未找到影片")
+
+        if bool(getattr(Setting().app, "preview_trace", False)):
+            preview_items = sum(
+                len(group.items or []) for group in (video.previews or [])
+            )
+            logger.info(
+                f"[PREVIEW_TRACE] subscribe.search num={num}, downloads={len(video.downloads or [])}, preview_groups={len(video.previews or [])}, preview_items={preview_items}"
+            )
+
         return video
 
     def download_video_manual(

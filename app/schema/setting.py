@@ -24,6 +24,7 @@ class SettingApp(BaseModel):
     # HTTP代理配置（格式: http://host:port 或 socks5://host:port）
     # 服务器IP被目标站点屏蔽时，可通过代理访问
     proxy: Optional[str] = None
+    preview_trace: bool = False
     # 定时扫描配置
     enable_scheduled_scan: bool = False
 
