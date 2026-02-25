@@ -23,9 +23,24 @@ class DmmSpider(Spider):
 
         response = self.session.post(self.api_url, json={
             "operationName": "ContentPageData",
-            "variables": {"id": code, "isAmateur": False, "isAnime": False, "isAv": True, "isCinema": False,
-                          "isLoggedIn": False, "isSP": False},
-            "query": "query ContentPageData($id:ID!,$isLoggedIn:Boolean!,$isAmateur:Boolean!,$isAnime:Boolean!,$isAv:Boolean!,$isCinema:Boolean!,$isSP:Boolean!){ppvContent(id:$id){...ContentData}reviewSummary(contentId:$id){...ReviewSummary}...basketCountFragment}fragment ContentData on PPVContent{id floor title isExclusiveDelivery releaseStatus description notices isNoIndex isAllowForeign announcements{body}featureArticles{link{url text}}packageImage{largeUrl mediumUrl}sampleImages{number imageUrl largeImageUrl}products{...ProductData}mostPopularContentImage{...on ContentSampleImage{largeImageUrl imageUrl}...on PackageImage{largeUrl mediumUrl}}priceSummary{lowestSalePrice lowestPrice campaign{title id endAt}}weeklyRanking:ranking(term:Weekly)monthlyRanking:ranking(term:Monthly)wishlistCount sample2DMovie{fileID highestMovieUrl}sampleVRMovie{highestMovieUrl}...AmateurAdditionalContentData @include(if:$isAmateur)...AnimeAdditionalContentData @include(if:$isAnime)...AvAdditionalContentData @include(if:$isAv)...CinemaAdditionalContentData @include(if:$isCinema)}fragment ProductData on PPVProduct{id priority deliveryUnit{id priority streamMaxQualityGroup downloadMaxQualityGroup}priceInclusiveTax sale{priceInclusiveTax}expireDays utilization @include(if:$isLoggedIn){isTVODRentalPlayable status}licenseType shopName availableCoupon{name expirationPolicy{...on ProductCouponExpirationAt{expirationAt}...on ProductCouponExpirationDay{expirationDays}}expirationAt discountedPrice minPayment destinationUrl}}fragment AmateurAdditionalContentData on PPVContent{deliveryStartDate duration amateurActress{id name imageUrl age waist bust bustCup height hip relatedContents{id title}}maker{id name}label{id name}genres{id name}makerContentId playableInfo{...PlayableInfo}}fragment PlayableInfo on PlayableInfo{playableDevices{deviceDeliveryUnits{id deviceDeliveryQualities{isDownloadable isStreamable}}device name priority}deviceGroups{id devices{deviceDeliveryUnits{deviceDeliveryQualities{isStreamable isDownloadable}}}}vrViewingType}fragment AnimeAdditionalContentData on PPVContent{deliveryStartDate duration series{id name}maker{id name}label{id name}genres{id name}makerContentId playableInfo{...PlayableInfo}}fragment AvAdditionalContentData on PPVContent{deliveryStartDate makerReleasedAt duration actresses{id name nameRuby imageUrl isBookmarked @include(if:$isLoggedIn)}histrions{id name}directors{id name}series{id name}maker{id name}label{id name}genres{id name}contentType relatedWords makerContentId playableInfo{...PlayableInfo}}fragment CinemaAdditionalContentData on PPVContent{deliveryStartDate duration actresses{id name nameRuby imageUrl}histrions{id name}directors{id name}authors{id name}series{id name}maker{id name}label{id name}genres{id name}makerContentId playableInfo{...PlayableInfo}}fragment ReviewSummary on ReviewSummary{average total withCommentTotal distributions{total withCommentTotal rating}}fragment basketCountFragment on Query{basketCount:legacyBasket @include(if:$isSP){total}}"
+            "variables": {"id": code},
+            "query": (
+                "query ContentPageData($id: ID!) {"
+                "  ppvContent(id: $id) {"
+                "    id title description makerContentId makerReleasedAt duration"
+                "    packageImage { largeUrl }"
+                "    sampleImages { imageUrl largeImageUrl }"
+                "    sample2DMovie { highestMovieUrl }"
+                "    actresses { id name imageUrl }"
+                "    maker { id name }"
+                "    label { id name }"
+                "    genres { id name }"
+                "    directors { name }"
+                "    series { id name }"
+                "  }"
+                "  reviewSummary(contentId: $id) { average }"
+                "}"
+            )
         }).json()
 
         # 验证API响应格式
@@ -77,7 +92,7 @@ class DmmSpider(Spider):
     def generate_url(self, num: str):
         parts = num.split("-")
         code = "{0}{1:0>5d}".format(parts[0], int(parts[1])).lower()
-        return urljoin(self.host, f"/digital/videoa/-/detail/=/cid={code}/"), code
+        return urljoin(self.origin_host, f"/digital/videoa/-/detail/=/cid={code}/"), code
 
     def get_real_page(self, num: str):
         url, code = self.generate_url(num)
