@@ -1,12 +1,12 @@
-'''
+"""
 Author: Await
 Date: 2025-05-24 17:05:38
 LastEditors: Await
 LastEditTime: 2025-05-27 14:27:14
 Description: 请填写简介
-'''
+"""
+
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 from app.scheduler import scheduler
 from app.schema import Setting
@@ -42,6 +42,16 @@ def save_setting(section: str, setting: dict):
         qbittorent.host = setting.get("host")
         qbittorent.tracker_subscribe = setting.get("tracker_subscribe")
         qbittorent.savepath = setting.get("savepath")
+
+    if section == "auto_download":
+        enabled = str(setting.get("enabled", "true")).lower() == "true"
+        check_interval = int(setting.get("check_interval", 60) or 60)
+
+        scheduler.jobs["auto_download"].interval = max(1, check_interval)
+        if enabled:
+            scheduler.add("auto_download")
+        else:
+            scheduler.remove("auto_download")
 
     return R.ok()
 

@@ -1185,7 +1185,13 @@ class JavdbSpider(Spider):
             logger.error(f"解析首页视频列表失败: {e}")
             return []
 
-    def get_ranking_with_details(self, video_type: str, cycle: str, max_pages: int = 1):
+    def get_ranking_with_details(
+        self,
+        video_type: str,
+        cycle: str,
+        max_pages: int = 1,
+        apply_delay: bool = True,
+    ):
         """获取排行榜数据，包含评分和评论信息，用于智能下载规则"""
         try:
             # 构造排行榜URL - 排行榜页面不需要分页，一次返回全部数据
@@ -1200,10 +1206,10 @@ class JavdbSpider(Spider):
 
             logger.info(f"获取排行榜页面: {url} (类型: {page_type})")
 
-            # 添加随机延迟，避免被识别为爬虫
-            delay = randint(3, 8)
-            logger.info(f"等待 {delay} 秒...")
-            time.sleep(delay)
+            if apply_delay:
+                delay = randint(3, 8)
+                logger.info(f"等待 {delay} 秒...")
+                time.sleep(delay)
 
             # 构建请求头，模拟浏览器
             headers = {

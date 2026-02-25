@@ -8,7 +8,7 @@
 import Filter, { FilterField } from "./-components/filter.tsx";
 import React from "react";
 import { Col, message, Row, Button, Tooltip, Checkbox, Modal, Statistic, Dropdown } from "antd";
-import { ReloadOutlined, InboxOutlined, CheckSquareOutlined, BorderOutlined, FolderOpenOutlined, ClockCircleOutlined, FileTextOutlined, PlusCircleOutlined, CheckCircleOutlined, MoreOutlined } from "@ant-design/icons";
+import { ReloadOutlined, InboxOutlined, CheckSquareOutlined, BorderOutlined, FolderOpenOutlined, ClockCircleOutlined, FileTextOutlined, PlusCircleOutlined, CheckCircleOutlined, MoreOutlined, FilterOutlined, DownOutlined, UpOutlined } from "@ant-design/icons";
 import { useResponsive } from "ahooks";
 import JavDBItem from "./-components/item.tsx";
 import Selector from "../../../components/Selector";
@@ -47,6 +47,21 @@ function JavDB() {
     const isMobile = !responsive.md
     const actionButtonEdge = isMobile ? 36 : 44
     const [refreshing, setRefreshing] = React.useState(false)
+    const [filterExpanded, setFilterExpanded] = React.useState(false)
+
+    const filterLabelMaps = {
+        video_type: { censored: '有码', uncensored: '无码' } as Record<string, string>,
+        cycle: { daily: '日榜', weekly: '周榜', monthly: '月榜' } as Record<string, string>,
+        sort_by: { rank: '评分', rank_count: '评论数', publish_date: '日期' } as Record<string, string>,
+        sort_order: { desc: '降序', asc: '升序' } as Record<string, string>,
+    }
+    const filterSummary = [
+        filterLabelMaps.video_type[filter.video_type as string],
+        filterLabelMaps.cycle[filter.cycle as string],
+        filterLabelMaps.sort_by[filter.sort_by as string],
+        filterLabelMaps.sort_order[filter.sort_order as string],
+        filter.rank > 0 ? `≥${filter.rank}分` : null,
+    ].filter(Boolean).join(' · ')
 
     // 批量选择相关状态
     const batchSelect = useBatchSelect();
@@ -148,7 +163,7 @@ function JavDB() {
                 { name: '评论数', value: 'rank_count' },
                 { name: '发布日期', value: 'publish_date' }]}
             />),
-            span: { lg: 6, md: 12, xs: 12 }
+            span: { lg: 6, md: 12, xs: 24 }
         },
         {
             dataIndex: 'sort_order',
@@ -239,35 +254,53 @@ function JavDB() {
                 background: colors.rgba('bgContainer', 0.85),
                 backdropFilter: 'blur(20px) saturate(180%)',
                 borderRadius: isMobile ? '12px' : '16px',
-                padding: isMobile ? '10px' : '16px',
+                padding: isMobile ? '10px 12px' : '16px',
                 border: `1px solid ${colors.borderPrimary}`,
                 boxShadow: `0 4px 24px ${colors.rgba('black', 0.1)}`,
             }}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: isMobile ? 'center' : 'flex-start',
-                    gap: isMobile ? '8px' : '12px',
-                }}>
-                    {/* 筛选器 */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <Filter 
-                            initialValues={filter} 
-                            onChange={(values) => {
-                                return navigate({ search: values as any })
-                            }} 
-                            fields={filterFields}
-                            compact={isMobile}
-                        />
-                    </div>
-
-                    {/* 操作按钮组 */}
-                    <div style={{
-                        display: 'flex',
-                        gap: isMobile ? '6px' : '8px',
-                        flexShrink: 0,
-                    }}>
-                        {isMobile ? (
+                {isMobile ? (
+                    <>
+                        {/* 移动端：折叠式筛选头部 */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {/* 可点击展开的筛选摘要 */}
+                            <div
+                                style={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    cursor: 'pointer',
+                                    padding: '6px 10px',
+                                    borderRadius: '8px',
+                                    background: filterExpanded
+                                        ? colors.rgba('gold', 0.08)
+                                        : colors.rgba('bgContainer', 0.5),
+                                    border: filterExpanded
+                                        ? `1px solid ${colors.borderGold}`
+                                        : `1px solid ${colors.borderSecondary}`,
+                                    transition: 'all 200ms',
+                                    minWidth: 0,
+                                }}
+                                onClick={() => setFilterExpanded(!filterExpanded)}
+                            >
+                                <FilterOutlined style={{ color: colors.goldPrimary, fontSize: '13px', flexShrink: 0 }} />
+                                <span style={{
+                                    fontSize: '12px',
+                                    color: colors.textSecondary,
+                                    flex: 1,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                }}>
+                                    {filterSummary}
+                                </span>
+                                {filterExpanded ? (
+                                    <UpOutlined style={{ fontSize: '10px', color: colors.textTertiary, flexShrink: 0 }} />
+                                ) : (
+                                    <DownOutlined style={{ fontSize: '10px', color: colors.textTertiary, flexShrink: 0 }} />
+                                )}
+                            </div>
+                            {/* 操作按鈕 */}
                             <Dropdown
                                 trigger={['click']}
                                 placement="bottomRight"
@@ -287,132 +320,166 @@ function JavDB() {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
+                                        flexShrink: 0,
                                     }}
                                 />
                             </Dropdown>
-                        ) : (
-                            <>
-                                {/* 扫描按钮 */}
-                                <Tooltip title="扫描本地视频文件" placement="bottom">
-                                    <Button
-                                        type="text"
-                                        icon={<FolderOpenOutlined />}
-                                        onClick={handleScan}
-                                        loading={scanning}
-                                        size="large"
-                                        style={{
-                                            background: colors.rgba('bgContainer', 0.8),
-                                            border: `1px solid ${colors.borderPrimary}`,
-                                            borderRadius: '12px',
-                                            color: colors.textSecondary,
-                                            height: actionButtonEdge,
-                                            minWidth: actionButtonEdge,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = colors.rgba('gold', 0.12);
-                                            e.currentTarget.style.borderColor = colors.borderGold;
-                                            e.currentTarget.style.color = colors.goldPrimary;
-                                            e.currentTarget.style.transform = 'scale(1.05)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
-                                            e.currentTarget.style.borderColor = colors.borderPrimary;
-                                            e.currentTarget.style.color = colors.textSecondary;
-                                            e.currentTarget.style.transform = 'scale(1)';
-                                        }}
-                                    />
-                                </Tooltip>
+                        </div>
 
-                                {/* 刷新按钮 */}
-                                <Tooltip title="刷新数据" placement="bottom">
-                                    <Button
-                                        type="text"
-                                        icon={<ReloadOutlined spin={refreshing} />}
-                                        onClick={handleRefresh}
-                                        loading={refreshing}
-                                        size="large"
-                                        style={{
-                                            background: colors.rgba('bgContainer', 0.8),
-                                            border: `1px solid ${colors.borderPrimary}`,
-                                            borderRadius: '12px',
-                                            color: colors.textSecondary,
-                                            height: actionButtonEdge,
-                                            minWidth: actionButtonEdge,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = colors.rgba('gold', 0.12);
-                                            e.currentTarget.style.borderColor = colors.borderGold;
-                                            e.currentTarget.style.color = colors.goldPrimary;
-                                            e.currentTarget.style.transform = 'scale(1.05)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
-                                            e.currentTarget.style.borderColor = colors.borderPrimary;
-                                            e.currentTarget.style.color = colors.textSecondary;
-                                            e.currentTarget.style.transform = 'scale(1)';
-                                        }}
-                                    />
-                                </Tooltip>
-
-                                {/* 批量选择按钮 */}
-                                <Tooltip 
-                                    title={batchSelect.isBatchMode ? "退出批量选择" : "批量选择"} 
-                                    placement="bottom"
-                                >
-                                    <Button
-                                        type="text"
-                                        icon={batchSelect.isBatchMode ? 
-                                            <CheckSquareOutlined /> : 
-                                            <BorderOutlined />
-                                        }
-                                        onClick={batchSelect.toggleBatchMode}
-                                        size="large"
-                                        style={{
-                                            background: batchSelect.isBatchMode ? 
-                                                colors.rgba('gold', 0.15) : 
-                                                colors.rgba('bgContainer', 0.8),
-                                            border: batchSelect.isBatchMode ? 
-                                                `1px solid ${colors.borderGold}` : 
-                                                `1px solid ${colors.borderPrimary}`,
-                                            borderRadius: '12px',
-                                            color: batchSelect.isBatchMode ? 
-                                                colors.goldPrimary : 
-                                                colors.textSecondary,
-                                            height: actionButtonEdge,
-                                            minWidth: actionButtonEdge,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = colors.rgba('gold', 0.15);
-                                            e.currentTarget.style.borderColor = colors.borderGold;
-                                            e.currentTarget.style.color = colors.goldPrimary;
-                                            e.currentTarget.style.transform = 'scale(1.05)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!batchSelect.isBatchMode) {
-                                                e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
-                                                e.currentTarget.style.borderColor = colors.borderPrimary;
-                                                e.currentTarget.style.color = colors.textSecondary;
-                                            }
-                                            e.currentTarget.style.transform = 'scale(1)';
-                                        }}
-                                    />
-                                </Tooltip>
-                            </>
+                        {/* 可展开的完整筛选面板 */}
+                        {filterExpanded && (
+                            <div style={{ marginTop: '10px' }}>
+                                <Filter
+                                    initialValues={filter}
+                                    onChange={(values) => {
+                                        return navigate({ search: values as any })
+                                    }}
+                                    fields={filterFields}
+                                    compact={true}
+                                />
+                            </div>
                         )}
+                    </>
+                ) : (
+                    /* 桌面端：原有横向布局 */
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                    }}>
+                        {/* 筛选器 */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <Filter
+                                initialValues={filter}
+                                onChange={(values) => {
+                                    return navigate({ search: values as any })
+                                }}
+                                fields={filterFields}
+                                compact={false}
+                            />
+                        </div>
+
+                        {/* 操作按鈕组 */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '8px',
+                            flexShrink: 0,
+                        }}>
+                            {/* 扫描按鈕 */}
+                            <Tooltip title="扫描本地视频文件" placement="bottom">
+                                <Button
+                                    type="text"
+                                    icon={<FolderOpenOutlined />}
+                                    onClick={handleScan}
+                                    loading={scanning}
+                                    size="large"
+                                    style={{
+                                        background: colors.rgba('bgContainer', 0.8),
+                                        border: `1px solid ${colors.borderPrimary}`,
+                                        borderRadius: '12px',
+                                        color: colors.textSecondary,
+                                        height: actionButtonEdge,
+                                        minWidth: actionButtonEdge,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = colors.rgba('gold', 0.12);
+                                        e.currentTarget.style.borderColor = colors.borderGold;
+                                        e.currentTarget.style.color = colors.goldPrimary;
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
+                                        e.currentTarget.style.borderColor = colors.borderPrimary;
+                                        e.currentTarget.style.color = colors.textSecondary;
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                    }}
+                                />
+                            </Tooltip>
+
+                            {/* 刷新按鈕 */}
+                            <Tooltip title="刷新数据" placement="bottom">
+                                <Button
+                                    type="text"
+                                    icon={<ReloadOutlined spin={refreshing} />}
+                                    onClick={handleRefresh}
+                                    loading={refreshing}
+                                    size="large"
+                                    style={{
+                                        background: colors.rgba('bgContainer', 0.8),
+                                        border: `1px solid ${colors.borderPrimary}`,
+                                        borderRadius: '12px',
+                                        color: colors.textSecondary,
+                                        height: actionButtonEdge,
+                                        minWidth: actionButtonEdge,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = colors.rgba('gold', 0.12);
+                                        e.currentTarget.style.borderColor = colors.borderGold;
+                                        e.currentTarget.style.color = colors.goldPrimary;
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
+                                        e.currentTarget.style.borderColor = colors.borderPrimary;
+                                        e.currentTarget.style.color = colors.textSecondary;
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                    }}
+                                />
+                            </Tooltip>
+
+                            {/* 批量选择按鈕 */}
+                            <Tooltip
+                                title={batchSelect.isBatchMode ? "退出批量选择" : "批量选择"}
+                                placement="bottom"
+                            >
+                                <Button
+                                    type="text"
+                                    icon={batchSelect.isBatchMode ?
+                                        <CheckSquareOutlined /> :
+                                        <BorderOutlined />
+                                    }
+                                    onClick={batchSelect.toggleBatchMode}
+                                    size="large"
+                                    style={{
+                                        background: batchSelect.isBatchMode ? colors.rgba('gold', 0.15) : colors.rgba('bgContainer', 0.8),
+                                        border: batchSelect.isBatchMode ? `1px solid ${colors.borderGold}` : `1px solid ${colors.borderPrimary}`,
+                                        borderRadius: '12px',
+                                        color: batchSelect.isBatchMode ? colors.goldPrimary : colors.textSecondary,
+                                        height: actionButtonEdge,
+                                        minWidth: actionButtonEdge,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = colors.rgba('gold', 0.15);
+                                        e.currentTarget.style.borderColor = colors.borderGold;
+                                        e.currentTarget.style.color = colors.goldPrimary;
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!batchSelect.isBatchMode) {
+                                            e.currentTarget.style.background = colors.rgba('bgContainer', 0.8);
+                                            e.currentTarget.style.borderColor = colors.borderPrimary;
+                                            e.currentTarget.style.color = colors.textSecondary;
+                                        }
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                    }}
+                                />
+                            </Tooltip>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
             <Await promise={data} fallback={(
                 <Row className={'mt-2'} gutter={[16, 16]}>

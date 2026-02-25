@@ -1,6 +1,7 @@
 """
 视频缓存服务 - 管理预抓取的视频数据
 """
+
 import traceback
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
@@ -8,6 +9,7 @@ from sqlalchemy import and_, or_, desc, func
 from sqlalchemy.orm import Session
 
 from app.db.models.video_cache import VideoCache
+from app.schema.setting import Setting
 from app.service.base import BaseService
 from app.utils import spider
 from app.utils.async_logger import get_logger
@@ -23,7 +25,8 @@ class VideoCacheService(BaseService):
         sources: List[str] = None,
         video_types: List[str] = None,
         cycles: List[str] = None,
-        max_pages: int = 3
+        max_pages: int = 3,
+        apply_delay: bool = True,
     ) -> Dict[str, Any]:
         """
         从多个网站抓取排行榜数据并缓存到数据库
@@ -38,29 +41,24 @@ class VideoCacheService(BaseService):
             统计信息字典
         """
         if sources is None:
-            sources = ['JavDB']  # 目前只支持 JavDB
+            sources = ["JavDB"]  # 目前只支持 JavDB
         if video_types is None:
-            video_types = ['censored', 'uncensored']
+            video_types = ["censored", "uncensored"]
         if cycles is None:
-            cycles = ['daily', 'weekly', 'monthly']
+            cycles = ["daily", "weekly", "monthly"]
 
-        stats = {
-            'total_fetched': 0,
-            'total_new': 0,
-            'total_updated': 0,
-            'errors': []
-        }
+        stats = {"total_fetched": 0, "total_new": 0, "total_updated": 0, "errors": []}
 
         for source in sources:
             for video_type in video_types:
                 for cycle in cycles:
                     try:
                         count = self._fetch_and_cache_single_ranking(
-                            source, video_type, cycle, max_pages
+                            source, video_type, cycle, max_pages, apply_delay
                         )
-                        stats['total_fetched'] += count['fetched']
-                        stats['total_new'] += count['new']
-                        stats['total_updated'] += count['updated']
+                        stats["total_fetched"] += count["fetched"]
+                        stats["total_new"] += count["new"]
+                        stats["total_updated"] += count["updated"]
 
                         logger.info(
                             f"缓存完成: {source} {video_type} {cycle} - "
@@ -70,7 +68,7 @@ class VideoCacheService(BaseService):
                         error_msg = f"抓取失败 {source} {video_type} {cycle}: {str(e)}"
                         logger.error(error_msg)
                         logger.debug(traceback.format_exc())
-                        stats['errors'].append(error_msg)
+                        stats["errors"].append(error_msg)
 
         logger.info(
             f"视频缓存更新完成: 总计抓取{stats['total_fetched']}个, "
@@ -84,7 +82,8 @@ class VideoCacheService(BaseService):
         source: str,
         video_type: str,
         cycle: str,
-        max_pages: int
+        max_pages: int,
+        apply_delay: bool = True,
     ) -> Dict[str, int]:
         """抓取单个排行榜并缓存"""
         spider_instance = self._get_spider(source)
@@ -92,8 +91,10 @@ class VideoCacheService(BaseService):
             raise ValueError(f"不支持的数据源: {source}")
 
         # 获取排行榜数据（包含详细信息）
-        if hasattr(spider_instance, 'get_ranking_with_details'):
-            videos = spider_instance.get_ranking_with_details(video_type, cycle, max_pages)
+        if hasattr(spider_instance, "get_ranking_with_details"):
+            videos = spider_instance.get_ranking_with_details(
+                video_type, cycle, max_pages, apply_delay=apply_delay
+            )
         else:
             # 降级方案：获取基础排行榜
             videos = spider_instance.get_ranking(video_type, cycle)
@@ -106,14 +107,18 @@ class VideoCacheService(BaseService):
         for idx, video in enumerate(videos, 1):
             try:
                 # 检查是否已存在
-                existing = self.db.query(VideoCache).filter(
-                    and_(
-                        VideoCache.num == video.get('num'),
-                        VideoCache.source == source,
-                        VideoCache.video_type == video_type,
-                        VideoCache.cycle == cycle
+                existing = (
+                    self.db.query(VideoCache)
+                    .filter(
+                        and_(
+                            VideoCache.num == video.get("num"),
+                            VideoCache.source == source,
+                            VideoCache.video_type == video_type,
+                            VideoCache.cycle == cycle,
+                        )
                     )
-                ).first()
+                    .first()
+                )
 
                 if existing:
                     # 更新现有记录
@@ -133,86 +138,89 @@ class VideoCacheService(BaseService):
 
         self.db.commit()
 
-        return {
-            'fetched': len(videos),
-            'new': new_count,
-            'updated': updated_count
-        }
+        return {"fetched": len(videos), "new": new_count, "updated": updated_count}
 
     def _create_video_cache(
-        self,
-        video: Dict,
-        source: str,
-        video_type: str,
-        cycle: str,
-        rank_position: int
+        self, video: Dict, source: str, video_type: str, cycle: str, rank_position: int
     ) -> VideoCache:
         """创建视频缓存记录"""
         # 数据验证
-        if not video.get('num'):
+        if not video.get("num"):
             raise ValueError(f"视频番号不能为空: {video}")
 
         # 评分验证
-        rating = video.get('rating')
+        rating = video.get("rating")
         if rating is not None:
             try:
                 rating_float = float(rating)
                 if not (0 <= rating_float <= 5):
-                    logger.warning(f"视频 {video.get('num')} 评分异常: {rating}，将设置为None")
+                    logger.warning(
+                        f"视频 {video.get('num')} 评分异常: {rating}，将设置为None"
+                    )
                     rating = None
             except (ValueError, TypeError):
-                logger.warning(f"视频 {video.get('num')} 评分格式错误: {rating}，将设置为None")
+                logger.warning(
+                    f"视频 {video.get('num')} 评分格式错误: {rating}，将设置为None"
+                )
                 rating = None
 
         # 评论数验证
-        comments_count = video.get('comments') or video.get('comments_count', 0)
+        comments_count = video.get("comments") or video.get("comments_count", 0)
         if comments_count:
             try:
                 comments_count = int(comments_count)
                 if comments_count < 0:
-                    logger.warning(f"视频 {video.get('num')} 评论数为负数: {comments_count}，将设置为0")
+                    logger.warning(
+                        f"视频 {video.get('num')} 评论数为负数: {comments_count}，将设置为0"
+                    )
                     comments_count = 0
             except (ValueError, TypeError):
-                logger.warning(f"视频 {video.get('num')} 评论数格式错误: {comments_count}，将设置为0")
+                logger.warning(
+                    f"视频 {video.get('num')} 评论数格式错误: {comments_count}，将设置为0"
+                )
                 comments_count = 0
 
         return VideoCache(
-            num=video.get('num'),
-            title=video.get('title'),
-            cover=video.get('cover'),
-            url=video.get('url'),
+            num=video.get("num"),
+            title=video.get("title"),
+            cover=video.get("cover"),
+            url=video.get("url"),
             rating=rating,
             comments_count=comments_count,
-            release_date=video.get('release_date'),
-            is_hd=video.get('is_hd', False),
-            is_zh=video.get('is_zh', False),
-            is_uncensored=video_type == 'uncensored',
-            actors=video.get('actors', []),
-            tags=video.get('tags', []),
-            magnets=video.get('magnets', []),
+            release_date=video.get("release_date"),
+            is_hd=video.get("is_hd", False),
+            is_zh=video.get("is_zh", False),
+            is_uncensored=video_type == "uncensored",
+            actors=video.get("actors", []),
+            tags=video.get("tags", []),
+            magnets=video.get("magnets", []),
             source=source,
             video_type=video_type,
             cycle=cycle,
             rank_position=rank_position,
-            extra_data=video.get('extra_data'),
-            fetched_at=datetime.now()
+            extra_data=video.get("extra_data"),
+            fetched_at=datetime.now(),
         )
 
-    def _update_video_cache(self, existing: VideoCache, video: Dict, rank_position: int):
+    def _update_video_cache(
+        self, existing: VideoCache, video: Dict, rank_position: int
+    ):
         """更新视频缓存记录"""
-        existing.title = video.get('title', existing.title)
-        existing.cover = video.get('cover', existing.cover)
-        existing.url = video.get('url', existing.url)
-        existing.rating = video.get('rating', existing.rating)
-        existing.comments_count = video.get('comments') or video.get('comments_count', existing.comments_count)
-        existing.release_date = video.get('release_date', existing.release_date)
-        existing.is_hd = video.get('is_hd', existing.is_hd)
-        existing.is_zh = video.get('is_zh', existing.is_zh)
-        existing.actors = video.get('actors', existing.actors)
-        existing.tags = video.get('tags', existing.tags)
-        existing.magnets = video.get('magnets', existing.magnets)
+        existing.title = video.get("title", existing.title)
+        existing.cover = video.get("cover", existing.cover)
+        existing.url = video.get("url", existing.url)
+        existing.rating = video.get("rating", existing.rating)
+        existing.comments_count = video.get("comments") or video.get(
+            "comments_count", existing.comments_count
+        )
+        existing.release_date = video.get("release_date", existing.release_date)
+        existing.is_hd = video.get("is_hd", existing.is_hd)
+        existing.is_zh = video.get("is_zh", existing.is_zh)
+        existing.actors = video.get("actors", existing.actors)
+        existing.tags = video.get("tags", existing.tags)
+        existing.magnets = video.get("magnets", existing.magnets)
         existing.rank_position = rank_position
-        existing.extra_data = video.get('extra_data', existing.extra_data)
+        existing.extra_data = video.get("extra_data", existing.extra_data)
         existing.updated_at = datetime.now()
         existing.fetched_at = datetime.now()
 
@@ -231,7 +239,7 @@ class VideoCacheService(BaseService):
         offset: int = 0,
         required_actor_id: Optional[str] = None,
         required_tags: Optional[List[str]] = None,
-        exclude_tags: Optional[List[str]] = None
+        exclude_tags: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         从缓存中查询视频数据
@@ -289,7 +297,7 @@ class VideoCacheService(BaseService):
         query = query.order_by(
             desc(VideoCache.rating),
             desc(VideoCache.comments_count),
-            desc(VideoCache.fetched_at)
+            desc(VideoCache.fetched_at),
         )
 
         # 分页
@@ -304,44 +312,50 @@ class VideoCacheService(BaseService):
         # 过滤：必须包含指定演员
         if required_actor_id:
             filtered_videos = [
-                v for v in filtered_videos
-                if v.get('actors') and any(
-                    actor.get('id') == required_actor_id
-                    for actor in v.get('actors', [])
+                v
+                for v in filtered_videos
+                if v.get("actors")
+                and any(
+                    actor.get("id") == required_actor_id
+                    for actor in v.get("actors", [])
                 )
             ]
-            logger.info(f"演员过滤后剩余 {len(filtered_videos)} 个视频（要求演员ID: {required_actor_id}）")
+            logger.info(
+                f"演员过滤后剩余 {len(filtered_videos)} 个视频（要求演员ID: {required_actor_id}）"
+            )
 
         # 过滤：必须包含所有指定标签
         if required_tags:
             filtered_videos = [
-                v for v in filtered_videos
-                if v.get('tags') and all(
-                    tag in v.get('tags', [])
-                    for tag in required_tags
-                )
+                v
+                for v in filtered_videos
+                if v.get("tags")
+                and all(tag in v.get("tags", []) for tag in required_tags)
             ]
-            logger.info(f"标签过滤后剩余 {len(filtered_videos)} 个视频（要求标签: {required_tags}）")
+            logger.info(
+                f"标签过滤后剩余 {len(filtered_videos)} 个视频（要求标签: {required_tags}）"
+            )
 
         # 过滤：排除包含指定标签的视频
         if exclude_tags:
             filtered_videos = [
-                v for v in filtered_videos
-                if not v.get('tags') or not any(
-                    tag in v.get('tags', [])
-                    for tag in exclude_tags
-                )
+                v
+                for v in filtered_videos
+                if not v.get("tags")
+                or not any(tag in v.get("tags", []) for tag in exclude_tags)
             ]
-            logger.info(f"排除标签后剩余 {len(filtered_videos)} 个视频（排除标签: {exclude_tags}）")
+            logger.info(
+                f"排除标签后剩余 {len(filtered_videos)} 个视频（排除标签: {exclude_tags}）"
+            )
 
         return filtered_videos
 
     def get_ranking_videos(
         self,
-        source: str = 'JavDB',
-        video_type: str = 'censored',
-        cycle: str = 'daily',
-        limit: int = 100
+        source: str = "JavDB",
+        video_type: str = "censored",
+        cycle: str = "daily",
+        limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """
         获取特定排行榜的缓存数据
@@ -355,13 +369,19 @@ class VideoCacheService(BaseService):
         Returns:
             排行榜视频列表（按排名排序）
         """
-        results = self.db.query(VideoCache).filter(
-            and_(
-                VideoCache.source == source,
-                VideoCache.video_type == video_type,
-                VideoCache.cycle == cycle
+        results = (
+            self.db.query(VideoCache)
+            .filter(
+                and_(
+                    VideoCache.source == source,
+                    VideoCache.video_type == video_type,
+                    VideoCache.cycle == cycle,
+                )
             )
-        ).order_by(VideoCache.rank_position).limit(limit).all()
+            .order_by(VideoCache.rank_position)
+            .limit(limit)
+            .all()
+        )
 
         return [video.to_dict() for video in results]
 
@@ -376,9 +396,11 @@ class VideoCacheService(BaseService):
             删除的记录数
         """
         cutoff_date = datetime.now() - timedelta(days=days)
-        deleted = self.db.query(VideoCache).filter(
-            VideoCache.fetched_at < cutoff_date
-        ).delete()
+        deleted = (
+            self.db.query(VideoCache)
+            .filter(VideoCache.fetched_at < cutoff_date)
+            .delete()
+        )
         self.db.commit()
 
         logger.info(f"清理了 {deleted} 条过期视频缓存记录（超过{days}天）")
@@ -389,34 +411,34 @@ class VideoCacheService(BaseService):
         total = self.db.query(func.count(VideoCache.id)).scalar()
 
         # 按数据源统计
-        by_source = self.db.query(
-            VideoCache.source,
-            func.count(VideoCache.id)
-        ).group_by(VideoCache.source).all()
+        by_source = (
+            self.db.query(VideoCache.source, func.count(VideoCache.id))
+            .group_by(VideoCache.source)
+            .all()
+        )
 
         # 按周期统计
-        by_cycle = self.db.query(
-            VideoCache.cycle,
-            func.count(VideoCache.id)
-        ).group_by(VideoCache.cycle).all()
+        by_cycle = (
+            self.db.query(VideoCache.cycle, func.count(VideoCache.id))
+            .group_by(VideoCache.cycle)
+            .all()
+        )
 
         # 最新更新时间
-        latest_fetch = self.db.query(
-            func.max(VideoCache.fetched_at)
-        ).scalar()
+        latest_fetch = self.db.query(func.max(VideoCache.fetched_at)).scalar()
 
         return {
-            'total_videos': total,
-            'by_source': dict(by_source),
-            'by_cycle': dict(by_cycle),
-            'latest_fetch': latest_fetch.isoformat() if latest_fetch else None
+            "total_videos": total,
+            "by_source": dict(by_source),
+            "by_cycle": dict(by_cycle),
+            "latest_fetch": latest_fetch.isoformat() if latest_fetch else None,
         }
 
     def _get_spider(self, source: str):
         """获取对应的爬虫实例"""
-        if source == 'JavDB':
+        if source == "JavDB":
             return spider.JavdbSpider()
-        elif source == 'JavBus':
+        elif source == "JavBus":
             return spider.JavbusSpider()
         return None
 
@@ -431,10 +453,10 @@ class VideoCacheService(BaseService):
 
                 logger.info("开始定时刷新视频缓存...")
                 stats = service.fetch_and_cache_rankings(
-                    sources=['JavDB'],
-                    video_types=['censored', 'uncensored'],
-                    cycles=['daily', 'weekly', 'monthly'],
-                    max_pages=3
+                    sources=["JavDB"],
+                    video_types=["censored", "uncensored"],
+                    cycles=["daily", "weekly", "monthly"],
+                    max_pages=3,
                 )
 
                 logger.info(
@@ -442,11 +464,22 @@ class VideoCacheService(BaseService):
                     f"新增{stats['total_new']}个, 更新{stats['total_updated']}个"
                 )
 
-                if stats['errors']:
+                if stats["errors"]:
                     logger.warning(f"刷新过程中发生 {len(stats['errors'])} 个错误")
 
-                # 清理7天前的旧数据
-                deleted = service.clean_old_cache(days=7)
+                setting = Setting()
+                cleanup_days = max(
+                    1,
+                    int(
+                        getattr(
+                            setting.auto_download,
+                            "auto_cleanup_days",
+                            7,
+                        )
+                        or 7
+                    ),
+                )
+                deleted = service.clean_old_cache(days=cleanup_days)
 
         except Exception as e:
             logger.error(f"视频缓存刷新失败: {str(e)}")

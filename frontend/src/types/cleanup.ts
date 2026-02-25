@@ -8,7 +8,7 @@
 export interface CleanupFile {
   name: string
   path: string
-  size: string
+  size: number
   size_mb?: number
   reason?: string
 }

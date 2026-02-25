@@ -57,6 +57,14 @@ class SettingNotify(BaseModel):
     telegram_chat_id: Optional[str] = None
 
 
+class SettingAutoDownload(BaseModel):
+    enabled: bool = True
+    check_interval: int = 60
+    max_daily_downloads: int = 10
+    auto_cleanup_days: int = 30
+    notification_enabled: bool = True
+
+
 config_path = Path(f"{Path(__file__).cwd()}/config/app.conf")
 
 
@@ -65,6 +73,7 @@ class Setting(BaseModel):
     file: SettingFile = SettingFile()
     download: SettingDownload = SettingDownload()
     notify: SettingNotify = SettingNotify()
+    auto_download: SettingAutoDownload = SettingAutoDownload()
 
     def __init__(self):
         settings = Setting.read()

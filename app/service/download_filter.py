@@ -11,6 +11,7 @@ from fastapi import Depends
 
 from app.db import get_db
 from app.db.models.download_filter import DownloadFilterSettings
+from app.schema import Setting
 from app.service.base import BaseService
 from app.utils.torrent_parser import torrent_parser, TorrentFile
 from app.utils.qbittorent import qbittorent
@@ -564,7 +565,13 @@ class DownloadFilterService(BaseService):
 
         return result
 
-    def cleanup_all_torrents(self, category: str = None, dry_run: bool = True) -> Dict:
+    def cleanup_all_torrents(
+        self,
+        category: str = None,
+        dry_run: bool = True,
+        include_success: bool = True,
+        include_failed: bool = True,
+    ) -> Dict:
         """
         清理所有种子（或指定分类）中不需要的文件
 
@@ -592,14 +599,29 @@ class DownloadFilterService(BaseService):
         }
 
         try:
+            effective_category = category
+            if effective_category is None:
+                download_category = getattr(Setting().download, "category", None)
+                effective_category = download_category or None
+
             # 获取种子列表
-            torrents_response = self.qb.get_torrents(category=category)
+            torrents_response = self.qb.get_torrents(
+                category=effective_category,
+                include_failed=include_failed,
+                include_success=include_success,
+            )
             if not torrents_response or torrents_response.status_code != 200:
                 result["message"] = "无法获取种子列表"
                 logger.error("cleanup_all_torrents: 无法获取种子列表")
                 return result
 
-            torrents = torrents_response.json()
+            filtered_data = getattr(torrents_response, "filtered_data", None)
+            torrents = (
+                filtered_data
+                if isinstance(filtered_data, list)
+                else torrents_response.json()
+            )
+            result["category"] = effective_category
             result["total_torrents"] = len(torrents)
 
             logger.info(
@@ -675,7 +697,9 @@ class DownloadFilterService(BaseService):
 
         return result
 
-    def filter_torrent_files_readonly(self, torrent_hash: str, qb_files: List[Dict]) -> Dict:
+    def filter_torrent_files_readonly(
+        self, torrent_hash: str, qb_files: List[Dict]
+    ) -> Dict:
         """
         对已存在的种子应用过滤规则（只读版本，不修改 qBittorrent 文件优先级）
         用于展示下载列表时的文件过滤，避免重复写入 qBittorrent。
@@ -700,6 +724,7 @@ class DownloadFilterService(BaseService):
             filter_settings = self.get_filter_settings()
             if not filter_settings:
                 from types import SimpleNamespace
+
                 filter_settings = SimpleNamespace(**self.get_default_filter_settings())
 
             files = torrent_parser.parse_qbittorrent_files(qb_files)
@@ -707,11 +732,15 @@ class DownloadFilterService(BaseService):
 
             filtered_files = self._apply_filter_rules(files, filter_settings)
             result["filtered_files"] = len(filtered_files)
-            result["filtered_size_mb"] = sum(f.size for f in filtered_files) / (1024 * 1024)
+            result["filtered_size_mb"] = sum(f.size for f in filtered_files) / (
+                1024 * 1024
+            )
             result["files"] = [self._file_to_dict(f) for f in filtered_files]
 
             result["success"] = True
-            result["message"] = f"过滤完成，保留{len(filtered_files)}/{len(files)}个文件"
+            result["message"] = (
+                f"过滤完成，保留{len(filtered_files)}/{len(files)}个文件"
+            )
 
         except Exception as e:
             logger.error(f"只读过滤种子文件时出错: {e}")

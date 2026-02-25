@@ -102,8 +102,18 @@ export const cleanupTorrent = (torrentHash: string, dryRun: boolean = true): Pro
   })
 }
 
-export const cleanupAllTorrents = (category?: string, dryRun: boolean = true): Promise<ApiResponse> => {
+export const cleanupAllTorrents = (
+  category?: string,
+  dryRun: boolean = true,
+  includeSuccess: boolean = true,
+  includeFailed: boolean = true,
+): Promise<ApiResponse> => {
   return request.post('/download-filter/cleanup-all', null, {
-    params: { category, dry_run: dryRun }
+    params: {
+      category,
+      dry_run: dryRun,
+      include_success: includeSuccess,
+      include_failed: includeFailed,
+    }
   })
 }

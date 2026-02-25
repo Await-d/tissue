@@ -1,4 +1,4 @@
-import { Card, Collapse, Empty, Input, List, App, Modal, Space, Tag, theme, Tooltip, Progress, Switch, Row, Col, Select, DatePicker, Divider, Button, Badge, Statistic } from "antd";
+import { Card, Collapse, Empty, Input, List, App, Modal, Space, Tag, theme, Tooltip, Progress, Switch, Row, Col, Select, Divider, Button, Badge, Statistic, Alert } from "antd";
 import * as api from "../../../apis/download";
 import { useDebounce, useRequest } from "ahooks";
 import { FileDoneOutlined, FolderViewOutlined, UserOutlined, FilterOutlined, ReloadOutlined, DeleteOutlined, PauseOutlined, PlayCircleOutlined, SearchOutlined, ClearOutlined } from "@ant-design/icons";
@@ -34,13 +34,6 @@ function Download() {
         sortBy: 'date',
         sortOrder: 'desc'
     })
-    const [downloadStats, setDownloadStats] = useState({
-        total: 0,
-        downloading: 0,
-        completed: 0,
-        failed: 0,
-        totalSize: '0 GB'
-    })
     const [cleanupModalVisible, setCleanupModalVisible] = useState(false)
     const [cleanupPreview, setCleanupPreview] = useState<CleanupPreviewData | null>(null)
     const [selectedTorrentHash, setSelectedTorrentHash] = useState<string>('')
@@ -50,6 +43,10 @@ function Download() {
     const [batchCleanupModalVisible, setBatchCleanupModalVisible] = useState(false)
     const [batchCleanupResult, setBatchCleanupResult] = useState<CleanupResultData | null>(null)
     const [batchCleanupLoading, setBatchCleanupLoading] = useState(false)
+    const affectedBatchCleanupResults = useMemo(
+        () => (batchCleanupResult?.torrent_results || []).filter((item: any) => (item.deleted_files || 0) > 0),
+        [batchCleanupResult]
+    )
 
     const { data = [], loading, refresh } = useRequest(
         () => api.getDownloads({
@@ -65,49 +62,78 @@ function Download() {
         let filteredData = data.filter((item: any) => {
             // 首先根据关键词筛选
             const matchKeyword = !keywordDebounce ||
-                item.name.indexOf(keywordDebounce) != -1 ||
+                item.name.indexOf(keywordDebounce) !== -1 ||
                 item.files.some((sub: any) => (
-                    sub.name.indexOf(keywordDebounce) != -1 ||
-                    sub.path.indexOf(keywordDebounce) != -1
+                    sub.name.indexOf(keywordDebounce) !== -1 ||
+                    sub.path.indexOf(keywordDebounce) !== -1
                 ));
 
-            if (!matchKeyword) return false;
-
-            // 然后根据完成状态筛选
-            const hasCompleted = item.files.some((file: any) => file.progress >= 1);
-            const hasFailed = item.files.some((file: any) => file.progress === 0);
-
-            // 如果不显示已完成，则过滤掉全部完成的任务
-            if (!includeSuccess && hasCompleted && !item.files.some((file: any) => file.progress < 1)) {
-                return false;
-            }
-
-            // 如果不显示失败，则过滤掉有失败文件的任务
-            if (!includeFailed && hasFailed) {
-                return false;
-            }
-
-            return true;
+            return matchKeyword;
         });
 
         // 高级过滤
         if (showAdvancedFilters) {
             filteredData = filteredData.filter((item: any) => {
+                const tags: string[] = Array.isArray(item.tags) ? item.tags : [];
                 // 状态过滤
                 if (advancedFilters.status !== 'all') {
                     const hasCompleted = item.files.some((file: any) => file.progress >= 1);
                     const hasDownloading = item.files.some((file: any) => file.progress > 0 && file.progress < 1);
+                    const hasFailedTag = tags.includes('整理失败');
+                    const isWaiting = !hasCompleted && !hasDownloading && !hasFailedTag;
                     
                     if (advancedFilters.status === 'completed' && !hasCompleted) return false;
                     if (advancedFilters.status === 'downloading' && !hasDownloading) return false;
+                    if (advancedFilters.status === 'failed' && !(hasFailedTag || isWaiting)) return false;
                 }
 
                 return true;
             });
         }
 
+        if (showAdvancedFilters) {
+            const toNumber = (sizeText: string): number => {
+                const normalized = (sizeText || '').trim().toUpperCase();
+                const value = parseFloat(normalized.replace(/[^\d.]/g, ''));
+                if (!Number.isFinite(value)) return 0;
+                if (normalized.includes('TB')) return value * 1024;
+                if (normalized.includes('GB')) return value;
+                if (normalized.includes('MB')) return value / 1024;
+                if (normalized.includes('KB')) return value / (1024 * 1024);
+                return value;
+            };
+
+            if (advancedFilters.sortBy === 'date') {
+                if (advancedFilters.sortOrder === 'asc') {
+                    filteredData = [...filteredData].reverse();
+                }
+                return filteredData;
+            }
+
+            filteredData = [...filteredData].sort((a: any, b: any) => {
+                const progressA = a.files.length
+                    ? a.files.reduce((sum: number, f: any) => sum + (f.progress || 0), 0) / a.files.length
+                    : 0;
+                const progressB = b.files.length
+                    ? b.files.reduce((sum: number, f: any) => sum + (f.progress || 0), 0) / b.files.length
+                    : 0;
+
+                const compareBy = (() => {
+                    if (advancedFilters.sortBy === 'progress') {
+                        return progressA - progressB;
+                    }
+                    if (advancedFilters.sortBy === 'size') {
+                        return toNumber(a.size || '') - toNumber(b.size || '');
+                    }
+                    return 0;
+                })();
+
+                return advancedFilters.sortOrder === 'asc' ? compareBy : -compareBy;
+            });
+        }
+
         return filteredData;
-    }, [data, keywordDebounce, showAdvancedFilters, advancedFilters, includeSuccess, includeFailed])
+    }, [data, keywordDebounce, showAdvancedFilters, advancedFilters])
 
     const { run: onComplete } = useRequest(api.completeDownload, {
         manual: true,
@@ -165,7 +191,7 @@ function Download() {
     const handleBatchCleanupClick = async () => {
         try {
             setBatchCleanupLoading(true)
-            const result = await cleanupAllTorrents(undefined, true)
+            const result = await cleanupAllTorrents(undefined, true, includeSuccess, includeFailed)
             if (result.success && result.data) {
                 setBatchCleanupResult(result.data)
                 setBatchCleanupModalVisible(true)
@@ -182,9 +208,9 @@ function Download() {
     const handleBatchCleanupConfirm = async () => {
         try {
             setBatchCleanupLoading(true)
-            const result = await cleanupAllTorrents(undefined, false)
+            const result = await cleanupAllTorrents(undefined, false, includeSuccess, includeFailed)
             if (result.success) {
-                message.success(`批量清理成功，共清理 ${result.data?.files_deleted || 0} 个文件`)
+                message.success(`批量清理成功，共清理 ${result.data?.total_deleted_files || 0} 个文件`)
                 setBatchCleanupModalVisible(false)
                 setBatchCleanupResult(null)
                 refresh()
@@ -304,7 +330,7 @@ function Download() {
                         borderRadius: '8px',
                         padding: '12px',
                     }}
-                    renderItem={(item: any, index) => (
+                    renderItem={(item: any) => (
                         <List.Item
                             style={{
                                 background: colors.bgElevated,
@@ -323,7 +349,7 @@ function Download() {
                                 e.currentTarget.style.background = colors.bgElevated;
                             }}
                             actions={[
-                            <Tooltip title={'整理'}>
+                            <Tooltip key="organize" title={'整理'}>
                                 <IconButton onClick={() => {
                                     setSelected(item.path)
                                 }}>
@@ -335,9 +361,15 @@ function Download() {
                                 title={(
                                     <span>
                                         {item.num ? (
-                                            <a
+                                            <button
+                                                type="button"
                                                 onClick={() => handleVideoClick(item.num)}
                                                 style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    padding: 0,
+                                                    margin: 0,
+                                                    cursor: 'pointer',
                                                     color: colors.goldPrimary,
                                                     fontWeight: 500,
                                                     transition: 'color 0.3s ease',
@@ -350,7 +382,7 @@ function Download() {
                                                 }}
                                             >
                                                 {item.name}
-                                            </a>
+                                            </button>
                                         ) : (
                                             <span style={{ color: colors.textPrimary, fontWeight: 500 }}>
                                                 {item.name}
@@ -391,9 +423,15 @@ function Download() {
                                                 <UserOutlined style={{ marginRight: 6, color: colors.textSecondary }} />
                                                 {item.actors.map((actor: string, idx: number) => (
                                                     <React.Fragment key={actor}>
-                                                        <a
+                                                        <button
+                                                            type="button"
                                                             onClick={() => handleActorClick(actor)}
                                                             style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                padding: 0,
+                                                                margin: 0,
+                                                                cursor: 'pointer',
                                                                 color: colors.goldPrimary,
                                                                 fontWeight: 500,
                                                                 fontSize: '13px',
@@ -407,7 +445,7 @@ function Download() {
                                                             }}
                                                         >
                                                             {actor}
-                                                        </a>
+                                                        </button>
                                                         {idx < item.actors.length - 1 && <span>, </span>}
                                                     </React.Fragment>
                                                 ))}
@@ -676,6 +714,13 @@ function Download() {
 
             <Divider />
 
+            <Alert
+                type="info"
+                showIcon
+                style={{ marginBottom: 16, background: colors.bgContainer, borderColor: colors.borderPrimary }}
+                message="当前页面显示下载器实时任务；订阅页显示订阅历史记录，两者数据范围不同。"
+            />
+
             {/* 基础过滤选项 */}
             <div style={{
                 marginBottom: 16,
@@ -916,7 +961,7 @@ function Download() {
                                 <Col span={12}>
                                     <span style={{ color: colors.textSecondary }}>预计释放空间：</span>
                                     <span style={{ color: '#52c41a', fontWeight: 600, marginLeft: 8 }}>
-                                        {cleanupPreview.total_size || '0 MB'}
+                                        {cleanupPreview.deleted_size_mb ? `${cleanupPreview.deleted_size_mb} MB` : '0 MB'}
                                     </span>
                                 </Col>
                             </Row>
@@ -1019,7 +1064,7 @@ function Download() {
                                 <Col span={8}>
                                     <Statistic
                                         title={<span style={{ color: colors.textSecondary }}>将要清理的种子数</span>}
-                                        value={batchCleanupResult.processed_torrents || 0}
+                                        value={affectedBatchCleanupResults.length}
                                         valueStyle={{ color: colors.goldPrimary, fontWeight: 600 }}
                                     />
                                 </Col>
@@ -1043,7 +1088,7 @@ function Download() {
                         </div>
 
                         {/* 每个种子的详细清理信息 */}
-                        {batchCleanupResult.torrent_results && batchCleanupResult.torrent_results.length > 0 ? (
+                        {affectedBatchCleanupResults.length > 0 ? (
                             <div>
                                 <div style={{
                                     marginBottom: 12,
@@ -1054,7 +1099,7 @@ function Download() {
                                     详细清理列表：
                                 </div>
                                 <List
-                                    dataSource={batchCleanupResult.torrent_results}
+                                    dataSource={affectedBatchCleanupResults}
                                     renderItem={(item: any, index: number) => (
                                         <List.Item
                                             style={{
@@ -1083,7 +1128,7 @@ function Download() {
                                                         fontWeight: 500,
                                                         fontSize: '14px'
                                                     }}>
-                                                        {item.torrent_name || '未知种子'}
+                                                        {item.name || '未知种子'}
                                                     </span>
                                                     <Tag
                                                         style={{
@@ -1093,28 +1138,16 @@ function Download() {
                                                             color: '#ff4d4f'
                                                         }}
                                                     >
-                                                        {item.files_removed?.length || 0} 个文件
+                                                        {item.deleted_files || 0} 个文件
                                                     </Tag>
                                                 </div>
-                                                {item.files_removed && item.files_removed.length > 0 && (
-                                                    <div style={{
-                                                        paddingLeft: 32,
-                                                        color: colors.textTertiary,
-                                                        fontSize: '13px'
-                                                    }}>
-                                                        {item.files_removed.map((file: string, idx: number) => (
-                                                            <div
-                                                                key={idx}
-                                                                style={{
-                                                                    padding: '4px 0',
-                                                                    borderBottom: idx < item.files_removed.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none'
-                                                                }}
-                                                            >
-                                                                {file}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                <div style={{
+                                                    paddingLeft: 32,
+                                                    color: colors.textTertiary,
+                                                    fontSize: '13px'
+                                                }}>
+                                                    {item.message || '无详情'}
+                                                </div>
                                             </div>
                                         </List.Item>
                                     )}

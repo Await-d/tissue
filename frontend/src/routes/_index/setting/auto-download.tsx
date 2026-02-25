@@ -1,17 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Form,
   Switch,
   InputNumber,
-  Select,
   Button,
-  Card,
-  Space,
   App,
-  Divider,
   Row,
   Col,
-  Statistic,
   Tag
 } from 'antd'
 import { createFileRoute } from '@tanstack/react-router'
@@ -20,13 +15,12 @@ import {
   triggerAutoDownload,
   type AutoDownloadStatistics
 } from '@/apis/autoDownload'
+import { getSettings, saveSetting } from '@/apis/setting'
 import { useThemeColors } from '../../../hooks/useThemeColors'
 
 export const Route = createFileRoute('/_index/setting/auto-download')({
   component: AutoDownloadSettings
 })
-
-const { Option } = Select
 
 function AutoDownloadSettings() {
   const { message } = App.useApp()
@@ -42,23 +36,44 @@ function AutoDownloadSettings() {
   })
   const colors = useThemeColors()
 
-  const loadStatistics = async () => {
+  const loadStatistics = useCallback(async () => {
     try {
       const stats = await getStatistics()
       setStatistics(stats)
     } catch (error) {
       message.error('加载统计信息失败')
     }
-  }
+  }, [message])
+
+  const loadAutoDownloadSettings = useCallback(async () => {
+    try {
+      const allSettings = await getSettings()
+      const remote = allSettings?.auto_download
+      if (remote) {
+        const nextSettings = {
+          enabled: remote.enabled ?? true,
+          check_interval: Number(remote.check_interval ?? 60),
+          max_daily_downloads: Number(remote.max_daily_downloads ?? 10),
+          auto_cleanup_days: Number(remote.auto_cleanup_days ?? 30),
+          notification_enabled: remote.notification_enabled ?? true
+        }
+        setSettings(nextSettings)
+        form.setFieldsValue(nextSettings)
+      }
+    } catch (error) {
+      message.error('加载自动下载设置失败')
+    }
+  }, [form, message])
 
   useEffect(() => {
     loadStatistics()
-    form.setFieldsValue(settings)
-  }, [])
+    loadAutoDownloadSettings()
+  }, [loadStatistics, loadAutoDownloadSettings])
 
   const handleSave = async (values: any) => {
     try {
       setLoading(true)
+      await saveSetting('auto_download', values)
       setSettings(values)
       message.success('设置保存成功')
     } catch (error) {

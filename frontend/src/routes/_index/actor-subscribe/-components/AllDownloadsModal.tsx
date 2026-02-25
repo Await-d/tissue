@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, List, Card, Row, Col, Space, Tag, Typography, Button, Tooltip, Avatar, App, Checkbox, Empty, Spin, Input, Select, Radio } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, List, Card, Row, Col, Space, Tag, Typography, Button, Tooltip, Avatar, App, Checkbox, Empty, Spin, Input, Select, Radio, Alert } from 'antd';
 import { DeleteOutlined, UserOutlined, FileOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/subscribe';
 import * as videoApi from '../../../../apis/video';
@@ -27,18 +27,7 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
         isUncensored: false
     });
 
-    useEffect(() => {
-        if (open) {
-            loadDownloads();
-        }
-    }, [open]);
-
-    // 当下载列表或筛选条件变化时，应用筛选
-    useEffect(() => {
-        applyFilters();
-    }, [downloads, filters, searchText]);
-
-    const loadDownloads = async () => {
+    const loadDownloads = useCallback(async () => {
         setLoading(true);
         try {
             const data = await api.getAllSubscriptionDownloads();
@@ -50,10 +39,10 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
         } finally {
             setLoading(false);
         }
-    };
+    }, [message]);
 
     // 应用筛选条件
-    const applyFilters = () => {
+    const applyFilters = useCallback(() => {
         if (!downloads.length) return;
 
         let result = [...downloads];
@@ -87,7 +76,18 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
         }
 
         setFilteredDownloads(result);
-    };
+    }, [downloads, filters, searchText]);
+
+    useEffect(() => {
+        if (open) {
+            loadDownloads();
+        }
+    }, [open, loadDownloads]);
+
+    // 当下载列表或筛选条件变化时，应用筛选
+    useEffect(() => {
+        applyFilters();
+    }, [applyFilters]);
 
     const handleDelete = (download: any) => {
         let deleteFiles = false;
@@ -207,6 +207,12 @@ const AllDownloadsModal: React.FC<AllDownloadsModalProps> = ({ open, onCancel, o
                     </Col>
                 </Row>
             </div>
+            <Alert
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message="此处展示的是订阅历史下载记录，不等同于下载器实时任务列表。"
+            />
             {loading ? (
                 <div className="all-downloads-loading">
                     <Spin />

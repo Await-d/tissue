@@ -92,7 +92,11 @@ def get_rankings(
             return _normalize_ranking_fields(cached_videos)
 
         refresh_stats = cache_service.fetch_and_cache_rankings(
-            sources=[source], video_types=[video_type], cycles=[cycle], max_pages=1
+            sources=[source],
+            video_types=[video_type],
+            cycles=[cycle],
+            max_pages=1,
+            apply_delay=False,
         )
         logger.info(
             f"首页榜单按需刷新完成: {source} {video_type} {cycle}, "
@@ -113,7 +117,7 @@ def get_rankings(
         spider_instance = spider.JavdbSpider()
 
         detailed_rankings = spider_instance.get_ranking_with_details(
-            video_type, cycle, max_pages=1
+            video_type, cycle, max_pages=1, apply_delay=False
         )
         if detailed_rankings:
             return _normalize_ranking_fields(detailed_rankings)

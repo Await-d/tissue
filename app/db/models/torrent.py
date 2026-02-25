@@ -1,10 +1,11 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, UniqueConstraint
 
 from app.db.models.base import Base
 
 
 class Torrent(Base):
-    __tablename__ = 'torrent'
+    __tablename__ = "torrent"
+    __table_args__ = (UniqueConstraint("hash", name="uq_torrent_hash"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     hash = Column(String(50), nullable=False)
