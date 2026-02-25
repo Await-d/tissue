@@ -21,9 +21,18 @@ Description: 请填写简介
 '''
 from abc import abstractmethod
 import logging
-import requests
-import ssl
 import time
+
+try:
+    from curl_cffi import requests as cffi_requests
+    from curl_cffi.requests import Session as CffiSession
+    HAS_CURL_CFFI = True
+except ImportError:
+    import requests as cffi_requests
+    from requests import Session as CffiSession
+    HAS_CURL_CFFI = False
+
+import requests
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -36,24 +45,34 @@ disable_warnings(InsecureRequestWarning)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('spider')
 
+# curl_cffi 使用的 Chrome 版本（与 UA 对齐）
+_IMPERSONATE = "chrome120"
 
-class Session(requests.Session):
+
+class Session(CffiSession if HAS_CURL_CFFI else requests.Session):
 
     def __init__(self, timeout: int = 10):
-        super().__init__()
+        if HAS_CURL_CFFI:
+            super().__init__(impersonate=_IMPERSONATE)
+        else:
+            super().__init__()
         self.timeout = timeout
-        
-        # 禁用SSL验证以避免证书问题
-        self.verify = False
+        # curl_cffi 不需要禁用SSL验证，它自带了对Cloudflare的支持
+        if not HAS_CURL_CFFI:
+            self.verify = False
 
     def request(self, *args, **kwargs):
         method = args[0] if args else kwargs.get('method')
         url = args[1] if len(args) > 1 else kwargs.get('url')
         logger.info(f"请求: {method} {url}")
-        
+
         kwargs.setdefault('timeout', self.timeout)
-        kwargs.setdefault('verify', False)  # 禁用SSL验证
-        
+        if not HAS_CURL_CFFI:
+            kwargs.setdefault('verify', False)
+        else:
+            # curl_cffi 用 impersonate 排试指纹，不需要额外verify参数
+            kwargs.setdefault('impersonate', _IMPERSONATE)
+
         # 添加重试机制
         max_retries = 3
         for attempt in range(max_retries):
@@ -64,16 +83,13 @@ class Session(requests.Session):
                     logger.error(f"请求失败: {response.status_code} - {url}")
                     logger.error(f"响应内容: {response.text[:200]}")
                 return response
-            except (requests.exceptions.SSLError, 
-                    requests.exceptions.ConnectionError,
-                    requests.exceptions.Timeout) as e:
+            except Exception as e:
                 logger.warning(f"请求失败 (尝试 {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     time.sleep(2 ** attempt)  # 指数退避
                 else:
                     logger.error(f"所有重试都失败了: {url}")
                     raise
-
 
 class Spider:
     name = None
@@ -142,7 +158,15 @@ class Spider:
     def get_cover(cls, url):
         logger.info(f"获取封面: {url}")
         try:
-            response = requests.get(url, headers={'Referer': cls.host}, verify=False, timeout=10)
+            if HAS_CURL_CFFI:
+                response = cffi_requests.get(
+                    url,
+                    headers={'Referer': cls.host},
+                    impersonate=_IMPERSONATE,
+                    timeout=10,
+                )
+            else:
+                response = requests.get(url, headers={'Referer': cls.host}, verify=False, timeout=10)
             if response.ok:
                 return response.content
             else:

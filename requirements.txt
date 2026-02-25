@@ -42,3 +42,4 @@ watchfiles==1.0.4
 websockets==14.2
 jieba==0.42.1
 brotli
+curl-cffi>=0.7.0
