@@ -368,7 +368,14 @@ class JavdbSpider(Spider):
         )
         if title_element:
             title = self._extract_text(title_element[0])
-            meta.title = f"{num.upper()} {title}"
+            # 合并内部多余空白/换行（HTML缩进段落产生）
+            title = re.sub(r"\s+", " ", title).strip()
+            # JavDB 的 current-title 元素本身已包含番号前缀（如 'HUNTC-459 ...')，
+            # 避免重复拼接为 'HUNTC-459 HUNTC-459 ...'
+            if title.upper().startswith(num.upper()):
+                meta.title = title
+            else:
+                meta.title = f"{num.upper()} {title}"
 
         premiered = self._extract_info_value(
             html, ["日期", "released date", "release date"]
@@ -1371,6 +1378,9 @@ class JavdbSpider(Spider):
                 video_info["rating"] = rating
                 video_info["comments"] = comments
                 video_info["comments_count"] = comments
+                # 兼容别名：供 home API / check 脚本直接读取
+                video_info["rank"] = rating
+                video_info["rank_count"] = comments
 
                 # 获取发布日期
                 meta_elements = element.xpath(".//div[contains(@class, 'meta')]")
@@ -1381,6 +1391,8 @@ class JavdbSpider(Spider):
                         video_info["release_date"] = (
                             parsed_date.strftime("%Y-%m-%d") if parsed_date else None
                         )
+                        # 别名：供 check 脚本 / home API 使用
+                        video_info["publish_date"] = video_info["release_date"]
 
                 # 设置质量标签
                 video_info["is_uncensored"] = page_type == "uncensored_ranking"
