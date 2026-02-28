@@ -265,10 +265,61 @@ class VideoCacheService(BaseService):
         """
         query = self.db.query(VideoCache)
 
+        normalized_required_actor_id = (
+            str(required_actor_id).strip() if required_actor_id is not None else ""
+        )
+
+        def _normalize_tag_value(tag: Any) -> str:
+            if isinstance(tag, dict):
+                raw_value = (
+                    tag.get("name")
+                    or tag.get("tag")
+                    or tag.get("value")
+                    or tag.get("label")
+                )
+            else:
+                raw_value = tag
+            return str(raw_value).strip().lower() if raw_value is not None else ""
+
+        normalized_required_tags = {
+            _normalize_tag_value(tag)
+            for tag in (required_tags or [])
+            if _normalize_tag_value(tag)
+        }
+        normalized_exclude_tags = {
+            _normalize_tag_value(tag)
+            for tag in (exclude_tags or [])
+            if _normalize_tag_value(tag)
+        }
+
+        has_memory_filters = bool(
+            normalized_required_actor_id
+            or normalized_required_tags
+            or normalized_exclude_tags
+        )
+
         # 时间范围过滤
         if days > 0:
-            cutoff_date = datetime.now() - timedelta(days=days)
-            query = query.filter(VideoCache.fetched_at >= cutoff_date)
+            release_cutoff = (datetime.now() - timedelta(days=days)).strftime(
+                "%Y-%m-%d"
+            )
+            fallback_fetched_cutoff = datetime.now() - timedelta(days=days)
+            query = query.filter(
+                or_(
+                    and_(
+                        VideoCache.release_date.isnot(None),
+                        VideoCache.release_date != "",
+                        VideoCache.release_date >= release_cutoff,
+                    ),
+                    and_(
+                        or_(
+                            VideoCache.release_date.is_(None),
+                            VideoCache.release_date == "",
+                        ),
+                        VideoCache.fetched_at >= fallback_fetched_cutoff,
+                    ),
+                )
+            )
 
         # 评分过滤
         if min_rating is not None and min_rating > 0:
@@ -279,9 +330,10 @@ class VideoCacheService(BaseService):
             query = query.filter(VideoCache.comments_count >= min_comments)
 
         # 属性过滤
-        # 注意: is_hd 和 is_zh 不在此处过滤，因为排行榜缓存数据无法获知视频是否有高清/中字版本
-        # 这两个条件应该在下载链接选择阶段（_find_suitable_download）处理
-        # 只有 is_uncensored 可以在此过滤，因为它由榜单类型决定
+        if is_hd:
+            query = query.filter(VideoCache.is_hd.is_(True))
+        if is_zh:
+            query = query.filter(VideoCache.is_zh.is_(True))
         if is_uncensored is not None:
             query = query.filter(VideoCache.is_uncensored == is_uncensored)
 
@@ -301,7 +353,11 @@ class VideoCacheService(BaseService):
         )
 
         # 分页
-        query = query.limit(limit).offset(offset)
+        if has_memory_filters:
+            prefetch_limit = max(limit + max(offset, 0), 1000)
+            query = query.limit(prefetch_limit)
+        else:
+            query = query.limit(limit).offset(offset)
 
         results = query.all()
         videos = [video.to_dict() for video in results]
@@ -310,43 +366,60 @@ class VideoCacheService(BaseService):
         filtered_videos = videos
 
         # 过滤：必须包含指定演员
-        if required_actor_id:
+        if normalized_required_actor_id:
             filtered_videos = [
                 v
                 for v in filtered_videos
                 if v.get("actors")
                 and any(
-                    actor.get("id") == required_actor_id
+                    str(actor.get("id", "")).strip() == normalized_required_actor_id
                     for actor in v.get("actors", [])
                 )
             ]
             logger.info(
-                f"演员过滤后剩余 {len(filtered_videos)} 个视频（要求演员ID: {required_actor_id}）"
+                f"演员过滤后剩余 {len(filtered_videos)} 个视频（要求演员ID: {normalized_required_actor_id}）"
             )
 
         # 过滤：必须包含所有指定标签
-        if required_tags:
+        if normalized_required_tags:
             filtered_videos = [
                 v
                 for v in filtered_videos
                 if v.get("tags")
-                and all(tag in v.get("tags", []) for tag in required_tags)
+                and normalized_required_tags.issubset(
+                    {
+                        _normalize_tag_value(tag)
+                        for tag in v.get("tags", [])
+                        if _normalize_tag_value(tag)
+                    }
+                )
             ]
             logger.info(
-                f"标签过滤后剩余 {len(filtered_videos)} 个视频（要求标签: {required_tags}）"
+                f"标签过滤后剩余 {len(filtered_videos)} 个视频（要求标签: {sorted(normalized_required_tags)}）"
             )
 
         # 过滤：排除包含指定标签的视频
-        if exclude_tags:
+        if normalized_exclude_tags:
             filtered_videos = [
                 v
                 for v in filtered_videos
                 if not v.get("tags")
-                or not any(tag in v.get("tags", []) for tag in exclude_tags)
+                or not (
+                    {
+                        _normalize_tag_value(tag)
+                        for tag in v.get("tags", [])
+                        if _normalize_tag_value(tag)
+                    }
+                    & normalized_exclude_tags
+                )
             ]
             logger.info(
-                f"排除标签后剩余 {len(filtered_videos)} 个视频（排除标签: {exclude_tags}）"
+                f"排除标签后剩余 {len(filtered_videos)} 个视频（排除标签: {sorted(normalized_exclude_tags)}）"
             )
+
+        if has_memory_filters:
+            safe_offset = max(offset, 0)
+            filtered_videos = filtered_videos[safe_offset : safe_offset + limit]
 
         return filtered_videos
 
