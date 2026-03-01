@@ -90,8 +90,13 @@ class Scheduler:
 
     def __init__(self):
         self.scheduler = BackgroundScheduler()
+        self._initialized = False
 
     def init(self):
+        if self._initialized:
+            logger.warning("调度器已初始化，跳过重复初始化")
+            return
+
         self.scheduler.start()
 
         setting = Setting()
@@ -156,6 +161,8 @@ class Scheduler:
             )
         else:
             logger.info("定时本地视频扫描任务已禁用（可在配置中启用）")
+
+        self._initialized = True
 
     def list(self):
         return self.scheduler.get_jobs()
