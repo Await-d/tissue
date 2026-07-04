@@ -33,13 +33,17 @@ class QBittorent:
             response = self.session.post(
                 url=urljoin(host, "/api/v2/auth/login"),
                 data={"username": setting.username, "password": setting.password},
+                headers=self._get_auth_headers(host),
             )
             logger.info(f"登录响应状态码: {response.status_code}")
-            if response.status_code != 200:
-                logger.error(f"登录失败，响应内容: {response.text}")
-                raise BizException(response.text)
-            else:
+
+            if self._is_login_success(response):
                 logger.info("qBittorrent登录成功")
+            else:
+                logger.error(f"登录失败，响应内容: {response.text}")
+                raise BizException(f"登录失败: {response.text.strip()}")
+        except BizException:
+            raise
         except Exception as e:
             logger.error(f"下载器连接失败: {str(e)}")
             raise BizException("下载器连接失败")
@@ -68,11 +72,15 @@ class QBittorent:
             login_response = self.session.post(
                 url=urljoin(host, "/api/v2/auth/login"),
                 data={"username": setting.username, "password": setting.password},
+                headers=self._get_auth_headers(host),
                 timeout=5,  # 设置5秒超时
             )
 
-            if login_response.status_code != 200:
-                return {"status": False, "message": f"登录失败: {login_response.text}"}
+            if not self._is_login_success(login_response):
+                return {
+                    "status": False,
+                    "message": f"登录失败: {login_response.text.strip()}",
+                }
 
             # 尝试获取基本信息验证登录状态
             version_response = self.session.get(
@@ -174,6 +182,53 @@ class QBittorent:
         if not (host.startswith("http://") or host.startswith("https://")):
             host = "http://" + host
         return host
+
+    def _get_auth_headers(self, host: str) -> dict:
+        """
+        构建qBittorrent登录所需的请求头。
+
+        qBittorrent 5.0+ 启用了CSRF保护和Host头验证，要求登录请求
+        必须包含 Referer 或 Origin 头，且其域名和端口需与 Host 头一致。
+
+        Args:
+            host: 包含协议头的host地址
+
+        Returns:
+            dict: 包含Referer头的字典
+        """
+        return {"Referer": host}
+
+    def _is_login_success(self, response) -> bool:
+        """
+        判断qBittorrent登录是否成功。
+
+        不同版本的qBittorrent登录响应行为不同：
+        - 旧版本(4.x): 成功返回 HTTP 200 + 响应体 "Ok."，设置 SID Cookie
+        - 新版本(5.x): 成功返回 HTTP 204 + 空响应体，设置 QBT_SID Cookie
+                       失败返回 HTTP 401 + "Unauthorized" 或 HTTP 200 + "Fails."
+
+        因此，通过检查响应中是否设置了会话Cookie来判断登录是否成功，
+        同时兼容各种版本的状态码和响应体。
+
+        Args:
+            response: requests.Response 对象
+
+        Returns:
+            bool: 登录是否成功
+        """
+        # 检查是否设置了会话Cookie（SID 或 QBT_SID 开头）
+        cookie_names = list(dict(response.cookies).keys())
+        has_session_cookie = any(
+            name == "SID" or name.startswith("QBT_SID") for name in cookie_names
+        )
+        if has_session_cookie:
+            return True
+
+        # 兼容：某些版本返回 200 + "Ok."
+        if response.status_code == 200 and response.text.strip() == "Ok.":
+            return True
+
+        return False
 
     @auth
     def get_torrents(
