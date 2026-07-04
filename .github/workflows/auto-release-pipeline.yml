@@ -63,26 +63,17 @@ jobs:
         git add version.py
         git commit -m "chore: sync version.py file with release ${{ steps.next_version.outputs.new_tag }} [skip ci]"
     # 构建前端并推送到 web-dist 分支
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+        run_install: false
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: latest
-        run_install: false
-    - name: Get pnpm store directory
-      shell: bash
-      run: |
-        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-    - name: Setup pnpm cache
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.STORE_PATH }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-store-
+        cache: 'pnpm'
+        cache-dependency-path: frontend/pnpm-lock.yaml
     - name: Build Frontend
       run: |
         echo "Building frontend for version ${{ steps.next_version.outputs.new_version }}..."
@@ -164,7 +155,7 @@ jobs:
         git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
         git push origin HEAD:master "$NEW_TAG"
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.next_version.outputs.new_tag }}
         name: Release ${{ steps.next_version.outputs.new_version }}
