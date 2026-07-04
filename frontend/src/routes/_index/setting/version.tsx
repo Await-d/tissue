@@ -182,7 +182,7 @@ function VersionManagement() {
       title: <span style={{ color: colors.textPrimary }}>版本</span>,
       dataIndex: 'version',
       key: 'version',
-      render: (version: string) => <Tag color="blue" style={{ backgroundColor: `rgba(212, 168, 82, 0.2)`, color: colors.goldPrimary, border: 'none' }}>{version}</Tag>
+      render: (version: string) => <Tag style={{ backgroundColor: colors.rgba('gold', 0.2), color: colors.goldPrimary, border: 'none' }}>{version}</Tag>
     },
     {
       title: <span style={{ color: colors.textPrimary }}>更新时间</span>,
@@ -419,7 +419,7 @@ function VersionManagement() {
           description={<span style={{ color: colors.textSecondary }}>当前版本与存储版本不一致，建议执行数据库迁移以确保功能正常运行。</span>}
           type="warning"
           showIcon
-          style={{ backgroundColor: colors.bgContainer, borderColor: `rgba(250, 173, 20, 0.3)` }}
+          style={{ backgroundColor: colors.bgContainer, borderColor: colors.rgba('warning', 0.3) }}
           action={
             <Button
               size="small"
@@ -447,7 +447,7 @@ function VersionManagement() {
             description="数据库迁移是一个重要操作，建议在执行前备份数据库。"
             type="info"
             showIcon
-            style={{ marginBottom: '1.5rem', backgroundColor: colors.bgElevated, borderColor: `rgba(212, 168, 82, 0.2)` }}
+            style={{ marginBottom: '1.5rem', backgroundColor: colors.bgElevated, borderColor: colors.rgba('gold', 0.2) }}
           />
 
           <div style={{ color: colors.goldLight }} className="font-semibold mb-4">迁移选项</div>
@@ -487,7 +487,7 @@ function VersionManagement() {
                 block
                 loading={migrationLoading}
                 onClick={() => handleMigration(true, true)}
-                style={{ backgroundColor: 'rgba(255, 77, 79, 0.1)', borderColor: 'rgba(255, 77, 79, 0.3)', color: 'rgb(255, 119, 119)' }}
+                style={{ backgroundColor: colors.rgba('red', 0.1), borderColor: colors.rgba('red', 0.3), color: colors.redLight }}
               >
                 强制迁移
               </Button>

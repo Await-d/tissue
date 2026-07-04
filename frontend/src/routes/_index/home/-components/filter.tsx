@@ -44,7 +44,6 @@ function Filter(props: FilterProps) {
                     minWidth: labelMinWidth,
                     fontSize: labelFontSize,
                     letterSpacing: '0.02em',
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
                 }}>{field.label}</div>
                 <div className={'flex-1'}>
                     {child}

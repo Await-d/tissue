@@ -15,7 +15,7 @@ import {
     InputNumber,
     Badge
 } from "antd";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
     CarryOutOutlined,
     CloudDownloadOutlined,
@@ -88,7 +88,7 @@ export const Route = createFileRoute('/_index/search/')({
             )
         }
     },
-    staleTime: Infinity
+    staleTime: 5 * 60 * 1000  // 5分钟后数据过期，允许重新获取
 })
 
 
@@ -170,13 +170,13 @@ export function Search() {
     })
 
     // 清除搜索结果
-    const handleClearSearch = () => {
+    const handleClearSearch = useCallback(() => {
         setSearchInput('');
         localStorage.removeItem(cacheLastSearchKey);
         router.navigate({ search: {} as any, replace: true });
-    };
+    }, [router]);
 
-    function renderItems(video: any) {
+    const renderItems = useCallback((video: any) => {
         return [
             {
                 key: 'actors',
@@ -293,9 +293,9 @@ export function Search() {
                 ),
             },
         ]
-    }
+    }, []);
 
-    function onCopyClick(item: any) {
+    const onCopyClick = useCallback((item: any) => {
         const textarea = document.createElement('textarea');
         textarea.value = item.magnet;
         textarea.style.position = 'fixed';
@@ -304,24 +304,24 @@ export function Search() {
         document.execCommand('copy');
         document.body.removeChild(textarea);
         return message.success("磁力链接已复制")
-    }
+    }, [message]);
 
-    const handleActorClick = (actorName: string) => {
+    const handleActorClick = useCallback((actorName: string) => {
         navigate({
             to: '/actor',
             search: { actorName: actorName } as any,
             replace: true
         });
-    };
+    }, [navigate]);
 
-    const handleHistorySelect = (num: string) => {
+    const handleHistorySelect = useCallback((num: string) => {
         setHistoryModalOpen(false)
         navigate({
             search: { num } as any
         })
-    };
+    }, [navigate]);
 
-    const handleDownloadClick = (video: any, downloadItem?: any) => {
+    const handleDownloadClick = useCallback((video: any, downloadItem?: any) => {
         setLoadingDownloadId(video.num)
 
         setSelectedVideo(video)
@@ -340,7 +340,7 @@ export function Search() {
             message.warning("没有可用的下载资源")
             setLoadingDownloadId(null)
         }
-    }
+    }, [message])
 
     return (
         <Row gutter={[15, 15]}>
@@ -391,19 +391,12 @@ export function Search() {
                                                 onPressEnter={() => {
                                                     router.navigate({ search: { num: searchInput } as any, replace: true })
                                                 }}
+                                                className="tissue-focus-input"
                                                 style={{
                                                     background: colors.bgBase,
                                                     border: `1px solid ${colors.borderPrimary}`,
                                                     color: colors.textPrimary,
                                                     transition: 'all 0.3s'
-                                                }}
-                                                onFocus={(e) => {
-                                                    e.currentTarget.style.borderColor = colors.goldPrimary;
-                                                    e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.rgba('gold', 0.1)}`;
-                                                }}
-                                                onBlur={(e) => {
-                                                    e.currentTarget.style.borderColor = colors.borderPrimary;
-                                                    e.currentTarget.style.boxShadow = 'none';
                                                 }}
                                             />
                                             <Button
@@ -413,20 +406,13 @@ export function Search() {
                                                 onClick={() => {
                                                     router.navigate({ search: { num: searchInput } as any, replace: true })
                                                 }}
+                                                className="tissue-hover-search-btn"
                                                 style={{
                                                     background: colors.goldGradient,
                                                     border: 'none',
                                                     color: colors.bgBase,
                                                     fontWeight: 600,
                                                     transition: 'all 0.3s'
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.background = colors.goldGradientHover;
-                                                    e.currentTarget.style.transform = 'scale(1.05)';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.background = colors.goldGradient;
-                                                    e.currentTarget.style.transform = 'scale(1)';
                                                 }}
                                             />
                                         </Space.Compact>
@@ -766,8 +752,8 @@ export function Search() {
                                                             <Badge
                                                                 count={filteredCount}
                                                                 style={{
-                                                                    backgroundColor: '#1890ff',
-                                                                    boxShadow: '0 2px 4px rgba(24,144,255,0.3)'
+                                                                    backgroundColor: colors.info,
+                                                                    boxShadow: `0 2px 4px ${colors.rgba('blue', 0.3)}`
                                                                 }}
                                                             />
                                                             <span style={{ fontWeight: 500 }}>
@@ -801,6 +787,7 @@ export function Search() {
                                                 dataSource={downloads}
                                                 renderItem={(item: any) => (
                                                     <div
+                                                        className="tissue-hover-download"
                                                         style={{
                                                             marginBottom: '12px',
                                                             padding: '16px',
@@ -809,18 +796,6 @@ export function Search() {
                                                             background: colors.bgContainer,
                                                             transition: 'all 0.3s',
                                                             cursor: 'pointer'
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.boxShadow = `0 8px 24px ${colors.rgba('gold', 0.15)}`;
-                                                            e.currentTarget.style.borderColor = colors.goldPrimary;
-                                                            e.currentTarget.style.transform = 'translateY(-2px)';
-                                                            e.currentTarget.style.background = colors.bgSpotlight;
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.boxShadow = 'none';
-                                                            e.currentTarget.style.borderColor = colors.borderPrimary;
-                                                            e.currentTarget.style.transform = 'translateY(0)';
-                                                            e.currentTarget.style.background = colors.bgContainer;
                                                         }}
                                                     >
                                                         <List.Item

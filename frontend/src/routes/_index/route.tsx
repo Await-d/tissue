@@ -58,7 +58,7 @@ function RouteLayout() {
             <ConfigProvider theme={{
                 components: {
                     Layout: {
-                        headerPadding: "0 10px"
+                        headerPadding: "0 16px"
                     },
                     Menu: {
                         activeBarBorderWidth: 0,
@@ -79,7 +79,6 @@ function RouteLayout() {
                     ) : (
                         responsive.md && (
                             <Drawer style={{
-                                width: 'calc(100% + env(safe-area-inset-left, 0))',
                                 paddingLeft: 'env(safe-area-inset-left, 0)'
                             }} width={208} title={null} closeIcon={null} placement={'left'}
                                     open={!collapsed} onClose={() => setCollapsed(true)} styles={{body: {padding: 0}}}>
@@ -89,7 +88,6 @@ function RouteLayout() {
                     )}
                     <Layout style={{position: 'relative', height: '100%'}}>
                         <div className={Styles.header} style={{
-                            background: token.colorBgContainer + '99',
                             borderBlockEndColor: token.colorBorderSecondary
                         }}>
                             <Layout.Header className={'bg-transparent'}>
@@ -113,7 +111,6 @@ function RouteLayout() {
                     </Layout>
                     {!responsive.md && (
                         <div className={Styles.footer} style={{
-                            background: token.colorBgContainer + '99',
                             borderBlockStartColor: token.colorBorderSecondary
                         }}>
                             <TabBar/>

@@ -1,6 +1,6 @@
 import {useRequest} from "ahooks";
 import * as api from "../../../apis/video";
-import {Card, Col, Empty, FloatButton, Row, Skeleton, Space, Tag} from "antd";
+import {Card, Col, Empty, FloatButton, Pagination, Row, Skeleton, Space, Tag} from "antd";
 import VideoCover from "../../../components/VideoCover";
 import React, {useMemo, useState} from "react";
 import {createPortal} from "react-dom";
@@ -9,6 +9,8 @@ import VideoFilterModal, {FilterParams} from "./-components/filter.tsx";
 import {createFileRoute, Link} from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
 import {useThemeColors} from "../../../hooks/useThemeColors";
+
+const VIDEO_PAGE_SIZE = 24;
 
 export const Route = createFileRoute('/_index/video/')({
     component: Video,
@@ -21,6 +23,7 @@ function Video() {
     const [selected, setSelected] = useState<string | undefined>()
     const [filterOpen, setFilterOpen] = useState(false)
     const [filterParams, setFilterParams] = useState<FilterParams>({})
+    const [currentPage, setCurrentPage] = useState(1)
 
     const actors = useMemo(() => {
         const actors: any[] = []
@@ -51,6 +54,12 @@ function Video() {
             return true
         })
     }, [filterParams, data])
+
+    // 前端分页
+    const pagedVideos = useMemo(() => {
+        const start = (currentPage - 1) * VIDEO_PAGE_SIZE
+        return videos.slice(start, start + VIDEO_PAGE_SIZE)
+    }, [videos, currentPage])
 
     const hasFilter = !!filterParams.title || !!filterParams.actors?.length
 
@@ -84,11 +93,12 @@ function Video() {
     return (
         <Row gutter={[16, 16]}>
             {videos.length > 0 ? (
-                videos.map((video: any, index: number) => (
+                pagedVideos.map((video: any, index: number) => (
                     <Col key={video.path} span={24} md={12} lg={6} className="tissue-animate-in" style={{ animationDelay: `${index * 50}ms` }}>
                         <Card
                             hoverable
                             size="small"
+                            className="tissue-hover-card"
                             cover={
                                 <div className="tissue-cover" style={{ height: '240px' }}>
                                     <VideoCover src={video.cover}/>
@@ -100,32 +110,21 @@ function Video() {
                                 border: `1px solid ${colors.borderPrimary}`,
                                 borderRadius: 'var(--radius-lg)',
                                 overflow: 'hidden',
-                                transition: 'all var(--transition-base)',
                                 cursor: 'pointer',
                                 position: 'relative',
-                            }}
-                            className="tissue-glow-border"
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-6px)';
-                                e.currentTarget.style.boxShadow = `0 0 24px ${colors.rgba('gold', 0.2)}, 0 8px 32px ${colors.rgba('black', 0.5)}`;
-                                e.currentTarget.style.borderColor = colors.borderGold;
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '';
-                                e.currentTarget.style.borderColor = colors.borderPrimary;
                             }}
                         >
                             <div style={{
                                 position: 'absolute',
                                 inset: 0,
-                                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 50%)',
+                                background: `linear-gradient(135deg, ${colors.rgba('white', 0.02)} 0%, transparent 50%)`,
                                 pointerEvents: 'none',
                                 zIndex: 1,
                             }} />
                             <Card.Meta
                                 title={
-                                    <div style={{
+                                    <div className="tissue-hover-title"
+                                        style={{
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         display: '-webkit-box',
@@ -136,15 +135,7 @@ function Video() {
                                         fontSize: '14px',
                                         fontWeight: 600,
                                         color: colors.textPrimary,
-                                        transition: 'color var(--transition-fast)',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.color = colors.goldLight;
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.color = colors.textPrimary;
-                                    }}
-                                    >
+                                    }}>
                                         {video.title}
                                     </div>
                                 }
@@ -190,6 +181,7 @@ function Video() {
                                         {video.actors.slice(0, 3).map((actor: any) => (
                                             <Tag
                                                 key={actor.name}
+                                                className="tissue-hover-tag"
                                                 style={{
                                                     background: colors.goldGlow,
                                                     color: colors.goldPrimary,
@@ -199,15 +191,6 @@ function Video() {
                                                     fontSize: '12px',
                                                     padding: '2px 10px',
                                                     margin: 0,
-                                                    transition: 'all var(--transition-fast)',
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.background = colors.rgba('gold', 0.25);
-                                                    e.currentTarget.style.transform = 'translateY(-1px)';
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.background = colors.goldGlow;
-                                                    e.currentTarget.style.transform = 'translateY(0)';
                                                 }}
                                             >
                                                 {actor.name}
@@ -278,17 +261,11 @@ function Video() {
                                                     <Link
                                                         to={'/setting'}
                                                         hash={'video'}
+                                                        className="tissue-hover-text-gold"
                                                         style={{
                                                             fontWeight: 500,
                                                             color: colors.goldPrimary,
                                                             textDecoration: 'none',
-                                                            transition: 'color var(--transition-fast)',
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.color = colors.goldLight;
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.color = colors.goldPrimary;
                                                         }}
                                                     >
                                                         配置视频路径
@@ -303,6 +280,18 @@ function Video() {
                         />
                     </Card>
                 </Col>
+            )}
+            {videos.length > VIDEO_PAGE_SIZE && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24, width: '100%' }}>
+                    <Pagination
+                        current={currentPage}
+                        pageSize={VIDEO_PAGE_SIZE}
+                        total={videos.length}
+                        onChange={(page) => setCurrentPage(page)}
+                        showSizeChanger={false}
+                        showTotal={(total) => `共 ${total} 个视频`}
+                    />
+                </div>
             )}
             <VideoDetail title={'编辑'}
                          mode={'video'}
@@ -321,6 +310,7 @@ function Video() {
                               onCancel={() => setFilterOpen(false)}
                               onFilter={params => {
                                   setFilterParams(params)
+                                  setCurrentPage(1)
                                   setFilterOpen(false)
                               }}/>
             <>

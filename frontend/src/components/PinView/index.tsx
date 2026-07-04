@@ -121,7 +121,7 @@ function PinView(props: Props) {
                     <Row gutter={[80, 0]}>
                         <Col span={24} md={12}>
                             <div className={'h-full flex flex-col items-center justify-center'}>
-                                <img className={'h-20'} src={Logo} alt="" style={{ filter: 'drop-shadow(0 0 20px rgba(212, 168, 82, 0.3))' }} />
+                                <img className={'h-20'} src={Logo} alt="" style={{ filter: `drop-shadow(0 0 20px ${colors.rgba('gold', 0.3)})` }} />
                                 <div style={{ color: colors.textPrimary, fontSize: '16px', marginTop: '24px', fontWeight: 500 }}>
                                     {repeatNumbers.length > 0 ? (
                                         '请再次输入密码 '

@@ -80,6 +80,9 @@ export interface RgbaColorMap {
     white: string
     black: string
     red: string
+    green: string
+    blue: string
+    warning: string
     bgContainer: string
 }
 
@@ -241,6 +244,9 @@ export const DARK_RGBA_COLORS: RgbaColorMap = {
     white: '255, 255, 255',
     black: '0, 0, 0',
     red: '255, 77, 79',
+    green: '82, 196, 26',
+    blue: '24, 144, 255',
+    warning: '250, 173, 20',
     bgContainer: '26, 26, 29',
 }
 
@@ -249,5 +255,8 @@ export const LIGHT_RGBA_COLORS: RgbaColorMap = {
     white: '255, 255, 255',
     black: '0, 0, 0',
     red: '255, 77, 79',
+    green: '82, 196, 26',
+    blue: '24, 144, 255',
+    warning: '250, 173, 20',
     bgContainer: '255, 255, 255',
 }

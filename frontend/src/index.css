@@ -10,27 +10,30 @@
 /* 暗色主题（默认） */
 :root, [data-theme='dark'] {
     /* === 核心色彩 === */
-    --color-bg-base: var(--color-bg-base);
-    --color-bg-elevated: var(--color-bg-elevated);
-    --color-bg-container: var(--color-bg-container);
-    --color-bg-spotlight: var(--color-bg-spotlight);
+    --color-bg-base: #0d0d0f;
+    --color-bg-elevated: #141416;
+    --color-bg-container: #1a1a1d;
+    --color-bg-spotlight: #222226;
 
     /* 金色强调 */
-    --color-gold-primary: var(--color-gold-primary);
-    --color-gold-light: var(--color-gold-light);
-    --color-gold-dark: var(--color-gold-dark);
+    --color-gold-primary: #d4a852;
+    --color-gold-light: #e8c780;
+    --color-gold-dark: #b08d3e;
     --color-gold-glow: rgba(212, 168, 82, 0.15);
 
     /* 文字色彩 */
-    --color-text-primary: var(--color-text-primary);
-    --color-text-secondary: var(--color-text-secondary);
-    --color-text-tertiary: var(--color-text-tertiary);
-    --color-text-gold: var(--color-gold-primary);
+    --color-text-primary: #f0f0f2;
+    --color-text-secondary: #a0a0a8;
+    --color-text-tertiary: #6a6a72;
+    --color-text-gold: #d4a852;
 
     /* 边框与分割 */
-    --color-border-primary: var(--color-border-primary);
-    --color-border-secondary: var(--color-border-secondary);
-    --color-border-gold: var(--color-border-gold);
+    --color-border-primary: rgba(255, 255, 255, 0.08);
+    --color-border-secondary: rgba(255, 255, 255, 0.04);
+    --color-border-gold: rgba(212, 168, 82, 0.3);
+    /* 填充色系 */
+    --color-fill: rgba(255, 255, 255, 0.06);
+    --color-fill-secondary: rgba(255, 255, 255, 0.04);
     /* 表单控件边框 */
     --color-border-control: rgba(255, 255, 255, 0.15);
     --color-border-control-hover: rgba(255, 255, 255, 0.25);
@@ -113,7 +116,7 @@
     --color-bg-spotlight: #fafafa;
 
     /* 金色强调 */
-    --color-gold-primary: var(--color-gold-dark);
+    --color-gold-primary: #b08d3e;
     --color-gold-light: #c9a654;
     --color-gold-dark: #8a6d2e;
     --color-gold-glow: rgba(176, 141, 62, 0.15);
@@ -122,12 +125,15 @@
     --color-text-primary: #1a1a1d;
     --color-text-secondary: #6a6a72;
     --color-text-tertiary: #a0a0a8;
-    --color-text-gold: var(--color-gold-dark);
+    --color-text-gold: #b08d3e;
 
     /* 边框与分割 */
     --color-border-primary: rgba(0, 0, 0, 0.18);
     --color-border-secondary: rgba(0, 0, 0, 0.10);
     --color-border-gold: rgba(176, 141, 62, 0.5);
+    /* 填充色系 */
+    --color-fill: rgba(0, 0, 0, 0.06);
+    --color-fill-secondary: rgba(0, 0, 0, 0.04);
     /* 表单控件边框 - 更强对比度 */
     --color-border-control: #c0c0c0;
     --color-border-control-hover: #a0a0a0;
@@ -509,7 +515,7 @@ body {
 
 /* === 玻璃态效果 === */
 .tissue-glass {
-    background: rgba(26, 26, 29, 0.85);
+    background: var(--color-layout-glass);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--color-border-primary);
@@ -656,10 +662,10 @@ body {
 
 @keyframes tissue-glow-pulse {
     0%, 100% {
-        box-shadow: 0 0 20px rgba(212, 168, 82, 0.1);
+        box-shadow: 0 0 20px var(--color-gold-glow);
     }
     50% {
-        box-shadow: 0 0 30px rgba(212, 168, 82, 0.25);
+        box-shadow: 0 0 30px var(--color-gold-glow-strong);
     }
 }
 
@@ -1100,7 +1106,7 @@ body {
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(212, 168, 82, 0.1),
+        var(--color-gold-glow),
         transparent
     );
     transition: left var(--transition-slow);
@@ -1631,7 +1637,7 @@ body {
 .version-history-table .ant-table {
     background-color: transparent;
     border: 1px solid var(--color-border-primary);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     overflow: hidden;
 }
 
@@ -1785,7 +1791,7 @@ body {
 
 /* === Tag 暗色主题优化 === */
 .ant-tag {
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .ant-tag-blue {
@@ -2134,4 +2140,104 @@ body {
 [data-theme='light'] .ant-tooltip-inner {
     background-color: rgba(0, 0, 0, 0.85) !important;
     color: #ffffff !important;
+}
+
+/* ============================================
+   HOVER UTILITY CLASSES
+   替代内联 onMouseEnter/onMouseLeave 的 CSS hover 类
+   ============================================ */
+
+/* 通用 hover：边框变金色 + 背景变亮 */
+.tissue-hover-gold {
+    transition: all 0.3s ease;
+}
+.tissue-hover-gold:hover {
+    border-color: var(--color-gold-primary) !important;
+    background: var(--color-bg-container) !important;
+}
+
+/* 列表项 hover：边框金色 + 背景提升 */
+.tissue-hover-item {
+    transition: all 0.3s ease;
+}
+.tissue-hover-item:hover {
+    border-color: var(--color-gold-primary) !important;
+    background: var(--color-bg-container) !important;
+}
+
+/* 卡片 hover：上浮 + 金色阴影 */
+.tissue-hover-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tissue-hover-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 24px rgba(212, 168, 82, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5);
+    border-color: var(--color-border-gold) !important;
+}
+
+/* 下载资源卡片 hover：上浮 + 金色边框 + 阴影 */
+.tissue-hover-download {
+    transition: all 0.3s ease;
+}
+.tissue-hover-download:hover {
+    box-shadow: 0 8px 24px rgba(212, 168, 82, 0.15);
+    border-color: var(--color-gold-primary) !important;
+    transform: translateY(-2px);
+    background: var(--color-bg-spotlight) !important;
+}
+
+/* 文字链接 hover：金色变亮 */
+.tissue-hover-text-gold {
+    transition: color 0.3s ease;
+    color: var(--color-gold-primary);
+}
+.tissue-hover-text-gold:hover {
+    color: var(--color-gold-light) !important;
+}
+
+/* 演员标签 hover */
+.tissue-hover-tag {
+    transition: all 0.3s ease;
+}
+.tissue-hover-tag:hover {
+    background: rgba(212, 168, 82, 0.25) !important;
+    transform: translateY(-1px);
+}
+
+/* 标题文字 hover */
+.tissue-hover-title {
+    transition: color 0.3s ease;
+}
+.tissue-hover-title:hover {
+    color: var(--color-gold-light) !important;
+}
+
+/* 操作按钮 hover（非批量模式） */
+.tissue-hover-action-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tissue-hover-action-btn:hover {
+    background: rgba(212, 168, 82, 0.12) !important;
+    border-color: var(--color-border-gold) !important;
+    color: var(--color-gold-primary) !important;
+    transform: scale(1.05);
+}
+
+/* 搜索按钮 hover */
+.tissue-hover-search-btn {
+    transition: all 0.3s ease;
+}
+.tissue-hover-search-btn:hover {
+    background: linear-gradient(135deg, var(--color-gold-light) 0%, var(--color-gold-primary) 100%) !important;
+    transform: scale(1.05);
+}
+
+/* 搜索输入框 focus 效果 */
+.tissue-focus-input {
+    transition: all 0.3s ease;
+}
+.tissue-focus-input:focus,
+.tissue-focus-input:focus-within {
+    border-color: var(--color-gold-primary) !important;
+    box-shadow: 0 0 0 2px rgba(212, 168, 82, 0.1) !important;
 }

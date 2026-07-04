@@ -96,22 +96,20 @@ function Site() {
                             </div>
                             <div className={'flex gap-2'}>
                                 <Tag
-                                    color={'blue'}
                                     style={{
-                                        background: 'rgba(24, 144, 255, 0.15)',
-                                        border: '1px solid rgba(24, 144, 255, 0.3)',
-                                        color: '#69b1ff'
+                                        background: colors.rgba('blue', 0.15),
+                                        border: `1px solid ${colors.rgba('blue', 0.3)}`,
+                                        color: colors.info
                                     }}
                                 >
                                     元数据
                                 </Tag>
                                 {item.downloadable && (
                                     <Tag
-                                        color={'green'}
                                         style={{
-                                            background: 'rgba(82, 196, 26, 0.15)',
-                                            border: '1px solid rgba(82, 196, 26, 0.3)',
-                                            color: '#95de64'
+                                            background: colors.rgba('green', 0.15),
+                                            border: `1px solid ${colors.rgba('green', 0.3)}`,
+                                            color: colors.success
                                         }}
                                     >
                                         下载

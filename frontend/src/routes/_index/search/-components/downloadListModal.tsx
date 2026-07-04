@@ -47,11 +47,11 @@ function DownloadListModal(props: Props) {
 
         if (size.includes("GB")) {
             const num = parseFloat(size);
-            if (num > 10) return "#f5222d15"; // 红色背景，体积很大
-            if (num > 5) return "#fa541c15";  // 橙色背景，体积较大
-            return "#52c41a15"; // 绿色背景，体积适中
+            if (num > 10) return `${colors.error}22`; // 红色背景，体积很大
+            if (num > 5) return `${colors.warning}22`;  // 橙色背景，体积较大
+            return `${colors.success}22`; // 绿色背景，体积适中
         }
-        return "#1890ff15"; // 蓝色背景，体积较小
+        return `${colors.info}22`; // 蓝色背景，体积较小
     };
 
     return (

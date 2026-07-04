@@ -59,8 +59,8 @@ function History() {
                     <Tag
                         style={{
                             background: colors.rgba('red', 0.1),
-                            border: '1px solid rgba(255, 77, 79, 0.3)',
-                            color: '#ff4d4f'
+                            border: `1px solid ${colors.rgba('red', 0.3)}`,
+                            color: colors.error
                         }}
                     >
                         失败
@@ -235,6 +235,14 @@ function History() {
                     dataSource={realData}
                     className="dark-table"
                     rowClassName="dark-table-row"
+                    pagination={{
+                        pageSize: 20,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `共 ${total} 条记录`,
+                        defaultPageSize: 20,
+                        pageSizeOptions: ['10', '20', '50', '100'],
+                    }}
                     style={{
                         background: 'transparent'
                     }}

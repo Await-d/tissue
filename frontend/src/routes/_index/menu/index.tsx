@@ -187,8 +187,8 @@ function Menu() {
                         height: '100%',
                         cursor: 'pointer',
                         boxShadow: isHovered
-                            ? `0 8px 24px rgba(212, 168, 82, 0.12), 0 0 0 1px ${colors.goldDark}`
-                            : '0 2px 8px rgba(0, 0, 0, 0.15)',
+                            ? `0 8px 24px ${colors.rgba('gold', 0.12)}, 0 0 0 1px ${colors.goldDark}`
+                            : `0 2px 8px ${colors.rgba('black', 0.15)}`,
                         transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
                         animation: `menuItemFadeIn 0.3s ease-out ${groupIndex * 0.1 + itemIndex * 0.05}s both`
                     }}>

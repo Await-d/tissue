@@ -535,7 +535,7 @@ function AutoDownloadRules() {
                     </div>
                   </Col>
                 </Row>
-                <Divider style={{ margin: '8px 0', borderColor: 'rgba(255, 255, 255, 0.05)' }} />
+                <Divider style={{ margin: '8px 0', borderColor: colors.borderSecondary }} />
                 <Row gutter={8}>
                   <Col span={8}>
                     <Button

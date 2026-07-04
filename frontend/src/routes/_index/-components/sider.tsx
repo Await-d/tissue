@@ -56,7 +56,7 @@ function Sider(props: Props) {
                 {showLogo && (
                     <Link to={'/'} className="group flex items-center">
                         <img
-                            className={'ml-6 mr-4 h-11 transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(212,168,82,0.5)]'}
+                            className={'ml-4 mr-4 h-10 transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(212,168,82,0.5)]'}
                             src={Logo}
                             alt=""
                         />

@@ -134,20 +134,20 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
                 className="tissue-home-card"
                 style={{
                     background: colors.bgContainer,
-                    borderRadius: 16,
+                    borderRadius: 14,
                     overflow: 'hidden',
                     border: `1px solid ${colors.borderSecondary}`,
                     cursor: 'pointer',
-                    transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    transition: 'all 350ms cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
                     boxShadow: `0 4px 12px ${colors.rgba('black', 0.15)}`,
                 }}
                 onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-8px)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.boxShadow = `
-                        0 24px 48px ${colors.rgba('black', 0.3)},
+                        0 16px 32px ${colors.rgba('black', 0.25)},
                         0 0 0 1px ${colors.borderGold},
-                        0 0 32px ${colors.rgba('gold', 0.2)}
+                        0 0 24px ${colors.rgba('gold', 0.15)}
                     `;
                     e.currentTarget.style.borderColor = colors.borderGold;
                 }}
@@ -343,21 +343,21 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
                             position: 'absolute',
                             top: 14,
                             right: 14,
-                            background: 'rgba(82, 196, 26, 0.95)',
+                            background: colors.rgba('bgContainer', 0.95),
                             backdropFilter: 'blur(10px)',
                             padding: '6px 12px',
                             borderRadius: 10,
                             display: 'flex',
                             alignItems: 'center',
                             gap: 6,
-                            boxShadow: '0 4px 12px rgba(82, 196, 26, 0.4)',
-                            border: '1px solid rgba(82, 196, 26, 0.5)',
+                            boxShadow: `0 4px 12px ${colors.rgba('black', 0.3)}`,
+                            border: `1px solid ${colors.success}`,
                             zIndex: 10,
                         }}>
                             <span style={{
                                 fontSize: 14,
                                 fontWeight: 600,
-                                color: '#fff',
+                                color: colors.success,
                                 letterSpacing: '0.02em',
                                 lineHeight: 1,
                             }}>
@@ -370,21 +370,21 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
                             position: 'absolute',
                             top: 14,
                             right: 14,
-                            background: 'rgba(24, 144, 255, 0.95)',
+                            background: colors.rgba('bgContainer', 0.95),
                             backdropFilter: 'blur(10px)',
                             padding: '6px 12px',
                             borderRadius: 10,
                             display: 'flex',
                             alignItems: 'center',
                             gap: 6,
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.4)',
-                            border: '1px solid rgba(24, 144, 255, 0.5)',
+                            boxShadow: `0 4px 12px ${colors.rgba('black', 0.3)}`,
+                            border: `1px solid ${colors.info}`,
                             zIndex: 10,
                         }}>
                             <span style={{
                                 fontSize: 14,
                                 fontWeight: 600,
-                                color: '#fff',
+                                color: colors.info,
                                 letterSpacing: '0.02em',
                                 lineHeight: 1,
                             }}>
@@ -396,7 +396,7 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
 
                 {/* 内容区域 */}
                 <div style={{ 
-                    padding: '16px 18px',
+                    padding: '16px',
                     background: `linear-gradient(to bottom, ${colors.bgContainer} 0%, ${colors.bgElevated} 100%)`,
                 }}>
                     {/* 番号标签 */}

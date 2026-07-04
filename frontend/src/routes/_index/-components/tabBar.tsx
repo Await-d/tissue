@@ -9,10 +9,12 @@ import { CarryOutOutlined, HomeOutlined, MenuOutlined, SearchOutlined, VideoCame
 import React from "react";
 import { Badge } from "antd";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useThemeColors } from "../../../hooks/useThemeColors";
 
 function TabBar() {
 
     const location = useLocation()
+    const colors = useThemeColors()
 
     const menus = [
         {
@@ -74,7 +76,7 @@ function TabBar() {
                             borderRadius: 12,
                             transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
                             background: active
-                                ? 'linear-gradient(135deg, rgba(212, 168, 82, 0.15) 0%, rgba(212, 168, 82, 0.05) 100%)'
+                                ? `linear-gradient(135deg, ${colors.rgba('gold', 0.15)} 0%, ${colors.rgba('gold', 0.05)} 100%)`
                                 : 'transparent',
                         }}
                     >
@@ -89,8 +91,8 @@ function TabBar() {
                                     width: 20,
                                     height: 2,
                                     borderRadius: 1,
-                                    background: 'linear-gradient(90deg, #d4a852 0%, #e8c780 100%)',
-                                    boxShadow: '0 0 8px rgba(212, 168, 82, 0.5)',
+                                    background: `linear-gradient(90deg, ${colors.goldPrimary} 0%, ${colors.goldLight} 100%)`,
+                                    boxShadow: `0 0 8px ${colors.rgba('gold', 0.5)}`,
                                 }}
                             />
                         )}
@@ -101,10 +103,10 @@ function TabBar() {
                                 style={{
                                     fontSize: 20,
                                     marginBottom: 2,
-                                    color: active ? '#d4a852' : '#6a6a72',
+                                    color: active ? colors.goldPrimary : colors.textTertiary,
                                     transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
                                     transform: active ? 'scale(1.1)' : 'scale(1)',
-                                    filter: active ? 'drop-shadow(0 0 6px rgba(212, 168, 82, 0.4))' : 'none',
+                                    filter: active ? `drop-shadow(0 0 6px ${colors.rgba('gold', 0.4)})` : 'none',
                                 }}
                             >
                                 {item.icon}
@@ -117,7 +119,7 @@ function TabBar() {
                                 fontSize: 10,
                                 lineHeight: 1.2,
                                 fontWeight: active ? 600 : 400,
-                                color: active ? '#d4a852' : '#6a6a72',
+                                color: active ? colors.goldPrimary : colors.textTertiary,
                                 transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
                                 letterSpacing: active ? '0.02em' : '0',
                             }}

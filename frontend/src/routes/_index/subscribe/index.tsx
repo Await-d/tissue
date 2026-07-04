@@ -1,5 +1,5 @@
-import { Badge, Button, Card, Col, Empty, FloatButton, Input, App, Row, Skeleton, Space, Tag, Tooltip } from "antd";
-import React, { useState, useEffect } from "react";
+import { Badge, Button, Card, Col, Empty, FloatButton, Input, App, Pagination, Row, Skeleton, Space, Tag, Tooltip } from "antd";
+import React, { useState, useEffect, useMemo } from "react";
 import * as api from "../../../apis/subscribe";
 import { useRequest } from "ahooks";
 import ModifyModal from "./-components/modifyModal.tsx";
@@ -12,6 +12,8 @@ import HistoryModal from "./-components/historyModal.tsx";
 import { useDownloadStatus } from "../../../hooks/useDownloadStatus";
 import './styles.css';
 
+const SUBSCRIBE_PAGE_SIZE = 24;
+
 export const Route = createFileRoute('/_index/subscribe/')({
     component: Subscribe
 })
@@ -23,6 +25,7 @@ function Subscribe() {
     const { data = [], loading, refresh } = useRequest(api.getSubscribes, {})
     const [filter, setFilter] = useState<string>()
     const [searchValue, setSearchValue] = useState<string>('')
+    const [currentPage, setCurrentPage] = useState(1)
     const { setOpen, modalProps, form } = useFormModal({
         service: api.modifySubscribe,
         onOk: () => {
@@ -43,10 +46,16 @@ function Subscribe() {
     })
 
     // 过滤订阅数据
-    const subscribes = data.filter((item: any) => {
+    const subscribes = useMemo(() => data.filter((item: any) => {
         if (!filter) return true
         return item.title.toUpperCase().includes(filter.toUpperCase()) || item.num.toUpperCase().includes(filter.toUpperCase())
-    })
+    }), [data, filter])
+
+    // 前端分页
+    const pagedSubscribes = useMemo(() => {
+        const start = (currentPage - 1) * SUBSCRIBE_PAGE_SIZE
+        return subscribes.slice(start, start + SUBSCRIBE_PAGE_SIZE)
+    }, [subscribes, currentPage])
 
     // 获取下载状态（必须在条件返回之前调用）
     const { statusMap, error: downloadStatusError } = useDownloadStatus(subscribes);
@@ -78,12 +87,12 @@ function Subscribe() {
                             allowClear
                             value={searchValue}
                             onChange={e => setSearchValue(e.target.value)}
-                            onPressEnter={() => setFilter(searchValue)}
+                            onPressEnter={() => { setFilter(searchValue); setCurrentPage(1); }}
                             placeholder="搜索番号或标题"
                         />
                         <Button
                             icon={<SearchOutlined />}
-                            onClick={() => setFilter(searchValue)}
+                            onClick={() => { setFilter(searchValue); setCurrentPage(1); }}
                             className="subscribe-search-btn"
                         />
                     </Space.Compact>
@@ -91,7 +100,7 @@ function Subscribe() {
             </Row>
             <Row gutter={[15, 15]}>
                 {subscribes.length > 0 ? (
-                    subscribes.map((subscribe: any) => {
+                    pagedSubscribes.map((subscribe: any) => {
                         const isDownloaded = statusMap[subscribe.num] || false;
 
                         const cardContent = (
@@ -161,6 +170,18 @@ function Subscribe() {
                     </Col>
                 )}
             </Row>
+            {subscribes.length > SUBSCRIBE_PAGE_SIZE && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                    <Pagination
+                        current={currentPage}
+                        pageSize={SUBSCRIBE_PAGE_SIZE}
+                        total={subscribes.length}
+                        onChange={(page) => setCurrentPage(page)}
+                        showSizeChanger={false}
+                        showTotal={(total) => `共 ${total} 个订阅`}
+                    />
+                </div>
+            )}
             <ModifyModal width={1100}
                 onDelete={onDelete}
                 {...modalProps} />

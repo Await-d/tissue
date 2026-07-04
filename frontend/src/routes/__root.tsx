@@ -44,9 +44,9 @@ const darkTheme = {
     // 背景色系
     colorBgBase: '#0d0d0f',
     colorBgContainer: '#1a1a1d',
-    colorBgElevated: '#222226',
+    colorBgElevated: '#141416',
     colorBgLayout: '#0d0d0f',
-    colorBgSpotlight: '#2a2a2e',
+    colorBgSpotlight: '#222226',
     colorBgMask: 'rgba(0, 0, 0, 0.6)',
 
     // 文字色系
@@ -310,7 +310,7 @@ const darkComponentTokens = {
         itemActiveBg: 'rgba(212, 168, 82, 0.12)',
     },
     Tooltip: {
-        colorBgSpotlight: '#2a2a2e',
+        colorBgSpotlight: '#222226',
     },
     Popover: {
         colorBgElevated: '#1a1a1d',

@@ -104,7 +104,7 @@ function Header(props: Props) {
         return (
             <div style={{
                 backgroundColor: colors.bgContainer,
-                borderRadius: 14,
+                borderRadius: 10,
                 boxShadow: colors.shadowLg,
                 border: `1px solid ${colors.borderPrimary}`,
                 overflow: 'hidden',
@@ -149,7 +149,7 @@ function Header(props: Props) {
                         <Link to={'/'}
                             className={'flex items-center group'}>
                             <img
-                                className={`${responsive.lg ? 'ml-4 mr-4 h-12' : 'mr-1 h-10'} transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(212,168,82,0.4)]`}
+                                className={`${responsive.lg ? 'ml-4 mr-4 h-10' : 'mr-1 h-10'} transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(212,168,82,0.4)]`}
                                 src={Logo}
                                 alt=""
                             />
@@ -207,7 +207,7 @@ function Header(props: Props) {
                 styles={{
                     content: {
                         background: colors.bgContainer,
-                        borderRadius: 14,
+                        borderRadius: 10,
                         border: `1px solid ${colors.borderPrimary}`,
                     },
                     header: {

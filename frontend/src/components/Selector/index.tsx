@@ -1,5 +1,5 @@
 import React from "react";
-import {theme} from "antd";
+import { useThemeColors } from "../../hooks/useThemeColors";
 
 interface SelectorItem {
     name: string
@@ -12,12 +12,10 @@ interface SelectorProps extends React.ComponentProps<any> {
     onChange?: (value: string) => void
 }
 
-const {useToken} = theme
-
 function Selector(props: SelectorProps) {
 
     const {items, value, onChange, ...others} = props
-    const {token} = useToken()
+    const colors = useThemeColors()
 
     function renderItem(item: SelectorItem) {
         const isSelected = item.value === value
@@ -31,24 +29,24 @@ function Selector(props: SelectorProps) {
                     }
                 }}
                 style={{
-                    background: isSelected ? '#d4a852' : '#1a1a1d',
-                    color: isSelected ? '#0d0d0f' : '#a0a0a8',
-                    border: `1px solid ${isSelected ? '#d4a852' : 'rgba(255, 255, 255, 0.08)'}`,
+                    background: isSelected ? colors.goldPrimary : colors.bgContainer,
+                    color: isSelected ? colors.bgBase : colors.textSecondary,
+                    border: `1px solid ${isSelected ? colors.goldPrimary : colors.borderPrimary}`,
                     fontWeight: isSelected ? 600 : 400,
-                    boxShadow: isSelected ? '0 0 16px rgba(212, 168, 82, 0.3)' : 'none'
+                    boxShadow: isSelected ? `0 0 16px ${colors.rgba('gold', 0.3)}` : 'none'
                 }}
                 onMouseEnter={(e) => {
                     if (!isSelected) {
-                        e.currentTarget.style.background = '#222226'
-                        e.currentTarget.style.color = '#f0f0f2'
-                        e.currentTarget.style.borderColor = 'rgba(212, 168, 82, 0.3)'
+                        e.currentTarget.style.background = colors.bgSpotlight
+                        e.currentTarget.style.color = colors.textPrimary
+                        e.currentTarget.style.borderColor = colors.rgba('gold', 0.3)
                     }
                 }}
                 onMouseLeave={(e) => {
                     if (!isSelected) {
-                        e.currentTarget.style.background = '#1a1a1d'
-                        e.currentTarget.style.color = '#a0a0a8'
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'
+                        e.currentTarget.style.background = colors.bgContainer
+                        e.currentTarget.style.color = colors.textSecondary
+                        e.currentTarget.style.borderColor = colors.borderPrimary
                     }
                 }}
             >
