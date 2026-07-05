@@ -6,17 +6,16 @@ LastEditTime: 2025-05-27 16:16:27
 Description: 请填写简介
 '''
 import hashlib
-import re
 import mimetypes
+import re
 from urllib.parse import urlparse
 
-import httpx
 import requests
 from cachetools import cached, TTLCache
 from fastapi import APIRouter, Response, Request, HTTPException
-from fastapi.responses import StreamingResponse
 
 from app.schema.r import R
+from app.service.resource import ResourceService
 from app.utils import spider
 from version import APP_VERSION
 
@@ -48,89 +47,19 @@ def _guess_image_media_type(url: str):
 @router.get("/cover")
 def proxy_video_cover(url: str):
     normalized_url = _normalize_cover_url(url)
-    cover = spider.get_video_cover(normalized_url)
-    if not cover:
+    response = ResourceService.proxy_cover(normalized_url)
+    if response.status_code >= 400:
         raise HTTPException(status_code=502, detail='封面读取失败')
-
-    headers = {
-        'Cache-Control': 'public, max-age=31536000',
-        'ETag': hashlib.md5(normalized_url.encode()).hexdigest(),
-    }
-    return Response(content=cover, media_type=_guess_image_media_type(normalized_url), headers=headers)
+    return response
 
 
 @router.get("/trailer")
-async def proxy_video_trailer(url: str, request: Request):
-    if url.startswith("//"):
-        url = 'https:' + url
-
-    parsed_url = urlparse(url)
-    # Use the video URL's own domain as Referer (avoids blocked cross-domain referers)
-    referer = f"{parsed_url.scheme}://{parsed_url.netloc}/"
-
-    range_val = request.headers.get("Range", "")
-    headers = {
-        "User-Agent": request.headers.get("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"),
-        "Accept": "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        "Referer": referer
-    }
-    if range_val:
-        headers["Range"] = range_val
-
-    # 为 javdb 相关请求设置必要的 cookies
-    cookies = {}
-    if 'javdb' in parsed_url.netloc:
-        cookies = {
-            "over18": "1",
-            "locale": "zh"
-        }
-
-    # Headers that conflict with StreamingResponse / httpx streaming and must be stripped
-    EXCLUDED_RESPONSE_HEADERS = {
-        'transfer-encoding', 'connection', 'content-encoding',
-        'keep-alive', 'te', 'trailers', 'upgrade'
-    }
-
-    async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-        try:
-            response = await client.get(url, headers=headers, cookies=cookies)
-
-            # 处理重定向到登录页面的情况 (follow_redirects=True handles most, but check final URL)
-            if 'login' in str(response.url).lower() or 'sign_in' in str(response.url).lower():
-                raise HTTPException(
-                    status_code=403,
-                    detail="访问视频预览需要认证，请检查 JavDB 配置或稍后重试"
-                )
-
-            response.raise_for_status()
-
-            async def video_stream():
-                async for chunk in response.aiter_bytes(1024 * 1024):
-                    yield chunk
-
-            filtered_headers = {
-                k: v for k, v in response.headers.items()
-                if k.lower() not in EXCLUDED_RESPONSE_HEADERS
-            }
-
-            return StreamingResponse(
-                video_stream(),
-                status_code=response.status_code,
-                headers=filtered_headers
-            )
-        except httpx.HTTPStatusError as e:
-            raise HTTPException(
-                status_code=e.response.status_code if e.response else 500,
-                detail=f"无法获取视频预览: {str(e)}"
-            )
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"视频代理错误: {str(e)}"
-            )
+async def proxy_video_trailer(
+    url: str,
+    request: Request,
+    base_url: str | None = None,
+):
+    return await ResourceService.proxy_trailer(url, request, base_url=base_url)
 
 @router.get("/version")
 @cached(cache=TTLCache(maxsize=1, ttl=3600))
