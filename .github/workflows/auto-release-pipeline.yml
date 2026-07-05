@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - master
+concurrency:
+  group: auto-release-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: write
   packages: write
@@ -20,8 +23,9 @@ jobs:
     - name: Get current version
       id: get_version
       run: |
-        # 获取最新的tag版本
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        git fetch --tags --force origin
+        LATEST_TAG=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)
+        LATEST_TAG=${LATEST_TAG:-v0.0.0}
         echo "Latest tag: $LATEST_TAG"
         TAG_VERSION=${LATEST_TAG#v}
         # 获取version.py文件中的版本
@@ -152,8 +156,13 @@ jobs:
     - name: Create and push tag
       run: |
         NEW_TAG="${{ steps.next_version.outputs.new_tag }}"
-        git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
-        git push origin HEAD:master "$NEW_TAG"
+        git push origin HEAD:master
+        if git ls-remote --exit-code --tags origin "refs/tags/$NEW_TAG" >/dev/null 2>&1; then
+          echo "Tag $NEW_TAG already exists on origin; continuing with existing tag."
+        else
+          git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
+          git push origin "$NEW_TAG"
+        fi
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
