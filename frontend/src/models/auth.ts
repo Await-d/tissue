@@ -5,6 +5,8 @@ import * as api from "../apis/auth";
 import {compare} from "compare-versions";
 import {router} from "../routes.tsx";
 
+const REMEMBER_COOKIE_DAYS = 365
+
 
 interface State {
     userToken: string | undefined
@@ -39,7 +41,7 @@ export const auth = createModel<RootModel>()({
             try {
                 dispatch.auth.setLogging(true)
                 const token = await api.login(params)
-                Cookies.set('userToken', token, params.remember ? {expires: 365} : {})
+                Cookies.set('userToken', token, params.remember ? {expires: REMEMBER_COOKIE_DAYS, sameSite: 'Lax'} : {sameSite: 'Lax'})
                 dispatch.auth.setToken(token)
                 await router.invalidate()
                 await router.navigate({ to: '/' })

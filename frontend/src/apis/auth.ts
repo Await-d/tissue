@@ -1,11 +1,17 @@
 import {request} from "../utils/requests";
 
-export async function login(data: any) {
+type LoginPayload = {
+    readonly username: string
+    readonly password: string
+    readonly remember: boolean
+}
+
+export async function login(data: LoginPayload) {
     const response = await request.request({
         url: '/auth/login',
         method: 'post',
         headers: {'content-type': 'application/x-www-form-urlencoded'},
-        data: `username=${data.username}&password=${data.password}`
+        data: `username=${encodeURIComponent(data.username)}&password=${encodeURIComponent(data.password)}&remember=${String(data.remember)}`
     })
     return response.data
 }
