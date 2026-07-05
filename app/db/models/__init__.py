@@ -12,3 +12,4 @@ from .scan_record import ScanRecord
 from .pending_torrent import PendingTorrent, PendingTorrentStatus
 from .enums import SubscribeStatus, HistoryStatus
 from .actor_subscribe import ActorSubscribe, ActorSubscribeDownload
+from .setting_entry import SettingEntry
