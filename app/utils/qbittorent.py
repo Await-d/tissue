@@ -14,16 +14,30 @@ from app.utils.logger import logger
 
 class QBittorent:
     def __init__(self):
+        self.session = requests.Session()
+        self.host = None
+        self.tracker_subscribe = ""
+        self.savepath = None
+        self.category = ""
+        self._session_identity = None
+        self._sync_settings()
+
+    def _sync_settings(self):
         setting = Setting().download
+        previous_identity = self._session_identity
+        current_identity = (setting.host, setting.username, setting.password)
         self.host = setting.host
         self.tracker_subscribe = setting.tracker_subscribe
         self.savepath = setting.savepath
         self.category = setting.category
-        self.session = requests.Session()
+        self._session_identity = current_identity
+        if previous_identity and previous_identity != current_identity:
+            self.session = requests.Session()
+        return setting
 
     def login(self):
         try:
-            setting = Setting().download
+            setting = self._sync_settings()
 
             # 获取带协议头的host
             host = self._get_host_with_scheme()
@@ -57,7 +71,7 @@ class QBittorent:
         """
         try:
             # 首先尝试登录
-            setting = Setting().download
+            setting = self._sync_settings()
 
             if not self.host or not self.host.strip():
                 return {"status": False, "message": "下载器地址未配置"}
@@ -125,6 +139,7 @@ class QBittorent:
     def auth(func):
         def wrapper(self, *args, **kwargs):
             try:
+                self._sync_settings()
                 logger.debug(f"执行qBittorrent方法: {func.__name__}")
                 response = func(self, *args, **kwargs)
                 # 检查响应是否为 None
