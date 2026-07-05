@@ -8,11 +8,10 @@ Description: 请填写简介
 
 from fastapi import APIRouter
 
-from app.scheduler import scheduler
+from app.integrations.downloaders.manager import downloader_manager
 from app.schema import Setting
 from app.schema.r import R
-from app.utils.qbittorent import qbittorent
-from app.utils.logger import logger
+from app.service.setting import SettingService
 
 router = APIRouter()
 
@@ -25,44 +24,13 @@ def get_settings():
 
 @router.post("/")
 def save_setting(section: str, setting: dict):
-    Setting.write_section(section, setting)
-    if section == "download":
-        trans_auto = setting.get("trans_auto")
-        if trans_auto:
-            scheduler.add("scrape_download")
-        else:
-            scheduler.remove("scrape_download")
-
-        delete_auto = setting.get("delete_auto")
-        if delete_auto:
-            scheduler.add("delete_complete_download")
-        else:
-            scheduler.remove("delete_complete_download")
-
-    if section == "auto_download":
-        enabled = str(setting.get("enabled", "true")).lower() == "true"
-        check_interval = int(setting.get("check_interval", 60) or 60)
-
-        scheduler.jobs["auto_download"].interval = max(1, check_interval)
-        if enabled:
-            scheduler.add("auto_download")
-        else:
-            scheduler.remove("auto_download")
-
+    SettingService.save_section(section, setting)
     return R.ok()
 
 
 @router.get("/test-qbittorrent")
 def test_qbittorrent_connection():
-    """
-    测试qBittorrent下载器连接
-    """
-    try:
-        result = qbittorent.test_connection()
-        if result["status"]:
-            return R.ok(result)
-        else:
-            return R.fail(result["message"], data=result)
-    except Exception as e:
-        logger.error(f"测试qBittorrent连接时出错: {str(e)}")
-        return R.fail(f"测试连接时发生错误: {str(e)}")
+    result = downloader_manager.get_active().test_connection()
+    if result["status"]:
+        return R.ok(result)
+    return R.fail(result["message"], data=result)

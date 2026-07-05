@@ -2,7 +2,8 @@ import json
 import random
 import time
 import traceback
-from typing import Optional, List
+from collections.abc import Callable
+from typing import Any, Optional, List
 from urllib.parse import urljoin
 
 import requests
@@ -13,40 +14,70 @@ from app.utils.logger import logger
 
 
 class QBittorent:
-    def __init__(self):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.session = requests.Session()
         self.host = None
+        self.username = None
+        self.password = None
         self.tracker_subscribe = ""
         self.savepath = None
         self.category = ""
         self._session_identity = None
+        self._config_override = config
         self._sync_settings()
 
     def _sync_settings(self):
-        setting = Setting().download
+        if self._config_override is None:
+            setting = Setting().download
+            provider_payload = setting.get_provider_payload("qbittorrent")
+            host = provider_payload.get("host") or setting.host
+            username = provider_payload.get("username") or setting.username
+            password = provider_payload.get("password") or setting.password
+            tracker_subscribe = (
+                provider_payload.get("tracker_subscribe") or setting.tracker_subscribe
+            )
+            savepath = setting.savepath
+            category = setting.category
+        else:
+            host = self._config_override.get("host")
+            username = self._config_override.get("username")
+            password = self._config_override.get("password")
+            tracker_subscribe = self._config_override.get("tracker_subscribe", "")
+            savepath = self._config_override.get("savepath")
+            category = self._config_override.get("category", "")
+
         previous_identity = self._session_identity
-        current_identity = (setting.host, setting.username, setting.password)
-        self.host = setting.host
-        self.tracker_subscribe = setting.tracker_subscribe
-        self.savepath = setting.savepath
-        self.category = setting.category
+        current_identity = (host, username, password)
+        self.host = host
+        self.username = username
+        self.password = password
+        self.tracker_subscribe = tracker_subscribe
+        self.savepath = savepath
+        self.category = category
         self._session_identity = current_identity
         if previous_identity and previous_identity != current_identity:
             self.session = requests.Session()
-        return setting
+        return {
+            "host": self.host,
+            "username": self.username,
+            "password": self.password,
+        }
 
     def login(self):
         try:
-            setting = self._sync_settings()
+            previous_session = self.session
+            self._sync_settings()
 
             # 获取带协议头的host
             host = self._get_host_with_scheme()
             logger.info(f"尝试登录qBittorrent: {host}")
-            logger.info(f"用户名: {setting.username}")
+            logger.info(f"用户名: {self.username}")
 
+            if self.session is previous_session:
+                self.session = requests.Session()
             response = self.session.post(
                 url=urljoin(host, "/api/v2/auth/login"),
-                data={"username": setting.username, "password": setting.password},
+                data={"username": self.username, "password": self.password},
                 headers=self._get_auth_headers(host),
             )
             logger.info(f"登录响应状态码: {response.status_code}")
@@ -71,21 +102,24 @@ class QBittorent:
         """
         try:
             # 首先尝试登录
-            setting = self._sync_settings()
+            previous_session = self.session
+            self._sync_settings()
 
             if not self.host or not self.host.strip():
                 return {"status": False, "message": "下载器地址未配置"}
 
-            if not setting.username or not setting.password:
+            if not self.username or not self.password:
                 return {"status": False, "message": "下载器用户名或密码未配置"}
 
             # 获取带协议头的host
             host = self._get_host_with_scheme()
 
             # 尝试登录
+            if self.session is previous_session:
+                self.session = requests.Session()
             login_response = self.session.post(
                 url=urljoin(host, "/api/v2/auth/login"),
-                data={"username": setting.username, "password": setting.password},
+                data={"username": self.username, "password": self.password},
                 headers=self._get_auth_headers(host),
                 timeout=5,  # 设置5秒超时
             )
@@ -128,20 +162,23 @@ class QBittorent:
                 "version": version_response.text,
                 "torrents_count": torrents_count,
             }
-        except requests.exceptions.ConnectionError:
-            return {"status": False, "message": "连接错误，请检查下载器地址是否正确"}
-        except requests.exceptions.Timeout:
+        except requests.exceptions.Timeout as e:
+            logger.error(f"测试下载器连接超时: {str(e)}")
             return {"status": False, "message": "连接超时，请检查下载器是否在线"}
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"测试下载器连接错误: {str(e)}")
+            return {"status": False, "message": "连接错误，请检查下载器地址是否正确"}
         except Exception as e:
             logger.error(f"测试下载器连接出错: {str(e)}")
             return {"status": False, "message": f"连接测试失败: {str(e)}"}
 
-    def auth(func):
+    @staticmethod
+    def auth(func: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(self, *args, **kwargs):
             try:
                 self._sync_settings()
                 logger.debug(f"执行qBittorrent方法: {func.__name__}")
-                response = func(self, *args, **kwargs)
+                response: Any = func(self, *args, **kwargs)
                 # 检查响应是否为 None
                 if response is None:
                     logger.warning(f"qBittorrent方法 {func.__name__} 返回了 None")
@@ -267,7 +304,7 @@ class QBittorent:
             result = list(filter(lambda item: "整理成功" not in item["tags"], result))
 
         # 将过滤后的结果设置回response对象（作为自定义属性）
-        response.filtered_data = result
+        setattr(response, "filtered_data", result)
         return response
 
     @auth
@@ -395,7 +432,7 @@ class QBittorent:
         response = self.session.post(urljoin(host, "/api/v2/torrents/add"), data=data)
         if response.status_code != 200:
             # 设置hash为None以避免AttributeError
-            response.hash = None
+            setattr(response, "hash", None)
             return response
 
         torrent_hash = ""
@@ -409,7 +446,7 @@ class QBittorent:
                 break
 
         # 设置hash属性，即使为空也要设置以避免AttributeError
-        response.hash = torrent_hash
+        setattr(response, "hash", torrent_hash)
 
         if self.tracker_subscribe and torrent_hash:
             trackers_text = requests.get(self.tracker_subscribe).text
@@ -532,6 +569,7 @@ class QBittorent:
             # 获取所有种子
             all_torrents_response = self.get_all_torrents()
 
+            all_torrents: list[dict[str, Any]]
             if hasattr(all_torrents_response, "json"):
                 if all_torrents_response.status_code != 200:
                     logger.warning(
@@ -540,7 +578,11 @@ class QBittorent:
                     return False
                 all_torrents = all_torrents_response.json()
             else:
-                all_torrents = all_torrents_response
+                all_torrents = [
+                    torrent
+                    for torrent in all_torrents_response
+                    if isinstance(torrent, dict)
+                ]
 
             # 检查是否有匹配的hash
             for torrent in all_torrents:
@@ -575,4 +617,76 @@ class QBittorent:
             logger.error(f"删除种子时发生错误: {e}")
 
 
-qbittorent = QBittorent()
+class QBittorentProxy:
+    def _provider(self):
+        from app.integrations.downloaders.manager import downloader_manager
+
+        return downloader_manager.get_active()
+
+    def test_connection(self):
+        return self._provider().test_connection()
+
+    def get_torrents(
+        self,
+        category: str | None = None,
+        include_failed: bool = True,
+        include_success: bool = True,
+    ):
+        return self._provider().get_torrents(
+            category=category,
+            include_failed=include_failed,
+            include_success=include_success,
+        )
+
+    def get_torrent_files(self, torrent_hash: str):
+        return self._provider().get_torrent_files(torrent_hash)
+
+    def add_torrent_tags(self, torrent_hash: str, tags: List[str]):
+        return self._provider().add_torrent_tags(torrent_hash, tags)
+
+    def remove_torrent_tags(self, torrent_hash: str, tags: List[str]):
+        return self._provider().remove_torrent_tags(torrent_hash, tags)
+
+    def delete_torrent(self, torrent_hash: str, delete_files: bool = True):
+        return self._provider().delete_torrent(torrent_hash, delete_files=delete_files)
+
+    def resume_torrent(self, torrent_hash: str):
+        return self._provider().resume_torrent(torrent_hash)
+
+    def stop_torrent(self, torrent_hash: str):
+        return self._provider().stop_torrent(torrent_hash)
+
+    def recheck_torrent(self, torrent_hash: str):
+        return self._provider().recheck_torrent(torrent_hash)
+
+    def get_torrent_properties(self, torrent_hash: str):
+        return self._provider().get_torrent_properties(torrent_hash)
+
+    def add_magnet(
+        self,
+        magnet: str,
+        savepath: str | None = None,
+        category: str | None = None,
+        paused: bool = False,
+    ):
+        return self._provider().add_magnet(
+            magnet,
+            save_path=savepath,
+            category=category,
+            paused=paused,
+        )
+
+    def set_file_priority(self, torrent_hash: str, file_ids: List[int], priority: int):
+        return self._provider().set_file_priority(torrent_hash, file_ids, priority)
+
+    def get_all_torrents(self):
+        return self._provider().get_all_torrents()
+
+    def extract_hash_from_magnet(self, magnet: str) -> Optional[str]:
+        return self._provider().extract_hash_from_magnet(magnet)
+
+    def is_magnet_exists(self, magnet: str) -> bool:
+        return self._provider().is_magnet_exists(magnet)
+
+
+qbittorent = QBittorentProxy()
