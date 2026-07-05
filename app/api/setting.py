@@ -39,10 +39,6 @@ def save_setting(section: str, setting: dict):
         else:
             scheduler.remove("delete_complete_download")
 
-        qbittorent.host = setting.get("host")
-        qbittorent.tracker_subscribe = setting.get("tracker_subscribe")
-        qbittorent.savepath = setting.get("savepath")
-
     if section == "auto_download":
         enabled = str(setting.get("enabled", "true")).lower() == "true"
         check_interval = int(setting.get("check_interval", 60) or 60)
