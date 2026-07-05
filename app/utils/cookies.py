@@ -1,0 +1,151 @@
+from dataclasses import dataclass
+from typing import Any, Iterable, Sequence
+from urllib.parse import quote, unquote, urlparse
+
+
+@dataclass(frozen=True, slots=True)
+class BrowserCookie:
+    name: str
+    value: str
+    path: str = "/"
+    domain: str = ""
+    secure: bool = False
+    http_only: bool = False
+    same_site: str = "Lax"
+
+
+def normalize_cookie_value(value: str) -> str:
+    return quote(unquote(value.strip()))
+
+
+def normalize_host(host: str | None) -> str:
+    if not host:
+        return ""
+    raw = host.strip()
+    parsed = urlparse(raw if "://" in raw else f"//{raw}")
+    normalized = parsed.hostname or parsed.path or ""
+    return normalized.strip().strip(".").lower()
+
+
+def is_same_domain_or_subdomain(host: str | None, candidate: str | None) -> bool:
+    normalized_host = normalize_host(host)
+    normalized_candidate = normalize_host(candidate)
+    if not normalized_host or not normalized_candidate:
+        return False
+    return (
+        normalized_host == normalized_candidate
+        or normalized_host.endswith(f".{normalized_candidate}")
+        or normalized_candidate.endswith(f".{normalized_host}")
+    )
+
+
+def parse_cookie_header(cookie_header: str | None) -> list[BrowserCookie]:
+    if not cookie_header:
+        return []
+
+    cookies: list[BrowserCookie] = []
+    for chunk in cookie_header.split(";"):
+        item = chunk.strip()
+        if not item or "=" not in item:
+            continue
+
+        name, value = item.split("=", 1)
+        cookie_name = name.strip()
+        if not cookie_name:
+            continue
+
+        cookies.append(BrowserCookie(name=cookie_name, value=normalize_cookie_value(value)))
+
+    return cookies
+
+
+def to_cookie_header(cookies: Sequence[BrowserCookie]) -> str:
+    parts = [
+        f"{cookie.name}={normalize_cookie_value(cookie.value)}"
+        for cookie in cookies
+        if cookie.name
+    ]
+    return "; ".join(parts)
+
+
+def cookiejar_to_cookies(cookie_jar: Any) -> list[BrowserCookie]:
+    cookies: list[BrowserCookie] = []
+    for cookie in cookie_jar:
+        if isinstance(cookie, str):
+            if not cookie:
+                continue
+            value = cookie_jar.get(cookie) if hasattr(cookie_jar, "get") else None
+            if value is None:
+                continue
+            cookies.append(BrowserCookie(name=cookie, value=normalize_cookie_value(str(value))))
+            continue
+
+        if not hasattr(cookie, "name") or not hasattr(cookie, "value"):
+            continue
+
+        has_nonstandard_attr = getattr(cookie, "has_nonstandard_attr", None)
+        get_nonstandard_attr = getattr(cookie, "get_nonstandard_attr", None)
+        cookies.append(
+            BrowserCookie(
+                name=cookie.name,
+                value=normalize_cookie_value(str(cookie.value)),
+                path=getattr(cookie, "path", "/") or "/",
+                domain=getattr(cookie, "domain", "") or "",
+                secure=bool(getattr(cookie, "secure", False)),
+                http_only=bool(has_nonstandard_attr("HttpOnly")) if callable(has_nonstandard_attr) else False,
+                same_site=(
+                    str(get_nonstandard_attr("SameSite", "Lax"))
+                    if callable(get_nonstandard_attr)
+                    else "Lax"
+                ),
+            ),
+        )
+    return cookies
+
+
+def apply_cookies_to_jar(cookies: Iterable[BrowserCookie], cookie_jar: Any) -> None:
+    for cookie in cookies:
+        if cookie.name:
+            cookie_jar.set(
+                cookie.name,
+                normalize_cookie_value(cookie.value),
+                path=cookie.path,
+                domain=cookie.domain,
+            )
+
+
+def cookiecloud_items_to_cookies(cookie_items: Sequence[dict[str, Any]]) -> list[BrowserCookie]:
+    cookies: list[BrowserCookie] = []
+    for item in cookie_items:
+        name = str(item.get("name", "")).strip()
+        if not name:
+            continue
+        cookies.append(
+            BrowserCookie(
+                name=name,
+                value=normalize_cookie_value(str(item.get("value", ""))),
+                path=str(item.get("path") or "/"),
+                domain=str(item.get("domain") or ""),
+                secure=bool(item.get("secure", False)),
+                http_only=bool(item.get("httpOnly", False)),
+                same_site=str(item.get("sameSite") or "Lax"),
+            ),
+        )
+    return cookies
+
+
+def cookies_to_cookiecloud_items(cookies: Sequence[BrowserCookie]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for cookie in cookies:
+        items.append(
+            {
+                "name": cookie.name,
+                "value": normalize_cookie_value(cookie.value),
+                "path": cookie.path,
+                "domain": cookie.domain,
+                "secure": cookie.secure,
+                "httpOnly": cookie.http_only,
+                "sameSite": cookie.same_site,
+            },
+        )
+    return items

@@ -1,6 +1,6 @@
 import {Card, Tabs} from "antd";
 import React from "react";
-import {AppstoreOutlined, CloudDownloadOutlined, FolderOpenOutlined, NotificationOutlined, RobotOutlined, BranchesOutlined, FilterOutlined} from "@ant-design/icons";
+import {AppstoreOutlined, CloudDownloadOutlined, FolderOpenOutlined, NotificationOutlined, RobotOutlined, BranchesOutlined, FilterOutlined, CloudOutlined} from "@ant-design/icons";
 import {createFileRoute, Outlet, useLocation, useNavigate} from "@tanstack/react-router";
 
 export const Route = createFileRoute('/_index/setting')({
@@ -39,6 +39,11 @@ function Setting() {
             icon: <NotificationOutlined/>,
         },
         {
+            key: '/setting/cookiecloud',
+            label: 'CookieCloud',
+            icon: <CloudOutlined/>,
+        },
+        {
             key: '/setting/auto-download',
             label: '智能下载',
             icon: <RobotOutlined/>,
@@ -62,4 +67,3 @@ function Setting() {
         </Card>
     )
 }
-

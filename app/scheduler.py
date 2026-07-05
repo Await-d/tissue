@@ -13,6 +13,7 @@ from app.service.subscribe import SubscribeService
 from app.utils.logger import logger
 from app.service.actor_subscribe import ActorSubscribeService
 from app.service.auto_download import AutoDownloadService
+from app.service.cookiecloud import cookiecloud_service
 from app.service.video_cache import VideoCacheService
 from app.service.pending_torrent import PendingTorrentService
 from app.service.file_scan import run_scan_task
@@ -86,6 +87,13 @@ class Scheduler:
             interval=1,  # 每分钟检查一次
             jitter=0,
         ),
+        "cookiecloud_sync": Job(
+            key="cookiecloud_sync",
+            name="CookieCloud 同步",
+            job=cookiecloud_service.sync,
+            interval=60,
+            jitter=10 * 60,
+        ),
     }
 
     def __init__(self):
@@ -111,6 +119,8 @@ class Scheduler:
             self.add("auto_download")
         self.add("refresh_video_cache")  # 启动视频缓存刷新任务
         self.add("process_pending_torrents")
+        if getattr(setting.cookiecloud, "enabled", False):
+            self.add("cookiecloud_sync")
 
         if setting.download.trans_auto:
             self.add("scrape_download")
