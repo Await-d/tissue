@@ -35,7 +35,9 @@ exception.init(app)
 def on_startup():
     # 版本检测和自动迁移
     perform_version_check_and_migration()
-    
+
+    db.init()
+
     # 数据库Schema检查和自动修复
     perform_schema_checks()
     
@@ -71,9 +73,6 @@ def on_startup():
         
     except Exception as e:
         logger.error(f"注册路由时出错: {str(e)}")
-    
-    # 初始化数据库和调度器
-    db.init()
     
     # 执行数据库迁移
     try:

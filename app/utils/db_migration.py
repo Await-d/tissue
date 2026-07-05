@@ -1,8 +1,5 @@
-"""
-数据库自动迁移工具
-用于在程序启动时自动创建缺失的表和字段
-"""
 from pathlib import Path
+from typing import Any
 
 from alembic import command
 from alembic.config import Config
@@ -108,8 +105,8 @@ class DatabaseMigration:
         if not self._table_exists(table_name):
             logger.info(f"创建表: {table_name}")
             try:
-                # 使用SQLAlchemy模型创建表
-                DownloadFilterSettings.__table__.create(self.engine)
+                download_filter_table: Any = getattr(DownloadFilterSettings, "__table__")
+                download_filter_table.create(self.engine)
                 logger.info(f"表 {table_name} 创建成功")
             except SQLAlchemyError as e:
                 logger.error(f"创建表 {table_name} 失败: {e}")
@@ -129,7 +126,8 @@ class DatabaseMigration:
         if not self._table_exists(table_name):
             logger.info(f"创建表: {table_name}")
             try:
-                PendingTorrent.__table__.create(self.engine, checkfirst=True)
+                pending_torrent_table: Any = getattr(PendingTorrent, "__table__")
+                pending_torrent_table.create(self.engine, checkfirst=True)
                 logger.info(f"表 {table_name} 创建成功")
             except SQLAlchemyError as e:
                 logger.error(f"创建表 {table_name} 失败: {e}")
@@ -184,17 +182,18 @@ class DatabaseMigration:
             with self.engine.connect() as conn:
                 # 检查是否已有设置记录
                 result = conn.execute(text("SELECT COUNT(*) as count FROM download_filter_settings WHERE is_active = 1"))
-                count = result.fetchone()[0]
+                row = result.fetchone()
+                count = row[0] if row is not None else 0
                 
                 if count == 0:
                     logger.info("初始化默认下载过滤设置")
                     
                     # 插入默认设置
                     insert_sql = """
-                    INSERT INTO download_filter_settings 
-                    (min_file_size_mb, max_file_size_mb, enable_smart_filter, 
-                     skip_sample_files, skip_subtitle_only, is_active) 
-                    VALUES (300, NULL, 1, 1, 1, 1)
+                     INSERT INTO download_filter_settings 
+                     (min_file_size_mb, max_file_size_mb, enable_smart_filter, 
+                     skip_sample_files, skip_subtitle_only, media_files_only, include_subtitles, is_active) 
+                    VALUES (300, NULL, 1, 1, 1, 0, 1, 1)
                     """
                     
                     conn.execute(text(insert_sql))

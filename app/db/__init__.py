@@ -1,18 +1,14 @@
-"""
-Author: Await
-Date: 2025-05-24 17:05:38
-LastEditors: Await
-LastEditTime: 2025-05-27 17:11:25
-Description: 请填写简介
-"""
-
+import secrets
 from pathlib import Path
+from typing import Any
+
 from sqlalchemy import create_engine, QueuePool, event
 from sqlalchemy.orm import sessionmaker
 
-from app.db.models import Base, User
+from app.db.models import Base, SettingEntry, User
 from app.middleware.requestvars import g
 from app.utils.security import get_password_hash
+from app.utils.logger import logger
 
 db_path = Path(f"{Path(__file__).cwd()}/config")
 if not db_path.exists():
@@ -76,13 +72,26 @@ def get_db():
 
 
 def init() -> None:
+    base_metadata: Any = getattr(Base, "metadata")
+    base_metadata.create_all(engine, checkfirst=True)
+    setting_entry_table: Any = getattr(SettingEntry, "__table__")
+    setting_entry_table.create(engine, checkfirst=True)
     with SessionFactory() as db:
         user = db.query(User).filter_by(username="admin").one_or_none()
         if not user:
+            initial_password = secrets.token_urlsafe(12)
             user = User()
-            user.username = "admin"
-            user.password = get_password_hash("password")
-            user.name = "管理员"
-            user.is_admin = True
-            db.add(user)
+            new_user: Any = user
+            new_user.username = "admin"
+            new_user.password = get_password_hash(initial_password)
+            new_user.name = "管理员"
+            new_user.is_admin = True
+            db.add(new_user)
             db.commit()
+            logger.warning(
+                f"检测到系统首次初始化，已创建管理员账号 admin，初始密码为【{initial_password}】。请登录后立即修改密码。",
+            )
+
+    from app.settings import settings_manager
+
+    settings_manager.bootstrap()
