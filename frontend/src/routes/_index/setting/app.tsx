@@ -146,17 +146,17 @@ function SettingApp() {
                                 </div>
                             </div>
 
-                            {/* JavDB 设置 */}
+                            {/* 站点镜像 */}
                             <div className="mb-8 pt-8 border-t" style={{ borderColor: colors.border }}>
                                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: colors.goldLight }}>
                                     <span className="w-1 h-5 rounded-full" style={{ background: colors.gold }}></span>
-                                    JavDB 设置
+                                    站点镜像
                                 </h3>
                                 <div className="space-y-4">
                                     <Form.Item
-                                        label={<span style={{ color: colors.text }}>JavDB Cookie</span>}
-                                        name={'javdb_cookie'}
-                                        tooltip={'登录 JavDB 后，从浏览器开发者工具复制 Cookie，用于访问排行榜等需要登录的页面。格式: key1=val1; key2=val2'}
+                                        label={<span style={{ color: colors.text }}>JavDB 镜像域名</span>}
+                                        name={'javdb_hosts'}
+                                        tooltip={'逗号或换行分隔，按顺序探测可用域名。填写后仅使用所填域名，留空则使用内置候选列表。主域名被墙时在此填入可用镜像即可。'}
                                     >
                                         <Input.TextArea
                                             style={{
@@ -165,7 +165,113 @@ function SettingApp() {
                                                 color: colors.text
                                             }}
                                             className="hover:border-opacity-50 focus:shadow-sm"
-                                            placeholder="_jdb_session=xxx; remember_me_token=yyy"
+                                            placeholder="https://javdb.com, https://javdb36.com"
+                                            rows={2}
+                                            allowClear
+                                        />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label={<span style={{ color: colors.text }}>JavBus 镜像域名</span>}
+                                        name={'javbus_hosts'}
+                                        tooltip={'逗号或换行分隔，按顺序探测可用域名。填写后仅使用所填域名，留空则使用内置候选列表。'}
+                                    >
+                                        <Input.TextArea
+                                            style={{
+                                                background: colors.bgDark,
+                                                borderColor: colors.border,
+                                                color: colors.text
+                                            }}
+                                            className="hover:border-opacity-50 focus:shadow-sm"
+                                            placeholder="https://www.javbus.com/, https://www.javbus.one/"
+                                            rows={2}
+                                            allowClear
+                                        />
+                                    </Form.Item>
+                                </div>
+                            </div>
+
+                            {/* 封面缓存 */}
+                            <div className="mb-8 pt-8 border-t" style={{ borderColor: colors.border }}>
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: colors.goldLight }}>
+                                    <span className="w-1 h-5 rounded-full" style={{ background: colors.gold }}></span>
+                                    封面缓存
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Form.Item
+                                        label={<span style={{ color: colors.text }}>缓存有效期(秒)</span>}
+                                        name={'cover_cache_ttl'}
+                                        tooltip={'图片缓存多久后重新抓取。即使已过期，重新抓取失败时仍会继续使用旧图，不会出现空白封面。'}
+                                    >
+                                        <InputNumber
+                                            min={60}
+                                            style={{
+                                                width: '100%',
+                                                background: colors.bgDark,
+                                                borderColor: colors.border,
+                                                color: colors.text
+                                            }}
+                                            className="hover:border-opacity-50 focus:shadow-sm"
+                                            placeholder="86400"
+                                        />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label={<span style={{ color: colors.text }}>抓取尝试次数</span>}
+                                        name={'cover_fetch_retries'}
+                                        tooltip={'单张图片的抓取尝试次数（含首次）。次数越多越能扛住偶发失败，但失败时耗时也更长。'}
+                                    >
+                                        <InputNumber
+                                            min={1}
+                                            max={5}
+                                            style={{
+                                                width: '100%',
+                                                background: colors.bgDark,
+                                                borderColor: colors.border,
+                                                color: colors.text
+                                            }}
+                                            className="hover:border-opacity-50 focus:shadow-sm"
+                                            placeholder="2"
+                                        />
+                                    </Form.Item>
+                                </div>
+                            </div>
+
+                            {/* 站点 Cookie */}
+                            <div className="mb-8 pt-8 border-t" style={{ borderColor: colors.border }}>
+                                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: colors.goldLight }}>
+                                    <span className="w-1 h-5 rounded-full" style={{ background: colors.gold }}></span>
+                                    站点 Cookie
+                                </h3>
+                                <div className="space-y-4">
+                                    <Form.Item
+                                        label={<span style={{ color: colors.text }}>JavDB Cookie</span>}
+                                        name={'javdb_cookie'}
+                                        tooltip={'用于访问排行榜等需要登录的页面，封面图抓取也会带上。被 Cloudflare 质询（页面标题 Just a moment...）时，用同一代理出口在浏览器过掉质询，把含 cf_clearance 的 Cookie 填在这里。注意 Cookie 绑定 IP 与 UA：换节点需重新获取，且上方 User-Agent 必须与取 Cookie 的浏览器一致。格式: key1=val1; key2=val2'}
+                                    >
+                                        <Input.TextArea
+                                            style={{
+                                                background: colors.bgDark,
+                                                borderColor: colors.border,
+                                                color: colors.text
+                                            }}
+                                            className="hover:border-opacity-50 focus:shadow-sm"
+                                            placeholder="cf_clearance=xxx; _jdb_session=yyy"
+                                            rows={3}
+                                            allowClear
+                                        />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label={<span style={{ color: colors.text }}>JavBus Cookie</span>}
+                                        name={'javbus_cookie'}
+                                        tooltip={'同上，用于 JavBus。被 Cloudflare 质询时，在浏览器过掉质询后把含 cf_clearance 的 Cookie 填在这里，封面图抓取也会带上。格式: key1=val1; key2=val2'}
+                                    >
+                                        <Input.TextArea
+                                            style={{
+                                                background: colors.bgDark,
+                                                borderColor: colors.border,
+                                                color: colors.text
+                                            }}
+                                            className="hover:border-opacity-50 focus:shadow-sm"
+                                            placeholder="cf_clearance=xxx; age=verified"
                                             rows={3}
                                             allowClear
                                         />

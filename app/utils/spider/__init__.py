@@ -5,13 +5,11 @@ from urllib.parse import urlparse
 
 from app.schema import VideoDetail
 from app.schema.setting import Setting
-from app.utils import cache
 from app.utils.logger import logger
 from app.utils.spider.dmm import DmmSpider
 from app.utils.spider.jav321 import Jav321Spider
 from app.utils.spider.javbus import JavbusSpider
 from app.utils.spider.javdb import JavdbSpider
-from app.utils.spider.spider import Spider
 from app.utils.spider.spider_exception import SpiderException
 
 
@@ -20,27 +18,6 @@ def _normalize_cover_url(url: str):
     if normalized.startswith("//"):
         normalized = "https:" + normalized
     return normalized
-
-
-def _is_image_binary(content: bytes):
-    if not content:
-        return False
-
-    if content.startswith(b"\xff\xd8\xff"):  # jpeg
-        return True
-    if content.startswith(b"\x89PNG\r\n\x1a\n"):  # png
-        return True
-    if content.startswith((b"GIF87a", b"GIF89a")):  # gif
-        return True
-    if content.startswith(b"RIFF") and content[8:12] == b"WEBP":  # webp
-        return True
-    if (
-        len(content) >= 12
-        and content[4:8] == b"ftyp"
-        and content[8:12] in (b"avif", b"mif1")
-    ):  # avif/heif
-        return True
-    return False
 
 
 def get_web_actor_videos(actor_name: str, source: str = "javdb"):
@@ -52,6 +29,11 @@ def get_web_actor_videos(actor_name: str, source: str = "javdb"):
 
 
 def get_video_cover(url: str):
+    """获取封面字节。
+
+    统一委托给 ResourceService，与 /common/cover 代理共用同一套缓存、
+    反爬通道与失败兜底逻辑，避免两条链路行为不一致。
+    """
     normalized_url = _normalize_cover_url(url)
     component = urlparse(normalized_url)
 
@@ -59,32 +41,10 @@ def get_video_cover(url: str):
         logger.warning(f"封面地址格式无效: {url}")
         return None
 
-    cached = cache.get_cache_file("cover", normalized_url)
-    if cached is not None:
-        if _is_image_binary(cached):
-            return cached
-        logger.warning(f"封面缓存内容非图片，清理并重新抓取: {normalized_url}")
-        cache.clean_cache_file("cover", normalized_url)
+    # 延迟导入：app.service.resource 会 import 本包内的爬虫，模块级导入会成环
+    from app.service.resource import ResourceService
 
-    hostname = component.hostname
-    if hostname in ("www.javbus.com", "javbus.com"):
-        response = JavbusSpider.get_cover(normalized_url)
-    elif hostname in ("c0.jdbstatic.com", "jdbstatic.com"):
-        response = JavdbSpider.get_cover(normalized_url)
-    else:
-        response = Spider.get_cover(normalized_url)
-
-    if not isinstance(response, (bytes, bytearray)):
-        logger.warning(f"封面抓取结果类型异常: {normalized_url}")
-        return None
-
-    if not _is_image_binary(bytes(response)):
-        logger.warning(f"封面抓取结果不是图片内容: {normalized_url}")
-        return None
-
-    cover_bytes = bytes(response)
-    cache.cache_file("cover", normalized_url, cover_bytes)
-    return cover_bytes
+    return ResourceService.fetch_image_bytes(normalized_url, "cover")
 
 
 def _merge_video_info(metas: List[VideoDetail]) -> VideoDetail:

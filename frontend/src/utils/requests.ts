@@ -25,7 +25,14 @@ request.interceptors.request.use(request => {
     return request
 })
 
-request.interceptors.response.use(response => response.data, error => {
+request.interceptors.response.use(response => {
+    // 默认只返回 data。少数接口需要读响应头（如榜单的 X-Data-Stale），
+    // 可在请求配置里传 rawResponse: true 拿到完整响应。
+    if ((response.config as any)?.rawResponse) {
+        return response as any
+    }
+    return response.data
+}, error => {
     if (!error.response) {
         console.error('网络错误:', error.message);
         message.error(`网络错误: ${error.message}`);

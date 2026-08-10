@@ -17,9 +17,20 @@ class SettingApp(BaseModel):
     concurrent_scraping: bool = True
     max_concurrent_spiders: int = 4
     javdb_cookie: str | None = None
+    # JavBus 站点 Cookie（形如 "k1=v1; k2=v2"）。被 Cloudflare 质询时，
+    # 在浏览器过掉质询后把含 cf_clearance 的 Cookie 填在这里，图片抓取也会带上。
+    javbus_cookie: str | None = None
     proxy: str | None = None
     preview_trace: bool = False
     enable_scheduled_scan: bool = False
+    # 站点镜像域名（逗号或换行分隔）。留空则使用代码内置的候选列表。
+    # 域名被墙时改这里即可，不必等代码更新。
+    javdb_hosts: str | None = None
+    javbus_hosts: str | None = None
+    # 图片缓存有效期（秒）。过期后会尝试重新抓取，抓取失败时仍继续使用旧图。
+    cover_cache_ttl: int = 86400
+    # 单张图片的抓取尝试次数（含首次）
+    cover_fetch_retries: int = 2
 
 
 class SettingFile(BaseModel):

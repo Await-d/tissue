@@ -5,18 +5,16 @@ LastEditors: Await
 LastEditTime: 2025-05-27 16:16:27
 Description: 请填写简介
 '''
-import hashlib
-import mimetypes
 import re
 from urllib.parse import urlparse
 
 import requests
 from cachetools import cached, TTLCache
 from fastapi import APIRouter, Response, Request, HTTPException
+from fastapi.responses import FileResponse
 
 from app.schema.r import R
-from app.service.resource import ResourceService
-from app.utils import spider
+from app.service.resource import ImageCacheType, ResourceService
 from version import APP_VERSION
 
 router = APIRouter()
@@ -37,20 +35,41 @@ def _normalize_cover_url(url: str):
     return normalized
 
 
-def _guess_image_media_type(url: str):
-    mime_type, _ = mimetypes.guess_type(urlparse(url).path)
-    if mime_type and mime_type.startswith('image/'):
-        return mime_type
-    return 'image/jpeg'
-
-
 @router.get("/cover")
-def proxy_video_cover(url: str):
+def proxy_video_cover(url: str, request: Request, image_type: ImageCacheType = 'cover'):
+    """代理图片。
+
+    命中缓存时直接从磁盘返回（FileResponse），并带上基于内容摘要的 ETag，
+    客户端下次带 If-None-Match 即可拿到 304，不必重传图片字节。
+    失败时透传真实状态码，前端可据此区分\"地址无效\"与\"源站阻断\"。
+    """
     normalized_url = _normalize_cover_url(url)
-    response = ResourceService.proxy_cover(normalized_url)
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail='封面读取失败')
-    return response
+    image = ResourceService.fetch_image_file(normalized_url, image_type)
+
+    if image.file_path:
+        max_age = ResourceService.IMAGE_CLIENT_CACHE_MAX_AGE_SECONDS
+        if image.etag and request.headers.get('if-none-match') == image.etag:
+            return Response(
+                status_code=304,
+                headers={
+                    'Cache-Control': f'public, max-age={max_age}',
+                    'ETag': image.etag,
+                },
+            )
+
+        headers = {'Cache-Control': f'public, max-age={max_age}'}
+        if image.etag:
+            headers['ETag'] = image.etag
+        return FileResponse(
+            path=image.file_path,
+            media_type=image.media_type,
+            headers=headers,
+        )
+
+    return Response(
+        status_code=image.status_code,
+        headers={'Cache-Control': 'no-cache'},
+    )
 
 
 @router.get("/trailer")

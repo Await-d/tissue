@@ -1,7 +1,8 @@
 import ipaddress
 import mimetypes
-from hashlib import md5
-from typing import Optional
+import os
+from dataclasses import dataclass
+from typing import Literal, Optional
 from urllib.parse import urlparse
 
 import httpx
@@ -9,11 +10,30 @@ from fastapi import Request, Response
 from fastapi.responses import StreamingResponse
 
 from app.schema import Setting
-from app.utils import spider
+from app.utils import cache
+from app.utils.logger import logger
 from app.utils.m3u8 import fix_m3u8_paths, is_m3u8
+from app.utils.spider.javbus import JavbusSpider
+from app.utils.spider.javdb import JavdbSpider
+from app.utils.spider.spider import Spider
+
+
+ImageCacheType = Literal["cover", "avatar", "preview"]
+
+
+@dataclass(slots=True)
+class ImageResult:
+    """图片抓取结果。file_path 为空时表示失败，由 status_code 说明原因。"""
+
+    file_path: Optional[str]
+    media_type: Optional[str]
+    status_code: int
+    etag: Optional[str] = None
 
 
 class ResourceService:
+    # 浏览器端缓存时长
+    IMAGE_CLIENT_CACHE_MAX_AGE_SECONDS = 24 * 60 * 60
     @staticmethod
     def _is_forbidden_ip(address: str) -> bool:
         ip = ipaddress.ip_address(address)
@@ -39,31 +59,25 @@ class ResourceService:
         return None
 
     @staticmethod
-    def fetch_image_bytes(url: str | None, image_type: str) -> bytes | None:
-        del image_type
-        if not url:
-            return None
-
-        parsed = urlparse(url)
-        hostname = parsed.hostname or ""
-        if hostname in {"www.javbus.com", "javbus.com", "c0.jdbstatic.com", "jdbstatic.com"}:
-            return spider.get_video_cover(url)
-
+    def _image_cache_ttl() -> int:
+        """图片缓存有效期，取自设置项 app.cover_cache_ttl。"""
         try:
-            response = httpx.get(
-                url,
-                headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                },
-                follow_redirects=True,
-                timeout=15.0,
-            )
-            if response.status_code != 200:
-                return None
-            return response.content
+            ttl = int(Setting().app.cover_cache_ttl)
+            return ttl if ttl > 0 else cache.DEFAULT_CACHE_TTL_SECONDS
         except Exception:
-            return None
+            return cache.DEFAULT_CACHE_TTL_SECONDS
+
+    @staticmethod
+    def normalize_image_url(url: str) -> str:
+        normalized = (url or "").strip()
+        if normalized.startswith("//"):
+            normalized = f"https:{normalized}"
+        return normalized
+
+    @classmethod
+    def is_remote_image(cls, url: str) -> bool:
+        component = urlparse(url)
+        return component.scheme in {"http", "https"}
 
     @staticmethod
     def _guess_image_media_type(url: str) -> str:
@@ -72,25 +86,165 @@ class ResourceService:
             return mime_type
         return "image/jpeg"
 
+    @staticmethod
+    def _fetch_cover_by_host(url: str) -> tuple[int, bytes | None, str | None]:
+        """按图片 host 选择带对应 Referer/Cookie 的抓取通道。
+
+        所有分支都走 curl_cffi + impersonate，不再有裸 httpx 的降级路径。
+        """
+        hostname = (urlparse(url).hostname or "").lower()
+        if hostname in {"c0.jdbstatic.com", "jdbstatic.com"} or hostname.endswith(".jdbstatic.com"):
+            return JavdbSpider.fetch_cover(url)
+        if hostname in {"www.javbus.com", "javbus.com"} or hostname.endswith(".javbus.com"):
+            return JavbusSpider.fetch_cover(url)
+        return Spider.fetch_cover(url)
+
+    @staticmethod
+    def is_image_binary(content: bytes | None) -> bool:
+        """按魔数判断是否为图片。
+
+        风控/年龄验证页面常以 200 返回 HTML，若不校验就会把错误页当图片缓存下来，
+        之后即使源站恢复，前端仍会一直读到这份坏缓存。
+        """
+        if not content:
+            return False
+        if content.startswith(b"\xff\xd8\xff"):  # jpeg
+            return True
+        if content.startswith(b"\x89PNG\r\n\x1a\n"):  # png
+            return True
+        if content.startswith((b"GIF87a", b"GIF89a")):  # gif
+            return True
+        if content.startswith(b"RIFF") and content[8:12] == b"WEBP":  # webp
+            return True
+        if (
+            len(content) >= 12
+            and content[4:8] == b"ftyp"
+            and content[8:12] in (b"avif", b"mif1")
+        ):  # avif/heif
+            return True
+        return False
+
     @classmethod
-    def proxy_cover(cls, url: str) -> Response:
-        normalized_url = f"https:{url}" if url.startswith("//") else url
+    def _cached_file_is_valid(cls, file_path, metadata) -> bool:
+        """校验磁盘上的缓存文件：既看魔数，也比对尺寸。
+
+        只看魔数会漏掉\"头部完好、内容截断或交错\"的坏文件——那种文件会在
+        整个 TTL 内被当成好图持续返回，即使源站早已恢复。
+        元数据里已经记了写入时的 size，拿它比对即可，成本仍然很低。
+        """
+        try:
+            with open(file_path, "rb") as file:
+                if not cls.is_image_binary(file.read(16)):
+                    return False
+
+            expected_size = (metadata or {}).get("size")
+            if isinstance(expected_size, int) and expected_size > 0:
+                if os.path.getsize(file_path) != expected_size:
+                    return False
+
+            return True
+        except OSError:
+            return False
+
+    @classmethod
+    def fetch_image_file(cls, url: str, image_type: ImageCacheType = "cover") -> ImageResult:
+        """取图片，优先本地缓存；上游失败时回落到过期副本，全失败才写负缓存。"""
+        normalized_url = cls.normalize_image_url(url)
         blocked_status = cls.get_remote_url_block_status(normalized_url)
         if blocked_status is not None:
-            return Response(status_code=blocked_status)
+            return ImageResult(file_path=None, media_type=None, status_code=blocked_status)
 
-        cover = cls.fetch_image_bytes(normalized_url, "cover")
-        if not cover:
-            return Response(status_code=502)
+        lookup = cache.get_cache_lookup(image_type, normalized_url)
 
-        return Response(
-            content=cover,
-            media_type=cls._guess_image_media_type(normalized_url),
-            headers={
-                "Cache-Control": "public, max-age=31536000",
-                "ETag": md5(normalized_url.encode()).hexdigest(),
-            },
+        stale_path: str | None = None
+        stale_media_type: str | None = None
+        stale_etag: str | None = None
+
+        if lookup.cache_status == "hit" and lookup.file_path is not None:
+            if cls._cached_file_is_valid(lookup.file_path, lookup.metadata):
+                stale_path = str(lookup.file_path)
+                stale_media_type = (
+                    lookup.metadata.get("content_type")
+                    or cls._guess_image_media_type(normalized_url)
+                )
+                stale_etag = cache.build_cache_etag(image_type, normalized_url, lookup.metadata)
+                if lookup.status == "fresh":
+                    return ImageResult(
+                        file_path=stale_path,
+                        media_type=stale_media_type,
+                        status_code=200,
+                        etag=stale_etag,
+                    )
+            else:
+                # 历史遗留的坏缓存（HTML 错误页等），清掉后重新抓取
+                logger.warning(f"缓存内容非图片，清理后重新抓取: {normalized_url}")
+                cache.clean_cache_file(image_type, normalized_url)
+        elif lookup.cache_status == "negative" and lookup.status == "fresh":
+            error_code = (lookup.metadata or {}).get("error_code") or 502
+            return ImageResult(file_path=None, media_type=None, status_code=int(error_code))
+
+        status_code, content, content_type = cls._fetch_cover_by_host(normalized_url)
+
+        # 只有确认是图片才写缓存，避免把风控/验证页当成封面存下来
+        if content and not cls.is_image_binary(content):
+            logger.warning(f"上游返回内容不是图片，按失败处理: {normalized_url}")
+            content = None
+            status_code = status_code if status_code and status_code >= 400 else 502
+
+        if content:
+            media_type = content_type or cls._guess_image_media_type(normalized_url)
+            if not media_type.startswith("image/"):
+                media_type = cls._guess_image_media_type(normalized_url)
+            metadata = cache.write_success_cache(
+                image_type,
+                normalized_url,
+                content,
+                media_type,
+                ttl=cls._image_cache_ttl(),
+            )
+            return ImageResult(
+                file_path=str(cache.get_cache_data_path(image_type, normalized_url)),
+                media_type=media_type,
+                status_code=200,
+                etag=cache.build_cache_etag(image_type, normalized_url, metadata),
+            )
+
+        # 上游失败但本地有过期副本：继续提供旧图并延长其可用期限
+        if stale_path is not None:
+            cache.extend_cache_expiry(
+                image_type, normalized_url, cache.get_stale_fallback_ttl_seconds()
+            )
+            logger.warning(f"图片上游不可用({status_code})，使用过期缓存兜底: {normalized_url}")
+            return ImageResult(
+                file_path=stale_path,
+                media_type=stale_media_type,
+                status_code=200,
+                etag=stale_etag,
+            )
+
+        cache.write_negative_cache(
+            image_type,
+            normalized_url,
+            status_code,
+            cache.get_negative_ttl_seconds(status_code),
         )
+        return ImageResult(file_path=None, media_type=None, status_code=status_code or 502)
+
+    @classmethod
+    def fetch_image_bytes(cls, url: str | None, image_type: ImageCacheType = "cover") -> bytes | None:
+        """取图片字节（通知模块等在用）。"""
+        if not url:
+            return None
+
+        image = cls.fetch_image_file(url, image_type)
+        if not image.file_path:
+            return None
+
+        try:
+            with open(image.file_path, "rb") as file:
+                return file.read()
+        except OSError:
+            return None
 
     @staticmethod
     def _build_proxy_headers(request: Request, url: str) -> dict[str, str]:

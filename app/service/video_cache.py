@@ -50,11 +50,33 @@ class VideoCacheService(BaseService):
         stats = {"total_fetched": 0, "total_new": 0, "total_updated": 0, "errors": []}
 
         for source in sources:
+            # 每个数据源只创建一次爬虫实例，跨 (video_type, cycle) 组合复用。
+            # 构造爬虫会触发域名探测，逐组合新建会把探测成本放大数倍。
+            try:
+                spider_instance = self._get_spider(source)
+            except Exception as e:
+                error_msg = f"初始化爬虫失败 {source}: {str(e)}"
+                logger.error(error_msg)
+                logger.debug(traceback.format_exc())
+                stats["errors"].append(error_msg)
+                continue
+
+            if not spider_instance:
+                error_msg = f"不支持的数据源: {source}"
+                logger.error(error_msg)
+                stats["errors"].append(error_msg)
+                continue
+
             for video_type in video_types:
                 for cycle in cycles:
                     try:
                         count = self._fetch_and_cache_single_ranking(
-                            source, video_type, cycle, max_pages, apply_delay
+                            source,
+                            video_type,
+                            cycle,
+                            max_pages,
+                            apply_delay,
+                            spider_instance=spider_instance,
                         )
                         stats["total_fetched"] += count["fetched"]
                         stats["total_new"] += count["new"]
@@ -84,9 +106,14 @@ class VideoCacheService(BaseService):
         cycle: str,
         max_pages: int,
         apply_delay: bool = True,
+        spider_instance=None,
     ) -> Dict[str, int]:
-        """抓取单个排行榜并缓存"""
-        spider_instance = self._get_spider(source)
+        """抓取单个排行榜并缓存。
+
+        spider_instance 可由调用方复用传入，避免重复构造爬虫（含域名探测）。
+        """
+        if spider_instance is None:
+            spider_instance = self._get_spider(source)
         if not spider_instance:
             raise ValueError(f"不支持的数据源: {source}")
 

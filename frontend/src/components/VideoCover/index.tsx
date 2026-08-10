@@ -1,4 +1,4 @@
-import { HTMLProps, useEffect, useMemo, useState } from "react";
+import { HTMLProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Empty } from "antd";
 import Styles from "./index.module.css";
 
@@ -11,65 +11,55 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 function VideoCover(props: HTMLProps<any>) {
     const { src, ...otherProps } = props
     const { goodBoy } = useSelector((state: RootState) => state.app)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [failed, setFailed] = useState(false)
+    // 重试计数用于给 URL 加 cache-buster，绕开浏览器对失败响应的缓存
+    const [retryToken, setRetryToken] = useState(0)
+    const retriedRef = useRef(false)
 
     const coverSrc = typeof src === 'string' ? src : ''
-    const coverUrl = useMemo(() => {
+    const baseUrl = useMemo(() => {
         if (!coverSrc) return ''
         return api.getVideoCover(coverSrc)
     }, [coverSrc])
 
+    const coverUrl = useMemo(() => {
+        if (!baseUrl) return ''
+        return retryToken > 0 ? `${baseUrl}&_r=${retryToken}` : baseUrl
+    }, [baseUrl, retryToken])
+
     useEffect(() => {
-        setErrorMessage(null)
-    }, [coverUrl])
+        // 换图时重置状态，允许新图再重试一次
+        setFailed(false)
+        setRetryToken(0)
+        retriedRef.current = false
+    }, [baseUrl])
 
-    const resolveCoverError = async () => {
-        if (!coverUrl) {
-            return '封面加载失败'
+    const handleError = useCallback(() => {
+        // 只重试一次。后端已有缓存兜底与负缓存，前端反复重试只会放大源站压力。
+        if (!retriedRef.current) {
+            retriedRef.current = true
+            setRetryToken(Date.now())
+            return
         }
-
-        try {
-            const response = await fetch(coverUrl, { method: 'GET' })
-            if (response.status === 422) {
-                return '封面地址无效'
-            }
-            if (response.status === 502) {
-                return '封面读取失败（路径无效/源站阻断）'
-            }
-            if (!response.ok) {
-                return `封面加载失败（${response.status}）`
-            }
-
-            const contentType = response.headers.get('content-type') || ''
-            if (!contentType.startsWith('image/')) {
-                return '封面内容无效'
-            }
-            return '封面加载失败'
-        } catch {
-            return '封面加载失败（网络异常）'
-        }
-    }
-
+        setFailed(true)
+    }, [])
 
     return (
         <div className={Styles.videoCoverContainer} {...otherProps}>
-            {(coverSrc && goodBoy && !errorMessage) && <div className={Styles.blur} />}
+            {(coverSrc && goodBoy && !failed) && <div className={Styles.blur} />}
             {coverSrc ? (
-                errorMessage ? (
+                failed ? (
                     <div className={'flex justify-center items-center'}>
-                        <Empty description={errorMessage} />
+                        <Empty description={'封面加载失败'} />
                     </div>
                 ) : (
-                <LazyLoadImage
-                    className={'object-contain'}
-                    src={coverUrl}
-                    alt={'视频封面'}
-                    onError={() => {
-                        void resolveCoverError().then(message => {
-                            setErrorMessage(message)
-                        })
-                    }}
-                />
+                    <LazyLoadImage
+                        key={coverUrl}
+                        className={'object-contain'}
+                        src={coverUrl}
+                        alt={'视频封面'}
+                        onError={handleError}
+                    />
                 )
             ) : (
                 <div className={'flex justify-center items-center'}>

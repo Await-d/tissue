@@ -19,7 +19,7 @@ from app.schema import (
     VideoSiteActor,
 )
 from app.schema.home import JavDBRanking
-from app.utils.spider.spider import Spider
+from app.utils.spider.spider import Spider, Session, _get_app_setting, parse_host_list
 from app.utils.spider.spider_exception import SpiderException
 
 # 获取logger
@@ -32,13 +32,28 @@ class JavdbSpider(Spider):
     downloadable = True
     avatar_host = "https://c0.jdbstatic.com/avatars/"
 
-    # 候选镜像域名列表（可扩展/与站点管理配置配合使用）
+    # 图片抓取需要年龄确认 Cookie，否则部分图床会返回占位图/403
+    cover_cookies = {"over18": "1", "locale": "zh"}
+
+    # 用户配置的 Cookie 所在设置项。过 Cloudflare 质询后拿到的 cf_clearance
+    # 填在这里，图片抓取也会带上（否则页面能抓到但封面仍 403）
+    cookie_setting_key = "javdb_cookie"
+
+    # 内置候选镜像域名，可被设置项 app.javdb_hosts 覆盖/前置
     mirror_hosts = [
         "https://javdb.com",
         "https://javdb36.com",
         "https://javdb37.com",
         "https://javdb47.com",
     ]
+
+    # 域名探测结果进程内缓存：(host, 探测完成时间戳)
+    _resolved_host: str | None = None
+    _resolved_host_at: float = 0.0
+    _HOST_CACHE_TTL_SECONDS = 10 * 60
+    # 全部候选域名探测失败的时间戳，用于短时间内快速失败（TTL 比成功短）
+    _probe_failed_at: float = 0.0
+    _HOST_FAILURE_TTL_SECONDS = 60
 
     def __init__(self):
         # 初始化基础会话配置
@@ -245,30 +260,116 @@ class JavdbSpider(Spider):
         except Exception as e:
             logger.debug(f"应用JavDB登录Cookie失败: {e}")
 
-    def _select_best_host(self):
-        """尝试镜像域名，选择可用的host"""
-        # 去重并保持顺序：优先使用内置镜像列表，再包含当前默认host
-        candidates = list(dict.fromkeys(self.mirror_hosts + [self.host]))
-        test_paths = ["/videos", "/rankings/movies?p=weekly&t=censored", "/"]
+    @classmethod
+    def _candidate_hosts(cls) -> List[str]:
+        """候选域名：设置项 app.javdb_hosts 优先，回落到内置镜像列表。"""
+        setting = _get_app_setting()
+        configured = getattr(setting, "javdb_hosts", None)
+        return parse_host_list(configured, cls.mirror_hosts)
 
-        for base in candidates:
-            for path in test_paths:
+    @classmethod
+    def _cached_host(cls) -> Optional[str]:
+        if not cls._resolved_host:
+            return None
+        if time.time() - cls._resolved_host_at > cls._HOST_CACHE_TTL_SECONDS:
+            return None
+        return cls._resolved_host
+
+    @classmethod
+    def _remember_host(cls, host: str) -> None:
+        cls._resolved_host = host
+        cls._resolved_host_at = time.time()
+        cls._probe_failed_at = 0.0
+
+    @classmethod
+    def _remember_probe_failure(cls) -> None:
+        cls._probe_failed_at = time.time()
+
+    @classmethod
+    def _probe_recently_failed(cls) -> bool:
+        """全部域名刚探测失败过就先别再探。
+
+        没有这层记忆时，网络不通/全部镜像被墙的场景下每次实例化爬虫都要
+        把所有候选域名重跑一遍（实测约 20 秒），而这恰恰是最需要快速失败的时候。
+        失败记忆的 TTL 比成功短，网络恢复后能较快重新探测。
+        """
+        if not cls._probe_failed_at:
+            return False
+        return time.time() - cls._probe_failed_at < cls._HOST_FAILURE_TTL_SECONDS
+
+    def _probe_host(self, base: str) -> bool:
+        """单路径、短超时、不重试地探测一个域名是否可用。
+
+        max_retries=1 很关键：默认的 3 次重试 + 指数退避会让每个不可达域名
+        耗时约 18 秒，多个候选域名串起来足以拖垮首页请求。
+        """
+        try:
+            resp = self.session.get(urljoin(base, "/"), timeout=(5, 8), max_retries=1)
+            return resp.status_code == 200 and not self._is_banned_response(resp)
+        except Exception:
+            return False
+
+    def _probe_host_isolated(self, base: str) -> bool:
+        """用独立 Session 探测一个域名，供并发探测使用。
+
+        curl_cffi 的 Session 内部包着 libcurl easy handle，多线程共用同一个
+        Session 会出问题，所以每个探测线程必须自建 Session。
+        """
+        session = None
+        try:
+            session = Session()
+            session.headers = dict(self.session.headers)
+            resp = session.get(urljoin(base, "/"), timeout=(5, 8), max_retries=1)
+            return resp.status_code == 200 and not self._is_banned_response(resp)
+        except Exception:
+            return False
+        finally:
+            if session is not None:
                 try:
-                    # 使用已配置的完整请求头
-                    resp = self.session.get(urljoin(base, path))
-                    # 状态码为200且不是封禁页面即认为可用
-                    if resp.status_code == 200 and not self._is_banned_response(resp):
-                        self.host = base
-                        # 同步更新Referer，避免部分页面校验失败
-                        self.session.headers["Referer"] = self.host
-                        self._set_age_cookies()
-                        logger.info(f"JavDB可用域名: {self.host}")
-                        return
+                    session.close()
                 except Exception:
-                    continue
+                    pass
 
-        # 若都不可用，仍设置基于现有host的cookie
+    def _select_best_host(self, force: bool = False):
+        """选择可用的 host。
+
+        探测结果在进程内缓存 _HOST_CACHE_TTL_SECONDS，避免每次实例化
+        JavdbSpider 都重新串行探测多个域名（这是首页加载慢/超时的主因）。
+        force=True 用于运行中被风控时强制重新探测。
+        """
+        if not force:
+            cached = self._cached_host()
+            if cached:
+                self.host = cached
+                self.session.headers["Referer"] = self.host
+                self._set_age_cookies()
+                return
+
+            # 刚整体探测失败过就快速退出，避免每次实例化都重跑全部候选域名
+            if self._probe_recently_failed():
+                logger.debug("JavDB域名探测近期已全部失败，暂时沿用默认host")
+                self._set_age_cookies()
+                return
+
+        candidates = self._candidate_hosts()
+
+        # 当前 host 排在最前，可用就不必再探测其它镜像
+        if self.host in candidates:
+            candidates = [self.host] + [c for c in candidates if c != self.host]
+
+        best = self._probe_hosts_concurrently(candidates)
+        if best:
+            self.host = best
+            # 同步更新Referer，避免部分页面校验失败
+            self.session.headers["Referer"] = self.host
+            self._set_age_cookies()
+            self._remember_host(best)
+            logger.info(f"JavDB可用域名: {self.host}")
+            return
+
+        # 若都不可用，仍设置基于现有host的cookie，并记住这次失败
         logger.warning("未能自动确认JavDB可用域名，将继续使用默认host")
+        self._remember_probe_failure()
         self._set_age_cookies()
 
     def _rebuild_url_for_current_host(self, absolute_or_relative_url: str) -> str:
@@ -319,7 +420,8 @@ class JavdbSpider(Spider):
         if self._is_banned_response(resp):
             logger.warning("检测到被封禁/风控，尝试切换镜像域名后重试")
             try:
-                self._select_best_host()
+                # 强制重新探测，绕过进程内缓存（缓存的域名已被风控）
+                self._select_best_host(force=True)
             except Exception:
                 pass
             target = self._rebuild_url_for_current_host(url)

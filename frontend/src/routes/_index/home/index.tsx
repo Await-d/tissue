@@ -24,10 +24,19 @@ export const Route = createFileRoute('/_index/home/')({
     },
     loaderDeps: ({ search }) => ({ ...search, rank: 0 }),
     loader: async ({ deps }) => ({
-        data: api.getRankings({ ...deps, source: 'JavDB' }).catch((err) => {
-            console.error('获取排行榜数据失败:', err);
-            return [];
-        })
+        // 失败时不再静默返回空数组：把错误信息一并带给组件，
+        // 让用户看到\"加载失败 + 重试\"而不是一个空页面。
+        data: api.getRankings({ ...deps, source: 'JavDB' })
+            .then((result) => ({ ...result, error: null as string | null }))
+            .catch((err) => {
+                console.error('获取排行榜数据失败:', err);
+                return {
+                    items: [] as any[],
+                    stale: false,
+                    dataSource: 'error',
+                    error: err?.message || '获取排行榜数据失败',
+                };
+            })
     }),
     staleTime: 5 * 60 * 1000
 })
@@ -76,7 +85,7 @@ function JavDB() {
     React.useEffect(() => {
         if (data) {
             data.then((loadedData) => {
-                setVideos(Array.isArray(loadedData) ? loadedData : []);
+                setVideos(Array.isArray(loadedData?.items) ? loadedData.items : []);
             });
         }
     }, [data]);
@@ -322,8 +331,52 @@ function JavDB() {
                 )}
             </div>
             <Await promise={data} fallback={<HomeSkeleton />}>
-                {(data = []) => {
-                    const videos = normalizeVideos(data);
+                {(result) => {
+                    const loadError: string | null = result?.error ?? null;
+                    const isStale = Boolean(result?.stale);
+
+                    if (loadError) {
+                        return (
+                            <div style={{
+                                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                justifyContent: 'center', padding: '64px 24px',
+                            }}>
+                                <div style={{
+                                    width: 120, height: 120, borderRadius: '50%',
+                                    background: colors.rgba('gold', 0.08),
+                                    border: `2px solid ${colors.rgba('gold', 0.2)}`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    marginBottom: '32px',
+                                }}>
+                                    <InboxOutlined style={{ fontSize: '56px', color: colors.goldPrimary }} />
+                                </div>
+                                <div style={{
+                                    fontSize: '22px', fontWeight: 600, color: colors.textPrimary,
+                                    marginBottom: '12px', letterSpacing: '0.02em',
+                                }}>
+                                    榜单数据加载失败
+                                </div>
+                                <div style={{
+                                    fontSize: '15px', color: colors.textSecondary, textAlign: 'center',
+                                    lineHeight: '1.6', maxWidth: '460px', marginBottom: '24px',
+                                }}>
+                                    {loadError}
+                                    <br />
+                                    源站可能暂时不可访问。可在「设置 - 应用设置」里配置站点镜像域名或 HTTP 代理后重试。
+                                </div>
+                                <Button
+                                    type={'primary'}
+                                    icon={<ReloadOutlined spin={refreshing} />}
+                                    loading={refreshing}
+                                    onClick={handleRefresh}
+                                >
+                                    重新加载
+                                </Button>
+                            </div>
+                        );
+                    }
+
+                    const videos = normalizeVideos(Array.isArray(result?.items) ? result.items : []);
                     const minRank = Number(filter.rank ?? 0);
                     const filteredVideos = videos.filter((item: any) => item.rank >= minRank);
                     const sortedVideos = sortVideos(filteredVideos, filter.sort_by || 'rank', filter.sort_order || 'desc');
@@ -338,7 +391,23 @@ function JavDB() {
                     // 使用 queueMicrotask 确保不阻塞渲染
                     queueMicrotask(() => { currentVideosRef.current = batchVideos; });
 
+                    const staleBanner = isStale ? (
+                        <div style={{
+                            marginTop: 8,
+                            padding: '10px 14px',
+                            borderRadius: 12,
+                            background: colors.rgba('gold', 0.08),
+                            border: `1px solid ${colors.rgba('gold', 0.2)}`,
+                            color: colors.textSecondary,
+                            fontSize: 13,
+                        }}>
+                            源站暂时无法访问，当前显示的是较早缓存的数据。
+                        </div>
+                    ) : null;
+
                     return sortedVideos.length > 0 ? (
+                        <>
+                        {staleBanner}
                         <Row className={'mt-2 cursor-pointer'} gutter={[16, 16]}>
                             {sortedVideos.map((item: any, index: number) => {
                                 const isSelected = batchSelect.isSelected(item.num);
@@ -397,6 +466,7 @@ function JavDB() {
                                 );
                             })}
                         </Row>
+                        </>
                     ) : (
                         <div
                             className="tissue-animate-in"

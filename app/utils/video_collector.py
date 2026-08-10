@@ -18,14 +18,23 @@ class VideoCollector:
     """视频收集器"""
     
     def __init__(self):
-        self.spiders = [
-            spider.JavdbSpider(),
-            # 可以添加其他爬虫
-        ]
+        # 延迟创建爬虫实例：构造 JavdbSpider 会触发域名探测（网络请求），
+        # 模块级单例在 import 期间就跑探测会拖慢整个应用启动。
+        self._spiders: Optional[List[Any]] = None
         # 添加缓存存储
         self._cache = {}
         # 缓存有效期（小时）- 临时设置为0以强制刷新
         self.cache_ttl_hours = 0
+
+    @property
+    def spiders(self) -> List[Any]:
+        """首次访问时才创建爬虫实例。"""
+        if self._spiders is None:
+            self._spiders = [
+                spider.JavdbSpider(),
+                # 可以添加其他爬虫
+            ]
+        return self._spiders
     
     def get_trending_videos(self, time_range: str = "week", max_pages: int = 3) -> List[Dict[str, Any]]:
         """获取热门视频"""

@@ -1,11 +1,13 @@
+import threading
 import time
 import logging
+import traceback
 from collections.abc import Iterable as IterableABC
 from pathlib import Path
 from typing import Any, Dict, List
 
 import tailer
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from fastapi.responses import StreamingResponse
@@ -63,12 +65,45 @@ def _normalize_ranking_fields(videos: Any) -> List[Dict[str, Any]]:
     return normalized
 
 
+# 按需刷新的进程内节流：避免多个客户端同时打开首页时各自触发一次完整抓取
+_REFRESH_LOCK = threading.Lock()
+_REFRESH_IN_FLIGHT: set[tuple[str, str, str]] = set()
+_REFRESH_LAST_ATTEMPT: Dict[tuple[str, str, str], float] = {}
+_REFRESH_COOLDOWN_SECONDS = 120
+
+
+def _try_acquire_refresh_slot(key: tuple[str, str, str]) -> bool:
+    """抢占某个榜单组合的刷新权限。已有刷新在跑或处于冷却期则返回 False。"""
+    with _REFRESH_LOCK:
+        if key in _REFRESH_IN_FLIGHT:
+            return False
+        last_attempt = _REFRESH_LAST_ATTEMPT.get(key, 0.0)
+        if time.time() - last_attempt < _REFRESH_COOLDOWN_SECONDS:
+            return False
+        _REFRESH_IN_FLIGHT.add(key)
+        _REFRESH_LAST_ATTEMPT[key] = time.time()
+        return True
+
+
+def _release_refresh_slot(key: tuple[str, str, str]) -> None:
+    with _REFRESH_LOCK:
+        _REFRESH_IN_FLIGHT.discard(key)
+
+
 @router.get("/ranking")
 def get_rankings(
-    source: str, video_type: str, cycle: str, db: Session = Depends(get_db)
+    source: str,
+    video_type: str,
+    cycle: str,
+    response: Response,
+    db: Session = Depends(get_db),
 ):
     """
     获取排行榜数据（优先从缓存读取，缓存不存在时实时爬取）
+
+    取数顺序：新鲜缓存 -> 按需抓取 -> 实时爬取 -> 30 天内旧缓存兜底。
+    每一层都独立容错，任意一层异常都不会让接口 500，以免直接跳过后面的兜底。
+    返回旧数据时通过响应头 X-Data-Stale / X-Data-Source 告知前端。
 
     Args:
         source: 数据源（JavDB, JavBus等）
@@ -80,52 +115,74 @@ def get_rankings(
     logger = logging.getLogger(__name__)
 
     cache_service = VideoCacheService(db)
+    refresh_key = (source, video_type, cycle)
 
-    # 优先从缓存获取
+    def _mark(data_source: str, stale: bool = False):
+        response.headers["X-Data-Source"] = data_source
+        response.headers["X-Data-Stale"] = "true" if stale else "false"
+
+    # 1. 新鲜缓存
     try:
         cached_videos = cache_service.get_ranking_videos(
             source=source, video_type=video_type, cycle=cycle, limit=100
         )
-
-        # 如果缓存有数据，直接返回
         if cached_videos:
-            return _normalize_ranking_fields(cached_videos)
-
-        refresh_stats = cache_service.fetch_and_cache_rankings(
-            sources=[source],
-            video_types=[video_type],
-            cycles=[cycle],
-            max_pages=1,
-            apply_delay=False,
-        )
-        logger.info(
-            f"首页榜单按需刷新完成: {source} {video_type} {cycle}, "
-            f"抓取{refresh_stats['total_fetched']}个, 错误{len(refresh_stats['errors'])}个"
-        )
-
-        cached_videos = cache_service.get_ranking_videos(
-            source=source, video_type=video_type, cycle=cycle, limit=100
-        )
-        if cached_videos:
+            _mark("cache")
             return _normalize_ranking_fields(cached_videos)
     except Exception as e:
-        # 缓存查询失败，记录日志并降级到实时爬取
-        logger.warning(f"从缓存获取排行榜失败: {e}，降级到实时爬取")
+        logger.warning(f"从缓存获取排行榜失败: {e}")
 
-    # 缓存没有数据或查询失败，降级到实时爬取
-    if source == "JavDB":
-        spider_instance = spider.JavdbSpider()
+    # 2. 按需抓取并写缓存（同一组合并发去重 + 冷却，避免抓取风暴）
+    if _try_acquire_refresh_slot(refresh_key):
+        try:
+            refresh_stats = cache_service.fetch_and_cache_rankings(
+                sources=[source],
+                video_types=[video_type],
+                cycles=[cycle],
+                max_pages=1,
+                apply_delay=False,
+            )
+            logger.info(
+                f"首页榜单按需刷新完成: {source} {video_type} {cycle}, "
+                f"抓取{refresh_stats['total_fetched']}个, 错误{len(refresh_stats['errors'])}个"
+            )
 
-        detailed_rankings = spider_instance.get_ranking_with_details(
-            video_type, cycle, max_pages=1, apply_delay=False
-        )
-        if detailed_rankings:
-            return _normalize_ranking_fields(detailed_rankings)
+            cached_videos = cache_service.get_ranking_videos(
+                source=source, video_type=video_type, cycle=cycle, limit=100
+            )
+            if cached_videos:
+                _mark("refresh")
+                return _normalize_ranking_fields(cached_videos)
+        except Exception as e:
+            logger.warning(f"按需刷新排行榜失败: {e}，降级到实时爬取")
+            logger.debug(traceback.format_exc())
+        finally:
+            _release_refresh_slot(refresh_key)
+    else:
+        logger.info(f"榜单刷新已在进行或处于冷却期，跳过本次抓取: {refresh_key}")
 
-        basic_rankings = spider_instance.get_ranking(video_type, cycle)
-        normalized = _normalize_ranking_fields(basic_rankings)
-        if normalized:
-            return normalized
+    # 3. 实时爬取（必须容错，否则会跳过下面的旧缓存兜底）
+    try:
+        if source == "JavDB":
+            spider_instance = spider.JavdbSpider()
+
+            detailed_rankings = spider_instance.get_ranking_with_details(
+                video_type, cycle, max_pages=1, apply_delay=False
+            )
+            if detailed_rankings:
+                _mark("live")
+                return _normalize_ranking_fields(detailed_rankings)
+
+            basic_rankings = spider_instance.get_ranking(video_type, cycle)
+            normalized = _normalize_ranking_fields(basic_rankings)
+            if normalized:
+                _mark("live")
+                return normalized
+    except Exception as e:
+        logger.warning(f"实时爬取排行榜失败: {e}，尝试使用旧缓存兜底")
+        logger.debug(traceback.format_exc())
+
+    # 4. 30 天内旧缓存兜底
     try:
         stale_videos = cache_service.query_videos(
             sources=[source], video_types=[video_type], days=30, limit=100
@@ -134,10 +191,13 @@ def get_rankings(
             logger.warning(
                 f"使用最近缓存兜底返回首页数据: {source} {video_type} {cycle}, 数量={len(stale_videos)}"
             )
+            _mark("stale-cache", stale=True)
             return _normalize_ranking_fields(stale_videos)
     except Exception as e:
         logger.warning(f"读取兜底缓存失败: {e}")
 
+    logger.error(f"首页榜单所有取数途径均失败: {source} {video_type} {cycle}")
+    _mark("empty", stale=True)
     return []
 
 
