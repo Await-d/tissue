@@ -108,14 +108,11 @@ class SettingsManager:
             return {namespace: self._default_payload(namespace) for namespace in NAMESPACE_ORDER}
 
         legacy_sections = Setting.read_ini()
-        return {
-            "app": SettingApp(**legacy_sections.get("app", {})).model_dump(),
-            "file": SettingFile(**legacy_sections.get("file", {})).model_dump(),
-            "download": SettingDownload(**legacy_sections.get("download", {})).model_dump(),
-            "notify": SettingNotify(**legacy_sections.get("notify", {})).model_dump(),
-            "auto_download": SettingAutoDownload(**legacy_sections.get("auto_download", {})).model_dump(),
-            "cookiecloud": SettingCookieCloud(**legacy_sections.get("cookiecloud", {})).model_dump(),
-        }
+        payloads = {}
+        for namespace in NAMESPACE_ORDER:
+            section = legacy_sections.get(namespace, {})
+            payloads[namespace] = self._normalize_namespace_payload(namespace, section)
+        return payloads
 
     def _migrate_entry(self, db: Any, entry: Any) -> None:
         entry_namespace = str(getattr(entry, "namespace"))
@@ -146,7 +143,34 @@ class SettingsManager:
         payload: dict[str, Any],
     ) -> dict[str, Any]:
         model = self.namespace_models[namespace]
-        return model(**payload).model_dump()
+        cleaned = self._coerce_legacy_bools(model, payload)
+        return model(**cleaned).model_dump()
+
+    @staticmethod
+    def _coerce_legacy_bools(
+        model: type[Any],
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        """将遗留数据中的字符串布尔值转换为真正的布尔值。
+
+        Pydantic v2 对空字符串 "" 等非标准布尔值输入会拒绝，而旧版
+        configparser 迁移的数据可能包含空字符串。此方法在传给 Pydantic
+        之前把常见字符串形式归一化为真正的 True/False。
+        """
+        coerced = dict(payload)
+        for field_name, field_info in model.model_fields.items():
+            if field_name not in coerced:
+                continue
+            if field_info.annotation is not bool:
+                continue
+            val = coerced[field_name]
+            if isinstance(val, str):
+                v = val.strip().lower()
+                if v in ("true", "1", "yes", "on"):
+                    coerced[field_name] = True
+                elif v in ("false", "0", "no", "off", "", "none"):
+                    coerced[field_name] = False
+        return coerced
 
     def _default_payload(self, namespace: str) -> dict[str, Any]:
         model = self.namespace_models[namespace]

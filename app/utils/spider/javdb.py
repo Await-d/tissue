@@ -319,6 +319,7 @@ class JavdbSpider(Spider):
         try:
             session = Session()
             session.headers = dict(self.session.headers)
+            session.proxies = dict(getattr(self.session, "proxies", {}) or {})
             resp = session.get(urljoin(base, "/"), timeout=(5, 8), max_retries=1)
             return resp.status_code == 200 and not self._is_banned_response(resp)
         except Exception:
@@ -405,6 +406,8 @@ class JavdbSpider(Spider):
                 b"access denied",
                 b"forbidden",
                 b"just a moment",
+                b"copyright restrictions",
+                b"access to this site is prohibited",
             ]
             return any(m in content_lower for m in markers)
         except Exception:

@@ -177,6 +177,33 @@ def test_probe_exception_is_treated_as_unreachable(spider_cls, monkeypatch):
     assert spider.host in spider._candidate_hosts()
 
 
+def test_isolated_probe_inherits_configured_proxy(monkeypatch):
+    from app.utils.spider import javdb as javdb_module
+
+    class FakeSession:
+        instances = []
+
+        def __init__(self):
+            self.headers = {}
+            self.proxies = {}
+            self.closed = False
+            self.__class__.instances.append(self)
+
+        def get(self, *_args, **_kwargs):
+            return type("Response", (), {"status_code": 200, "url": "https://mirror.test/", "content": b"ok"})()
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setattr(javdb_module, "Session", FakeSession)
+    spider = JavdbSpider.__new__(JavdbSpider)
+    spider.session = FakeSession()
+    spider.session.proxies = {"http": "http://127.0.0.1:7897", "https": "http://127.0.0.1:7897"}
+
+    assert spider._probe_host_isolated("https://mirror.test") is True
+    assert FakeSession.instances[-1].proxies == spider.session.proxies
+
+
 def test_failure_memo_expires_so_recovery_is_detected(spider_cls):
     spider_cls._probe_failed_at = time.time()
     assert spider_cls._probe_recently_failed() is True
