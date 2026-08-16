@@ -1,3 +1,4 @@
+import os
 from types import SimpleNamespace
 
 from app.service.video import VideoService
@@ -15,9 +16,12 @@ def test_delete_video_meta_skips_none_image_fields(db_session, monkeypatch):
     )
 
     removed_paths = []
+    nfo_path = "/tmp/video.nfo"
+    movie_nfo_path = os.path.join("/tmp", "movie.nfo")
+    thumb_path = os.path.join("/tmp", "thumb.jpg")
 
     def fake_exists(path):
-        return path in {"/tmp/video.nfo", "/tmp/movie.nfo", "/tmp/thumb.jpg"}
+        return path in {nfo_path, movie_nfo_path, thumb_path}
 
     def fake_remove(path):
         removed_paths.append(path)
@@ -27,4 +31,4 @@ def test_delete_video_meta_skips_none_image_fields(db_session, monkeypatch):
 
     service.delete_video_meta("/tmp/video.mp4")
 
-    assert removed_paths == ["/tmp/video.nfo", "/tmp/movie.nfo", "/tmp/thumb.jpg"]
+    assert removed_paths == [nfo_path, movie_nfo_path, thumb_path]
