@@ -3,10 +3,11 @@ import os.path
 import hashlib
 import json
 import tempfile
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, Dict, List
+from typing import Any, Optional, Dict, Final, List
 from functools import wraps
 
 cache_path = Path(f'{Path(__file__).cwd()}/config/cache')
@@ -18,6 +19,7 @@ STALE_FALLBACK_TTL_SECONDS = 30 * 60
 # 负缓存 TTL：明确的 4xx 缓存久一些，网络/5xx 类错误尽快重试
 NEGATIVE_TTL_NOT_FOUND_SECONDS = 6 * 60 * 60
 NEGATIVE_TTL_TRANSIENT_SECONDS = 5 * 60
+_ATOMIC_REPLACE_LOCK: Final = threading.Lock()
 
 
 def get_cache_path(parent: str, path: str):
@@ -43,7 +45,10 @@ def _write_bytes_atomic(target: str, content: bytes) -> None:
             file.write(content)
             file.flush()
             os.fsync(file.fileno())
-        os.replace(tmp_path, target)
+        # Windows can reject simultaneous replacement of one destination even
+        # when every writer owns a unique temporary file.
+        with _ATOMIC_REPLACE_LOCK:
+            os.replace(tmp_path, target)
     except BaseException:
         # 失败时不要留下 .tmp 残留
         try:
