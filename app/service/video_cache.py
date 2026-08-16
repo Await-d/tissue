@@ -6,7 +6,6 @@ import traceback
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from sqlalchemy import and_, or_, desc, func
-from sqlalchemy.orm import Session
 
 from app.db.models.video_cache import VideoCache
 from app.schema.setting import Setting
@@ -61,8 +60,8 @@ class VideoCacheService(BaseService):
                 stats["errors"].append(error_msg)
                 continue
 
-            if not spider_instance:
-                error_msg = f"不支持的数据源: {source}"
+            if not spider_instance or not spider.supports_capability(source, "ranking"):
+                error_msg = f"不支持排行榜数据源: {source}"
                 logger.error(error_msg)
                 stats["errors"].append(error_msg)
                 continue
@@ -163,8 +162,10 @@ class VideoCacheService(BaseService):
                 logger.error(f"缓存视频失败 {video.get('num')}: {str(e)}")
                 logger.debug(traceback.format_exc())
 
-        self.db.commit()
+        if not videos:
+            raise RuntimeError("榜单未返回视频")
 
+        self.db.commit()
         return {"fetched": len(videos), "new": new_count, "updated": updated_count}
 
     def _create_video_cache(
@@ -579,7 +580,7 @@ class VideoCacheService(BaseService):
                         or 7
                     ),
                 )
-                deleted = service.clean_old_cache(days=cleanup_days)
+                service.clean_old_cache(days=cleanup_days)
 
         except Exception as e:
             logger.error(f"视频缓存刷新失败: {str(e)}")

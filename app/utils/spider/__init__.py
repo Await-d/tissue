@@ -13,6 +13,19 @@ from app.utils.spider.javdb import JavdbSpider
 from app.utils.spider.spider_exception import SpiderException
 
 
+_SOURCE_CAPABILITIES = {
+    "javdb": frozenset({"metadata", "ranking"}),
+    "javbus": frozenset({"metadata"}),
+    "jav321": frozenset({"metadata"}),
+    "dmm": frozenset({"metadata"}),
+}
+
+
+def supports_capability(source: str, capability: str) -> bool:
+    capabilities = _SOURCE_CAPABILITIES.get((source or "").strip().casefold())
+    return capabilities is not None and capability in capabilities
+
+
 def _normalize_cover_url(url: str):
     normalized = (url or "").strip()
     if normalized.startswith("//"):

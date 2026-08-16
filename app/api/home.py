@@ -111,8 +111,14 @@ def get_rankings(
         cycle: 周期（daily, weekly, monthly）
         db: 数据库会话
     """
-    source = _normalize_source(source)
     logger = logging.getLogger(__name__)
+    source = _normalize_source(source)
+
+    if not spider.supports_capability(source, "ranking"):
+        logger.warning(f"拒绝无排行榜能力的数据源: {source}")
+        response.headers["X-Data-Source"] = "empty"
+        response.headers["X-Data-Stale"] = "true"
+        return []
 
     cache_service = VideoCacheService(db)
     refresh_key = (source, video_type, cycle)
