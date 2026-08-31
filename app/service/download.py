@@ -123,11 +123,28 @@ class DownloadService(BaseService):
                 tags=list(map(lambda i: i.strip(), info["tags"].split(","))),
             )
             files_response = self.qb.get_torrent_files(info["hash"])
-            files = (
-                files_response.json()
-                if hasattr(files_response, "json")
-                else files_response
-            )
+            if hasattr(files_response, "json"):
+                status_code = getattr(files_response, "status_code", None)
+                if status_code is not None and status_code != 200:
+                    logger.warning(
+                        f"获取种子 {info['hash']} 文件列表失败: HTTP {status_code}"
+                    )
+                    continue
+                try:
+                    files = files_response.json()
+                except ValueError:
+                    logger.warning(
+                        f"获取种子 {info['hash']} 文件列表失败: 响应不是有效JSON"
+                    )
+                    continue
+            else:
+                files = files_response
+
+            if not isinstance(files, list):
+                logger.warning(
+                    f"获取种子 {info['hash']} 文件列表失败: 响应格式不是列表"
+                )
+                continue
 
             # 检查是否有任何文件
             if not files:
