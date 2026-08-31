@@ -23,7 +23,7 @@ def send_video(video: VideoNotify):
 
 def send_subscribe(subscribe: SubscribeNotify):
     notification_manager.emit_subscribe_started(
-        SubscribeStartedPayload.model_validate(subscribe.model_dump()),
+        SubscribeStartedPayload.model_validate(subscribe.model_dump(mode="json")),
     )
 
 

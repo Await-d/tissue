@@ -232,7 +232,9 @@ class SubscribeService(BaseService):
 
         if send_notification:
             subscribe_notify = schema.SubscribeNotify.model_validate(video)
-            subscribe_notify = subscribe_notify.model_copy(update=link.model_dump())
+            subscribe_notify = subscribe_notify.model_copy(
+                update=link.model_dump(mode="json")
+            )
             notify.send_subscribe(subscribe_notify)
 
     def _check_and_record_actor_subscribe_download(
