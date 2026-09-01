@@ -480,13 +480,21 @@ class ActorSubscribeService(BaseService):
     def download_actor_video(self, subscription, video_detail, resource):
         """下载演员视频并记录"""
         from app.service.base_download import BaseDownloadService
+        from app.schema.setting import Setting
 
         try:
+            setting = Setting()
+            download_path = (
+                resource.savepath
+                if resource.savepath
+                else setting.download.download_path
+            )
+
             # 使用基础下载服务进行下载（包含过滤规则）
             base_download_service = BaseDownloadService(self.db)
             download_result = base_download_service.download_with_filter(
                 magnet=resource.magnet,
-                savepath=resource.savepath,
+                savepath=download_path,
                 category=None,  # 演员订阅可以使用默认分类
                 skip_filter=False,  # 启用过滤规则
             )
