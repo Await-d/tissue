@@ -189,32 +189,31 @@ class PendingTorrentService(BaseService):
 
     def _is_metadata_ready(self, torrent_info: Dict) -> bool:
         """
-        检查元数据是否就绪
+        仅在 qBittorrent 返回文件列表时确认元数据已就绪。
 
-        qBittorrent 中，当元数据就绪时：
-        1. content_path 不为空且不等于 save_path
-        2. 或者可以获取到文件列表
+        磁力链接的显示名称和内容路径可能在元数据仍未获取时就已经存在，
+        因此不能将它们作为元数据已就绪的依据。
 
         Args:
-            torrent_info: 种子信息
+            torrent_info: qBittorrent 返回的种子信息
 
         Returns:
             bool: 元数据就绪返回 True
         """
-        content_path = torrent_info.get("content_path", "")
-        save_path = torrent_info.get("save_path", "")
-        name = torrent_info.get("name", "")
-
-        # 如果 content_path 存在且不等于 save_path，说明元数据已就绪
-        if content_path and content_path != save_path:
-            return True
-
-        # 如果有具体的种子名称（不是 hash），也说明元数据已就绪
         torrent_hash = torrent_info.get("hash", "")
-        if name and name.lower() != torrent_hash.lower():
-            return True
+        try:
+            response = self.qb.get_torrent_files(torrent_hash)
+            if hasattr(response, "json") and response.status_code != 200:
+                logger.warning(
+                    f"获取种子文件列表失败: {torrent_hash}, HTTP {response.status_code}"
+                )
+                return False
 
-        return False
+            files = response.json() if hasattr(response, "json") else response
+            return bool(files)
+        except Exception as e:
+            logger.warning(f"获取种子文件列表失败: {torrent_hash}, {e}")
+            return False
 
     def check_metadata_and_filter(self, pending: PendingTorrent) -> bool:
         """
@@ -302,20 +301,22 @@ class PendingTorrentService(BaseService):
                     f"种子过滤完成并开始下载: {torrent_hash}, {filter_result.get('message', '')}"
                 )
             else:
-                # 过滤失败，删除种子
+                filter_message = filter_result.get("message", "过滤失败")
                 logger.warning(
-                    f"种子过滤失败: {torrent_hash}, {filter_result.get('message', '')}"
+                    f"种子过滤失败，保留暂停任务: {torrent_hash}, {filter_message}"
                 )
-                try:
-                    self.qb.delete_torrent(torrent_hash, delete_files=True)
-                    logger.info(f"已删除不符合过滤条件的种子: {torrent_hash}")
-                except Exception as e:
-                    logger.error(f"删除种子失败: {e}")
-
+                if filter_message == "无法获取种子文件列表":
+                    self.update_status(
+                        torrent_hash,
+                        PendingTorrentStatus.WAITING_METADATA,
+                        error_message=filter_message,
+                        filter_result=filter_result,
+                    )
+                    return False
                 self.update_status(
                     torrent_hash,
                     PendingTorrentStatus.FAILED,
-                    error_message=filter_result.get("message", "过滤失败"),
+                    error_message=filter_message,
                     filter_result=filter_result,
                 )
 

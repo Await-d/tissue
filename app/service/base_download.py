@@ -195,17 +195,25 @@ class BaseDownloadService:
                     result['message'] = filter_result['message']
                     logger.info(f"下载任务创建成功: {result['message']}")
                 else:
-                    # 过滤失败，删除种子
-                    logger.warning(f"过滤规则拒绝，删除种子: {filter_result['message']}")
-                    try:
-                        qbittorent.delete_torrent(torrent_hash, delete_files=True)
-                        logger.info(f"已删除不符合过滤条件的种子: {torrent_hash}")
-                    except Exception as e:
-                        logger.error(f"删除种子失败: {e}")
-
-                    result['success'] = False
-                    result['pending'] = False
-                    result['message'] = f"过滤规则拒绝: {filter_result['message']}"
+                    filter_message = filter_result.get('message', '过滤失败')
+                    if filter_message == '无法获取种子文件列表':
+                        logger.warning(f"文件列表暂不可用，加入待处理队列: {torrent_hash}")
+                        self.pending_service.add_pending_torrent(
+                            torrent_hash=torrent_hash,
+                            magnet=magnet,
+                            savepath=savepath,
+                            category=category,
+                            num=num,
+                            source=source,
+                        )
+                        result['success'] = True
+                        result['pending'] = True
+                        result['message'] = '种子已添加，等待文件列表获取后自动过滤'
+                    else:
+                        logger.warning(f"过滤规则拒绝，保留暂停种子: {filter_message}")
+                        result['success'] = False
+                        result['pending'] = False
+                        result['message'] = f"过滤规则拒绝: {filter_message}"
             else:
                 # 5. 元数据未就绪，加入待处理队列
                 logger.info(f"元数据未就绪，加入待处理队列: {torrent_hash}")
