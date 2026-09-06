@@ -10,6 +10,7 @@ import './ActorSubscribeModal.css';
 interface ActorSubscribeModalProps {
     open: boolean;
     actor: any;
+    subscription?: any;
     onCancel: () => void;
     onOk: () => void;
     confirmLoading?: boolean;
@@ -18,6 +19,7 @@ interface ActorSubscribeModalProps {
 const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
     open,
     actor,
+    subscription,
     onCancel,
     onOk,
     confirmLoading = false
@@ -32,15 +34,15 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
                 actor_name: actor.name,
                 actor_url: actor.url,
                 actor_thumb: actor.thumb,
-                from_date: dayjs(),
-                is_hd: true,
-                is_zh: false,
-                is_uncensored: false,
-                min_rating: 0.0,
-                min_comments: 0
+                from_date: subscription?.from_date ? dayjs(subscription.from_date) : dayjs(),
+                is_hd: subscription?.is_hd ?? true,
+                is_zh: subscription?.is_zh ?? false,
+                is_uncensored: subscription?.is_uncensored ?? false,
+                min_rating: subscription?.min_rating ?? 0.0,
+                min_comments: subscription?.min_comments ?? 0
             });
         }
-    }, [actor, open, form]);
+    }, [actor, subscription, open, form]);
 
     const { run: subscribe, loading } = useRequest(subscribeApi.subscribeActor, {
         manual: true,
@@ -75,7 +77,7 @@ const ActorSubscribeModal: React.FC<ActorSubscribeModalProps> = ({
 
     return (
         <Modal
-            title="订阅演员"
+            title={subscription ? "修改订阅" : "订阅演员"}
             open={open}
             forceRender
             onCancel={onCancel}

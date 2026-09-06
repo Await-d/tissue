@@ -3,6 +3,7 @@ import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, Modal, Radi
 import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined, StarFilled, CheckCircleFilled, FilterOutlined, CheckSquareOutlined, BorderOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
+import { checkDownloadStatusBatch, type DownloadStatus } from '../../apis/downloadStatus';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useRequest } from 'ahooks';
@@ -43,6 +44,15 @@ interface WebVideo {
 interface WebActorSearchProps {
     onVideoSelect?: (video: WebVideo) => void;
     defaultSearchValue?: string;
+}
+
+interface ActorSubscriptionConfig {
+    from_date?: string;
+    is_hd?: boolean;
+    is_zh?: boolean;
+    is_uncensored?: boolean;
+    min_rating?: number;
+    min_comments?: number;
 }
 
 // 定义要保存的状态接口
@@ -89,6 +99,8 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     const isFirstRender = useRef(true); // 添加首次渲染标记
     const [subscribeModalVisible, setSubscribeModalVisible] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
+    const [currentSubscription, setCurrentSubscription] = useState<ActorSubscriptionConfig | null>(null);
+    const [downloadStatuses, setDownloadStatuses] = useState<Record<string, DownloadStatus>>({});
     const [checkingSubscription, setCheckingSubscription] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
@@ -200,13 +212,15 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         setCheckingSubscription(true);
         try {
             const subscriptions = await subscribeApi.getActorSubscriptions();
-            const isAlreadySubscribed = subscriptions.some(
+            const subscription = subscriptions.find(
                 (sub: any) => sub.actor_name.toLowerCase() === actorName.toLowerCase()
             );
-            setIsSubscribed(isAlreadySubscribed);
-            console.log(`演员 ${actorName} 订阅状态:`, isAlreadySubscribed ? '已订阅' : '未订阅');
+            setCurrentSubscription(subscription ?? null);
+            setIsSubscribed(Boolean(subscription));
+            console.log(`演员 ${actorName} 订阅状态:`, subscription ? '已订阅' : '未订阅');
         } catch (error) {
             console.error('检查演员订阅状态失败:', error);
+            setCurrentSubscription(null);
         } finally {
             setCheckingSubscription(false);
         }
@@ -218,8 +232,34 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
             checkActorSubscription(selectedActor.name);
         } else {
             setIsSubscribed(false);
+            setCurrentSubscription(null);
         }
     }, [selectedActor]);
+
+    useEffect(() => {
+        const nums = actorVideos
+            .map((video: WebVideo) => video.num)
+            .filter((num: string) => Boolean(num));
+
+        if (nums.length === 0) {
+            setDownloadStatuses({});
+            return;
+        }
+
+        let cancelled = false;
+        checkDownloadStatusBatch(nums)
+            .then((statuses) => {
+                if (!cancelled) setDownloadStatuses(statuses);
+            })
+            .catch((error) => {
+                console.error('检查演员影片下载状态失败:', error);
+                if (!cancelled) setDownloadStatuses({});
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [actorVideos]);
 
     // 添加下载功能
     const { run: onDownload, loading: onDownloading } = useRequest(subscribeApi.downloadVideos, {
@@ -1043,6 +1083,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                     source: sourceType,
                                 };
                                 const isSelected = batchSelect.isSelected(video.num);
+                                const downloadStatus = downloadStatuses[video.num];
 
                                 return (
                                     <List.Item key={videoId}>
@@ -1165,6 +1206,16 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                                                             </div>
                                                         )}
                                                         <div style={{ marginTop: '8px' }}>
+                                                            {downloadStatus === 'downloaded' && (
+                                                                <Tag color="success" style={{ marginRight: 8 }}>
+                                                                    已下载
+                                                                </Tag>
+                                                            )}
+                                                            {downloadStatus === 'downloading' && (
+                                                                <Tag color="processing" style={{ marginRight: 8 }}>
+                                                                    下载中
+                                                                </Tag>
+                                                            )}
                                                             {video.is_zh && (
                                                                 <span className="web-actor-badge web-actor-badge-zh" style={{
                                                                     marginRight: 8,
@@ -1284,6 +1335,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 <ActorSubscribeModal
                     open={subscribeModalVisible}
                     actor={selectedActor}
+                    subscription={currentSubscription}
                     onCancel={() => setSubscribeModalVisible(false)}
                     onOk={handleSubscribeSuccess}
                 />
@@ -1330,4 +1382,4 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
     );
 };
 
-export default WebActorSearch; 
+export default WebActorSearch;
