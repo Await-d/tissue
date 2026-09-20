@@ -1,0 +1,23 @@
+import{r as d,I as b,_ as m,ab as u,W as x,F as e,b3 as h,av as p,b4 as f,R as y,G as g,b5 as c,a0 as j,an as I,aq as k,al as v,b6 as R,b7 as $,b8 as w,b9 as M,ba as P,b0 as S,bb as C}from"./index-BqYHbufV.js";import{R as D}from"./RobotOutlined-BRJ8W_Hc.js";var z={icon:{tag:"svg",attrs:{viewBox:"64 64 896 896",focusable:"false"},children:[{tag:"path",attrs:{d:"M505.7 661a8 8 0 0012.6 0l112-141.7c4.1-5.2.4-12.9-6.3-12.9h-74.1V168c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v338.3H400c-6.7 0-10.4 7.7-6.3 12.9l112 141.8zM878 626h-60c-4.4 0-8 3.6-8 8v154H214V634c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v198c0 17.7 14.3 32 32 32h684c17.7 0 32-14.3 32-32V634c0-4.4-3.6-8-8-8z"}}]},name:"download",theme:"outlined"},E=function(a,n){return d.createElement(b,m({},a,{ref:n,icon:z}))},F=d.forwardRef(E);const B=[{key:"home",icon:e.jsx(I,{}),label:"首页",path:"/home"},{key:"search",icon:e.jsx(k,{}),label:"搜索",path:"/search"},{key:"actor",icon:e.jsx(v,{}),label:"演员",path:"/actor"},{key:"actor-subscribe",icon:e.jsx(R,{}),label:"演员订阅",path:"/actor-subscribe"},{key:"subscribe",icon:e.jsx($,{}),label:"订阅",path:"/subscribe"},{key:"schedule",icon:e.jsx(w,{}),label:"定时任务",path:"/schedule"},{key:"file",icon:e.jsx(M,{}),label:"文件",path:"/file"},{key:"setting",icon:e.jsx(P,{}),label:"设置",path:"/setting"},{key:"history",icon:e.jsx(S,{}),label:"历史",path:"/history"},{key:"download",icon:e.jsx(F,{}),label:"下载",path:"/download"},{key:"about",icon:e.jsx(C,{}),label:"关于",path:"/about"},{key:"auto-download",icon:e.jsx(D,{}),label:"智能下载",path:"/auto-download"}],H=[{title:"常用功能",items:["home","search","actor","subscribe","auto-download"]},{title:"内容管理",items:["file","download","history"]},{title:"系统设置",items:["setting","schedule","about","actor-subscribe"]}],N=s=>B.find(a=>a.key===s),W=c.memo(function({item:a,groupIndex:n,itemIndex:r,colors:t}){const[o,i]=c.useState(!1);return e.jsx(j,{to:a.path,style:{textDecoration:"none"},children:e.jsxs("div",{className:"p-3 flex flex-col items-center",onMouseEnter:()=>i(!0),onMouseLeave:()=>i(!1),style:{background:o?t.bgSpotlight:t.bgContainer,borderRadius:"12px",transition:"all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",border:`1px solid ${o?t.goldDark:t.borderPrimary}`,height:"100%",cursor:"pointer",boxShadow:o?`0 8px 24px ${t.rgba("gold",.12)}, 0 0 0 1px ${t.goldDark}`:`0 2px 8px ${t.rgba("black",.15)}`,transform:o?"translateY(-2px)":"translateY(0)",animation:`menuItemFadeIn 0.3s ease-out ${n*.1+r*.05}s both`},children:[e.jsx("div",{className:"text-3xl",style:{color:o?t.goldLight:t.goldPrimary,transition:"all 0.3s ease",filter:o?`drop-shadow(0 0 8px ${t.goldPrimary})`:"none",transform:o?"scale(1.1)":"scale(1)"},children:a.icon}),e.jsx("div",{className:"mt-2 text-center",style:{fontSize:"12px",color:o?t.textPrimary:t.textSecondary,transition:"color 0.3s ease",fontWeight:o?500:400},children:a.label})]})})});function L(){const s=u(),a=x();function n(){return H.map((r,t)=>e.jsxs("div",{style:{animation:`menuFadeIn 0.4s ease-out ${t*.1}s both`},children:[e.jsx(f,{style:{borderColor:a.borderPrimary,marginTop:t===0?"0":"24px",marginBottom:"20px"},children:e.jsx("span",{style:{color:a.goldPrimary,fontSize:"13px",fontWeight:600,letterSpacing:"0.5px",textTransform:"uppercase"},children:r.title})}),e.jsx(y,{gutter:[12,12],justify:"center",children:r.items.map((o,i)=>{const l=N(o);return l?e.jsx(g,{span:6,children:e.jsx(W,{item:l,groupIndex:t,itemIndex:i,colors:a})},l.key):null})})]},r.title))}return s.md?e.jsx(h,{to:"/"}):e.jsxs(e.Fragment,{children:[e.jsx("style",{children:`
+                    @keyframes menuFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(10px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    
+                    @keyframes menuItemFadeIn {
+                        from {
+                            opacity: 0;
+                            transform: scale(0.95);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: scale(1);
+                        }
+                    }
+                `}),e.jsx(p,{title:e.jsx("span",{style:{color:a.goldPrimary,fontSize:"18px",fontWeight:600},children:"功能菜单"}),variant:"borderless",style:{background:a.bgElevated,borderRadius:"16px"},styles:{header:{borderBottom:`1px solid ${a.borderPrimary}`,background:a.bgBase},body:{background:a.bgElevated}},children:n()})]})}export{L as component};
