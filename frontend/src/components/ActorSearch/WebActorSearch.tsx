@@ -4,8 +4,6 @@ import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, Star
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
 import { checkDownloadStatusBatch, type DownloadStatus } from '../../apis/downloadStatus';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
-import 'react-lazy-load-image-component/src/effects/blur.css';
 import { useRequest } from 'ahooks';
 import VideoCover from "../VideoCover";
 import { useNavigate, useRouter } from "@tanstack/react-router";
