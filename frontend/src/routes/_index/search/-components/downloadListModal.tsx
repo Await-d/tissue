@@ -41,19 +41,6 @@ function DownloadListModal(props: Props) {
         onDownload(video, downloadItem);
     };
 
-    // 根据文件大小选择背景颜色
-    const getSizeColor = (size: string) => {
-        if (!size) return "";
-
-        if (size.includes("GB")) {
-            const num = parseFloat(size);
-            if (num > 10) return `${colors.error}22`; // 红色背景，体积很大
-            if (num > 5) return `${colors.warning}22`;  // 橙色背景，体积较大
-            return `${colors.success}22`; // 绿色背景，体积适中
-        }
-        return `${colors.info}22`; // 蓝色背景，体积较小
-    };
-
     return (
         <Modal
             title={

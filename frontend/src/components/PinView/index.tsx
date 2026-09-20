@@ -1,7 +1,7 @@
 import { Button, Col, message, Row, Space, theme, ConfigProvider } from "antd";
 import Logo from "../../assets/logo.svg";
 import PinPad from "./pad.tsx";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useResponsive } from "ahooks";
 import { CloseOutlined, EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 import { sha256 } from "js-sha256";
@@ -92,23 +92,25 @@ function PinView(props: Props) {
         )
     }
 
+    const themeConfig = useMemo(() => ({
+        components: {
+            Button: {
+                colorPrimary: colors.goldPrimary,
+                colorPrimaryHover: colors.goldLight,
+                colorPrimaryActive: colors.goldDark,
+                colorBgContainer: colors.bgContainer,
+                colorBorder: colors.borderPrimary,
+                colorText: colors.textPrimary,
+                defaultBg: colors.bgContainer,
+                defaultBorderColor: colors.borderPrimary,
+                defaultColor: colors.textSecondary,
+            }
+        }
+    }), [colors])
+
     return createPortal(
         <ConfigProvider
-            theme={{
-                components: {
-                    Button: {
-                        colorPrimary: colors.goldPrimary,
-                        colorPrimaryHover: colors.goldLight,
-                        colorPrimaryActive: colors.goldDark,
-                        colorBgContainer: colors.bgContainer,
-                        colorBorder: colors.borderPrimary,
-                        colorText: colors.textPrimary,
-                        defaultBg: colors.bgContainer,
-                        defaultBorderColor: colors.borderPrimary,
-                        defaultColor: colors.textSecondary,
-                    }
-                }
-            }}
+            theme={themeConfig}
         >
             <div
                 className={'fixed top-0 right-0 bottom-0 left-0 z-[1000]'}

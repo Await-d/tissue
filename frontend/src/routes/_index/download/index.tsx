@@ -1,8 +1,8 @@
-import { Card, Collapse, Empty, Input, List, App, Modal, Space, Tag, theme, Tooltip, Progress, Row, Col, Button, Badge, Pagination } from "antd";
+import { Card, Collapse, Empty, Input, List, App, Space, Tag, theme, Tooltip, Progress, Button, Badge, Pagination } from "antd";
 import * as api from "../../../apis/download";
 import { useDebounce, useRequest } from "ahooks";
 import { FileDoneOutlined, FolderViewOutlined, UserOutlined, FilterOutlined, ReloadOutlined, DeleteOutlined, PauseOutlined, PlayCircleOutlined, SearchOutlined, ClearOutlined } from "@ant-design/icons";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import IconButton from "../../../components/IconButton";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import VideoDetail from "../../../components/VideoDetail";
@@ -29,6 +29,17 @@ const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
 }
 
 const PAGE_SIZE = 10;
+
+// 进行中的下载任务轮询间隔（仅在存在下载中/等待中的任务时启用）
+const DOWNLOAD_POLL_INTERVAL = 3000;
+
+// 任务是否仍有未完成的文件（下载中/等待中）；已标记"整理失败"的任务不再轮询，避免无谓请求
+const isActiveDownloadTask = (item: { tags?: string[]; files?: { progress?: number }[] }): boolean => {
+    const tags = Array.isArray(item.tags) ? item.tags : []
+    if (tags.includes('整理失败')) return false
+    const files = Array.isArray(item.files) ? item.files : []
+    return files.some(file => (file.progress ?? 0) < 1)
+}
 
 function Download() {
     const { message, modal } = App.useApp()
@@ -59,13 +70,42 @@ function Download() {
         [batchCleanupResult]
     )
 
-    const { data = [], loading, refresh } = useRequest(
+    const fetchDownloads = useCallback(
         () => api.getDownloads({
             include_success: includeSuccess,
             include_failed: includeFailed
         }),
-        { refreshDeps: [includeSuccess, includeFailed] }
+        [includeSuccess, includeFailed]
     )
+
+    const { data = [], loading, refresh, mutate } = useRequest(fetchDownloads, {
+        refreshDeps: [includeSuccess, includeFailed]
+    })
+
+    // 仅当存在进行中的任务时轮询；空闲时不创建定时器
+    const hasActiveDownloads = useMemo(
+        () => data.some(isActiveDownloadTask),
+        [data]
+    )
+
+    useEffect(() => {
+        if (!hasActiveDownloads) return
+
+        let cancelled = false
+        const timer = setInterval(async () => {
+            try {
+                const nextData = await fetchDownloads()
+                if (!cancelled) mutate(nextData)
+            } catch {
+                // 轮询失败保留现有数据，等待下一次轮询
+            }
+        }, DOWNLOAD_POLL_INTERVAL)
+
+        return () => {
+            cancelled = true
+            clearInterval(timer)
+        }
+    }, [hasActiveDownloads, fetchDownloads, mutate])
 
     const realData = useMemo(() => {
         let filteredData = data.filter((item: any) => {
@@ -265,7 +305,9 @@ function Download() {
                         const totalFiles = torrent.files.length;
                         const completedFiles = torrent.files.filter((f: any) => f.progress >= 1).length;
                         const downloadingFiles = torrent.files.filter((f: any) => f.progress > 0 && f.progress < 1).length;
-                        const avgProgress = torrent.files.reduce((sum: number, f: any) => sum + f.progress, 0) / totalFiles;
+                        const avgProgress = totalFiles > 0
+                            ? torrent.files.reduce((sum: number, f: { progress: number }) => sum + f.progress, 0) / totalFiles
+                            : 0;
                         return (
                             <>
                                 <Tag style={{

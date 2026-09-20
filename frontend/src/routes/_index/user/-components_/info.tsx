@@ -20,6 +20,7 @@ function UserInfo() {
         onSuccess: () => {
             getInfo()
             message.success('保存成功')
+            form.resetFields(['password', 'confirmPassword'])
         }
     })
 
@@ -27,9 +28,13 @@ function UserInfo() {
         if (userInfo) {
             form.setFieldsValue(userInfo)
         }
-    }, [userInfo])
+    }, [userInfo, form])
 
     function onFinish(values: any) {
+        if (!userInfo) {
+            message.error('用户信息未加载')
+            return
+        }
         if (values.password && values.password !== values.confirmPassword) {
             return message.error("两次输入密码不一致")
         }

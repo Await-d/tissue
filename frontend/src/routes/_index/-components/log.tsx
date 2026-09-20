@@ -20,6 +20,13 @@ const tagColorMap: { [key: string]: string } = {
     'ERROR': 'error',
 }
 
+// 日志缓冲区上限，避免长时间连接导致内存无限增长
+const MAX_LOG_MESSAGES = 500
+// 断线重连策略：最多重试次数与指数退避上限
+const MAX_RETRY_ATTEMPTS = 5
+const BASE_RETRY_DELAY = 1000
+const MAX_RETRY_DELAY = 30000
+
 function Log() {
 
     const {userToken} = useSelector((state: RootState) => state.auth)
@@ -27,12 +34,15 @@ function Log() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const container = useRef<HTMLDivElement>(null)
+    const messageIndex = useRef(0)
+    const retryAttempt = useRef(0)
 
     useEffect(() => {
         const ctrl = new AbortController();
+        retryAttempt.current = 0;
         setLoading(true);
         setError(null);
-        
+
         fetchEventSource(`${configs.BASE_API}/home/log`, {
             method: 'GET',
             headers: {
@@ -41,37 +51,62 @@ function Log() {
             signal: ctrl.signal,
             openWhenHidden: true,
             async onopen(response) {
-                console.log('日志连接已打开', response.status);
+                if (import.meta.env.DEV) {
+                    console.log('日志连接已打开', response.status);
+                }
                 setLoading(false);
-                if (response.status !== 200) {
+                if (response.status === 200) {
+                    // 连接成功，重置重试计数
+                    retryAttempt.current = 0;
+                } else {
                     setError(`连接失败: HTTP ${response.status}`);
                 }
             },
             onmessage(msg) {
-                console.log('收到日志消息:', msg.data);
+                if (import.meta.env.DEV) {
+                    console.log('收到日志消息:', msg.data);
+                }
                 if (msg.data) {
                     const matched = msg.data.match(/【(.+)】(.+) - (.+) - (.+)/)
                     if (matched) {
-                        setMessages(data => [{
-                            index: data.length + 1,
+                        messageIndex.current += 1
+                        const nextMessage = {
+                            index: messageIndex.current,
                             level: matched[1],
                             time: matched[2].split(" ")[1],
                             module: matched[3],
                             content: matched[4],
-                        }, ...data])
-                    } else {
+                        }
+                        setMessages(data => [nextMessage, ...data].slice(0, MAX_LOG_MESSAGES))
+                    } else if (import.meta.env.DEV) {
                         console.warn('日志格式不匹配:', msg.data);
                     }
                 }
             },
             onerror(err) {
                 console.error('日志连接错误:', err);
-                setError('连接日志服务失败，请检查网络连接');
                 setLoading(false);
+                if (ctrl.signal.aborted) {
+                    throw err;
+                }
+                retryAttempt.current += 1;
+                if (retryAttempt.current > MAX_RETRY_ATTEMPTS) {
+                    setError('连接日志服务失败，请检查网络连接');
+                    // 抛出异常以终止 fetchEventSource 的无限重连循环
+                    throw err;
+                }
+                // 指数退避：1s、2s、4s、8s、16s，避免紧凑的无限重连
+                return Math.min(BASE_RETRY_DELAY * 2 ** (retryAttempt.current - 1), MAX_RETRY_DELAY);
             },
             onclose() {
-                console.log('日志连接已关闭');
+                if (import.meta.env.DEV) {
+                    console.log('日志连接已关闭');
+                }
                 setLoading(false);
+            }
+        }).catch((err) => {
+            if (import.meta.env.DEV) {
+                console.warn('日志连接已终止:', err);
             }
         });
         return () => {

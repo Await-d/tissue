@@ -12,9 +12,7 @@ import {
     UserOutlined,
     VideoCameraOutlined,
     StarOutlined,
-    HeartOutlined,
-    ClockCircleOutlined,
-    FileOutlined
+    HeartOutlined
 } from "@ant-design/icons";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen.ts";

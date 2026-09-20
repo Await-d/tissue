@@ -32,6 +32,34 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [previewData, setPreviewData] = useState<any[]>([]);
 
+    // 组件卸载后不再更新状态
+    const mountedRef = React.useRef(true);
+    React.useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
+
+    // 预览与下载使用同一接口、同一参数，共用一次请求，避免重复请求
+    const detailRequestRef = React.useRef<{ key: string; promise: ReturnType<typeof api.getVideoDownloads> } | null>(null);
+
+    const getVideoDetail = React.useCallback(() => {
+        const key = `${item.num ?? ''}|${item.url ?? ''}`;
+        if (!detailRequestRef.current || detailRequestRef.current.key !== key) {
+            const source = 'JavDB';
+            detailRequestRef.current = { key, promise: api.getVideoDownloads(item.num, source.toLowerCase(), item.url) };
+        }
+        const promise = detailRequestRef.current.promise;
+        return promise.catch((error) => {
+            // 请求失败时不缓存，保证用户可以重试
+            if (detailRequestRef.current?.promise === promise) {
+                detailRequestRef.current = null;
+            }
+            throw error;
+        });
+    }, [item.num, item.url]);
+
     // 添加下载功能
     const { run: onDownload, loading: onDownloading } = useRequest(subscribeApi.downloadVideos, {
         manual: true,
@@ -56,10 +84,9 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
 
         message.loading({ content: '正在获取下载资源...', key: 'download' });
 
-        const source = 'JavDB';
-
-        api.getVideoDownloads(item.num, source.toLowerCase(), item.url)
+        getVideoDetail()
             .then(detailData => {
+                if (!mountedRef.current) return;
                 setLoadingVideoId(null);
 
                 if (detailData && detailData.downloads && detailData.downloads.length > 0) {
@@ -72,6 +99,7 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
                 }
             })
             .catch(error => {
+                if (!mountedRef.current) return;
                 setLoadingVideoId(null);
                 console.error('获取下载资源失败:', error);
                 message.error({ content: '获取下载资源失败', key: 'download' });
@@ -95,10 +123,9 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
         setLoadingPreview(true);
         message.loading({ content: '正在获取预览...', key: 'preview' });
 
-        const source = 'JavDB';
-
-        api.getVideoDownloads(item.num, source.toLowerCase(), item.url)
+        getVideoDetail()
             .then(detailData => {
+                if (!mountedRef.current) return;
                 setLoadingPreview(false);
 
                 if (detailData && detailData.previews && detailData.previews.length > 0) {
@@ -115,6 +142,7 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
                 }
             })
             .catch(error => {
+                if (!mountedRef.current) return;
                 setLoadingPreview(false);
                 console.error('获取预览失败:', error);
                 message.error({ content: '获取预览失败', key: 'preview' });
@@ -513,4 +541,4 @@ function JavDBItem(props: { item: any; downloadStatus?: DownloadStatus }) {
     )
 }
 
-export default JavDBItem
+export default React.memo(JavDBItem)

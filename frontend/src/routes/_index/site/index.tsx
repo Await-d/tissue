@@ -1,5 +1,5 @@
-import {createFileRoute, Link} from "@tanstack/react-router";
-import {Badge, Card, Empty, FloatButton, List, message, Skeleton, Space, Tag, theme} from "antd";
+import {createFileRoute} from "@tanstack/react-router";
+import {Badge, Card, Empty, FloatButton, List, message, Skeleton, Space, Tag} from "antd";
 import ModifyModal from "./-components/modifyModal.tsx";
 import {useFormModal} from "../../../utils/useFormModal.ts";
 import * as api from "../../../apis/site.ts";
@@ -17,7 +17,6 @@ export const Route = createFileRoute('/_index/site/')({
 function Site() {
 
     const colors = useThemeColors();
-    const {token} = theme.useToken()
 
     const {data, refresh, loading} = useRequest(api.getSites, {})
 

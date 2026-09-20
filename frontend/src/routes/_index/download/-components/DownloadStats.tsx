@@ -1,12 +1,35 @@
+import { memo, useMemo } from "react";
 import { Card, Col, Row, Statistic } from "antd";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
 
-interface DownloadStatsProps {
-    data: any[];
+interface DownloadStatsFile {
+    progress: number;
 }
 
-export default function DownloadStats({ data }: DownloadStatsProps) {
+interface DownloadStatsTask {
+    files: DownloadStatsFile[];
+}
+
+interface DownloadStatsProps {
+    data: DownloadStatsTask[];
+}
+
+function DownloadStats({ data }: DownloadStatsProps) {
     const colors = useThemeColors();
+
+    const stats = useMemo(() => {
+        let downloading = 0;
+        let completed = 0;
+        let failed = 0;
+        data.forEach((item) => {
+            item.files.forEach((file) => {
+                if (file.progress > 0 && file.progress < 1) downloading += 1;
+                if (file.progress >= 1) completed += 1;
+                if (file.progress === 0) failed += 1;
+            });
+        });
+        return { total: data.length, downloading, completed, failed };
+    }, [data]);
 
     const cardStyle = {
         background: colors.bgContainer,
@@ -22,7 +45,7 @@ export default function DownloadStats({ data }: DownloadStatsProps) {
                 <Card size="small" style={cardStyle} styles={{ body: bodyStyle }}>
                     <Statistic
                         title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>总任务数</span>}
-                        value={data.length}
+                        value={stats.total}
                         valueStyle={{ color: colors.textPrimary, fontSize: '24px', fontWeight: 600 }}
                     />
                 </Card>
@@ -31,9 +54,7 @@ export default function DownloadStats({ data }: DownloadStatsProps) {
                 <Card size="small" style={cardStyle} styles={{ body: bodyStyle }}>
                     <Statistic
                         title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>进行中</span>}
-                        value={data.reduce((count: number, item: any) =>
-                            count + item.files.filter((f: any) => f.progress > 0 && f.progress < 1).length, 0
-                        )}
+                        value={stats.downloading}
                         valueStyle={{ color: colors.info, fontSize: '24px', fontWeight: 600 }}
                     />
                 </Card>
@@ -42,9 +63,7 @@ export default function DownloadStats({ data }: DownloadStatsProps) {
                 <Card size="small" style={cardStyle} styles={{ body: bodyStyle }}>
                     <Statistic
                         title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>已完成</span>}
-                        value={data.reduce((count: number, item: any) =>
-                            count + item.files.filter((f: any) => f.progress >= 1).length, 0
-                        )}
+                        value={stats.completed}
                         valueStyle={{ color: colors.success, fontSize: '24px', fontWeight: 600 }}
                     />
                 </Card>
@@ -53,9 +72,7 @@ export default function DownloadStats({ data }: DownloadStatsProps) {
                 <Card size="small" style={cardStyle} styles={{ body: bodyStyle }}>
                     <Statistic
                         title={<span style={{ color: colors.textSecondary, fontSize: '14px' }}>失败/等待</span>}
-                        value={data.reduce((count: number, item: any) =>
-                            count + item.files.filter((f: any) => f.progress === 0).length, 0
-                        )}
+                        value={stats.failed}
                         valueStyle={{ color: colors.redLight, fontSize: '24px', fontWeight: 600 }}
                     />
                 </Card>
@@ -63,3 +80,5 @@ export default function DownloadStats({ data }: DownloadStatsProps) {
         </Row>
     );
 }
+
+export default memo(DownloadStats);

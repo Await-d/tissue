@@ -1,7 +1,7 @@
 import {Button, Card, Empty, Input, List, Space, Tag, theme, Tooltip} from "antd";
 import {useDebounce, useRequest} from "ahooks";
 import * as api from "../../../apis/file.ts";
-import React, {useMemo, useState} from "react";
+import React, {useCallback, useMemo, useState} from "react";
 import {FolderViewOutlined, SearchOutlined} from "@ant-design/icons";
 import IconButton from "../../../components/IconButton";
 import {createFileRoute, Link} from "@tanstack/react-router";
@@ -32,6 +32,47 @@ function File() {
         })
     }, [data, keywordDebounce])
 
+    const renderItem = useCallback((item: any, _index: number) => (
+        <List.Item 
+            className="dark-file-item"
+            actions={[
+                <Tooltip title={'整理'}>
+                    <IconButton
+                        onClick={() => setSelected(`${item.path}/${item.name}`)}
+                        style={{
+                            color: colors.goldPrimary,
+                            transition: 'all 0.3s'
+                        }}
+                        className="file-action-btn"
+                    >
+                        <FolderViewOutlined style={{fontSize: token.sizeLG}}/>
+                    </IconButton>
+                </Tooltip>
+            ]}
+        >
+            <List.Item.Meta
+                title={(
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ color: colors.textPrimary, fontWeight: 500 }}>{item.name}</span>
+                        <Tag
+                            style={{
+                                background: colors.rgba('gold', 0.12),
+                                border: `1px solid ${colors.rgba('gold', 0.25)}`,
+                                color: colors.goldLight,
+                                margin: 0
+                            }}
+                        >
+                            {item.size}
+                        </Tag>
+                    </span>
+                )}
+                description={(
+                    <span style={{ color: colors.textSecondary, fontSize: 13 }}>{item.path}</span>
+                )}
+            />
+        </List.Item>
+    ), [colors, token.sizeLG])
+
     return (
         <div className="file-page-wrapper animate-fade-in">
             <Card
@@ -46,7 +87,7 @@ function File() {
                 extra={(
                     <Space.Compact>
                         <Input
-                            value={keyword}
+                            value={keyword ?? ''}
                             onChange={e => setKeyword(e.target.value)}
                             placeholder={'搜索文件名或路径'}
                             style={{
@@ -72,46 +113,7 @@ function File() {
                         itemLayout="horizontal"
                         dataSource={realData}
                         className="dark-file-list"
-                        renderItem={(item: any, index) => (
-                            <List.Item 
-                                className="dark-file-item"
-                                actions={[
-                                    <Tooltip title={'整理'}>
-                                        <IconButton
-                                            onClick={() => setSelected(`${item.path}/${item.name}`)}
-                                            style={{
-                                                color: colors.goldPrimary,
-                                                transition: 'all 0.3s'
-                                            }}
-                                            className="file-action-btn"
-                                        >
-                                            <FolderViewOutlined style={{fontSize: token.sizeLG}}/>
-                                        </IconButton>
-                                    </Tooltip>
-                                ]}
-                            >
-                                <List.Item.Meta
-                                    title={(
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <span style={{ color: colors.textPrimary, fontWeight: 500 }}>{item.name}</span>
-                                            <Tag
-                                                style={{
-                                                    background: colors.rgba('gold', 0.12),
-                                                    border: `1px solid ${colors.rgba('gold', 0.25)}`,
-                                                    color: colors.goldLight,
-                                                    margin: 0
-                                                }}
-                                            >
-                                                {item.size}
-                                            </Tag>
-                                        </span>
-                                    )}
-                                    description={(
-                                        <span style={{ color: colors.textSecondary, fontSize: 13 }}>{item.path}</span>
-                                    )}
-                                />
-                            </List.Item>
-                        )}
+                        renderItem={renderItem}
                     />
                 ) : (
                     <Empty

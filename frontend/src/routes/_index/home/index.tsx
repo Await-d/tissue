@@ -13,6 +13,7 @@ import { useBatchSelect, type BatchSelectVideo } from "@/hooks/useBatchSelect";
 import { BatchActionBar, BatchDownloadModal } from "@/components/BatchDownload";
 import { useThemeColors } from '../../../hooks/useThemeColors';
 import { useDownloadStatus } from '../../../hooks/useDownloadStatus';
+import type { DownloadStatus } from '../../../types/downloadStatus';
 import HomeSkeleton from "./-components/HomeSkeleton.tsx";
 import ScanResultModal from "./-components/ScanResultModal.tsx";
 
@@ -40,6 +41,243 @@ export const Route = createFileRoute('/_index/home/')({
     }),
     staleTime: 5 * 60 * 1000
 })
+
+interface RankingVideo extends BatchSelectVideo {
+    rank_count?: number;
+    rating?: number;
+    comments_count?: number;
+    comments?: number;
+    release_date?: string;
+    path?: string;
+}
+
+const EMPTY_RANKING_ITEMS: RankingVideo[] = [];
+
+function sortVideos(videos: RankingVideo[], sortBy: string, sortOrder: string) {
+    return [...videos].sort((a, b) => {
+        const getValue = (video: RankingVideo) => {
+            switch (sortBy) {
+                case 'rank_count':
+                    return Number(video.rank_count ?? video.comments_count ?? video.comments ?? 0) || 0;
+                case 'publish_date': {
+                    const date = video.publish_date ?? video.release_date ?? '1970-01-01';
+                    return new Date(date).getTime();
+                }
+                case 'rank':
+                default:
+                    return Number(video.rank ?? video.rating ?? 0) || 0;
+            }
+        };
+        const aValue = getValue(a);
+        const bValue = getValue(b);
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+}
+
+function normalizeVideos(videos: RankingVideo[]): RankingVideo[] {
+    if (!Array.isArray(videos)) return [];
+    return videos.map((video) => {
+        const rank = Number(video.rank ?? video.rating ?? 0) || 0;
+        const rankCount = Number(video.rank_count ?? video.comments_count ?? video.comments ?? 0) || 0;
+        const publishDate = video.publish_date ?? video.release_date ?? '';
+        return { ...video, rank, rank_count: rankCount, publish_date: publishDate };
+    });
+}
+
+interface HomeVideoCardProps {
+    item: RankingVideo;
+    index: number;
+    isBatchMode: boolean;
+    selected: boolean;
+    batchVideo: BatchSelectVideo;
+    downloadStatus: DownloadStatus;
+    toggleVideoSelection: (video: BatchSelectVideo) => void;
+    navigate: ReturnType<typeof useNavigate>;
+}
+
+// 单张卡片：memo 化后，只有自身 props（选中态/下载状态等）变化时才重渲染
+const HomeVideoCard = React.memo(function HomeVideoCard(props: HomeVideoCardProps) {
+    const { item, index, isBatchMode, selected, batchVideo, downloadStatus, toggleVideoSelection, navigate } = props;
+    const colors = useThemeColors();
+
+    const handleClick = useCallback(() => {
+        if (isBatchMode) {
+            toggleVideoSelection(batchVideo);
+        } else {
+            navigate({
+                to: '/home/detail',
+                search: { source: 'JavDB', url: item.url, num: item.num }
+            });
+        }
+    }, [isBatchMode, toggleVideoSelection, batchVideo, navigate, item.url, item.num]);
+
+    const handleToggleSelection = useCallback(() => {
+        toggleVideoSelection(batchVideo);
+    }, [toggleVideoSelection, batchVideo]);
+
+    return (
+        <Col
+            span={24}
+            md={12}
+            lg={6}
+            className={`tissue-animate-in tissue-stagger-${(index % 8) + 1}`}
+            onClick={handleClick}
+        >
+            <div style={{ position: 'relative', height: '100%' }}>
+                {isBatchMode && (
+                    <div style={{
+                        position: 'absolute', top: 12, left: 12, zIndex: 20,
+                        background: colors.rgba('bgContainer', 0.95), backdropFilter: 'blur(10px)',
+                        borderRadius: '8px', padding: '4px',
+                        border: `1px solid ${colors.borderPrimary}`,
+                        boxShadow: `0 2px 8px ${colors.rgba('black', 0.2)}`,
+                    }}>
+                        <Checkbox
+                            checked={selected}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={handleToggleSelection}
+                            style={{ transform: 'scale(1.15)' }}
+                        />
+                    </div>
+                )}
+                <div style={{
+                    borderRadius: '18px', overflow: 'hidden',
+                    border: selected ? `3px solid ${colors.goldPrimary}` : '3px solid transparent',
+                    boxShadow: selected ? `0 0 0 1px ${colors.rgba('gold', 0.2)}, 0 8px 24px ${colors.rgba('gold', 0.3)}` : 'none',
+                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+                    opacity: isBatchMode && !selected ? 0.6 : 1,
+                    transform: selected ? 'scale(0.98)' : 'scale(1)',
+                }}>
+                    <JavDBItem
+                        item={item}
+                        downloadStatus={downloadStatus}
+                    />
+                </div>
+            </div>
+        </Col>
+    );
+});
+
+interface HomeVideoGridProps {
+    items: RankingVideo[];
+    minRank: number;
+    sortBy: string;
+    sortOrder: string;
+    stale: boolean;
+    isBatchMode: boolean;
+    isSelected: (num: string) => boolean;
+    toggleVideoSelection: (video: BatchSelectVideo) => void;
+    statusMap: Record<string, DownloadStatus>;
+    onVideosChange: (videos: BatchSelectVideo[]) => void;
+    navigate: ReturnType<typeof useNavigate>;
+}
+
+// 卡片网格：派生列表（过滤/排序/映射）仅在数据或筛选参数变化时重算
+const HomeVideoGrid = React.memo(function HomeVideoGrid(props: HomeVideoGridProps) {
+    const {
+        items, minRank, sortBy, sortOrder, stale, isBatchMode,
+        isSelected, toggleVideoSelection, statusMap, onVideosChange, navigate,
+    } = props;
+    const colors = useThemeColors();
+
+    const sortedVideos = useMemo(() => {
+        const normalized = normalizeVideos(items);
+        const filtered = normalized.filter((item) => (item.rank ?? 0) >= minRank);
+        return sortVideos(filtered, sortBy, sortOrder);
+    }, [items, minRank, sortBy, sortOrder]);
+
+    const batchVideos = useMemo<BatchSelectVideo[]>(() => sortedVideos.map((item) => ({
+        num: item.num, title: item.title, cover: item.cover, url: item.url,
+        is_zh: item.is_zh, is_uncensored: item.is_uncensored,
+        rank: item.rank, publish_date: item.publish_date, source: 'JavDB',
+    })), [sortedVideos]);
+
+    // 更新当前视频列表（用于全选）
+    React.useEffect(() => {
+        onVideosChange(batchVideos);
+    }, [batchVideos, onVideosChange]);
+
+    if (sortedVideos.length === 0) {
+        return (
+            <div
+                className="tissue-animate-in"
+                style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '100px 40px',
+                    background: `linear-gradient(135deg, ${colors.rgba('bgContainer', 0.8)} 0%, ${colors.rgba('black', 0.3)} 100%)`,
+                    backdropFilter: 'blur(20px)', borderRadius: '20px',
+                    border: `1px solid ${colors.borderPrimary}`,
+                    boxShadow: `0 8px 32px ${colors.rgba('black', 0.1)}`,
+                    marginTop: '60px', position: 'relative', overflow: 'hidden',
+                }}
+            >
+                <div style={{
+                    position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%',
+                    background: `radial-gradient(circle, ${colors.rgba('gold', 0.08)} 0%, transparent 70%)`,
+                    pointerEvents: 'none',
+                }} />
+                <div style={{
+                    position: 'absolute', bottom: -30, left: -30, width: 150, height: 150, borderRadius: '50%',
+                    background: `radial-gradient(circle, ${colors.rgba('gold', 0.05)} 0%, transparent 70%)`,
+                    pointerEvents: 'none',
+                }} />
+                <div style={{
+                    width: 120, height: 120, borderRadius: '50%',
+                    background: colors.rgba('gold', 0.08),
+                    border: `2px solid ${colors.rgba('gold', 0.2)}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: '32px', animation: 'tissue-glow-pulse 3s ease-in-out infinite',
+                }}>
+                    <InboxOutlined style={{ fontSize: '56px', color: colors.goldPrimary }} />
+                </div>
+                <div style={{ fontSize: '22px', fontWeight: 600, color: colors.textPrimary, marginBottom: '12px', letterSpacing: '0.02em' }}>
+                    没有找到符合条件的视频
+                </div>
+                <div style={{ fontSize: '15px', color: colors.textSecondary, textAlign: 'center', lineHeight: '1.6', maxWidth: '400px', marginBottom: '24px' }}>
+                    {minRank > 0 ? '请尝试降低评分要求或调整其他筛选条件' : '请调整筛选条件重试，或者稍后再来看看'}
+                </div>
+                <div style={{
+                    width: '60px', height: '3px',
+                    background: `linear-gradient(90deg, transparent 0%, ${colors.goldPrimary} 50%, transparent 100%)`,
+                    borderRadius: '2px',
+                }} />
+            </div>
+        );
+    }
+
+    return (
+        <>
+            {stale && (
+                <div style={{
+                    marginTop: 8,
+                    padding: '10px 14px',
+                    borderRadius: 12,
+                    background: colors.rgba('gold', 0.08),
+                    border: `1px solid ${colors.rgba('gold', 0.2)}`,
+                    color: colors.textSecondary,
+                    fontSize: 13,
+                }}>
+                    源站暂时无法访问，当前显示的是较早缓存的数据。
+                </div>
+            )}
+            <Row className={'mt-2 cursor-pointer'} gutter={[16, 16]}>
+                {sortedVideos.map((item, index) => (
+                    <HomeVideoCard
+                        key={item.num ?? item.path ?? item.url ?? index}
+                        item={item}
+                        index={index}
+                        isBatchMode={isBatchMode}
+                        selected={isSelected(item.num)}
+                        batchVideo={batchVideos[index]}
+                        downloadStatus={statusMap[item.num] || 'none'}
+                        toggleVideoSelection={toggleVideoSelection}
+                        navigate={navigate}
+                    />
+                ))}
+            </Row>
+        </>
+    );
+});
 
 function JavDB() {
     const colors = useThemeColors();
@@ -72,6 +310,9 @@ function JavDB() {
     const batchSelect = useBatchSelect();
     const [batchDownloadModalVisible, setBatchDownloadModalVisible] = React.useState(false);
     const currentVideosRef = React.useRef<BatchSelectVideo[]>([]);
+    const handleVideosChange = useCallback((nextVideos: BatchSelectVideo[]) => {
+        currentVideosRef.current = nextVideos;
+    }, []);
 
     // 扫描相关状态
     const [scanning, setScanning] = React.useState(false);
@@ -159,37 +400,6 @@ function JavDB() {
             span: { lg: 24, md: 24, xs: 24 }
         },
     ], []);
-
-    const sortVideos = useCallback((videos: any[], sortBy: string, sortOrder: string) => {
-        return [...videos].sort((a, b) => {
-            const getValue = (video: any) => {
-                switch (sortBy) {
-                    case 'rank_count':
-                        return Number(video.rank_count ?? video.comments_count ?? video.comments ?? 0) || 0;
-                    case 'publish_date': {
-                        const date = video.publish_date ?? video.release_date ?? '1970-01-01';
-                        return new Date(date).getTime();
-                    }
-                    case 'rank':
-                    default:
-                        return Number(video.rank ?? video.rating ?? 0) || 0;
-                }
-            };
-            const aValue = getValue(a);
-            const bValue = getValue(b);
-            return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-        });
-    }, []);
-
-    const normalizeVideos = useCallback((videos: any[]) => {
-        if (!Array.isArray(videos)) return [];
-        return videos.map((video) => {
-            const rank = Number(video.rank ?? video.rating ?? 0) || 0;
-            const rankCount = Number(video.rank_count ?? video.comments_count ?? video.comments ?? 0) || 0;
-            const publishDate = video.publish_date ?? video.release_date ?? '';
-            return { ...video, rank, rank_count: rankCount, publish_date: publishDate };
-        });
-    }, []);
 
     const mobileActionItems = useMemo(() => [
         { key: 'scan', label: '扫描本地视频文件', icon: <FolderOpenOutlined />, disabled: scanning, onClick: handleScan },
@@ -376,142 +586,24 @@ function JavDB() {
                         );
                     }
 
-                    const videos = normalizeVideos(Array.isArray(result?.items) ? result.items : []);
-                    const minRank = Number(filter.rank ?? 0);
-                    const filteredVideos = videos.filter((item: any) => item.rank >= minRank);
-                    const sortedVideos = sortVideos(filteredVideos, filter.sort_by || 'rank', filter.sort_order || 'desc');
+                    const rawItems = result?.items;
+                    const items: RankingVideo[] = Array.isArray(rawItems) ? rawItems : EMPTY_RANKING_ITEMS;
 
-                    const batchVideos: BatchSelectVideo[] = sortedVideos.map((item: any) => ({
-                        num: item.num, title: item.title, cover: item.cover, url: item.url,
-                        is_zh: item.is_zh, is_uncensored: item.is_uncensored,
-                        rank: item.rank, publish_date: item.publish_date, source: 'JavDB',
-                    }));
-
-                    // 更新当前视频列表（用于全选）- 在渲染阶段安全地设置 ref
-                    // 使用 queueMicrotask 确保不阻塞渲染
-                    queueMicrotask(() => { currentVideosRef.current = batchVideos; });
-
-                    const staleBanner = isStale ? (
-                        <div style={{
-                            marginTop: 8,
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            background: colors.rgba('gold', 0.08),
-                            border: `1px solid ${colors.rgba('gold', 0.2)}`,
-                            color: colors.textSecondary,
-                            fontSize: 13,
-                        }}>
-                            源站暂时无法访问，当前显示的是较早缓存的数据。
-                        </div>
-                    ) : null;
-
-                    return sortedVideos.length > 0 ? (
-                        <>
-                        {staleBanner}
-                        <Row className={'mt-2 cursor-pointer'} gutter={[16, 16]}>
-                            {sortedVideos.map((item: any, index: number) => {
-                                const isSelected = batchSelect.isSelected(item.num);
-                                const batchVideo: BatchSelectVideo = batchVideos[index];
-
-                                return (
-                                    <Col
-                                        key={item.url}
-                                        span={24}
-                                        md={12}
-                                        lg={6}
-                                        className={`tissue-animate-in tissue-stagger-${(index % 8) + 1}`}
-                                        onClick={() => {
-                                            if (batchSelect.isBatchMode) {
-                                                batchSelect.toggleVideoSelection(batchVideo);
-                                            } else {
-                                                navigate({
-                                                    to: '/home/detail',
-                                                    search: { source: 'JavDB', url: item.url, num: item.num }
-                                                });
-                                            }
-                                        }}
-                                    >
-                                        <div style={{ position: 'relative', height: '100%' }}>
-                                            {batchSelect.isBatchMode && (
-                                                <div style={{
-                                                    position: 'absolute', top: 12, left: 12, zIndex: 20,
-                                                    background: colors.rgba('bgContainer', 0.95), backdropFilter: 'blur(10px)',
-                                                    borderRadius: '8px', padding: '4px',
-                                                    border: `1px solid ${colors.borderPrimary}`,
-                                                    boxShadow: `0 2px 8px ${colors.rgba('black', 0.2)}`,
-                                                }}>
-                                                    <Checkbox
-                                                        checked={isSelected}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        onChange={() => batchSelect.toggleVideoSelection(batchVideo)}
-                                                        style={{ transform: 'scale(1.15)' }}
-                                                    />
-                                                </div>
-                                            )}
-                                            <div style={{
-                                                borderRadius: '18px', overflow: 'hidden',
-                                                border: isSelected ? `3px solid ${colors.goldPrimary}` : '3px solid transparent',
-                                                boxShadow: isSelected ? `0 0 0 1px ${colors.rgba('gold', 0.2)}, 0 8px 24px ${colors.rgba('gold', 0.3)}` : 'none',
-                                                transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                                opacity: batchSelect.isBatchMode && !isSelected ? 0.6 : 1,
-                                                transform: isSelected ? 'scale(0.98)' : 'scale(1)',
-                                            }}>
-                                                <JavDBItem
-                                                    item={item}
-                                                    downloadStatus={statusMap[item.num] || 'none'}
-                                                />
-                                            </div>
-                                        </div>
-                                    </Col>
-                                );
-                            })}
-                        </Row>
-                        </>
-                    ) : (
-                        <div
-                            className="tissue-animate-in"
-                            style={{
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                padding: '100px 40px',
-                                background: `linear-gradient(135deg, ${colors.rgba('bgContainer', 0.8)} 0%, ${colors.rgba('black', 0.3)} 100%)`,
-                                backdropFilter: 'blur(20px)', borderRadius: '20px',
-                                border: `1px solid ${colors.borderPrimary}`,
-                                boxShadow: `0 8px 32px ${colors.rgba('black', 0.1)}`,
-                                marginTop: '60px', position: 'relative', overflow: 'hidden',
-                            }}
-                        >
-                            <div style={{
-                                position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%',
-                                background: `radial-gradient(circle, ${colors.rgba('gold', 0.08)} 0%, transparent 70%)`,
-                                pointerEvents: 'none',
-                            }} />
-                            <div style={{
-                                position: 'absolute', bottom: -30, left: -30, width: 150, height: 150, borderRadius: '50%',
-                                background: `radial-gradient(circle, ${colors.rgba('gold', 0.05)} 0%, transparent 70%)`,
-                                pointerEvents: 'none',
-                            }} />
-                            <div style={{
-                                width: 120, height: 120, borderRadius: '50%',
-                                background: colors.rgba('gold', 0.08),
-                                border: `2px solid ${colors.rgba('gold', 0.2)}`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                marginBottom: '32px', animation: 'tissue-glow-pulse 3s ease-in-out infinite',
-                            }}>
-                                <InboxOutlined style={{ fontSize: '56px', color: colors.goldPrimary }} />
-                            </div>
-                            <div style={{ fontSize: '22px', fontWeight: 600, color: colors.textPrimary, marginBottom: '12px', letterSpacing: '0.02em' }}>
-                                没有找到符合条件的视频
-                            </div>
-                            <div style={{ fontSize: '15px', color: colors.textSecondary, textAlign: 'center', lineHeight: '1.6', maxWidth: '400px', marginBottom: '24px' }}>
-                                {filter.rank > 0 ? '请尝试降低评分要求或调整其他筛选条件' : '请调整筛选条件重试，或者稍后再来看看'}
-                            </div>
-                            <div style={{
-                                width: '60px', height: '3px',
-                                background: `linear-gradient(90deg, transparent 0%, ${colors.goldPrimary} 50%, transparent 100%)`,
-                                borderRadius: '2px',
-                            }} />
-                        </div>
-                    )
+                    return (
+                        <HomeVideoGrid
+                            items={items}
+                            minRank={Number(filter.rank ?? 0)}
+                            sortBy={filter.sort_by || 'rank'}
+                            sortOrder={filter.sort_order || 'desc'}
+                            stale={isStale}
+                            isBatchMode={batchSelect.isBatchMode}
+                            isSelected={batchSelect.isSelected}
+                            toggleVideoSelection={batchSelect.toggleVideoSelection}
+                            statusMap={statusMap}
+                            onVideosChange={handleVideosChange}
+                            navigate={navigate}
+                        />
+                    );
                 }}
             </Await>
 

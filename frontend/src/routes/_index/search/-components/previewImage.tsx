@@ -5,8 +5,11 @@ import {useSelector} from "react-redux";
 import {RootState} from "../../../../models";
 import {PlayCircleTwoTone} from "@ant-design/icons";
 import {theme} from "antd";
+import {LazyLoadImage} from "react-lazy-load-image-component";
 
 const {useToken} = theme
+
+const PREVIEW_IMAGE_MAX_HEIGHT = 80
 
 interface Props extends React.ComponentProps<any> {
     src: string,
@@ -26,7 +29,7 @@ function PreviewImage(props: Props) {
                     <PlayCircleTwoTone style={{color: token.colorPrimary}} className={'text-4xl'}/>
                 </div>
             )}
-            <img className={'w-full h-auto align-bottom object-contain'} style={{maxHeight: 80}} src={api.getVideoCover(src)}
+            <LazyLoadImage className={'w-full h-auto align-bottom object-contain'} style={{maxHeight: PREVIEW_IMAGE_MAX_HEIGHT}} src={api.getVideoCover(src)}
                  alt=""/>
         </div>
     )

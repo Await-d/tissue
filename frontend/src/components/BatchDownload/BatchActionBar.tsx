@@ -7,12 +7,8 @@ import React from 'react';
 import { Button, Space, Checkbox } from 'antd';
 import {
     CloudDownloadOutlined,
-    CloseOutlined,
-    CheckSquareOutlined,
-    BorderOutlined
+    CloseOutlined
 } from '@ant-design/icons';
-import type { BatchSelectVideo } from '@/hooks/useBatchSelect';
-import { useThemeColors } from '../../hooks/useThemeColors';
 import './BatchActionBar.css';
 
 interface BatchActionBarProps {
@@ -44,7 +40,6 @@ const BatchActionBar: React.FC<BatchActionBarProps> = ({
     onExit,
     loading = false,
 }) => {
-    const colors = useThemeColors();
     if (!visible) return null;
 
     const isAllSelected = selectedCount > 0 && selectedCount === totalCount;

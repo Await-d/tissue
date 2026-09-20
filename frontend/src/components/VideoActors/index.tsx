@@ -1,4 +1,4 @@
-import { Avatar, message, Tooltip, Button, Typography, Space } from "antd";
+import { Avatar, message, Button, Typography, Space } from "antd";
 import * as api from "../../apis/video";
 import React, { useState } from "react";
 import ModifyModal from "./modifyModal";
@@ -28,8 +28,7 @@ function VideoActors(props: Props) {
             }
             onChange?.([...(value || []), data])
         } else if (editMode == 'edit') {
-            value!![selected!!] = data
-            onChange?.(value && [...value])
+            onChange?.(value?.map((item, index) => index != selected ? item : data))
         }
         setEditMode(undefined)
         setSelected(undefined)

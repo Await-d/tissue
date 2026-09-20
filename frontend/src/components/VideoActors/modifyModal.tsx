@@ -25,7 +25,7 @@ function ModifyModal(props: Props) {
             form.resetFields();
             setPreviewThumb(undefined);
         }
-    }, [props.open, data]);
+    }, [props.open, data, form]);
 
     function onSave(value: any) {
         onOk?.(value);

@@ -8,7 +8,7 @@ export async function getUsers(params: any, extra: any) {
     });
     return ({
         list: response.data,
-        total: 0
+        total: response.total ?? (Array.isArray(response.data) ? response.data.length : 0)
     });
 }
 

@@ -11,7 +11,6 @@ import PinView, {PinMode} from "../../components/PinView";
 import {createFileRoute, Outlet, redirect} from "@tanstack/react-router";
 import {useDispatch, useSelector} from "react-redux";
 import {Dispatch, RootState} from "../../models";
-import pinView from "../../components/PinView";
 
 const {useToken} = theme
 
@@ -41,12 +40,14 @@ function RouteLayout() {
     useEffect(() => {
         dispatch.getInfo()
         dispatch.getVersions()
-    }, [])
+    }, [dispatch])
 
     useEffect(() => {
         if (pin) {
             setPinVisible(true)
         }
+        // 仅在进入前台(visible)时校验 PIN；pin 变化不应立即弹出验证框
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible])
 
     useEffect(() => {

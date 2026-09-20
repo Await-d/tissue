@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
-  Card,
   Row,
   Col,
-  Statistic,
   Button,
-  Space,
   Table,
   Tag,
   Alert,
@@ -13,8 +10,6 @@ import {
   Progress,
   Descriptions,
   List,
-  Typography,
-  Divider,
   App,
   Popconfirm
 } from 'antd'
@@ -45,8 +40,6 @@ export const Route = createFileRoute('/_index/setting/version')({
   component: VersionManagement
 })
 
-const { Title, Text } = Typography
-
 function VersionManagement() {
   const { message, modal } = App.useApp()
   const colors = useThemeColors()
@@ -57,7 +50,7 @@ function VersionManagement() {
   const [migrationLoading, setMigrationLoading] = useState(false)
   const [migrationModalVisible, setMigrationModalVisible] = useState(false)
 
-  const loadVersionInfo = async () => {
+  const loadVersionInfo = useCallback(async () => {
     try {
       setLoading(true)
       const [info, status, historyResponse] = await Promise.all([
@@ -69,16 +62,16 @@ function VersionManagement() {
       setVersionInfo(info)
       setVersionStatus(status.data || null)
       setVersionHistory(historyResponse.data?.history || [])
-    } catch (error) {
+    } catch (_error) {
       message.error('加载版本信息失败')
     } finally {
       setLoading(false)
     }
-  }
+  }, [message])
 
   useEffect(() => {
     loadVersionInfo()
-  }, [])
+  }, [loadVersionInfo])
 
   const handleCheckUpdate = async () => {
     try {
@@ -92,7 +85,7 @@ function VersionManagement() {
       }
       
       loadVersionInfo()
-    } catch (error) {
+    } catch (_error) {
       message.error('检查版本更新失败')
     } finally {
       setLoading(false)
@@ -135,7 +128,7 @@ function VersionManagement() {
         message.error(`数据库迁移执行失败: ${migrationResponse.message}`)
       }
       
-    } catch (error) {
+    } catch (_error) {
       message.error('执行数据库迁移失败')
     } finally {
       setMigrationLoading(false)
@@ -147,18 +140,8 @@ function VersionManagement() {
       await forceSaveVersion()
       message.success('版本信息已强制保存')
       loadVersionInfo()
-    } catch (error) {
+    } catch (_error) {
       message.error('强制保存版本信息失败')
-    }
-  }
-
-  const getHealthStatusColor = (status: string) => {
-    switch (status) {
-      case 'excellent': return 'success'
-      case 'good': return 'processing'
-      case 'warning': return 'warning'
-      case 'critical': return 'exception'
-      default: return 'normal'
     }
   }
 

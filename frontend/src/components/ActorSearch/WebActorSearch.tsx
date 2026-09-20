@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Tabs, Modal, Radio, Space, Button, Tooltip, Tag, App, Rate, Select, Checkbox, Row, Col, InputNumber, Switch } from 'antd';
+import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Modal, Radio, Space, Button, Tooltip, Tag, App, Rate, Select, Checkbox, Row, Col, InputNumber } from 'antd';
 import { SearchOutlined, UserOutlined, CloudDownloadOutlined, RedoOutlined, StarOutlined, StarFilled, CheckCircleFilled, FilterOutlined, CheckSquareOutlined, BorderOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
 import * as subscribeApi from '../../apis/subscribe';
@@ -63,21 +63,22 @@ interface SavedState {
     actorVideos?: any[];
 }
 
+// 尝试从localStorage获取保存的状态
+const getSavedState = (): SavedState | null => {
+    try {
+        const savedStateString = localStorage.getItem(STORAGE_KEY);
+        if (savedStateString) {
+            return JSON.parse(savedStateString);
+        }
+    } catch (error) {
+        console.error('Failed to parse saved state:', error);
+    }
+    return null;
+};
+
 const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultSearchValue }) => {
     const { message } = App.useApp();
     const colors = useThemeColors();
-    // 尝试从localStorage获取保存的状态
-    const getSavedState = (): SavedState | null => {
-        try {
-            const savedStateString = localStorage.getItem(STORAGE_KEY);
-            if (savedStateString) {
-                return JSON.parse(savedStateString);
-            }
-        } catch (error) {
-            console.error('Failed to parse saved state:', error);
-        }
-        return null;
-    };
 
     const savedState = getSavedState();
 
@@ -111,18 +112,13 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         sortBy: 'comments',
         sortOrder: 'desc'
     });
-    const [progress, setProgress] = useState({
-        total: 0,
-        loaded: 0,
-        isLoading: false
-    });
 
     // 批量选择相关状态
     const batchSelect = useBatchSelect();
     const [batchDownloadModalVisible, setBatchDownloadModalVisible] = useState(false);
 
-    // 保存状态到localStorage
-    const saveState = () => {
+    // 当关键状态变化时保存状态到localStorage
+    useEffect(() => {
         try {
             const stateToSave: SavedState = {
                 searchValue,
@@ -133,15 +129,10 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
         } catch (error) {
             console.error('Failed to save state:', error);
         }
-    };
-
-    // 当关键状态变化时保存状态
-    useEffect(() => {
-        saveState();
     }, [searchValue, selectedActor, sourceType]);
 
     // 获取热门演员列表
-    const { data: actorsData = [], loading: loadingActors, refresh: refreshActors } = useRequest(
+    const { data: actorsData = [], loading: loadingActors } = useRequest(
         () => api.getWebActors(sourceType),
         {
             refreshDeps: [sourceType],
@@ -279,14 +270,15 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
 
     // 初始化时处理默认搜索值或恢复保存的状态
     useEffect(() => {
+        const saved = getSavedState();
         if (defaultSearchValue && defaultSearchValue.trim()) {
             // 如果有默认搜索值，优先使用默认搜索值
             setSearchValue(defaultSearchValue);
             searchActor(defaultSearchValue);
-        } else if (savedState?.selectedActor && savedState.searchValue) {
+        } else if (saved?.selectedActor && saved.searchValue) {
             // 如果有保存的演员，恢复之前的状态
-            if (savedState.selectedActor.name) {
-                fetchActorVideos(savedState.selectedActor.name);
+            if (saved.selectedActor.name) {
+                fetchActorVideos(saved.selectedActor.name);
             }
         }
     }, [defaultSearchValue, searchActor, fetchActorVideos]);
@@ -1371,7 +1363,7 @@ const WebActorSearch: React.FC<WebActorSearchProps> = ({ onVideoSelect, defaultS
                 videos={batchSelect.getSelectedList()}
                 sourceType={sourceType}
                 onCancel={() => setBatchDownloadModalVisible(false)}
-                onComplete={(successCount, failCount) => {
+                onComplete={(successCount, _failCount) => {
                     setBatchDownloadModalVisible(false);
                     if (successCount > 0) {
                         batchSelect.exitBatchMode();

@@ -2,6 +2,7 @@ import {Card, Tabs} from "antd";
 import React from "react";
 import {AppstoreOutlined, CloudDownloadOutlined, FolderOpenOutlined, NotificationOutlined, RobotOutlined, BranchesOutlined, FilterOutlined, CloudOutlined} from "@ant-design/icons";
 import {createFileRoute, Outlet, useLocation, useNavigate} from "@tanstack/react-router";
+import {SettingsProvider} from "./-context/SettingsContext";
 
 export const Route = createFileRoute('/_index/setting')({
     component: Setting
@@ -63,7 +64,9 @@ function Setting() {
                 items={items}
                 onChange={key => navigate({to: key})}
             />
-            <Outlet/>
+            <SettingsProvider>
+                <Outlet/>
+            </SettingsProvider>
         </Card>
     )
 }

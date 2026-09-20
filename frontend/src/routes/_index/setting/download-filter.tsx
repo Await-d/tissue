@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Form,
   InputNumber,
   Switch,
   Button,
-  Card,
-  Space,
   App,
-  Divider,
   Row,
   Col,
   Alert,
   Tag,
   Modal,
   Input,
-  Statistic,
   Tooltip,
   Typography
 } from 'antd'
@@ -23,7 +19,6 @@ import {
   ExperimentOutlined,
   ReloadOutlined,
   SettingOutlined,
-  FilterOutlined,
   DeleteOutlined,
   EyeOutlined
 } from '@ant-design/icons'
@@ -38,7 +33,7 @@ export const Route = createFileRoute('/_index/setting/download-filter')({
   component: DownloadFilterSettings
 })
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 function DownloadFilterSettings() {
   const { message, modal } = App.useApp()
@@ -50,7 +45,7 @@ function DownloadFilterSettings() {
   const [cleanupResultModalVisible, setCleanupResultModalVisible] = useState(false)
   const [cleanupResult, setCleanupResult] = useState<CleanupResultData | null>(null)
 
-  const { loading } = useRequest(api.getFilterSettings, {
+  useRequest(api.getFilterSettings, {
     onSuccess: (res) => {
       if (res.data) {
         form.setFieldsValue(res.data)

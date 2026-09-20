@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Modal, List, Card, Row, Col, Space, Tag, Typography, Button, Tooltip, Avatar, App, Checkbox, Empty, Spin, Input, Select, Radio, Alert } from 'antd';
-import { DeleteOutlined, UserOutlined, FileOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
+import { Modal, List, Card, Row, Col, Space, Tag, Typography, Button, Tooltip, App, Checkbox, Empty, Spin, Input, Select, Alert } from 'antd';
+import { DeleteOutlined, FileOutlined, SearchOutlined } from '@ant-design/icons';
 import * as api from '../../../../apis/subscribe';
 import * as videoApi from '../../../../apis/video';
 import './AllDownloadsModal.css';

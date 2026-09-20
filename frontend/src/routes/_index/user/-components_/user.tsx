@@ -20,8 +20,12 @@ import { useThemeColors } from '../../../../hooks/useThemeColors';
 function UserList() {
     const { message } = App.useApp();
     const { tableProps, refresh } = useAntdTable(api.getUsers)
-    const { setOpen, modalProps, form } = useFormModal({
+    const { setOpen, modalProps } = useFormModal({
         service: api.modifyUser,
+        transform: (values: any) => {
+            const { confirmPassword, ...payload } = values
+            return payload
+        },
         onOk: () => {
             message.success("保存成功")
             setOpen(false)

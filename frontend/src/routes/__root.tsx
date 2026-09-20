@@ -5,7 +5,7 @@
  * @LastEditTime: 2025-05-26 16:49:02
  * @Description: TISSUE+ 根路由 - 电影美学主题配置
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import zhCN from "antd/lib/locale/zh_CN";
 import dayjs from "dayjs";
 import localizedFormat from 'dayjs/plugin/localizedFormat';
@@ -16,12 +16,16 @@ import { useSelector } from "react-redux";
 
 import { ConfigProvider, theme, App as AntdApp } from "antd";
 import { RootState } from "../models";
+import { ThemeColorsProvider } from "../theme/ThemeColorsProvider";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 
 
 dayjs.extend(relativeTime)
 dayjs.extend(localizedFormat)
 dayjs.locale('zh-cn')
+
+// 稳定的弹层挂载容器（模块级，避免每次渲染重建函数）
+const getPopupContainer = () => document.body
 
 interface MyRouteContext {
     userToken?: string
@@ -567,47 +571,37 @@ function App() {
     const { theme: systemTheme } = useTheme()
 
     // 判断当前是否为暗色模式
-    const isDark = () => {
+    const isDark = useMemo(() => {
         if (themeMode === 'dark') return true
         if (themeMode === 'light') return false
         // system 模式：根据系统主题判断
         return systemTheme === 'dark'
-    }
+    }, [themeMode, systemTheme])
 
-    // 根据当前主题模式返回对应的算法
-    const getAlgorithm = () => {
-        return isDark() ? theme.darkAlgorithm : theme.defaultAlgorithm
-    }
-
-    // 根据当前主题模式返回对应的 token 配置
-    const getThemeTokens = () => {
-        return isDark() ? darkTheme : lightTheme
-    }
-
-    // 根据当前主题模式返回对应的组件配置
-    const getComponentTokens = () => {
-        return isDark() ? darkComponentTokens : lightComponentTokens
-    }
+    // 缓存 antd 主题配置，避免每次渲染创建新的 theme 对象
+    const antdTheme = useMemo(() => ({
+        algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: isDark ? darkTheme : lightTheme,
+        components: isDark ? darkComponentTokens : lightComponentTokens,
+    }), [isDark])
 
     // 同步主题到 HTML 和 body 元素，以便 CSS 变量能正确切换
     useEffect(() => {
-        const currentTheme = isDark() ? 'dark' : 'light'
+        const currentTheme = isDark ? 'dark' : 'light'
         document.documentElement.setAttribute('data-theme', currentTheme)
         document.body.setAttribute('data-theme', currentTheme)
-    }, [themeMode, systemTheme])
+    }, [isDark])
 
     return (
         <ConfigProvider
             locale={zhCN}
-            getPopupContainer={() => document.body}
-            theme={{
-                algorithm: getAlgorithm(),
-                token: getThemeTokens(),
-                components: getComponentTokens(),
-            }}>
-            <AntdApp>
-                <Outlet />
-            </AntdApp>
+            getPopupContainer={getPopupContainer}
+            theme={antdTheme}>
+            <ThemeColorsProvider>
+                <AntdApp>
+                    <Outlet />
+                </AntdApp>
+            </ThemeColorsProvider>
         </ConfigProvider>
     );
 }

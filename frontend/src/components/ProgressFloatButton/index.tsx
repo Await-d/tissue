@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FloatButton, Badge, ConfigProvider } from 'antd';
 import { MonitorOutlined } from '@ant-design/icons';
 import ProgressMonitor, { ProgressManager } from '../ProgressMonitor';
@@ -24,23 +24,25 @@ const ProgressFloatButton: React.FC<ProgressFloatButtonProps> = ({ style }) => {
         return unsubscribe;
     }, []);
 
+    const themeConfig = useMemo(() => ({
+        components: {
+            FloatButton: {
+                colorPrimary: colors.goldPrimary,
+                colorPrimaryHover: colors.goldLight,
+                colorBgElevated: colors.bgContainer,
+                colorText: colors.textPrimary,
+                colorBorder: colors.borderPrimary,
+            },
+            Badge: {
+                colorError: colors.goldPrimary,
+                colorBgContainer: colors.bgBase,
+            }
+        }
+    }), [colors]);
+
     return (
         <ConfigProvider
-            theme={{
-                components: {
-                    FloatButton: {
-                        colorPrimary: colors.goldPrimary,
-                        colorPrimaryHover: colors.goldLight,
-                        colorBgElevated: colors.bgContainer,
-                        colorText: colors.textPrimary,
-                        colorBorder: colors.borderPrimary,
-                    },
-                    Badge: {
-                        colorError: colors.goldPrimary,
-                        colorBgContainer: colors.bgBase,
-                    }
-                }
-            }}
+            theme={themeConfig}
         >
             <Badge count={activeCount} offset={[-8, 8]}>
                 <FloatButton

@@ -1,8 +1,8 @@
 import {useRequest} from "ahooks";
 import * as api from "../../../apis/video";
-import {Card, Col, Empty, FloatButton, Pagination, Row, Skeleton, Space, Tag} from "antd";
+import {Card, Col, Empty, FloatButton, Pagination, Row, Tag} from "antd";
 import VideoCover from "../../../components/VideoCover";
-import React, {useMemo, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {createPortal} from "react-dom";
 import {FilterOutlined, RedoOutlined} from "@ant-design/icons";
 import VideoFilterModal, {FilterParams} from "./-components/filter.tsx";
@@ -24,21 +24,26 @@ function Video() {
     const [filterOpen, setFilterOpen] = useState(false)
     const [filterParams, setFilterParams] = useState<FilterParams>({})
     const [currentPage, setCurrentPage] = useState(1)
+    const [portalHost, setPortalHost] = useState<HTMLElement | null>(null)
+
+    useEffect(() => {
+        setPortalHost((document.getElementsByClassName('index-float-button-group')[0] as HTMLElement) ?? null)
+    }, [])
 
     const actors = useMemo(() => {
-        const actors: any[] = []
-        data.forEach((video: any) => {
-            video.actors.forEach((actor: any) => {
-                const exist = actors.find(i => i.name == actor.name)
+        // 聚合演员统计：用 Map 替代 O(n*m) 的 find 扫描，并且只构建新对象，绝不修改接口缓存对象
+        const byName = new Map<string | undefined, { name?: string; count: number }>()
+        data.forEach((video: { actors?: Array<{ name?: string }> | null } | null) => {
+            video?.actors?.forEach((actor) => {
+                const exist = byName.get(actor?.name)
                 if (exist) {
-                    exist.count = exist.count + 1
+                    byName.set(actor?.name, {...exist, count: exist.count + 1})
                 } else {
-                    actor.count = 1
-                    actors.push(actor)
+                    byName.set(actor?.name, {...actor, count: 1})
                 }
             })
         })
-        return actors
+        return Array.from(byName.values())
     }, [data])
 
     const videos = useMemo(() => {
@@ -314,7 +319,7 @@ function Video() {
                                   setFilterOpen(false)
                               }}/>
             <>
-                {createPortal((
+                {portalHost && createPortal((
                         <>
                             <FloatButton
                                 icon={<RedoOutlined/>}
@@ -339,7 +344,7 @@ function Video() {
                                 }}
                             />
                         </>
-                    ), document.getElementsByClassName('index-float-button-group')[0]
+                    ), portalHost
                 )}
             </>
         </Row>

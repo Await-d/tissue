@@ -1,4 +1,4 @@
-import { Badge, Col, Empty, List, Modal, Row, Space, Statistic, Tag } from "antd";
+import { Badge, Col, Empty, List, Modal, Row, Statistic, Tag } from "antd";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
 import type { CleanupResultData } from "@/types/cleanup";
 

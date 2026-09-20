@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Table,
   Button,
@@ -17,7 +17,6 @@ import {
   Col,
   Statistic,
   List,
-  Avatar,
   Divider,
   Grid
 } from 'antd'
@@ -38,7 +37,6 @@ import {
 import { useThemeColors } from '../../../hooks/useThemeColors'
 import './rules-style.css'
 
-const { Option } = Select
 const { useBreakpoint } = Grid
 
 function AutoDownloadRules() {
@@ -58,7 +56,7 @@ function AutoDownloadRules() {
   const screens = useBreakpoint()
 
   // 加载规则列表
-  const loadRules = async (page = 1, pageSize = 20) => {
+  const loadRules = useCallback(async (page = 1, pageSize = 20) => {
     try {
       setLoading(true)
       const response = await getRules({
@@ -83,10 +81,10 @@ function AutoDownloadRules() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [message])
 
   // 加载统计信息
-  const loadStatistics = async () => {
+  const loadStatistics = useCallback(async () => {
     try {
       const stats = await getStatistics()
       console.log('获取到的统计数据:', stats)
@@ -95,12 +93,12 @@ function AutoDownloadRules() {
       console.error('加载统计信息失败:', error)
       message.error('加载统计信息失败')
     }
-  }
+  }, [message])
 
   useEffect(() => {
     loadRules()
     loadStatistics()
-  }, [])
+  }, [loadRules, loadStatistics])
 
   // 创建/更新规则
   const handleSubmit = async (values: any) => {
@@ -142,7 +140,7 @@ function AutoDownloadRules() {
       message.success('规则删除成功')
       loadRules(pagination.current, pagination.pageSize)
       loadStatistics()
-    } catch (error) {
+    } catch (_error) {
       message.error('规则删除失败')
     }
   }
@@ -154,7 +152,7 @@ function AutoDownloadRules() {
       message.success(`规则已${enabled ? '启用' : '禁用'}`)
       loadRules(pagination.current, pagination.pageSize)
       loadStatistics()
-    } catch (error) {
+    } catch (_error) {
       message.error('操作失败')
     }
   }
@@ -166,7 +164,7 @@ function AutoDownloadRules() {
       await triggerAutoDownload({ rule_ids: ruleIds })
       message.success('触发成功')
       loadStatistics()
-    } catch (error) {
+    } catch (_error) {
       message.error('触发失败')
     } finally {
       setLoading(false)
@@ -447,7 +445,7 @@ function AutoDownloadRules() {
           loading={loading}
           dataSource={rules}
           className="rules-mobile-list"
-          renderItem={(rule, index) => (
+          renderItem={(rule, _index) => (
             <List.Item style={{ padding: 0, marginBottom: 16 }} className="mobile-rule-item">
               <Card
                 size="small"

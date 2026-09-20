@@ -1,11 +1,9 @@
 /**
  * 主题颜色 Hook
  * 根据当前主题模式动态返回对应的颜色值,用于内联样式
+ * 颜色由 ThemeColorsProvider 统一计算并通过 Context 下发
  */
-import { useMemo } from 'react'
-import { useSelector } from 'react-redux'
-import { useTheme } from 'ahooks'
-import { RootState } from '../models'
+import { createContext, useContext } from 'react'
 import {
     DARK_COLORS,
     LIGHT_COLORS,
@@ -28,34 +26,42 @@ export interface ThemeColors extends ThemeColorConfig {
 }
 
 /**
+ * 纯函数：根据是否为暗色模式计算完整的主题颜色对象
+ * @param isDark - 是否为暗色模式
+ * @returns 主题颜色对象
+ */
+export const computeThemeColors = (isDark: boolean): ThemeColors => {
+    const baseColors = isDark ? DARK_COLORS : LIGHT_COLORS
+    const rgbaColors = isDark ? DARK_RGBA_COLORS : LIGHT_RGBA_COLORS
+
+    return {
+        ...baseColors,
+        // 工具方法：生成 rgba 颜色（用于动态透明度）
+        rgba: (color: 'gold' | 'white' | 'black' | 'red' | 'green' | 'blue' | 'warning' | 'bgContainer', alpha: number) => {
+            return `rgba(${rgbaColors[color]}, ${alpha})`
+        },
+        // 模态框专用颜色（直接暴露）
+        modalBg: baseColors.modalBg,
+        modalOverlay: baseColors.modalOverlay,
+    }
+}
+
+/**
+ * 亮色模式静态默认值（模块级常量）
+ * 若组件在 ThemeColorsProvider 之外渲染,则作为兜底值,避免崩溃
+ */
+const LIGHT_DEFAULT: ThemeColors = computeThemeColors(false)
+
+/**
+ * 主题颜色 Context
+ * 由 ThemeColorsProvider 提供,useThemeColors 消费
+ */
+export const ThemeColorsContext = createContext<ThemeColors>(LIGHT_DEFAULT)
+
+/**
  * 主题颜色 Hook
- * 性能优化：使用 useMemo 缓存计算结果
+ * 从 ThemeColorsContext 读取,不再在调用点各自订阅 redux / matchMedia
  */
 export const useThemeColors = (): ThemeColors => {
-    const themeMode = useSelector((state: RootState) => state.app?.themeMode)
-    const { theme: systemTheme } = useTheme()
-
-    // 使用 useMemo 缓存 isDark 计算
-    const isDark = useMemo(() => {
-        if (themeMode === 'dark') return true
-        if (themeMode === 'light') return false
-        return systemTheme === 'dark'
-    }, [themeMode, systemTheme])
-
-    // 使用 useMemo 缓存整个颜色对象
-    return useMemo(() => {
-        const baseColors = isDark ? DARK_COLORS : LIGHT_COLORS
-        const rgbaColors = isDark ? DARK_RGBA_COLORS : LIGHT_RGBA_COLORS
-
-        return {
-            ...baseColors,
-            // 工具方法：生成 rgba 颜色（用于动态透明度）
-            rgba: (color: 'gold' | 'white' | 'black' | 'red' | 'green' | 'blue' | 'warning' | 'bgContainer', alpha: number) => {
-                return `rgba(${rgbaColors[color]}, ${alpha})`
-            },
-            // 模态框专用颜色（直接暴露）
-            modalBg: baseColors.modalBg,
-            modalOverlay: baseColors.modalOverlay,
-        }
-    }, [isDark])
+    return useContext(ThemeColorsContext)
 }

@@ -1,11 +1,8 @@
-import {Col, Row, theme} from "antd";
+import {Col, Row} from "antd";
 import { useThemeColors } from "../../hooks/useThemeColors";
-
-const {useToken} = theme
 
 function PinPadButton(props: any) {
 
-    const {token} = useToken()
     const colors = useThemeColors()
 
     return (

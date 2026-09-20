@@ -26,7 +26,13 @@ function Subscribe() {
     const [filter, setFilter] = useState<string>()
     const [searchValue, setSearchValue] = useState<string>('')
     const [currentPage, setCurrentPage] = useState(1)
-    const { setOpen, modalProps, form } = useFormModal({
+    const [portalHost, setPortalHost] = useState<HTMLElement | null>(null)
+
+    useEffect(() => {
+        setPortalHost((document.getElementsByClassName('index-float-button-group')[0] as HTMLElement) ?? null)
+    }, [])
+
+    const { setOpen, modalProps } = useFormModal({
         service: api.modifySubscribe,
         onOk: () => {
             setOpen(false)
@@ -48,7 +54,7 @@ function Subscribe() {
     // 过滤订阅数据
     const subscribes = useMemo(() => data.filter((item: any) => {
         if (!filter) return true
-        return item.title.toUpperCase().includes(filter.toUpperCase()) || item.num.toUpperCase().includes(filter.toUpperCase())
+        return ((item.title ?? '').toUpperCase().includes(filter.toUpperCase())) || ((item.num ?? '').toUpperCase().includes(filter.toUpperCase()))
     }), [data, filter])
 
     // 前端分页
@@ -193,7 +199,7 @@ function Subscribe() {
                           }}
             />
             <>
-                {createPortal((
+                {portalHost && createPortal((
                     <>
                         <FloatButton
                             icon={<PlusOutlined />}
@@ -207,7 +213,7 @@ function Subscribe() {
                             className="subscribe-float-btn"
                         />
                     </>),
-                    document.getElementsByClassName('index-float-button-group')[0]
+                    portalHost
                 )}
             </>
         </div>

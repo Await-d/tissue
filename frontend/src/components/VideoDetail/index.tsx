@@ -24,11 +24,12 @@ interface Props extends ModalProps {
     path?: string,
     mode?: string
     transMode?: string
+    initialData?: any
 }
 
 function VideoDetail(props: Props) {
     const { message, modal } = App.useApp()
-    const {path, mode, transMode, onOk, ...otherProps} = props
+    const {path, mode, transMode, initialData, onOk, ...otherProps} = props
     const [form] = Form.useForm()
 
     const {run: onLoad, loading} = useRequest(loadVideoDetail, {
@@ -97,12 +98,18 @@ function VideoDetail(props: Props) {
     }
 
     useEffect(() => {
-        if (otherProps.open && path) {
-            onLoad(path)
+        if (otherProps.open) {
+            if (initialData) {
+                form.setFieldsValue(initialData)
+            } else if (path) {
+                onLoad(path)
+            } else {
+                form.resetFields()
+            }
         } else {
             form.resetFields()
         }
-    }, [otherProps.open])
+    }, [otherProps.open, path, initialData, form, onLoad])
 
     return (
         <Modal 

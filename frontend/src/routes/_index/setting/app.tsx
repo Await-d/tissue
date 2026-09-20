@@ -1,8 +1,8 @@
-import {Button, Form, Input, InputNumber, message, Skeleton, Switch, Divider} from "antd";
-import * as api from "../../../apis/setting.ts";
-import {useRequest} from "ahooks";
+import {Form, Input, InputNumber, Switch} from "antd";
 import {createFileRoute} from "@tanstack/react-router";
 import { useThemeColors } from "../../../hooks/useThemeColors";
+import { useSectionSettings } from "./-context/SettingsContext";
+import { SettingsPage } from "./-component/SettingsPage";
 
 
 export const Route = createFileRoute('/_index/setting/app')({
@@ -11,47 +11,21 @@ export const Route = createFileRoute('/_index/setting/app')({
 
 function SettingApp() {
     const colors = useThemeColors();
-    const [form] = Form.useForm()
-
-    const {loading} = useRequest(api.getSettings, {
-        onSuccess: (res) => {
-            form.setFieldsValue(res.app)
-        }
-    })
-
-    const {run, loading: saving} = useRequest(api.saveSetting, {
-        manual: true,
-        onSuccess: () => {
-            message.success("设置成功")
-        }
-    })
-
-    function onFinish(data: any) {
-        run('app', data)
-    }
+    const {form, loading, saving, submit} = useSectionSettings('app')
 
     return (
-        loading ? (
-            <Skeleton active />
-        ) : (
-            <div className="max-w-5xl mx-auto px-6 py-8">
-                <div style={{ background: colors.cardBg, borderColor: colors.border }} className="rounded-2xl border shadow-2xl overflow-hidden">
-                    {/* 页面标题 */}
-                    <div className="px-8 py-6 border-b" style={{
-                        borderColor: colors.border,
-                        background: `linear-gradient(to right, ${colors.bgDark}, ${colors.cardBg})`
-                    }}>
-                        <h2 className="text-2xl font-bold flex items-center gap-3" style={{ color: colors.gold }}>
-                            <span className="w-1.5 h-8 rounded-full" style={{
-                                background: `linear-gradient(to bottom, ${colors.gold}, ${colors.goldDark})`
-                            }}></span>
-                            应用设置
-                        </h2>
-                        <p className="text-sm mt-2 ml-6" style={{ color: colors.textMuted }}>配置应用基础选项和刮削参数</p>
-                    </div>
-
-                    <div className="p-8">
-                        <Form layout={'vertical'} form={form} onFinish={onFinish}>
+        <SettingsPage
+            title="应用设置"
+            subtitle="配置应用基础选项和刮削参数"
+            loading={loading}
+            form={form}
+            onFinish={submit}
+            saving={saving}
+            maxWidth="5xl"
+            headerGradient="base"
+            cardBorder="solid"
+            saveButtonVariant="legacy"
+        >
                             {/* 视频配置 */}
                             <div className="mb-8">
                                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: colors.goldLight }}>
@@ -316,28 +290,7 @@ function SettingApp() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-center pt-6">
-                                <Button
-                                    type={'primary'}
-                                    size="large"
-                                    loading={saving}
-                                    htmlType={"submit"}
-                                    style={{
-                                        background: `linear-gradient(to right, ${colors.gold}, ${colors.goldDark})`,
-                                        border: 0,
-                                        color: colors.buttonText,
-                                        fontWeight: 600
-                                    }}
-                                    className="w-48 h-11 shadow-lg hover:shadow-xl"
-                                >
-                                    保存设置
-                                </Button>
-                            </div>
-                        </Form>
-                    </div>
-                </div>
-            </div>
-        )
+        </SettingsPage>
     )
 }
 

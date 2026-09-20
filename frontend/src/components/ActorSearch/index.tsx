@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AutoComplete, Input, Avatar, Spin, Empty, List, Card, Button, App, FloatButton } from 'antd';
 import { SearchOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons';
 import * as api from '../../apis/video';
@@ -89,7 +89,7 @@ const ActorSearch: React.FC<ActorSearchProps> = ({ onVideoSelect }) => {
         }
     };
 
-    const handleSelect = async (value: string, option: any) => {
+    const handleSelect = async (value: string, _option: any) => {
         setSearchValue(value);
         setSearching(true);
         try {

@@ -1,4 +1,4 @@
-import {List, Rate, Space, Statistic, theme} from "antd";
+import {List, Rate, Space, theme} from "antd";
 import {LikeOutlined} from "@ant-design/icons";
 
 function Comment(props: { data: any }) {

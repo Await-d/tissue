@@ -1,4 +1,5 @@
 import { request } from '@/utils/requests'
+import type { ApiEnvelope } from '@/utils/response'
 
 // 类型定义
 export interface VersionInfo {
@@ -34,11 +35,7 @@ export interface VersionStatus {
   recommendations: string[]
 }
 
-export interface ApiResponse<T = any> {
-  success: boolean
-  message: string
-  data?: T
-}
+export type ApiResponse<T = any> = ApiEnvelope<T>
 
 // 版本信息API
 export const getVersionInfo = (): Promise<VersionInfo> => {

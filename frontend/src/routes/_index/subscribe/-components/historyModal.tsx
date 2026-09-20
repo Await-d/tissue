@@ -40,7 +40,7 @@ function HistoryModal(props: Props) {
         if (props.open) {
             run()
         }
-    }, [props.open]);
+    }, [props.open, run]);
 
     return (
         <Modal title={'订阅历史'} width={800} footer={null} loading={loading} {...otherProps}>

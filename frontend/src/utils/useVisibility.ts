@@ -35,7 +35,9 @@ function useVisibility() {
             window.removeEventListener('focus', handleForeground)
             document.removeEventListener("visibilitychange", handleVisibilityChange)
         }
-    })
+        // 处理器只调用 setState/console，无外部状态依赖；监听器只需在挂载时注册一次，[] 为刻意选择
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     return visible
 }

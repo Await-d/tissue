@@ -1,5 +1,5 @@
-import {GetProps, Input, InputNumber, Slider as AntSlider, ConfigProvider} from "antd";
-import {useEffect, useState} from "react";
+import {GetProps, Input, Slider as AntSlider, ConfigProvider} from "antd";
+import {useEffect, useMemo, useState} from "react";
 import {useThemeColors} from "../../hooks/useThemeColors";
 
 type SliderProps = GetProps<typeof AntSlider>
@@ -15,30 +15,32 @@ function Slider(props: SliderProps) {
         setSliderValue(value as any)
     }, [value])
 
+    const themeConfig = useMemo(() => ({
+        components: {
+            Slider: {
+                railBg: colors.bgContainer,
+                railHoverBg: colors.bgSpotlight,
+                trackBg: colors.goldPrimary,
+                trackHoverBg: colors.goldLight,
+                handleColor: colors.goldPrimary,
+                handleActiveColor: colors.goldLight,
+                dotActiveBorderColor: colors.goldPrimary,
+                colorPrimaryBorderHover: colors.goldPrimary,
+            },
+            Input: {
+                colorBgContainer: colors.bgContainer,
+                colorBorder: colors.borderPrimary,
+                colorText: colors.textPrimary,
+                colorTextPlaceholder: colors.textTertiary,
+                activeBorderColor: colors.goldPrimary,
+                hoverBorderColor: colors.borderGold,
+            }
+        }
+    }), [colors])
+
     return (
         <ConfigProvider
-            theme={{
-                components: {
-                    Slider: {
-                        railBg: colors.bgContainer,
-                        railHoverBg: colors.bgSpotlight,
-                        trackBg: colors.goldPrimary,
-                        trackHoverBg: colors.goldLight,
-                        handleColor: colors.goldPrimary,
-                        handleActiveColor: colors.goldLight,
-                        dotActiveBorderColor: colors.goldPrimary,
-                        colorPrimaryBorderHover: colors.goldPrimary,
-                    },
-                    Input: {
-                        colorBgContainer: colors.bgContainer,
-                        colorBorder: colors.borderPrimary,
-                        colorText: colors.textPrimary,
-                        colorTextPlaceholder: colors.textTertiary,
-                        activeBorderColor: colors.goldPrimary,
-                        hoverBorderColor: colors.borderGold,
-                    }
-                }
-            }}
+            theme={themeConfig}
         >
             <div className={'flex items-center'}>
                 <AntSlider

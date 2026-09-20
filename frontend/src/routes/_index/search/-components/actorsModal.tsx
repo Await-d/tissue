@@ -1,6 +1,6 @@
 import {SearchOutlined} from "@ant-design/icons";
 import {Modal, ModalProps, Segmented, Space} from "antd";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import { useThemeColors } from '../../../../hooks/useThemeColors';
 
 interface Props extends ModalProps {
@@ -13,11 +13,11 @@ function ActorsModal(props: Props) {
     const [selectedSite, setSelectedSite] = useState<string>()
     const colors = useThemeColors()
 
-    const sites = actors.map((item: any) => item.website)
+    const sites = useMemo(() => actors.map((item: any) => item.website), [actors])
 
     useEffect(() => {
         if (otherProps.open) setSelectedSite(sites[0])
-    }, [otherProps.open])
+    }, [otherProps.open, sites])
 
     const items = actors.find((item: any) => item.website === selectedSite)?.items
 

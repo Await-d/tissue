@@ -28,9 +28,6 @@ import {
 import { useThemeColors } from '../../../hooks/useThemeColors'
 import './subscriptions-style.css'
 
-const { Option } = Select
-const { RangePicker } = DatePicker
-
 function AutoDownloadSubscriptions() {
   const { message } = App.useApp()
   const navigate = useNavigate()
@@ -53,13 +50,17 @@ function AutoDownloadSubscriptions() {
   })
 
   // 加载订阅记录列表
-  const loadSubscriptions = async (page = 1, pageSize = 20) => {
+  const loadSubscriptions = async (
+    page = 1,
+    pageSize = 20,
+    overrideFilters?: typeof filters
+  ) => {
     try {
       setLoading(true)
       const params = {
         page,
         page_size: pageSize,
-        ...filters
+        ...(overrideFilters ?? filters)
       }
       const response = await getSubscriptions(params)
       const { items = [], total = 0 } = response || {}
@@ -70,7 +71,7 @@ function AutoDownloadSubscriptions() {
         pageSize,
         total: total
       })
-    } catch (error) {
+    } catch (_error) {
       message.error('加载订阅记录失败')
       setSubscriptions([])
     } finally {
@@ -84,7 +85,7 @@ function AutoDownloadSubscriptions() {
       const response = await getRules({ page: 1, page_size: 100 })
       const { items = [] } = response || {}
       setRules(items)
-    } catch (error) {
+    } catch (_error) {
       message.error('加载规则列表失败')
       setRules([])
     }
@@ -93,6 +94,8 @@ function AutoDownloadSubscriptions() {
   useEffect(() => {
     loadSubscriptions()
     loadRules()
+    // 仅挂载时加载一次；两个 loader 每次渲染都会重建，加入依赖会随筛选输入重复请求
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 删除订阅记录
@@ -101,7 +104,7 @@ function AutoDownloadSubscriptions() {
       await deleteSubscription(id)
       message.success('删除成功')
       loadSubscriptions(pagination.current, pagination.pageSize)
-    } catch (error) {
+    } catch (_error) {
       message.error('删除失败')
     }
   }
@@ -124,7 +127,7 @@ function AutoDownloadSubscriptions() {
       message.success('操作成功')
       setSelectedRowKeys([])
       loadSubscriptions(pagination.current, pagination.pageSize)
-    } catch (error) {
+    } catch (_error) {
       message.error('操作失败')
     }
   }
@@ -138,7 +141,7 @@ function AutoDownloadSubscriptions() {
       })
       message.success('重试成功')
       loadSubscriptions(pagination.current, pagination.pageSize)
-    } catch (error) {
+    } catch (_error) {
       message.error('重试失败')
     }
   }
@@ -155,14 +158,15 @@ function AutoDownloadSubscriptions() {
 
   // 重置筛选
   const handleReset = () => {
-    setFilters({
+    const emptyFilters = {
       rule_id: undefined,
       status: undefined,
       num: '',
       start_date: '',
       end_date: ''
-    })
-    loadSubscriptions(1, pagination.pageSize)
+    }
+    setFilters(emptyFilters)
+    loadSubscriptions(1, pagination.pageSize, emptyFilters)
   }
 
   // 查看详情
@@ -173,23 +177,6 @@ function AutoDownloadSubscriptions() {
         num: record.num
       }
     })
-  }
-
-  // 状态颜色映射
-  const getStatusColor = (status: string) => {
-    const upperStatus = status?.toUpperCase()
-    switch (upperStatus) {
-      case 'PENDING':
-        return 'default'
-      case 'DOWNLOADING':
-        return 'processing'
-      case 'COMPLETED':
-        return 'success'
-      case 'FAILED':
-        return 'error'
-      default:
-        return 'default'
-    }
   }
 
   // 状态文本映射

@@ -1,4 +1,5 @@
 import { request } from '@/utils/requests'
+import type { ApiEnvelope } from '@/utils/response'
 
 // 类型定义
 export interface FilterSettings {
@@ -54,11 +55,7 @@ export interface FilterStatistics {
   most_common_filtered_types: string[]
 }
 
-export interface ApiResponse<T = any> {
-  success: boolean
-  message: string
-  data?: T
-}
+export type ApiResponse<T = any> = ApiEnvelope<T>
 
 // 过滤设置API
 export const getFilterSettings = (): Promise<ApiResponse<FilterSettings>> => {

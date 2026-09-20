@@ -15,13 +15,15 @@ interface State {
     versions?: { current: string, latest: string, hasNew: boolean },
 }
 
+const initialState: State = {
+    userToken: Cookies.get("userToken"),
+    userInfo: undefined,
+    logging: false,
+    versions: undefined,
+}
+
 export const auth = createModel<RootModel>()({
-    state: {
-        userToken: Cookies.get("userToken"),
-        userInfo: undefined,
-        logging: false,
-        version: undefined,
-    } as State,
+    state: initialState,
     reducers: {
         setLogging(state, payload: boolean) {
             return {...state, logging: payload}
@@ -53,6 +55,8 @@ export const auth = createModel<RootModel>()({
             Cookies.remove("userToken")
             dispatch.app.setPin('')
             dispatch.auth.setToken(undefined)
+            dispatch.auth.setInfo(undefined)
+            dispatch.auth.setVersions(undefined)
             await router.invalidate()
         },
         async getInfo() {

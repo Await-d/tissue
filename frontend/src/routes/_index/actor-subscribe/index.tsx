@@ -5,7 +5,6 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import * as api from '../../../apis/video';
 import * as subscribeApi from '../../../apis/subscribe';
 import { useRequest } from 'ahooks';
-import { createPortal } from 'react-dom';
 import { useThemeColors } from '../../../hooks/useThemeColors';
 import EditSubscribeModal from './-components/EditSubscribeModal';
 import AllDownloadsModal from './-components/AllDownloadsModal';
@@ -39,7 +38,7 @@ function ActorSubscribe() {
     });
 
     // 删除订阅
-    const { run: deleteSubscription, loading: deleting } = useRequest(subscribeApi.deleteActorSubscription, {
+    const { run: deleteSubscription } = useRequest(subscribeApi.deleteActorSubscription, {
         manual: true,
         onSuccess: () => {
             message.success('已取消订阅');
@@ -70,9 +69,9 @@ function ActorSubscribe() {
     });
 
     // 更新订阅状态（暂停/恢复）
-    const { run: updateSubscriptionStatus, loading: updatingStatus } = useRequest(subscribeApi.updateActorSubscriptionStatus, {
+    const { run: updateSubscriptionStatus } = useRequest(subscribeApi.updateActorSubscriptionStatus, {
         manual: true,
-        onSuccess: (_, [id, isPaused]) => {
+        onSuccess: (_, [_id, isPaused]) => {
             message.success(isPaused ? '已暂停订阅' : '已恢复订阅');
             refresh();
         },

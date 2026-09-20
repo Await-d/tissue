@@ -3,8 +3,8 @@
  * @Date: 2025-01-10
  * @Description: 批量下载弹窗组件
  */
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Modal, List, Avatar, Progress, Tag, Space, Switch, Button, App, Empty, Spin } from 'antd';
+import React, { useState, useRef, useEffect } from 'react';
+import { Modal, List, Avatar, Progress, Space, Switch, Button, App, Empty } from 'antd';
 import {
     CheckCircleFilled,
     CloseCircleFilled,
@@ -160,6 +160,9 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
             return;
         }
 
+        let finalSuccess = 0;
+        let finalError = 0;
+
         setDownloading(true);
         setPaused(false);
         pausedRef.current = false;
@@ -198,6 +201,13 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
                 return newMap;
             });
 
+            // 累计本次成功/失败数量（setState 异步，不能用 downloadStatuses 统计）
+            if (result.status === 'success') {
+                finalSuccess += 1;
+            } else if (result.status === 'error') {
+                finalError += 1;
+            }
+
             // 短暂延迟，避免请求过快
             if (i < videos.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 800));
@@ -206,11 +216,6 @@ const BatchDownloadModal: React.FC<BatchDownloadModalProps> = ({
 
         setDownloading(false);
         setCurrentIndex(-1);
-
-        // 计算最终结果
-        const finalStatuses = downloadStatuses;
-        const finalSuccess = Array.from(finalStatuses.values()).filter(s => s.status === 'success').length;
-        const finalError = Array.from(finalStatuses.values()).filter(s => s.status === 'error').length;
 
         if (!abortRef.current) {
             message.success(`批量下载完成：成功 ${finalSuccess}，失败 ${finalError}`);

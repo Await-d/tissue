@@ -1,9 +1,11 @@
-import { App, Button, Form, Input, Select, Skeleton, Switch } from "antd";
+import { App, Button, Form, Input, Select, Switch } from "antd";
 import * as api from "../../../apis/setting.ts";
 import { useRequest } from "ahooks";
 import { createFileRoute } from "@tanstack/react-router";
 import { TransModeOptions } from "../../../utils/constants.ts";
 import { useThemeColors } from "../../../hooks/useThemeColors";
+import { SettingsPage } from "./-component/SettingsPage";
+import { useSectionSettings } from "./-context/SettingsContext";
 
 export const Route = createFileRoute('/_index/setting/download')({
     component: SettingDownload
@@ -12,20 +14,7 @@ export const Route = createFileRoute('/_index/setting/download')({
 function SettingDownload() {
     const colors = useThemeColors();
     const { message } = App.useApp();
-    const [form] = Form.useForm()
-
-    const { loading } = useRequest(api.getSettings, {
-        onSuccess: (res) => {
-            form.setFieldsValue(res.download)
-        }
-    })
-
-    const { run, loading: saving } = useRequest(api.saveSetting, {
-        manual: true,
-        onSuccess: () => {
-            message.success("设置成功")
-        }
-    })
+    const { form, loading, saving, submit } = useSectionSettings('download')
 
     // 测试qBittorrent连接
     const { run: testConnection, loading: testing } = useRequest(api.testQBittorrentConnection, {
@@ -46,33 +35,20 @@ function SettingDownload() {
         }
     });
 
-    function onFinish(data: any) {
-        run('download', data)
-    }
-
     return (
-        loading ? (
-            <Skeleton active />
-        ) : (
-            <div className="max-w-5xl mx-auto px-6 py-8">
-                <div style={{ background: colors.cardBg, borderColor: colors.border }} className="rounded-2xl border shadow-2xl overflow-hidden">
-                    {/* 页面标题 */}
-                    <div className="px-8 py-6 border-b" style={{
-                        borderColor: colors.border,
-                        background: `linear-gradient(to right, ${colors.bgDark}, ${colors.cardBg})`
-                    }}>
-                        <h2 className="text-2xl font-bold flex items-center gap-3" style={{ color: colors.gold }}>
-                            <span className="w-1.5 h-8 rounded-full" style={{
-                                background: `linear-gradient(to bottom, ${colors.gold}, ${colors.goldDark})`
-                            }}></span>
-                            下载设置
-                        </h2>
-                        <p className="text-sm mt-2 ml-6" style={{ color: colors.textMuted }}>配置 qBittorrent 下载器连接和自动化选项</p>
-                    </div>
-
-                    <div className="p-8">
-                        <Form layout={'vertical'} form={form} onFinish={onFinish}>
-                            {/* qBittorrent 连接配置 */}
+        <SettingsPage
+            title="下载设置"
+            subtitle={<span style={{ color: colors.textMuted }}>配置 qBittorrent 下载器连接和自动化选项</span>}
+            loading={loading}
+            form={form}
+            onFinish={submit}
+            saving={saving}
+            maxWidth="5xl"
+            headerGradient="base"
+            cardBorder="solid"
+            saveButtonVariant="legacy"
+        >
+            {/* qBittorrent 连接配置 */}
                             <div className="mb-8">
                                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: colors.goldLight }}>
                                     <span className="w-1 h-5 rounded-full" style={{ background: colors.gold }}></span>
@@ -150,7 +126,7 @@ function SettingDownload() {
                                         tooltip={'手动或自动转移使用的转移模式'}
                                     >
                                         <Select className="custom-select-dark">
-                                            {TransModeOptions.map(i => (<Select.Option key={i.value}>{i.name}</Select.Option>))}
+                                            {TransModeOptions.map(i => (<Select.Option key={i.value} value={i.value}>{i.name}</Select.Option>))}
                                         </Select>
                                     </Form.Item>
                                     <div className="grid grid-cols-2 gap-4">
@@ -280,27 +256,6 @@ function SettingDownload() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-center pt-6">
-                                <Button
-                                    type={'primary'}
-                                    size="large"
-                                    loading={saving}
-                                    htmlType={"submit"}
-                                    style={{
-                                        background: `linear-gradient(to right, ${colors.gold}, ${colors.goldDark})`,
-                                        border: 0,
-                                        color: colors.buttonText,
-                                        fontWeight: 600
-                                    }}
-                                    className="w-48 h-11 shadow-lg hover:shadow-xl"
-                                >
-                                    保存设置
-                                </Button>
-                            </div>
-                        </Form>
-                    </div>
-                </div>
-            </div>
-        )
+        </SettingsPage>
     )
 }

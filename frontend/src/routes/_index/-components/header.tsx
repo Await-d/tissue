@@ -1,4 +1,4 @@
-import { Divider, Dropdown, Modal, Space, theme } from "antd";
+import { Dropdown, Modal, Space } from "antd";
 import type { MenuProps } from 'antd';
 
 import {
@@ -24,8 +24,6 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useThemeColors } from '../../../hooks/useThemeColors';
 
 
-const { useToken } = theme
-
 interface Props {
     collapsible: boolean
     onCollapse: () => void
@@ -42,7 +40,6 @@ function Header(props: Props) {
     const userIconRef = useRef(null)
     const backIconRef = useRef(null)
 
-    const { token } = useToken()
     const isGoodBoy = useSelector((state: RootState) => state.app.goodBoy)
     const canBack = useSelector((state: RootState) => state.app?.canBack)
     const appDispatch = useDispatch<Dispatch>().app

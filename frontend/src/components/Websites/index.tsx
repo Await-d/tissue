@@ -45,7 +45,7 @@ function Websites(props: Props) {
             const newValue = [...(value || []), editInputValue];
             onChange?.(newValue);
             setEditInputValue('');
-        } catch (e) {
+        } catch (_e) {
             setEditInputValue('')
             setInputVisible(false)
         }
@@ -56,21 +56,25 @@ function Websites(props: Props) {
         onChange?.(newValue);
     };
 
-    function handleURL(url: string) {
-        return new URL(url).hostname
+    function safeHostname(url: string): string {
+        try {
+            return new URL(url).hostname
+        } catch {
+            return url
+        }
     }
 
     return (
         <Space size={[0, 8]} wrap>
             <>
-                {value?.map((tag, index) => (
+                {value?.map((tag, _index) => (
                     <Tag key={tag}
                          closable={!readonly}
                          style={{userSelect: 'none'}}
                          onClose={() => handleClose(tag)}
-                         onClick={() => window.open(tag)}
+                         onClick={() => window.open(tag, '_blank', 'noopener,noreferrer')}
                     >
-                        <span style={{cursor: 'pointer'}}>{handleURL(tag)}</span>
+                        <span style={{cursor: 'pointer'}}>{safeHostname(tag)}</span>
                     </Tag>
                 ))}
                 {inputVisible ? (

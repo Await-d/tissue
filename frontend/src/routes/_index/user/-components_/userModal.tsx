@@ -20,10 +20,20 @@ function UserModal(props: FormModalProps) {
                 <Form.Item name={'username'} label={'用户名'} rules={[{required: true, message: '请输入用户名'}]}>
                     <Input/>
                 </Form.Item>
-                <Form.Item name={'password'} label={'新密码'} rules={[{required: !id}]}>
+                <Form.Item name={'password'} label={'新密码'} rules={[{required: !id, message: '请输入密码'}]}>
                     <Input.Password/>
                 </Form.Item>
-                <Form.Item name={'confirmPassword'} label={'确认新密码'} rules={[{required: !id}]}>
+                <Form.Item name={'confirmPassword'} label={'确认新密码'} dependencies={['password']} rules={[
+                    {required: !id, message: '请再次输入密码'},
+                    ({getFieldValue}) => ({
+                        validator(_, value) {
+                            if (!value || getFieldValue('password') === value) {
+                                return Promise.resolve()
+                            }
+                            return Promise.reject(new Error('两次输入的密码不一致'))
+                        }
+                    })
+                ]}>
                     <Input.Password/>
                 </Form.Item>
             </Form>

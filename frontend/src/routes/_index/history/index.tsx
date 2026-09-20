@@ -1,9 +1,9 @@
-import {Button, Card, Input, App, Modal, Space, Table, Tag} from "antd";
+import {Button, Card, Input, App, Space, Table, Tag} from "antd";
 import {ColumnsType} from "antd/lib/table";
 import * as api from "../../../apis/history";
 import {useDebounce, useRequest} from "ahooks";
 import dayjs from "dayjs";
-import React, {useMemo, useState} from "react";
+import React, {useCallback, useMemo, useState} from "react";
 import {DeleteOutlined, EditOutlined, SearchOutlined} from "@ant-design/icons";
 import More from "../../../components/More";
 import {createFileRoute} from "@tanstack/react-router";
@@ -40,7 +40,33 @@ function History() {
         }
     })
 
-    const columns: ColumnsType<any> = [
+    const items = useMemo(() => [
+        {
+            key: 'edit',
+            label: '重新整理',
+            icon: <EditOutlined/>
+        },
+        {
+            key: 'delete',
+            label: '删除记录',
+            icon: <DeleteOutlined/>
+        },
+    ], [])
+
+    const onMoreClick = useCallback((key: string, record: any) => {
+        if (key === 'edit') {
+            setSelected(record)
+        } else if (key === 'delete') {
+            modal.confirm({
+                title: '是否确认删除记录',
+                onOk: () => {
+                    onDelete(record.id)
+                }
+            })
+        }
+    }, [modal, onDelete])
+
+    const columns = useMemo<ColumnsType<any>>(() => [
         {
             title: '状态',
             dataIndex: 'status',
@@ -165,33 +191,7 @@ function History() {
                 )
             )
         }
-    ]
-
-    const items = [
-        {
-            key: 'edit',
-            label: '重新整理',
-            icon: <EditOutlined/>
-        },
-        {
-            key: 'delete',
-            label: '删除记录',
-            icon: <DeleteOutlined/>
-        },
-    ] as any
-
-    function onMoreClick(key: string, record: any) {
-        if (key === 'edit') {
-            setSelected(record)
-        } else if (key === 'delete') {
-            modal.confirm({
-                title: '是否确认删除记录',
-                onOk: () => {
-                    onDelete(record.id)
-                }
-            })
-        }
-    }
+    ], [colors, items, onMoreClick])
 
     return (
         <div className="history-page-wrapper animate-fade-in">
@@ -206,7 +206,7 @@ function History() {
                 extra={(
                     <Space.Compact>
                         <Input
-                            value={keyword}
+                            value={keyword ?? ''}
                             onChange={e => setKeyword(e.target.value)}
                             placeholder={'搜索番号或路径'}
                             style={{

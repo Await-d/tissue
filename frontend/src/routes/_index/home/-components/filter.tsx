@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Col, Row } from "antd";
 import { useThemeColors } from "../../../../hooks/useThemeColors";
 
@@ -20,6 +20,13 @@ function Filter(props: FilterProps) {
 
     const {fields, initialValues = {}, onChange, compact = false, ...others} = props
     const [values, setValues] = useState<any>(initialValues)
+    const initialValuesKey = useMemo(() => JSON.stringify(initialValues ?? {}), [initialValues])
+
+    // initialValues（如 URL 筛选参数）变化时同步内部状态，避免界面显示旧值
+    useEffect(() => {
+        setValues((prev: unknown) => (JSON.stringify(prev ?? {}) === initialValuesKey ? prev : JSON.parse(initialValuesKey)))
+    }, [initialValuesKey])
+
     const colors = useThemeColors();
     const fieldMinHeight = compact ? 38 : 48
     const labelMinWidth = compact ? '3em' : '3.5em'

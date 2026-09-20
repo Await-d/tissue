@@ -10,11 +10,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Card, Skeleton } from 'antd';
 import * as api from '../../../apis/video';
 import VideoDetail from '../../../components/VideoDetail';
-import { useThemeColors } from '../../../hooks/useThemeColors';
 
 export const Route = createFileRoute('/_index/video/$num')({
     component: VideoDetailPage,
-    loader: async ({ params, context }) => {
+    loader: async ({ params }) => {
         // 从params中获取num，从URL查询参数中获取source和url
         const { num } = params;
         const urlParams = new URLSearchParams(window.location.search);
@@ -34,7 +33,6 @@ export const Route = createFileRoute('/_index/video/$num')({
 });
 
 function VideoDetailPage() {
-    const colors = useThemeColors()
     const navigate = useNavigate();
     const { num } = Route.useParams();
     const data = Route.useLoaderData();
@@ -62,6 +60,7 @@ function VideoDetailPage() {
             width={1100}
             // 传递视频数据
             path={data.path || ''}
+            initialData={data}
             mode="detail"
         />
     );

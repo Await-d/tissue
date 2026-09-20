@@ -9,13 +9,14 @@ import {
     App,
     Row, Segmented, Skeleton,
     Space,
+    Spin,
     Tag,
     Tooltip,
     Select,
     InputNumber,
     Badge
 } from "antd";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
     CarryOutOutlined,
     CloudDownloadOutlined,
@@ -28,7 +29,7 @@ import {
     SearchOutlined
 } from "@ant-design/icons";
 import * as api from "../../../apis/subscribe";
-import { useRequest, useResponsive } from "ahooks";
+import { useRequest, useResponsive, useDebounce } from "ahooks";
 import { useFormModal } from "../../../utils/useFormModal.ts";
 import Websites from "../../../components/Websites";
 import VideoCover from "../../../components/VideoCover";
@@ -48,10 +49,108 @@ import DownloadListModal from "./-components/downloadListModal.tsx";
 import HistoryModal from "./-components/historyModal.tsx";
 import Comment from "./-components/comment.tsx";
 import ActorsModal from "./-components/actorsModal.tsx";
-import { useThemeColors } from '../../../hooks/useThemeColors';
+import { useThemeColors, type ThemeColors } from '../../../hooks/useThemeColors';
 
 const cacheHistoryKey = 'search_video_histories'
 const cacheLastSearchKey = 'search_video_last_search'
+// 输入停顿多久后才真正发起搜索请求（毫秒）。
+// 保持极短：/subscribe/search 会走 spider.get_video 真实刮削，用极短防抖合并连续按键即可，既接近「输入即搜」又不至于每个按键都触发刮削。
+const searchDebounceWait = 120
+
+interface DownloadItem {
+    name?: string
+    url?: string
+    website?: string
+    size?: string
+    is_hd?: boolean
+    is_zh?: boolean
+    is_uncensored?: boolean
+    publish_date?: string
+    magnet?: string
+}
+
+interface DownloadItemVideo {
+    num?: string
+}
+
+interface DownloadItemCardProps {
+    item: DownloadItem
+    video: DownloadItemVideo
+    loading: boolean
+    isLg: boolean
+    colors: ThemeColors
+    onDownload: (video: DownloadItemVideo, item: DownloadItem) => void
+    onCopy: (item: DownloadItem) => void
+}
+
+// 资源卡片抽离为 memo 组件，避免页面其它状态（弹窗、选中、输入等）变化时重渲染每个卡片
+const DownloadItemCard = React.memo(function DownloadItemCard(props: DownloadItemCardProps) {
+    const {item, video, loading, isLg, colors, onDownload, onCopy} = props
+
+    return (
+        <div
+            className="tissue-hover-download"
+            style={{
+                marginBottom: '12px',
+                padding: '16px',
+                borderRadius: '12px',
+                border: `1px solid ${colors.borderPrimary}`,
+                background: colors.bgContainer,
+                transition: 'all 0.3s',
+                cursor: 'pointer'
+            }}
+        >
+            <List.Item
+                style={{ border: 'none', padding: 0 }}
+                actions={[
+                    <Tooltip title={'发送到下载器'}>
+                        <Button
+                            type={'primary'}
+                            icon={<CloudDownloadOutlined />}
+                            shape={'circle'}
+                            size="large"
+                            loading={loading}
+                            onClick={() => onDownload(video, item)}
+                        />
+                    </Tooltip>,
+                    <Tooltip title={'复制磁力链接'}>
+                        <Button
+                            type={'default'}
+                            icon={<CopyOutlined />}
+                            shape={'circle'}
+                            size="large"
+                            onClick={() => onCopy(item)}
+                        />
+                    </Tooltip>
+                ]}>
+                <List.Item.Meta
+                    title={<span style={{ fontSize: '15px', fontWeight: 500 }}>{item.name}</span>}
+                    description={(
+                        <Space
+                            direction={isLg ? 'horizontal' : 'vertical'}
+                            size={isLg ? 0 : 'small'}>
+                            <div>
+                                <a href={item.url}>
+                                    <Tag color="blue">{item.website}</Tag>
+                                </a>
+                                <Tag color="purple">{item.size}</Tag>
+                            </div>
+                            <div>
+                                {item.is_hd &&
+                                    <Tag color={'red'}>高清</Tag>}
+                                {item.is_zh &&
+                                    <Tag color={'blue'}>中文</Tag>}
+                                {item.is_uncensored &&
+                                    <Tag color={'green'}>无码</Tag>}
+                            </div>
+                            <div><Tag color="default">{item.publish_date}</Tag></div>
+                        </Space>
+                    )}
+                />
+            </List.Item>
+        </div>
+    )
+})
 
 export const Route = createFileRoute('/_index/search/')({
     component: Search,
@@ -106,6 +205,10 @@ export function Search() {
     const appDispatch = useDispatch<Dispatch>().app
     const responsive = useResponsive()
     const [searchInput, setSearchInput] = useState(search?.num)
+    // 输入框保持即时响应，实际请求使用防抖后的值
+    const debouncedSearchInput = useDebounce(searchInput, { wait: searchDebounceWait })
+    // 仅在用户实际输入后自动搜索，避免初始化（含本地缓存回填）时触发额外请求
+    const userTypedRef = useRef(false)
     const [filter, setFilter] = useState({ isHd: false, isZh: false, isUncensored: false })
     const [previewSelected, setPreviewSelected] = useState<string>()
     const [commentSelected, setCommentSelected] = useState<string>()
@@ -125,6 +228,8 @@ export function Search() {
     const [historyModalOpen, setHistoryModalOpen] = useState(false)
     const [actorsModalOpen, setActorsModalOpen] = useState(false)
     const [loadingDownloadId, setLoadingDownloadId] = useState<string | null>(null)
+    // 真实刮削搜索请求进行中（/subscribe/search 走 spider.get_video，耗时 1-3s），用于即时加载反馈
+    const [isSearching, setIsSearching] = useState(false)
 
     // 组件加载时，检查是否有上一次搜索的番号，如果有且当前没有搜索参数，则自动搜索
     useEffect(() => {
@@ -136,6 +241,8 @@ export function Search() {
                 // router.navigate({ search: { num: lastSearch } as any, replace: true });
             }
         }
+        // 仅在挂载时恢复上次搜索；search?.num 后续变化（如清除/返回）不应重新回填输入框
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -147,7 +254,33 @@ export function Search() {
         }
     }, [detailMatch, appDispatch])
 
-    const { setOpen: setSubscribeOpen, modalProps: subscribeModalProps, form: subscribeForm } = useFormModal({
+    const navigateToSearch = useCallback((num: string) => {
+        // 番号未变化时路由不会重新执行 loader（staleTime 内），避免出现无法结束的加载态
+        if (num === search?.num) return
+        setIsSearching(Boolean(num))
+        router.navigate({ search: { num } as any, replace: true })
+    }, [router, search?.num])
+
+    // 输入停顿（防抖）后再发起搜索，避免每次按键都触发请求
+    useEffect(() => {
+        if (!userTypedRef.current) return
+        if (detailMatch) return
+        if (!debouncedSearchInput || debouncedSearchInput === search?.num) return
+        navigateToSearch(debouncedSearchInput)
+    }, [debouncedSearchInput, detailMatch, navigateToSearch, search?.num])
+
+    // loader 返回的 data 即本次搜索请求的 Promise，请求结束（成功或失败）后结束加载反馈
+    useEffect(() => {
+        if (typeof loaderData?.then !== 'function') return
+        let active = true
+        loaderData.then(
+            () => { if (active) setIsSearching(false) },
+            () => { if (active) setIsSearching(false) }
+        )
+        return () => { active = false }
+    }, [loaderData])
+
+    const { setOpen: setSubscribeOpen, modalProps: subscribeModalProps } = useFormModal({
         service: api.modifySubscribe,
         onOk: () => {
             setSubscribeOpen(false)
@@ -158,12 +291,14 @@ export function Search() {
     const { run: onDownload, loading: onDownloading } = useRequest(api.downloadVideos, {
         manual: true,
         onSuccess: () => {
+            setLoadingDownloadId(null)
             setSelectedVideo(undefined)
             setSelectedDownload(undefined)
             setShowDownloadList(false)
             return message.success("下载任务创建成功")
         },
         onError: (err) => {
+            setLoadingDownloadId(null)
             console.error(err)
             message.error("下载任务创建失败")
         }
@@ -175,6 +310,14 @@ export function Search() {
         localStorage.removeItem(cacheLastSearchKey);
         router.navigate({ search: {} as any, replace: true });
     }, [router]);
+
+    const handleActorClick = useCallback((actorName: string) => {
+        navigate({
+            to: '/actor',
+            search: { actorName: actorName } as any,
+            replace: true
+        });
+    }, [navigate]);
 
     const renderItems = useCallback((video: any) => {
         return [
@@ -266,7 +409,7 @@ export function Search() {
                 span: 24,
                 children: (
                     <div className={'leading-7'}>
-                        {video.tags.map((i: any) => (
+                        {(video.tags ?? []).map((i: any) => (
                             <Tag key={i}>{i}</Tag>
                         ))}
                     </div>
@@ -293,7 +436,7 @@ export function Search() {
                 ),
             },
         ]
-    }, []);
+    }, [handleActorClick]);
 
     const onCopyClick = useCallback((item: any) => {
         const textarea = document.createElement('textarea');
@@ -306,14 +449,6 @@ export function Search() {
         return message.success("磁力链接已复制")
     }, [message]);
 
-    const handleActorClick = useCallback((actorName: string) => {
-        navigate({
-            to: '/actor',
-            search: { actorName: actorName } as any,
-            replace: true
-        });
-    }, [navigate]);
-
     const handleHistorySelect = useCallback((num: string) => {
         setHistoryModalOpen(false)
         navigate({
@@ -321,26 +456,10 @@ export function Search() {
         })
     }, [navigate]);
 
-    const handleDownloadClick = useCallback((video: any, downloadItem?: any) => {
-        setLoadingDownloadId(video.num)
-
-        setSelectedVideo(video)
-
-        if (downloadItem) {
-            setSelectedDownload(downloadItem)
-            setLoadingDownloadId(null)
-            return
-        }
-
-        const downloads = video?.downloads
-        if (downloads && downloads.length > 0) {
-            setShowDownloadList(true)
-            setLoadingDownloadId(null)
-        } else {
-            message.warning("没有可用的下载资源")
-            setLoadingDownloadId(null)
-        }
-    }, [message])
+    const handleItemDownload = useCallback((video: DownloadItemVideo, item: DownloadItem) => {
+        setLoadingDownloadId(video.num ?? null)
+        onDownload(video, item)
+    }, [onDownload])
 
     return (
         <Row gutter={[15, 15]}>
@@ -387,10 +506,11 @@ export function Search() {
                                                 size="large"
                                                 value={searchInput}
                                                 allowClear
-                                                onChange={e => setSearchInput(e.target.value)}
-                                                onPressEnter={() => {
-                                                    router.navigate({ search: { num: searchInput } as any, replace: true })
+                                                onChange={e => {
+                                                    userTypedRef.current = true
+                                                    setSearchInput(e.target.value)
                                                 }}
+                                                onPressEnter={() => navigateToSearch(searchInput)}
                                                 className="tissue-focus-input"
                                                 style={{
                                                     background: colors.bgBase,
@@ -403,9 +523,8 @@ export function Search() {
                                                 type="primary"
                                                 size="large"
                                                 icon={<SearchOutlined />}
-                                                onClick={() => {
-                                                    router.navigate({ search: { num: searchInput } as any, replace: true })
-                                                }}
+                                                loading={isSearching}
+                                                onClick={() => navigateToSearch(searchInput)}
                                                 className="tissue-hover-search-btn"
                                                 style={{
                                                     background: colors.goldGradient,
@@ -416,6 +535,14 @@ export function Search() {
                                                 }}
                                             />
                                         </Space.Compact>
+                                    </div>
+                                )}
+                                {isSearching && (
+                                    <div style={{ padding: '4px 0 16px', textAlign: 'center' }}>
+                                        <Space size={8} style={{ color: colors.textSecondary, fontSize: '14px' }}>
+                                            <Spin size="small" />
+                                            <span>搜索中…</span>
+                                        </Space>
                                     </div>
                                 )}
                                 <Await promise={loaderData}>
@@ -786,70 +913,15 @@ export function Search() {
                                                 <List
                                                 dataSource={downloads}
                                                 renderItem={(item: any) => (
-                                                    <div
-                                                        className="tissue-hover-download"
-                                                        style={{
-                                                            marginBottom: '12px',
-                                                            padding: '16px',
-                                                            borderRadius: '12px',
-                                                            border: `1px solid ${colors.borderPrimary}`,
-                                                            background: colors.bgContainer,
-                                                            transition: 'all 0.3s',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                    >
-                                                        <List.Item
-                                                            style={{ border: 'none', padding: 0 }}
-                                                            actions={[
-                                                                <Tooltip title={'发送到下载器'}>
-                                                                    <Button
-                                                                        type={'primary'}
-                                                                        icon={<CloudDownloadOutlined />}
-                                                                        shape={'circle'}
-                                                                        size="large"
-                                                                        loading={loadingDownloadId === video.num}
-                                                                        onClick={() => {
-                                                                            setLoadingDownloadId(video.num);
-                                                                            onDownload(video, item);
-                                                                        }}
-                                                                    />
-                                                                </Tooltip>,
-                                                                <Tooltip title={'复制磁力链接'}>
-                                                                    <Button
-                                                                        type={'default'}
-                                                                        icon={<CopyOutlined />}
-                                                                        shape={'circle'}
-                                                                        size="large"
-                                                                        onClick={() => onCopyClick(item)}
-                                                                    />
-                                                                </Tooltip>
-                                                            ]}>
-                                                            <List.Item.Meta
-                                                                title={<span style={{ fontSize: '15px', fontWeight: 500 }}>{item.name}</span>}
-                                                                description={(
-                                                                    <Space
-                                                                        direction={responsive.lg ? 'horizontal' : 'vertical'}
-                                                                        size={responsive.lg ? 0 : 'small'}>
-                                                                        <div>
-                                                                            <a href={item.url}>
-                                                                                <Tag color="blue">{item.website}</Tag>
-                                                                            </a>
-                                                                            <Tag color="purple">{item.size}</Tag>
-                                                                        </div>
-                                                                        <div>
-                                                                            {item.is_hd &&
-                                                                                <Tag color={'red'}>高清</Tag>}
-                                                                            {item.is_zh &&
-                                                                                <Tag color={'blue'}>中文</Tag>}
-                                                                            {item.is_uncensored &&
-                                                                                <Tag color={'green'}>无码</Tag>}
-                                                                        </div>
-                                                                        <div><Tag color="default">{item.publish_date}</Tag></div>
-                                                                    </Space>
-                                                                )}
-                                                            />
-                                                        </List.Item>
-                                                    </div>
+                                                    <DownloadItemCard
+                                                        item={item}
+                                                        video={video}
+                                                        loading={loadingDownloadId === video.num}
+                                                        isLg={responsive.lg}
+                                                        colors={colors}
+                                                        onDownload={handleItemDownload}
+                                                        onCopy={onCopyClick}
+                                                    />
                                                 )}
                                                 />
                                             </>

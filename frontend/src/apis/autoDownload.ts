@@ -1,4 +1,5 @@
 import { request } from '@/utils/requests'
+import type { ApiEnvelope } from '@/utils/response'
 
 // 类型定义
 export interface AutoDownloadRule {
@@ -55,11 +56,7 @@ export interface ListResponse<T> {
   total_pages: number
 }
 
-export interface ApiResponse<T = any> {
-  success: boolean
-  message: string
-  data?: T
-}
+export type ApiResponse<T = any> = ApiEnvelope<T>
 
 // 规则管理API
 export const getRules = (params: {

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Progress, List, Typography, Space, Tag, Button, Drawer, Badge, Statistic, Row, Col } from 'antd';
-import { MonitorOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Progress, List, Typography, Space, Tag, Button, Drawer, Badge, Statistic, Row, Col } from 'antd';
+import { MonitorOutlined, CloseOutlined } from '@ant-design/icons';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface ProgressItem {
     id: string;
