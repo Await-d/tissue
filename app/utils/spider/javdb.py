@@ -230,6 +230,87 @@ class JavdbSpider(Spider):
 
         return None
 
+    _ACTOR_LABELS = {"演員", "演员", "出演者", "actor", "actors", "actor(s)", "actress", "actresses"}
+    _ACTOR_NAV_CODES = {"", "actors", "all", "censored", "uncensored", "western"}
+    _ACTOR_PLACEHOLDERS = {"n/a", "na", "none", "无", "不明", "/"}
+
+    def _extract_actor_panel(self, html: etree.HTML):
+        """收集所有「演員」面板内的演员链接，返回 (是否找到面板, 链接列表)。
+
+        新版结构：
+            <strong>演員:</strong>
+            <span class="value">
+                <a class="actor-female" href="/actors/CODE">Name</a>, ...
+            </span>
+        遍历所有匹配标签的面板并按文档顺序合并链接，避免一个空面板或仅含
+        导航链接的面板遮蔽后续真实面板；面板存在但无链接（如 N/A 无码作品）
+        返回 (True, [])，以便调用方区分「面板为空」与「站点结构不同，需要
+        旧版回退」。
+        """
+        wanted = {self._clean_label(label) for label in self._ACTOR_LABELS}
+        panel_found = False
+        links: List = []
+        for strong in html.xpath("//strong"):
+            if self._clean_label(self._extract_text(strong)) not in wanted:
+                continue
+            values = strong.xpath(
+                "./following-sibling::span[contains(@class,'value')][1]"
+            )
+            if not values:
+                continue
+            panel_found = True
+            links.extend(values[0].xpath(".//a[contains(@href,'/actors/')]"))
+        return panel_found, links
+
+    def _extract_actors(self, html: etree.HTML) -> List[VideoActor]:
+        """解析 JavDB 详情页演员列表。
+
+        优先解析新版「演員」面板并提取全部演员（女优 class=actor-female，
+        男优无 class），站点改版后仍能取到名字；面板缺失时回退到旧版
+        symbol female/male 与 <a><strong> 结构。
+        """
+        panel_found, candidates = self._extract_actor_panel(html)
+        if not panel_found:
+            candidates = html.xpath(
+                "//strong[contains(@class,'symbol') and "
+                "(contains(@class,'female') or contains(@class,'male'))]"
+                "/preceding-sibling::a[contains(@href,'/actors/')][1]"
+            )
+            if not candidates:
+                candidates = html.xpath(
+                    "//a[contains(@href,'/actors/') and .//strong]"
+                )
+
+        actors: List[VideoActor] = []
+        seen = set()
+        for element in candidates:
+            actor_url = (element.get("href") or "").strip()
+            actor_code = actor_url.rstrip("/").split("/")[-1]
+            if not actor_code or actor_code.lower() in self._ACTOR_NAV_CODES:
+                continue
+            if actor_code in seen:
+                continue
+            strong_children = element.xpath(".//strong")
+            raw_name = (
+                self._extract_text(strong_children[0])
+                if strong_children
+                else self._extract_text(element)
+            )
+            actor_name = re.sub(r"\s+", " ", raw_name).strip()
+            if not actor_name or actor_name.lower() in self._ACTOR_PLACEHOLDERS:
+                continue
+            has_real_char = bool(re.search(r"\w", actor_name))
+            if not has_real_char:
+                continue
+            seen.add(actor_code)
+            actor_avatar = urljoin(
+                self.avatar_host, f"{actor_code[0:2].lower()}/{actor_code}.jpg"
+            )
+            actors.append(
+                VideoActor(name=actor_name, thumb=actor_avatar, code=actor_code)
+            )
+        return actors
+
     def _absolutize(self, maybe_url: str) -> str:
         url = (maybe_url or "").strip()
         if not url:
@@ -525,52 +606,10 @@ class JavdbSpider(Spider):
             ]
             meta.tags = tags
 
-        # 演员 - 支持中英文标签，female symbol 或 Actor(s) 标签
-        actor_elements = html.xpath(
-            "//strong[contains(@class,'symbol') and contains(@class,'female')]"
-        )
-        if actor_elements:
-            actors = []
-            for element in actor_elements:
-                links = element.xpath("./preceding-sibling::a[1]")
-                if not links:
-                    continue
-                actor_element = links[0]
-                actor_url = actor_element.get("href")
-                if not actor_url:
-                    continue
-                actor_code = actor_url.split("/")[-1]
-                actor_avatar = urljoin(
-                    self.avatar_host, f"{actor_code[0:2].lower()}/{actor_code}.jpg"
-                )
-                actor = VideoActor(
-                    name=actor_element.text, thumb=actor_avatar, code=actor_code
-                )
-                actors.append(actor)
+        actors = self._extract_actors(html)
+        if actors:
             meta.actors = actors
             meta.site_actors = [VideoSiteActor(website=self.name, items=actors)]
-        else:
-            actors = []
-            actor_links = html.xpath("//a[contains(@href,'/actors/') and .//strong]")
-            for actor_link in actor_links:
-                actor_name = (
-                    self._extract_text(actor_link.xpath(".//strong")[0])
-                    if actor_link.xpath(".//strong")
-                    else ""
-                )
-                actor_url = actor_link.get("href") or ""
-                if not actor_name or not actor_url:
-                    continue
-                actor_code = actor_url.rstrip("/").split("/")[-1]
-                actor_avatar = urljoin(
-                    self.avatar_host, f"{actor_code[0:2].lower()}/{actor_code}.jpg"
-                )
-                actors.append(
-                    VideoActor(name=actor_name, thumb=actor_avatar, code=actor_code)
-                )
-            if actors:
-                meta.actors = actors
-                meta.site_actors = [VideoSiteActor(website=self.name, items=actors)]
 
         cover_element = html.xpath(
             "//img[contains(@class,'video-cover')] | //div[contains(@class,'cover')]//img[1]"

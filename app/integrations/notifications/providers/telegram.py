@@ -1,4 +1,7 @@
 import os
+import re
+from html import escape
+from urllib.parse import urlparse
 
 import requests
 
@@ -11,6 +14,10 @@ from app.schema.notification import (
     VideoSavedPayload,
 )
 from app.service.resource import ResourceService
+
+
+def _esc(value) -> str:
+    return escape(str(value), quote=False)
 
 
 class TelegramNotificationProvider(NotificationProvider):
@@ -41,20 +48,20 @@ class TelegramNotificationProvider(NotificationProvider):
         if video.is_uncensored:
             tags.append("无码")
         content = (
-            f"\n<b><tg-spoiler>{video.num or '-'}</tg-spoiler>整理成功</b>\n"
-            f"演员：<tg-spoiler>{actors or '-'}</tg-spoiler>\n"
-            f"大小：{video.size or '-'}\n"
-            f"文件：<tg-spoiler>{video.path or '-'}</tg-spoiler>\n"
-            f"标签：<tg-spoiler>{', '.join(tags) if tags else '-'}</tg-spoiler>\n"
+            f"\n<b><tg-spoiler>{_esc(video.num or '-')}</tg-spoiler>整理成功</b>\n"
+            f"演员：<tg-spoiler>{_esc(actors or '-')}</tg-spoiler>\n"
+            f"大小：{_esc(video.size or '-')}\n"
+            f"文件：<tg-spoiler>{_esc(video.path or '-')}</tg-spoiler>\n"
+            f"标签：<tg-spoiler>{_esc(', '.join(tags) if tags else '-')}</tg-spoiler>\n"
         )
         self._send_message_with_cover(content, video.cover)
 
     def _send_video_failed(self, video: VideoFailedPayload) -> None:
         content = (
             "\n<b>影片整理失败</b>\n"
-            f"文件：<tg-spoiler>{video.path or '-'}</tg-spoiler>\n"
-            f"大小：{video.size or '-'}\n"
-            f"消息：<tg-spoiler>{video.message or '-'}</tg-spoiler>\n"
+            f"文件：<tg-spoiler>{_esc(video.path or '-')}</tg-spoiler>\n"
+            f"大小：{_esc(video.size or '-')}\n"
+            f"消息：<tg-spoiler>{_esc(video.message or '-')}</tg-spoiler>\n"
         )
         self._send_message_with_cover(content, video.cover)
 
@@ -66,16 +73,16 @@ class TelegramNotificationProvider(NotificationProvider):
             tags.append("中文")
         if subscribe.is_uncensored:
             tags.append("无码")
-        link = f"<a href='{subscribe.url}'>点击</a>" if subscribe.url else "-"
+        link = f"<a href='{escape(subscribe.url, quote=True)}'>点击</a>" if subscribe.url else "-"
         content = (
-            f"\n<b><tg-spoiler>{subscribe.num}</tg-spoiler>开始下载</b>\n"
-            f"演员：<tg-spoiler>{subscribe.actors or '-'}</tg-spoiler>\n"
-            f"大小：{subscribe.size or '-'}\n"
-            f"名称：<tg-spoiler>{subscribe.name or '-'}</tg-spoiler>\n"
-            f"站点：<tg-spoiler>{subscribe.website or '-'}</tg-spoiler>\n"
+            f"\n<b><tg-spoiler>{_esc(subscribe.num)}</tg-spoiler>开始下载</b>\n"
+            f"演员：<tg-spoiler>{_esc(subscribe.actors or '-')}</tg-spoiler>\n"
+            f"大小：{_esc(subscribe.size or '-')}\n"
+            f"名称：<tg-spoiler>{_esc(subscribe.name or '-')}</tg-spoiler>\n"
+            f"站点：<tg-spoiler>{_esc(subscribe.website or '-')}</tg-spoiler>\n"
             f"链接：{link}\n"
-            f"日期：{subscribe.publish_date or '-'}\n"
-            f"标签：<tg-spoiler>{', '.join(tags) if tags else '-'}</tg-spoiler>\n"
+            f"日期：{_esc(subscribe.publish_date or '-')}\n"
+            f"标签：<tg-spoiler>{_esc(', '.join(tags) if tags else '-')}</tg-spoiler>\n"
         )
         self._send_message_with_cover(content, subscribe.cover)
 
@@ -88,20 +95,20 @@ class TelegramNotificationProvider(NotificationProvider):
         if actor_subscribe.is_uncensored:
             tags.append("无码")
         content = (
-            f"\n<b>演员订阅: <tg-spoiler>{actor_subscribe.actor_name}</tg-spoiler>新作品</b>\n"
-            f"番号：<tg-spoiler>{actor_subscribe.num}</tg-spoiler>\n"
-            f"标题：<tg-spoiler>{actor_subscribe.title or '-'}</tg-spoiler>\n"
-            f"大小：{actor_subscribe.size or '-'}\n"
-            f"标签：<tg-spoiler>{', '.join(tags) if tags else '-'}</tg-spoiler>\n"
+            f"\n<b>演员订阅: <tg-spoiler>{_esc(actor_subscribe.actor_name)}</tg-spoiler>新作品</b>\n"
+            f"番号：<tg-spoiler>{_esc(actor_subscribe.num)}</tg-spoiler>\n"
+            f"标题：<tg-spoiler>{_esc(actor_subscribe.title or '-')}</tg-spoiler>\n"
+            f"大小：{_esc(actor_subscribe.size or '-')}\n"
+            f"标签：<tg-spoiler>{_esc(', '.join(tags) if tags else '-')}</tg-spoiler>\n"
         )
         self._send_message_with_cover(content, actor_subscribe.cover)
 
     def _send_cookie_invalid(self, cookie: CookieInvalidPayload) -> None:
         content = (
             "\n<b>Cookie 已失效</b>\n"
-            f"站点：{cookie.site_name}\n"
-            f"域名：{cookie.domain}\n"
-            f"消息：{cookie.message}\n"
+            f"站点：{_esc(cookie.site_name)}\n"
+            f"域名：{_esc(cookie.domain)}\n"
+            f"消息：{_esc(cookie.message)}\n"
         )
         self._send_message(content)
 
@@ -110,7 +117,9 @@ class TelegramNotificationProvider(NotificationProvider):
         picture_name = None
         if cover_url:
             picture = ResourceService.fetch_image_bytes(cover_url, "cover")
-            _, ext_name = os.path.splitext(cover_url)
+            ext_name = os.path.splitext(urlparse(cover_url).path)[1].lower()
+            if not re.fullmatch(r"\.[a-z0-9]{1,5}", ext_name):
+                ext_name = ".jpg"
             picture_name = f"cover{ext_name}"
         self._send_message(content, picture=picture, picture_name=picture_name)
 

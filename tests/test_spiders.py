@@ -462,6 +462,112 @@ class TestJavdbSearchParsing:
         assert exact[0].text == "ABC-123"
 
 
+class TestJavdbDetailActorExtraction:
+    """JavDB 详情页演员提取：新版「演員」面板 + 旧版结构回退"""
+
+    NEW_PANEL_HTML = """
+    <html><body>
+      <div class="panel-block">
+        <strong>演員:</strong>
+        &nbsp;<span class="value">
+          <a class="actor-female" href="/actors/O4Gz">あまね弥生</a>,
+          <a href="/actors/NwRvG">　大沢真司</a>
+        </span>
+      </div>
+    </body></html>
+    """.encode("utf-8")
+
+    def test_new_panel_extracts_female_and_male(self, javdb_spider_no_network):
+        html = etree.HTML(
+            self.NEW_PANEL_HTML, parser=etree.HTMLParser(encoding="utf-8")
+        )
+        actors = javdb_spider_no_network._extract_actors(html)
+        assert [a.name for a in actors] == ["あまね弥生", "大沢真司"]
+        assert [a.code for a in actors] == ["O4Gz", "NwRvG"]
+        assert actors[0].thumb == "https://c0.jdbstatic.com/avatars/o4/O4Gz.jpg"
+        assert actors[1].thumb == "https://c0.jdbstatic.com/avatars/nw/NwRvG.jpg"
+
+    def test_panel_na_yields_empty(self, javdb_spider_no_network):
+        html = etree.HTML(
+            '<div class="panel-block"><strong>演員:</strong>'
+            '<span class="value">N/A</span></div>',
+            parser=etree.HTMLParser(encoding="utf-8"),
+        )
+        assert javdb_spider_no_network._extract_actors(html) == []
+
+    def test_panel_filters_nav_and_placeholder(self, javdb_spider_no_network):
+        html = etree.HTML(
+            '<div class="panel-block"><strong>演員:</strong><span class="value">'
+            '<a href="/actors/censored">有碼</a>'
+            '<a href="/actors/all">全部</a>'
+            '<a href="/actors/">索引</a>'
+            '<a class="actor-female" href="/actors/D1">女优</a>'
+            '<a href="/actors/D2">???</a>'
+            "</span></div>",
+            parser=etree.HTMLParser(encoding="utf-8"),
+        )
+        names = [a.name for a in javdb_spider_no_network._extract_actors(html)]
+        assert names == ["女优"]
+
+    def test_decoy_empty_panel_does_not_shadow_real_panel(
+        self, javdb_spider_no_network
+    ):
+        html = etree.HTML(
+            '<div><strong>Actors:</strong><span class="value"></span></div>'
+            '<div class="panel-block"><strong>演員:</strong><span class="value">'
+            '<a class="actor-female" href="/actors/REAL1">真女优</a>'
+            "</span></div>",
+            parser=etree.HTMLParser(encoding="utf-8"),
+        )
+        actors = javdb_spider_no_network._extract_actors(html)
+        assert [a.name for a in actors] == ["真女优"]
+
+    def test_nav_only_panel_does_not_shadow_real_panel(
+        self, javdb_spider_no_network
+    ):
+        html = etree.HTML(
+            '<div><strong>Actor:</strong><span class="value">'
+            '<a href="/actors/censored">有碼</a></span></div>'
+            '<div class="panel-block"><strong>演員:</strong><span class="value">'
+            '<a class="actor-female" href="/actors/REAL2">后出现的女优</a>'
+            "</span></div>",
+            parser=etree.HTMLParser(encoding="utf-8"),
+        )
+        actors = javdb_spider_no_network._extract_actors(html)
+        assert [a.name for a in actors] == ["后出现的女优"]
+
+    def test_legacy_symbol_structure_fallback(self, javdb_spider_no_network):
+        html = etree.HTML(
+            '<a href="/actors/ABC1"><strong>旧版女优</strong></a>'
+            '<strong class="symbol female">♀</strong>',
+            parser=etree.HTMLParser(encoding="utf-8"),
+        )
+        actors = javdb_spider_no_network._extract_actors(html)
+        assert [a.name for a in actors] == ["旧版女优"]
+
+    def test_legacy_anchor_strong_fallback(self, javdb_spider_no_network):
+        html = etree.HTML(
+            '<a href="/actors/XYZ9"><strong>旧版演员</strong></a>',
+            parser=etree.HTMLParser(encoding="utf-8"),
+        )
+        actors = javdb_spider_no_network._extract_actors(html)
+        assert [a.name for a in actors] == ["旧版演员"]
+
+    def test_get_info_wires_actors_and_site_actors(self, javdb_spider_no_network):
+        mock_resp = MagicMock()
+        mock_resp.content = self.NEW_PANEL_HTML
+        with patch.object(javdb_spider_no_network, "_get", return_value=mock_resp):
+            result = javdb_spider_no_network.get_info(
+                "TEST-001", url="https://javdb.com/v/O4Gz"
+            )
+        assert [a.name for a in result.actors] == ["あまね弥生", "大沢真司"]
+        assert result.site_actors[0].website == "JavDB"
+        assert [a.name for a in result.site_actors[0].items] == [
+            "あまね弥生",
+            "大沢真司",
+        ]
+
+
 # ──────────────────────────────────────────────
 # JavBus: Bug 修复验证
 # ──────────────────────────────────────────────

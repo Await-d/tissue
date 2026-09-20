@@ -10,6 +10,16 @@ def convert_size(text, bits=2):
         text = text / size
 
 
+def sanitize_path_component(name, fallback="未知"):
+    """清洗外部文本（演员名/标题/番号）作为路径段，去除路径分隔符、空字符与首尾点，防止目录穿越。"""
+    text = "" if name is None else str(name)
+    text = text.replace("\x00", "").replace("/", "_").replace("\\", "_")
+    text = text.replace("\r", " ").replace("\n", " ").strip().strip(".").strip()
+    if not text:
+        return fallback
+    return text
+
+
 def remove_empty_directory(path: str):
     parent = os.path.abspath(os.path.join(path, '..'))
     if os.path.isdir(path):

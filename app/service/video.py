@@ -216,14 +216,26 @@ class VideoService(BaseService):
 
         actor_folder = (
             (
-                ",".join(map(lambda i: i.name, video.actors[0:3]))
+                ",".join(
+                    utils.sanitize_path_component(i.name) for i in video.actors[0:3]
+                )
                 + ("等" if len(video.actors) > 3 else "")
             )
             if len(video.actors) > 0
             else "未知演员"
         )
-        video_folder = video.title[0:80]
+        video_folder = utils.sanitize_path_component((video.title or "")[0:80], "")
         save_path = os.path.join(video_path, actor_folder, video_folder)
+        library_root = os.path.normpath(os.path.abspath(video_path))
+        normalized_save = os.path.normpath(os.path.abspath(save_path))
+        try:
+            in_library = (
+                os.path.commonpath([library_root, normalized_save]) == library_root
+            )
+        except ValueError:
+            in_library = False
+        if not in_library:
+            raise BizException("非法的保存路径")
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
@@ -233,9 +245,10 @@ class VideoService(BaseService):
         if video.is_zh:
             video_tags.append("C")
 
+        safe_num = utils.sanitize_path_component(video.num, "")
         video_path = os.path.join(
             save_path,
-            video.num + (f"-{''.join(video_tags)}" if video_tags else "") + ext_name,
+            safe_num + (f"-{''.join(video_tags)}" if video_tags else "") + ext_name,
         )
 
         if video_path != video.path:
